@@ -114,8 +114,17 @@ const MemoryGame = () => {
             <Card size='l'> 
             <Text variant="display-1">Game Over!</Text>
             <Text variant="body-2">Your time: {(endTime && startTime) ? ((endTime - startTime) / 1000) : 0} seconds</Text>
-            <TextInput placeholder="Your name" value={userName} onChange={(e) => setUserName(e.target.value)} />
-            <Button size='l' view='action' onClick={handleSaveResult}>Save Result</Button>
+            <div style={{ margin: '10px 0', width: '100%' }}>
+              <TextInput 
+                placeholder="Your name" 
+                value={userName} 
+                onChange={(e) => setUserName(e.target.value)}
+                style={{ width: '100%', marginBottom: '10px' }}
+              />
+            </div>
+            <Button size='l' view='action' onClick={handleSaveResult} style={{ width: '100%' }}>
+              Save Result
+            </Button>
 
             {leaderboard.length > 0 && (
               <div className="leaderboard">
