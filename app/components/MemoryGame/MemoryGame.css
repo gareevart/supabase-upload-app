@@ -79,6 +79,8 @@
   
   /* Полноэкранная кнопка старта игры */
   .memory-game > button {
+    display: flex;
+    align-items: center;
     width: 80%;
     max-width: 300px;
     height: 60px;

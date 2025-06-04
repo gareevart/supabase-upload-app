@@ -122,7 +122,7 @@ const MemoryGame = () => {
                 style={{ width: '100%', marginBottom: '10px' }}
               />
             </div>
-            <Button size='l' view='action' onClick={handleSaveResult} style={{ width: '100%' }}>
+            <Button size='l' view='action' onClick={handleSaveResult}>
               Save Result
             </Button>
 
