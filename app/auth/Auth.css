@@ -1,0 +1,232 @@
+/* Auth Layout Styles */
+.auth-layout {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    width: 100%;
+    font-size: 18px;
+    color: var(--g-color-text-primary);
+}
+
+/* Login Card Styles */
+.login {
+    display: flex;
+    min-width: 320px;
+    padding: var(--g-spacing-6, 24px) var(--g-spacing-5, 20px);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    background-color: var(--g-color-base-background);
+    border-radius: var(--g-border-radius-xl, 16px);
+    border: 1px solid var(--g-color-line-generic, rgba(255, 255, 255, 0.15));
+    margin: 0 auto;
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.login>.title {
+    display: flex;
+    flex-direction: column;
+    gap: var(--g-spacing-1, 4px);
+}
+
+.success-message {
+    display: flex;
+    flex-direction: column;
+    gap: var(--g-spacing-3, 12px);
+}
+
+.login>h2 {
+    padding-bottom: 0;
+}
+
+.login>form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.app-logo {
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.app-logo img {
+    max-width: 180px;
+    height: auto;
+}
+
+.signup {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--g-spacing-3);
+    justify-content: center;
+}
+
+.link {
+    text-decoration: none;
+}
+
+p {
+    margin: 0px;
+    padding: 0px;
+}
+
+.signup>p {
+    font-size: 13px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 18px;
+    margin: 0;
+}
+
+.continue {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-content: center;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--g-spacing-3);
+}
+
+.continue>p {
+    display: flex;
+    min-width: fit-content;
+}
+
+.divider {
+    display: flex;
+    flex-direction: row;
+    border: 1px solid var(--g-color-line-generic, rgba(255, 255, 255, 0.15));
+    width: 100%;
+}
+
+.profile {
+    display: flex;
+    flex-direction: column;
+    min-width: fit-content;
+    align-items: flex-start;
+    gap: var(--g-spacing-5);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.g-card {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+}
+
+.profile-field {
+    margin-bottom: 0px;
+}
+
+.profile-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    margin: 10px 0;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--g-color-line-generic, rgba(255, 255, 255, 0.15));
+}
+
+.profile-view {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--g-spacing-3);
+}
+
+.flex-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--g-spacing-3);
+}
+
+.pb2 {
+    padding-bottom: var(--g-spacing-4);
+}
+
+.subscribe-view {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--g-spacing-4);
+}
+
+.responsive-card {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+/* Ensure DefinitionList fits on mobile screens */
+.responsive-definition-list {
+    width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+.responsive-definition-list a {
+    word-break: break-all;
+}
+
+@media (max-width: 480px) {
+    .profile-view {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .profile-avatar {
+        width: 60px !important;
+        height: 60px !important;
+    }
+    
+    /* Adjust DefinitionList for mobile */
+    .g-definition-list__item {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+    
+    .g-definition-list__item-name {
+        margin-bottom: 4px !important;
+        padding-right: 0 !important;
+    }
+    
+    .g-definition-list__item-content {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+form>.password {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}

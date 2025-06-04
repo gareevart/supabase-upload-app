@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --base-bg: #f1f1f1;
+}
+
+:root {
+  --color-background: var(--background);
+  --base-bg: var(--base-bg);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --base-bg: #616161;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+main {
+  width: auto;
+  padding: var(--g-spacing-6, 24px);
+}
+
+/* Desktop styles - account for side navigation */
+@media (min-width: 768px) {
+  main {
+    margin-left: 100px; /* Desktop navigation width */
+    width: calc(100% - 100px);
+  }
+}
+
+/* Mobile styles - account for bottom navigation */
+@media (max-width: 767px) {
+  main {
+    margin-bottom: 65px; /* Mobile navigation height */
+  }
+}
+
+/* New styles for the updated page structure */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  gap: 16px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* Desktop styles for page container */
+@media (min-width: 768px) {
+  .page-container {
+    padding-left: 16px;
+  }
+}
+
+.content-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--g-spacing-6, 24px);
+}
+
+.text-container {
+  max-width: 968px;
+  text-align: start;
+}
+
+.links-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+}
+
+.link-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--foreground);
+}
+
+.link-item:hover {
+  text-decoration: underline;
+}
