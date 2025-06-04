@@ -38,13 +38,6 @@
     align-items: center;
   }
 
-  .logo-bar {
-    height: 4px;
-    width: 32px;
-    background-color: #f97316;
-    margin-bottom: 4px;
-  }
-
   .nav-items {
     flex: 1;
     display: flex;

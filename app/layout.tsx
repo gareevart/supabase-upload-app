@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import ThemeWrapper from './components/ThemeWrapper';
 import { Toaster } from './components/ui/toast';
-import "./globals.css";
 import Navigation from './components/Navigation/Navigation';
+import './styles.css';
 import '@gravity-ui/uikit/styles/styles.css';
 import './auth/Auth.css';
+import "./globals.css";
+
 
 
 const geistSans = Geist({

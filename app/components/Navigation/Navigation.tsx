@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@gravity-ui/uikit';
 import {House, Circles4Square, Person, Magnifier, BookmarkFill, Plus, Bars, MagicWand, Ghost} from '@gravity-ui/icons';
+import Image from 'next/image';
 import UserAvatar from '../UserAvatar';
 import Link from 'next/link';
 import NavigationItem from './NavigationItem';
@@ -52,11 +53,13 @@ const Navigation: React.FC = () => {
         <div className="nav-container">
           <div className="logo-area">
             <div className="logo-wrapper">
-              <Icon data={BookmarkFill} size={28} />
-              <div className="logo-bars">
-                <div className="logo-bar"></div>
-                <div className="logo-bar"></div>
-              </div>
+              <Image 
+                src="/g-logo.svg" 
+                alt="Logo" 
+                width={32} 
+                height={32}
+                priority
+              />
             </div>
           </div>
 
