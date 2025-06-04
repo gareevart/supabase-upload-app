@@ -29,13 +29,20 @@ const MemoryGame = () => {
   const [endTime, setEndTime] = useState<number | null>(null);
   const [userName, setUserName] = useState<string>('');
   const [gameOver, setGameOver] = useState<boolean>(false);
+  const [resultSaved, setResultSaved] = useState<boolean>(false);
 
   const startGame = () => {
     const shuffledCards = [...emojis, ...emojis]
         .sort(() => Math.random() - 0.5)
         .map((emoji, index) => ({ id: index, emoji, flipped: false }));
     setCards(shuffledCards);
+    setFlippedCards([]);
+    setMatchedCards([]);
     setStartTime(Date.now());
+    setEndTime(null);
+    setGameOver(false);
+    setResultSaved(false);
+    setUserName('');
     setGameStarted(true);
   };
 
@@ -64,6 +71,8 @@ const MemoryGame = () => {
 
   const handleSaveResult = async () => {
     if (!userName) return alert('Please enter your name');
+    if (resultSaved) return alert('Result already saved!');
+    
     const timeTaken = (endTime && startTime) ? (endTime - startTime) / 1000 : 0;
     const { error } = await supabase.from('memory_game_results').insert([
       { name: userName, time: timeTaken },
@@ -72,21 +81,23 @@ const MemoryGame = () => {
       console.error('Error saving result:', error);
     } else {
       alert('Result saved successfully!');
-    const fetchLeaderboard = async () => {
-      const { data, error } = await supabase
-        .from('memory_game_results')
-        .select('name, time')
-        .order('time', { ascending: true })
-        .limit(10);
-      if (error) {
-        console.error('Error fetching leaderboard:', error);
-      } else {
-        setLeaderboard(data || []);
-      }
-    };
+      setResultSaved(true);
+      
+      const fetchLeaderboard = async () => {
+        const { data, error } = await supabase
+          .from('memory_game_results')
+          .select('name, time')
+          .order('time', { ascending: true })
+          .limit(10);
+        if (error) {
+          console.error('Error fetching leaderboard:', error);
+        } else {
+          setLeaderboard(data || []);
+        }
+      };
 
-    fetchLeaderboard();
-  };
+      fetchLeaderboard();
+    }
   };
 
   return (
@@ -122,8 +133,21 @@ const MemoryGame = () => {
                 style={{ width: '100%', marginBottom: '10px' }}
               />
             </div>
-            <Button size='l' view='action' onClick={handleSaveResult}>
-              Save Result
+            <Button 
+              size='l' 
+              view={resultSaved ? 'outlined' : 'action'} 
+              onClick={handleSaveResult}
+              disabled={resultSaved}
+            >
+              {resultSaved ? 'Result Saved' : 'Save Result'}
+            </Button>
+            <Button 
+              size='l' 
+              view='normal' 
+              onClick={startGame}
+              style={{ marginTop: '10px' }}
+            >
+              Play Again
             </Button>
 
             {leaderboard.length > 0 && (
