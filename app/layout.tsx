@@ -68,7 +68,7 @@ export default function RootLayout({
         <ThemeWrapper theme={isDarkTheme ? "dark" : "light"}>
           <Toaster>
             <Navigation />
-            <main className="container mx-auto">
+            <main className="main-content">
               {children}
             </main>
           </Toaster>

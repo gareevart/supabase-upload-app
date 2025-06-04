@@ -25,48 +25,57 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  margin: 0;
+  min-height: 100vh;
 }
 
-main {
-  width: auto;
-  padding: var(--g-spacing-6, 24px);
-}
-
-/* Desktop styles - account for side navigation */
+/* Desktop layout with grid */
 @media (min-width: 768px) {
-  main {
-    margin-left: 100px; /* Desktop navigation width */
-    width: calc(100% - 100px);
+  body {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    grid-template-areas: "nav main";
+  }
+  
+  .navigation {
+    grid-area: nav;
+  }
+  
+  .main-content {
+    grid-area: main;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+    box-sizing: border-box;
   }
 }
 
 /* Mobile styles - account for bottom navigation */
 @media (max-width: 767px) {
-  main {
+  .main-content {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
     margin-bottom: 65px; /* Mobile navigation height */
+    box-sizing: border-box;
   }
 }
 
-/* New styles for the updated page structure */
 .page-container {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
+  min-height: calc(100vh - 48px); /* Account for padding */
   gap: 16px;
-  max-width: 1200px;
   width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 16px;
-}
-
-/* Desktop styles for page container */
-@media (min-width: 768px) {
-  .page-container {
-    padding-left: 16px;
-  }
+  box-sizing: border-box;
 }
 
 .content-container {
@@ -74,18 +83,22 @@ main {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: var(--g-spacing-6, 24px);
+  gap: 24px;
+  width: 100%;
+  max-width: 968px;
+  margin: 0 auto;
 }
 
 .text-container {
   max-width: 968px;
-  text-align: start;
+  text-align: left;
+  width: 100%;
 }
 
 .links-container {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 24px;
 }
 
