@@ -1,12 +1,40 @@
 "use client" 
 import React from 'react';
-import { Flex, Card, Text, Button, Alert, Spin, TextArea } from '@gravity-ui/uikit';
+import { Flex, Text, Button, Alert, Spin, TextArea } from '@gravity-ui/uikit';
+import { supabase } from '@/lib/supabase';
 
 const Yaart = () => {
     const [prompt, setPrompt] = React.useState('');
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState('');
     const [generatedImage, setGeneratedImage] = React.useState('');
+    const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null);
+    const [canGenerate, setCanGenerate] = React.useState(true);
+    const [showLimitWarning, setShowLimitWarning] = React.useState(false);
+    
+    React.useEffect(() => {
+      const checkAuth = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        setIsAuthenticated(!!user);
+        
+        if (!user) {
+          // Проверяем лимит для неавторизованных пользователей
+          const lastGeneration = localStorage.getItem('last_image_generation');
+          if (lastGeneration) {
+            const lastDate = new Date(lastGeneration);
+            const today = new Date();
+            const isSameDay = lastDate.toDateString() === today.toDateString();
+            
+            if (isSameDay) {
+              setCanGenerate(false);
+              setShowLimitWarning(true);
+            }
+          }
+        }
+      };
+      
+      checkAuth();
+    }, []);
     
     const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       setPrompt(e.target.value);
@@ -15,6 +43,12 @@ const Yaart = () => {
     const handleGenerateImage = async () => {
       if (!prompt.trim()) {
         setError('Please enter a prompt for image generation');
+        return;
+      }
+      
+      // Проверяем ограничения для неавторизованных пользователей
+      if (!isAuthenticated && !canGenerate) {
+        setError('Daily limit reached. Please sign in to generate more images or try again tomorrow.');
         return;
       }
       
@@ -37,6 +71,13 @@ const Yaart = () => {
         const data = await response.json();
         if (data.imageUrl) {
           setGeneratedImage(data.imageUrl);
+          
+          // Сохраняем время генерации для неавторизованных пользователей
+          if (!isAuthenticated) {
+            localStorage.setItem('last_image_generation', new Date().toISOString());
+            setCanGenerate(false);
+            setShowLimitWarning(true);
+          }
         } else {
           throw new Error('No image URL in response');
         }
@@ -49,86 +90,90 @@ const Yaart = () => {
     };
     
     return (
-        <div className="grid grid-rows-[16px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-        <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Flex direction="column">
-        <Card view="outlined" type="container">
-          <Flex direction="column" gap={2}>
-            <Text variant="display-1">Image Generator</Text>
-            
-            <Flex direction="column" gap={4}>
-              <Text variant="body-1">Enter a prompt to generate an image</Text>
-              <TextArea
-                placeholder="Enter a detailed description of the image you want to generate..."
-                value={prompt}
-                onChange={handlePromptChange}
-                rows={4}
-                maxRows={8}
-              />
-            </Flex>
-            
-            <Flex justifyContent="flex-end">
-              <Button
-                view="action"
-                size="l"
-                onClick={handleGenerateImage}
-                disabled={loading || !prompt.trim()}
-                loading={loading}
-              >
-                Generate Image
-              </Button>
-            </Flex>
-            
-            {error && (
-              <Alert 
-                theme="danger" 
-                message={error} 
-                onClose={() => setError('')}
-              />
-            )}
-            
-            {loading && (
-              <Flex justifyContent="center" alignItems="center" style={{ padding: '40px' }}>
-                <Flex direction="column" alignItems="center" gap={10}>
-                  <Spin size="xl" />
-                  <Text>Generating your image...</Text>
-                </Flex>
+        <div className="page-container">
+          <div className="content-container">
+            <Flex direction="column" gap={2}>
+              <Text variant="display-1">Image Generator</Text>
+              
+              {showLimitWarning && !isAuthenticated && (
+                <Alert 
+                  theme="warning" 
+                  message="Users without authorization can generate only one image per day. Please log in for unlimited access"
+                  onClose={() => setShowLimitWarning(false)}
+                />
+              )}
+              
+              <Flex direction="column" gap={4}>
+                <Text variant="body-1">Enter a prompt to generate an image</Text>
+                <TextArea
+                  placeholder="Enter a detailed description of the image you want to generate..."
+                  value={prompt}
+                  onChange={handlePromptChange}
+                  rows={4}
+                  maxRows={8}
+                  style={{ width: '100%' }}
+                />
               </Flex>
-            )}
-            
-            {generatedImage && !loading && (
-              <Flex direction="column" gap={10}>
-                <Text variant="body-1" color="secondary">Generated Image:</Text>
-                <Card view="outlined" type="container">
-                  <img 
-                    src={generatedImage} 
-                    alt="Generated from prompt" 
-                    style={{ maxWidth: '100%', height: 'auto' }} 
-                  />
-                </Card>
-                <Flex justifyContent="flex-end">
-                  <Button 
-                    view="outlined"
-                    onClick={() => {
-                      const link = document.createElement('a');
-                      link.href = generatedImage;
-                      link.download = 'generated-image.jpg';
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                    }}
-                  >
-                    Download Image
-                  </Button>
-                </Flex>
+              
+              <Flex justifyContent="flex-end">
+                <Button
+                  view="action"
+                  size="l"
+                  onClick={handleGenerateImage}
+                  disabled={loading || !prompt.trim() || (!isAuthenticated && !canGenerate)}
+                  loading={loading}
+                >
+                  Generate Image
+                </Button>
               </Flex>
-            )}
-          </Flex>
-        </Card>
-      </Flex>
-      </main>
+              
+              {error && (
+                <Alert 
+                  theme="danger" 
+                  message={error} 
+                  onClose={() => setError('')}
+                />
+              )}
+              
+              {loading && (
+                <Flex justifyContent="center" alignItems="center" style={{ padding: '40px' }}>
+                  <Flex direction="column" alignItems="center" gap={10}>
+                    <Spin size="xl" />
+                    <Text>Generating your image...</Text>
+                  </Flex>
+                </Flex>
+              )}
+              
+              {generatedImage && !loading && (
+                <Flex direction="column" gap={10}>
+                  <Text variant="body-1" color="secondary">Generated Image:</Text>
+                  <div style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '16px' }}>
+                    <img 
+                      src={generatedImage} 
+                      alt="Generated from prompt" 
+                      style={{ maxWidth: '100%', height: 'auto' }} 
+                    />
+                  </div>
+                  <Flex justifyContent="flex-end">
+                    <Button 
+                      view="outlined"
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = generatedImage;
+                        link.download = 'generated-image.jpg';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                    >
+                      Download Image
+                    </Button>
+                  </Flex>
+                </Flex>
+              )}
+            </Flex>
+          </div>
         </div>
     );
   };
   export default Yaart;
-  
