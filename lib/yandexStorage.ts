@@ -51,7 +51,7 @@ export async function uploadFile(file: File, customPath?: string, userId?: strin
 }
 
 // List files using the API route
-export async function listFiles(prefix: string = FOLDER_PREFIX, bucket: string = 'buckets3', userId?: string) {
+export async function listFiles(prefix: string = FOLDER_PREFIX, bucket: string = 'public-gareevde', userId?: string) {
   try {
     const headers: HeadersInit = {};
     if (userId) {

@@ -14,6 +14,7 @@ import {
 import withAuth from './withAuth';
 import FileUploader from './components/FileUploader';
 import BucketAccessChecker from './components/BucketAccessChecker';
+import { useAuth } from '../contexts/AuthContext';
 import './Auth.css';
 
 interface Profile {
@@ -35,7 +36,7 @@ interface Subscription {
 }
 
 const Profile = () => {
-    const [user, setUser] = useState<any>(null);
+    const { user, signOut } = useAuth();
     const [profile, setProfile] = useState<Profile | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -89,11 +90,6 @@ const Profile = () => {
 
     useEffect(() => {
         const fetchUserAndProfile = async () => {
-            const {
-                data: {user},
-            } = await supabase.auth.getUser();
-            setUser(user);
-
             if (user) {
                 const {data: profile} = await supabase
                     .from('profiles')
@@ -108,7 +104,7 @@ const Profile = () => {
             }
         };
         fetchUserAndProfile();
-    }, []);
+    }, [user]);
 
     const handleSubscriptionToggle = async () => {
         if (!user || !user.email || !subscription) return;
@@ -211,9 +207,8 @@ const Profile = () => {
     };
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
-        localStorage.clear(); // Очищаем все данные из localStorage
-        navigate('/login');
+        await signOut();
+        // Контекст авторизации автоматически обработает очистку состояния и перенаправление
     };
 
     if (!user || !profile)

@@ -5,11 +5,12 @@ import { Geist, Geist_Mono } from "next/font/google";
 import ThemeWrapper from './components/ThemeWrapper';
 import { Toaster } from './components/ui/toast';
 import Navigation from './components/Navigation/Navigation';
-
+import { AuthProvider } from './contexts/AuthContext';
 
 import '@gravity-ui/uikit/styles/styles.css';
 import "@/styles/globals.css";
 import './auth/Auth.css';
+import '@/styles/styles.css';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -66,14 +67,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeWrapper theme={isDarkTheme ? "dark" : "light"}>
-          <Toaster>
-            <Navigation />
-            <main className="main-content">
-              {children}
-            </main>
-          </Toaster>
-        </ThemeWrapper>
+        <AuthProvider>
+          <ThemeWrapper theme={isDarkTheme ? "dark" : "light"}>
+            <Toaster>
+              <Navigation />
+              <main className="main-content">
+                {children}
+              </main>
+            </Toaster>
+          </ThemeWrapper>
+        </AuthProvider>
       </body>
     </html>
   );

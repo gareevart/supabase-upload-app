@@ -33,7 +33,7 @@ export default function FileView() {
         .single();
       setUserRole(profile?.role || null);
 
-      const { data, error } = await listFiles(`profiles/${userId}/`, 'buckets3', userId);
+      const { data, error } = await listFiles(`profiles/${userId}/`, 'public-gareevde', userId);
       if (error) throw error;
       
       const urls: Record<string, string> = {};
@@ -169,7 +169,7 @@ export default function FileView() {
         </div>
       ) : images.length === 0 ? (
         <div className="file-view-empty">
-          Нет изображений в папке "profiles" бакета "buckets3"
+          Нет изображений в папке "profiles" бакета "public-gareevde"
         </div>
       ) : (
         <div className="file-view-grid">

@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const prefix = searchParams.get('prefix') || 'profiles/';
     const userId = request.headers.get('x-user-id');
-    const bucket = searchParams.get('bucket') || 'buckets3';
+    const bucket = searchParams.get('bucket') || 'public-gareevde';
     
     console.log('List request:', { prefix, userId, bucket });
 
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
       stack: error instanceof Error ? error.stack : undefined,
       prefix: searchParams.get('prefix') || 'profiles/',
       userId: request.headers.get('x-user-id'),
-      bucket: searchParams.get('bucket') || 'buckets3'
+      bucket: searchParams.get('bucket') || 'public-gareevde'
     };
     console.error('API List Error:', errorContext);
     return NextResponse.json(

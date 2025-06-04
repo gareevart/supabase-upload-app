@@ -15,6 +15,7 @@ import {
 } from '@gravity-ui/uikit';
 import withAuth from '../withAuth';
 import FileUploader from '../components/FileUploader';
+import { useAuth } from '@/app/contexts/AuthContext';
 // CSS import removed as it's now in the root layout
 
 interface Profile {
@@ -36,7 +37,7 @@ interface Subscription {
 }
 
 const Profile = () => {
-    const [user, setUser] = useState<any>(null);
+    const { user, signOut } = useAuth();
     const [profile, setProfile] = useState<Profile | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -97,26 +98,19 @@ const Profile = () => {
 
     useEffect(() => {
         const fetchUserAndProfile = async () => {
-            if (!mounted) return;
+            if (!mounted || !user) return;
             
             try {
                 setLoading(true);
-                const {
-                    data: { user },
-                } = await supabase.auth.getUser();
-                setUser(user);
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+                setProfile(profile);
 
-                if (user) {
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', user.id)
-                        .single();
-                    setProfile(profile);
-
-                    if (user.email) {
-                        await fetchSubscription(user.id, user.email);
-                    }
+                if (user.email) {
+                    await fetchSubscription(user.id, user.email);
                 }
             } catch (error) {
                 console.error('Error fetching user data:', error);
@@ -128,7 +122,7 @@ const Profile = () => {
         if (mounted) {
             fetchUserAndProfile();
         }
-    }, [mounted]);
+    }, [mounted, user]);
 
     const handleSubscriptionToggle = async () => {
         if (!user || !user.email || !subscription) return;
@@ -231,8 +225,8 @@ const Profile = () => {
     };
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
-        router.push('/auth/login');
+        await signOut();
+        // Контекст авторизации автоматически обработает очистку состояния и перенаправление
     };
 
     // Don't render until client-side to avoid hydration issues
