@@ -149,7 +149,7 @@ const FileUploader = ({
   };
 
   return (
-    <div style={{ marginBottom: '16px' }}>
+    <div>
       {preview && preview.startsWith('http') && (
         <div style={{ marginBottom: '12px' }}>
           <img 
@@ -186,12 +186,12 @@ const FileUploader = ({
             flex: '1',
             padding: '8px',
             border: '1px solid var(--g-color-line-generic, rgba(255, 255, 255, 0.15))',
-            borderRadius: '6px'
+            borderRadius: '8px'
           }}
         />
         
         <Button
-          size="m"
+          size="l"
           view="action"
           onClick={handleUpload}
           loading={uploading}

@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Button, Theme, TextInput, TextArea, useThemeValue, Text } from '@gravity-ui/uikit';
+import { Button, Theme, TextInput, TextArea, useThemeValue, Text, Avatar } from '@gravity-ui/uikit';
 import { useToast } from "@/hooks/use-toast";
 import { ThemeSelector } from "./ThemeSelector";
 import { useProfile } from "../../hooks/useProfile";
 import { useAuth } from "../contexts/AuthContext";
 import FileUploader from '../auth/components/FileUploader';
+import { FaceAlien } from '@gravity-ui/icons';
 
 type FormData = {
   name: string;
@@ -162,6 +163,21 @@ export const ProfileForm = () => {
 
       <div className="space-y-2">
         <Text variant="subheader-1" color="primary">Аватар</Text>
+        {formData.avatar_url && (
+          <div className="flex items-center gap-4 mb-4">
+            <Avatar 
+              imgUrl={formData.avatar_url} 
+              fallbackImgUrl="https://loremflickr.com/640/480/cats?lock=3552647338524672" 
+              size="l" 
+            />
+            <Button
+              view="flat-danger"
+              onClick={() => setFormData(prev => ({ ...prev, avatar_url: null }))}
+            >
+              Удалить аватар
+            </Button>
+          </div>
+        )}
         <FileUploader
           bucketName="avatars"
           folderPath="profiles"
