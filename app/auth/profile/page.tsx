@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import {
     Button,
+    Alert,
     Card,
     DefinitionList,
     Spin,
@@ -16,6 +17,7 @@ import {
 import withAuth from '../withAuth';
 import FileUploader from '../components/FileUploader';
 import { useAuth } from '@/app/contexts/AuthContext';
+import Link from 'next/link';
 // CSS import removed as it's now in the root layout
 
 interface Profile {
@@ -244,6 +246,8 @@ const Profile = () => {
     return (
         <div className="profile pb2">
             <Text variant="header-2">Profile</Text>
+            <Alert theme="info" layout="horizontal" align="center" title="New profile page is avaliable" actions={<Alert.Action><Link href="/profile">New Profile</Link></Alert.Action>} style={{ width: '100%' }} />
+            
             {isEditing ? (
                 <>
                     <div className="profile-field">
