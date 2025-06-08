@@ -1,223 +1,311 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import '../components.css';
 import { listFiles, deleteFile, getPublicUrl, FileObject } from '@/lib/yandexStorage';
 import { supabase } from '@/lib/supabase';
-import {TrashBin, Copy} from '@gravity-ui/icons';
-import {Button, Icon, Card, Text, Skeleton, useToaster} from '@gravity-ui/uikit';
+import { TrashBin, Copy } from '@gravity-ui/icons';
+import { Button, Icon, Card, Text, Skeleton, useToaster } from '@gravity-ui/uikit';
+
+interface FileViewState {
+  images: FileObject[];
+  loading: boolean;
+  error: string | null;
+  imageUrls: Record<string, string>;
+  userRole: string | null;
+}
 
 export default function FileView() {
-  const [images, setImages] = useState<FileObject[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [state, setState] = useState<FileViewState>({
+    images: [],
+    loading: true,
+    error: null,
+    imageUrls: {},
+    userRole: null,
+  });
+
   const toaster = useToaster();
 
-  const fetchImages = async () => {
+  // Мемоизируем userId для избежания повторных вычислений
+  const userId = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('user_id');
+    }
+    return null;
+  }, []);
+
+  // Функция для безопасного обновления состояния
+  const updateState = useCallback((updates: Partial<FileViewState>) => {
+    setState(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  // Функция для показа уведомлений
+  const showToast = useCallback((type: 'success' | 'error', title: string, content: string) => {
+    toaster.add({
+      name: `${type}-${Date.now()}`,
+      title,
+      content,
+      theme: type === 'success' ? 'success' : 'danger',
+      autoHiding: 3000
+    });
+  }, [toaster]);
+
+  const fetchImages = useCallback(async () => {
+    if (!userId) {
+      updateState({
+        images: [],
+        imageUrls: {},
+        userRole: null,
+        loading: false,
+        error: null
+      });
+      return;
+    }
+
     try {
-      setLoading(true);
-      const userId = localStorage.getItem('user_id');
-      if (!userId) {
-        setImages([]);
-        setImageUrls({});
-        setUserRole(null);
-        return;
+      updateState({ loading: true, error: null });
+
+      // Параллельно получаем роль пользователя и список файлов
+      const [profileResult, filesResult] = await Promise.allSettled([
+        supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .single(),
+        listFiles(`profiles/${userId}/`, 'public-gareevde', userId)
+      ]);
+
+      // Обрабатываем результат получения профиля
+      const userRole = profileResult.status === 'fulfilled' 
+        ? profileResult.value.data?.role || null 
+        : null;
+
+      // Обрабатываем результат получения файлов
+      if (filesResult.status === 'rejected') {
+        throw new Error(filesResult.reason?.message || 'Ошибка при загрузке файлов');
       }
 
-      // Получаем роль пользователя
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', userId)
-        .single();
-      setUserRole(profile?.role || null);
+      const { data: files, error: filesError } = filesResult.value;
+      if (filesError) throw new Error(filesError);
 
-      const { data, error } = await listFiles(`profiles/${userId}/`, 'public-gareevde', userId);
-      if (error) throw error;
-      
-      const urls: Record<string, string> = {};
-      for (const image of data || []) {
+      const images = files || [];
+
+      // Параллельно получаем URL для всех изображений
+      const urlPromises = images.map(async (image) => {
         try {
           const url = await getPublicUrl(`profiles/${userId}/${image.name}`);
-          urls[image.name] = url;
-        } catch (err) {}
-      }
-      
-      setImages(data || []);
-      setImageUrls(urls);
-    } catch (err: any) {
-      setError(err.message || 'Ошибка при загрузке списка изображений');
-    } finally {
-      setLoading(false);
-    }
-  };
+          return { name: image.name, url };
+        } catch {
+          return { name: image.name, url: '' };
+        }
+      });
 
-  const handleDelete = async (fileName: string) => {
+      const urlResults = await Promise.allSettled(urlPromises);
+      const imageUrls: Record<string, string> = {};
+      
+      urlResults.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          imageUrls[result.value.name] = result.value.url;
+        }
+      });
+
+      updateState({
+        images,
+        imageUrls,
+        userRole,
+        loading: false,
+        error: null
+      });
+
+    } catch (err: any) {
+      console.error('Error fetching images:', err);
+      updateState({
+        loading: false,
+        error: err.message || 'Ошибка при загрузке списка изображений'
+      });
+    }
+  }, [userId, updateState]);
+
+  const handleDelete = useCallback(async (fileName: string) => {
+    if (!userId) {
+      updateState({ error: 'Необходимо авторизоваться для удаления изображений' });
+      return;
+    }
+    
+    if (fileName.startsWith('public/')) {
+      updateState({ error: 'Нельзя удалять публичные изображения' });
+      return;
+    }
+
     try {
-      const userId = localStorage.getItem('user_id');
-      if (!userId) {
-        setError('Необходимо авторизоваться для удаления изображений');
-        return;
-      }
-      
-      // Проверяем, не пытаемся ли удалить публичное изображение
-      if (fileName.startsWith('public/')) {
-        setError('Нельзя удалять публичные изображения');
-        return;
-      }
-
       const { error } = await deleteFile(`profiles/${userId}/${fileName}`, userId);
-      if (error) throw error;
-      fetchImages();
+      if (error) throw new Error(error);
+      
+      showToast('success', 'Успешно!', 'Изображение удалено');
+      await fetchImages(); // Обновляем список после удаления
     } catch (err: any) {
-      setError(err.message || 'Ошибка при удалении изображения');
+      console.error('Error deleting file:', err);
+      const errorMessage = err.message || 'Ошибка при удалении изображения';
+      updateState({ error: errorMessage });
+      showToast('error', 'Ошибка!', errorMessage);
     }
-  };
+  }, [userId, updateState, showToast, fetchImages]);
 
-  const getImageUrl = (fileName: string) => {
-    return imageUrls[fileName] || '';
-  };
-
-  const handleCopyUrl = async (fileName: string) => {
-    const url = getImageUrl(fileName);
-    if (url) {
-      try {
-        await navigator.clipboard.writeText(url);
-        toaster.add({
-          name: 'copy-success',
-          title: 'Успешно!',
-          content: 'Ссылка скопирована в буфер обмена',
-          theme: 'success',
-          autoHiding: 3000
-        });
-      } catch (err) {
-        toaster.add({
-          name: 'copy-error',
-          title: 'Ошибка!',
-          content: 'Не удалось скопировать ссылку',
-          theme: 'danger',
-          autoHiding: 3000
-        });
-      }
+  const handleCopyUrl = useCallback(async (fileName: string) => {
+    const url = state.imageUrls[fileName];
+    if (!url) {
+      showToast('error', 'Ошибка!', 'URL изображения не найден');
+      return;
     }
-  };
+
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast('success', 'Успешно!', 'Ссылка скопирована в буфер обмена');
+    } catch (err) {
+      console.error('Error copying to clipboard:', err);
+      showToast('error', 'Ошибка!', 'Не удалось скопировать ссылку');
+    }
+  }, [state.imageUrls, showToast]);
 
   const handleFileUploaded = useCallback(() => {
-    const userId = localStorage.getItem('user_id');
     if (userId) {
       fetchImages();
     }
-  }, []);
-
-  // Слушатель события загрузки нового файла
-  useEffect(() => {
-    // Добавляем слушатель события
-    window.addEventListener('fileUploaded', handleFileUploaded);
-
-    // Удаляем слушатель при размонтировании компонента
-    return () => {
-      window.removeEventListener('fileUploaded', handleFileUploaded);
-    };
-  }, [handleFileUploaded]);
+  }, [userId, fetchImages]);
 
   // Обработчик изменения localStorage
   const handleStorageChange = useCallback(() => {
-    const userId = localStorage.getItem('user_id');
-    if (!userId) {
-      setUserRole(null);
-      setImages([]);
-      setImageUrls({});
-    }
-  }, []);
-
-  // Загрузка изображений при монтировании компонента
-  useEffect(() => {
-    const userId = localStorage.getItem('user_id');
-    if (userId) {
+    const currentUserId = localStorage.getItem('user_id');
+    if (!currentUserId) {
+      updateState({
+        userRole: null,
+        images: [],
+        imageUrls: {},
+        loading: false,
+        error: null
+      });
+    } else if (currentUserId !== userId) {
+      // Если изменился пользователь, перезагружаем данные
       fetchImages();
     }
+  }, [userId, updateState, fetchImages]);
 
-    // Добавляем слушатель изменения localStorage
+  // Эффект для загрузки данных при монтировании
+  useEffect(() => {
+    fetchImages();
+  }, [fetchImages]);
+
+  // Эффект для слушателей событий
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    window.addEventListener('fileUploaded', handleFileUploaded);
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
+      window.removeEventListener('fileUploaded', handleFileUploaded);
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [handleStorageChange]);
+  }, [handleFileUploaded, handleStorageChange]);
+
+  // Сброс ошибки через некоторое время
+  useEffect(() => {
+    if (state.error) {
+      const timer = setTimeout(() => {
+        updateState({ error: null });
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [state.error, updateState]);
+
+  const renderSkeletons = () => (
+    <div className="file-view-grid">
+      {Array.from({ length: 8 }, (_, index) => (
+        <div key={`skeleton-${index}`} className="file-view-item">
+          <div className="file-view-image-container">
+            <Skeleton style={{ width: '100%', height: '100%', borderRadius: '8px' }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderImageGrid = () => (
+    <div className="file-view-grid">
+      {state.images.map((image) => (
+        <div key={image.name} className="file-view-item">
+          <div className="file-view-image-container">
+            <img
+              src={state.imageUrls[image.name] || ''}
+              alt={image.name}
+              className="file-view-image"
+              loading="lazy" // Ленивая загрузка для оптимизации
+              onError={(e) => {
+                const img = e.currentTarget;
+                img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNlZWVlZWUiLz48dGV4dCB4PSI1MCIgeT0iNTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk5OSI+SW1hZ2Ugbm90IGZvdW5kPC90ZXh0Pjwvc3ZnPg==';
+              }}
+            />
+          </div>
+          
+          <div className="file-view-overlay">
+            <div className="file-view-buttons">
+              <Button
+                size="m"
+                view="normal-contrast"
+                title="Скопировать URL изображения"
+                onClick={() => handleCopyUrl(image.name)}
+                style={{ marginRight: '8px' }}
+              >
+                <Icon data={Copy} size={18} />
+              </Button>
+              {!image.name.startsWith('public/') && (
+                <Button
+                  size="m"
+                  view="normal-contrast"
+                  title="Удалить изображение"
+                  onClick={() => handleDelete(image.name)}
+                >
+                  <Icon data={TrashBin} size={18} />
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <Card view="filled">
       <div className="file-view-header">
         <Text variant="header-1">Галерея изображений</Text>
-          <Button size='l' view="normal" onClick={fetchImages} loading={loading} >
-            {loading ? 'Загрузка...' : 'Обновить'}
-          </Button>
+        <Button 
+          size="l" 
+          view="normal" 
+          onClick={fetchImages} 
+          loading={state.loading}
+          disabled={state.loading}
+        >
+          {state.loading ? 'Загрузка...' : 'Обновить'}
+        </Button>
       </div>
       
-      {error && <div className="file-view-error">{error}</div>}
-      
-      {loading ? (
-        <div className="file-view-grid">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <div key={`skeleton-${index}`} className="file-view-item">
-              <div className="file-view-image-container">
-                <Skeleton style={{ width: '100%', height: '100%', borderRadius: '9999px' }} />
-              </div>
-            </div>
-          ))}
+      {state.error && (
+        <div className="file-view-error" role="alert">
+          {state.error}
         </div>
-      ) : images.length === 0 ? (
+      )}
+      
+      {state.loading ? (
+        renderSkeletons()
+      ) : state.images.length === 0 ? (
         <div className="file-view-empty">
-          Нет изображений в папке "profiles" бакета "public-gareevde"
+          {userId 
+            ? 'Нет изображений в вашей галерее'
+            : 'Необходимо авторизоваться для просмотра галереи'
+          }
         </div>
       ) : (
-        <div className="file-view-grid">
-          {images.map((image) => (
-            <div 
-              key={image.name} 
-              className="file-view-item"
-            >
-              <div className="file-view-image-container">
-              <img
-                src={imageUrls[image.name] || ''}
-                alt={image.name}
-                className="file-view-image"
-                onError={(e) => {
-                  if (!e.currentTarget) return;
-                  const img = e.currentTarget;
-                  img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNlZWVlZWUiLz48dGV4dCB4PSI1MCIgeT0iNTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk5OSI+SW1hZ2Ugbm90IGZvdW5kPC90ZXh0Pjwvc3ZnPg==';
-                }}
-              />
-              </div>
-              
-              {/* Overlay with action buttons on hover */}
-              <div className="file-view-overlay">
-                <div className="file-view-buttons">
-                  <Button
-                    size="m"
-                    view="normal-contrast"
-                    title="Copy image URL"
-                    onClick={() => handleCopyUrl(image.name)}
-                    style={{ marginRight: '8px' }}
-                  >
-                    <Icon data={Copy} size={18} />
-                  </Button>
-                  {!image.name.startsWith('public/') && (
-                    <Button
-                      size="m"
-                      view="normal-contrast"
-                      title="Delete image"
-                      onClick={() => handleDelete(image.name)}
-                    >
-                      <Icon data={TrashBin} size={18} />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        renderImageGrid()
       )}
     </Card>
   );
