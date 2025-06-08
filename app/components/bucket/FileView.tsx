@@ -92,14 +92,14 @@ export default function FileView() {
       const images = files || [];
 
       // Параллельно получаем URL для всех изображений
-      const urlPromises = images.map(async (image) => {
-        try {
-          const url = await getPublicUrl(`profiles/${userId}/${image.name}`);
-          return { name: image.name, url };
-        } catch {
-          return { name: image.name, url: '' };
-        }
-      });
+      const urlPromises = images.map(async (image: FileObject) => {
+  try {
+    const url = await getPublicUrl(`profiles/${userId}/${image.name}`);
+    return { name: image.name, url };
+  } catch {
+    return { name: image.name, url: '' };
+  }
+});
 
       const urlResults = await Promise.allSettled(urlPromises);
       const imageUrls: Record<string, string> = {};
