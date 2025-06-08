@@ -25,12 +25,14 @@ export default function FileView() {
 
   const toaster = useToaster();
 
-  // Мемоизируем userId для избежания повторных вычислений
-  const userId = useMemo(() => {
+  // Получаем userId безопасно
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('user_id');
+      const id = localStorage.getItem('user_id');
+      setUserId(id);
     }
-    return null;
   }, []);
 
   // Функция для безопасного обновления состояния
@@ -85,7 +87,7 @@ export default function FileView() {
       }
 
       const { data: files, error: filesError } = filesResult.value;
-      if (filesError) throw new Error(filesError);
+      if (filesError) throw new Error(typeof filesError === 'string' ? filesError : 'Ошибка при загрузке файлов');
 
       const images = files || [];
 
@@ -138,7 +140,7 @@ export default function FileView() {
 
     try {
       const { error } = await deleteFile(`profiles/${userId}/${fileName}`, userId);
-      if (error) throw new Error(error);
+      if (error) throw new Error(typeof error === 'string' ? error : 'Ошибка при удалении файла');
       
       showToast('success', 'Успешно!', 'Изображение удалено');
       await fetchImages(); // Обновляем список после удаления
@@ -174,18 +176,22 @@ export default function FileView() {
 
   // Обработчик изменения localStorage
   const handleStorageChange = useCallback(() => {
-    const currentUserId = localStorage.getItem('user_id');
-    if (!currentUserId) {
-      updateState({
-        userRole: null,
-        images: [],
-        imageUrls: {},
-        loading: false,
-        error: null
-      });
-    } else if (currentUserId !== userId) {
-      // Если изменился пользователь, перезагружаем данные
-      fetchImages();
+    if (typeof window !== 'undefined') {
+      const currentUserId = localStorage.getItem('user_id');
+      if (!currentUserId) {
+        setUserId(null);
+        updateState({
+          userRole: null,
+          images: [],
+          imageUrls: {},
+          loading: false,
+          error: null
+        });
+      } else if (currentUserId !== userId) {
+        setUserId(currentUserId);
+        // Перезагружаем данные при смене пользователя
+        fetchImages();
+      }
     }
   }, [userId, updateState, fetchImages]);
 
