@@ -237,3 +237,9 @@
   object-fit: cover;
   border: 2px solid #3b82f6; /* border-2 border-blue-500 */
 }
+
+.g-modal__content {
+  display: flex;
+  padding: 24px 16px 24px;
+  flex-direction: column;
+}

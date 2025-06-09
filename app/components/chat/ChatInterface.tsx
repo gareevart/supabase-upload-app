@@ -2,13 +2,14 @@
 import { useState, useRef, useEffect } from "react";
 import { useChat, Message } from "@/hooks/useChat";
 import { Button,TextArea  } from "@gravity-ui/uikit";
-import { Loader2, Send, Settings, Copy } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
 import { ScrollArea } from "@/app/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/app/components/ui/dialog";
 import { Label } from "@/app/components/ui/label";
 import { Badge } from "@/app/components/ui/badge";
 import ReactMarkdown from 'react-markdown';
-import { useToast } from "@/hooks/use-toast";
+import {Toaster, Spin, Icon, Modal,Text } from '@gravity-ui/uikit';
+import {Gear, Copy} from '@gravity-ui/icons';
 
 interface ChatInterfaceProps {
   chatId: string;
@@ -26,12 +27,13 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
     isAssistantTyping,
   } = useChat(chatId);
   
-  const { toast } = useToast();
+  const toaster = new Toaster();
   const [messageText, setMessageText] = useState("");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (chat?.system_prompt) {
@@ -115,10 +117,10 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
         <Button 
           variant="outline" 
           size="m" 
-          onClick={() => setIsSettingsOpen(true)}
+          onClick={() => setOpen(true)}
           title="Настройки"
         >
-          <Settings className="h-4 w-4" />
+           <Icon data={Gear} size={18} />
         </Button>
       </header>
 
@@ -138,8 +140,10 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
                 message={message} 
                 onCopy={(content) => {
                   navigator.clipboard.writeText(content);
-                  toast({
-                    description: "Сообщение скопировано в буфер обмена",
+                  toaster.add({
+                    name: 'copy-notification',
+                    title: 'Скопировано в буфер обмена',
+                    autoHiding: 3000,
                   });
                 }}
               />
@@ -173,18 +177,16 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
           disabled={!messageText.trim() || isMessageSending}
         >
           {isMessageSending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+
+            <Spin className="h-4 w-4 animate-spin" />
           ) : (
             <Send className="h-4 w-4" />
           )}
         </Button>
       </form>
 
-      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Настройки чата</DialogTitle>
-          </DialogHeader>
+      <Modal className="modal" open={open} onClose={() => setOpen(false)}>
+        <Text variant="header-1">Настройки чата</Text>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <div className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
@@ -204,17 +206,19 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
           </div>
           <DialogFooter>
             <Button 
-              variant="outline" 
+            size="l"
+              view="outlined" 
               onClick={() => setIsSettingsOpen(false)}
             >
               Отмена
             </Button>
-            <Button onClick={handleSaveSettings}>
+            <Button 
+              view="action"
+              size="l" onClick={handleSaveSettings}>
               Сохранить
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </Modal>    
     </div>
   );
 };
@@ -249,7 +253,7 @@ const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
           className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
           onClick={() => onCopy(message.content)}
         >
-          <Copy className="h-4 w-4" />
+          <Icon data={Copy} size={18} />
         </Button>
       </div>
     </div>

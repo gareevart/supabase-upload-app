@@ -7,6 +7,7 @@ import { Separator } from "@/app/components/ui/separator";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { redirect } from "next/navigation";
 import { Toaster } from "@/app/components/ui/toaster";
+import "../../components/components.css"; // Import your custom styles
 
 const ChatPage = () => {
   const { slug: chatId } = useParams<{ slug: string }>();
