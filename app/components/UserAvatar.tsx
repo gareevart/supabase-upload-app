@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Avatar, Skeleton } from '@gravity-ui/uikit';
-import { FaceAlien } from '@gravity-ui/icons';
+import { EyesLookRight, EyesLookLeft } from '@gravity-ui/icons';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/app/contexts/AuthContext';
 
@@ -15,6 +15,7 @@ export default function UserAvatar() {
   const { user, loading: authLoading } = useAuth();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentIcon, setCurrentIcon] = useState<typeof EyesLookRight | typeof EyesLookLeft>(EyesLookRight);
 
   useEffect(() => {
     async function fetchUserData() {
@@ -72,14 +73,28 @@ export default function UserAvatar() {
     };
   }, [user, authLoading]);
 
+  // Animation effect for unauthenticated users - toggle between EyesLookLeft and EyesLookRight every 5 seconds
+  useEffect(() => {
+    // Only run the animation for unauthenticated users
+    if (user || loading || authLoading) return;
+    
+    const intervalId = setInterval(() => {
+      setCurrentIcon((prevIcon: typeof EyesLookRight | typeof EyesLookLeft) =>
+        prevIcon === EyesLookRight ? EyesLookLeft : EyesLookRight
+      );
+    }, 5000);
+    
+    return () => clearInterval(intervalId);
+  }, [user, loading, authLoading]);
+
   // If still loading, show a skeleton loader
   if (authLoading || loading) {
     return <Skeleton style={{ width: '42px', height: '42px', borderRadius: '50%' }} />;
   }
 
-  // If no user is authenticated, show avatar with alien icon
+  // If no user is authenticated, show avatar with animated icon
   if (!user || !userData) {
-    return <Avatar icon={FaceAlien} size="l" />;
+    return <Avatar icon={currentIcon} size="l" />;
   }
 
   // If user has an avatar, show it
@@ -100,5 +115,5 @@ export default function UserAvatar() {
   }
 
   // Fallback case (should not happen)
-  return <Avatar icon={FaceAlien} size="l" />;
+  return <Avatar icon={EyesLookLeft} size="l" />;
 }
