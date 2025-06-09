@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ThemeWrapper from './components/ThemeWrapper';
-import { Toaster } from './components/ui/toast';
+import { ToastProvider } from '@/hooks/use-toast';
+import { Toaster } from './components/ui/toaster';
 import Navigation from './components/Navigation/Navigation';
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -23,6 +25,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
   display: 'swap', // Ensure text remains visible during font loading
 });
+
+const queryClient = new QueryClient();
 
 export default function RootLayout({
   children,
@@ -67,16 +71,19 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          <ThemeWrapper theme={isDarkTheme ? "dark" : "light"}>
-            <Toaster>
-              <Navigation />
-              <main className="main-content">
-                {children}
-              </main>
-            </Toaster>
-          </ThemeWrapper>
-        </AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <ThemeWrapper theme={isDarkTheme ? "dark" : "light"}>
+              <ToastProvider>
+                <Toaster />
+                <Navigation />
+                <main className="main-content">
+                  {children}
+                </main>
+              </ToastProvider>
+            </ThemeWrapper>
+          </AuthProvider>
+        </QueryClientProvider>
       </body>
     </html>
   );

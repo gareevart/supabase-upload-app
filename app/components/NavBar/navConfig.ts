@@ -19,5 +19,10 @@ export const mainNavItems: NavItem[] = [
     href: '/yaart',
     label: 'YaART',
     exact: true
+  },
+  {
+    href: '/notes',
+    label: 'Notes',
+    exact: true
   }
 ];

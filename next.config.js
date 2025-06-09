@@ -16,6 +16,16 @@ const nextConfig = {
   
   // Compress assets for better performance
   compress: true,
+  
+  // Configure path aliases
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.resolve(__dirname),
+    };
+    return config;
+  },
 };
 
+const path = require('path');
 module.exports = nextConfig;

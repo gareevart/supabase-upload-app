@@ -12,9 +12,9 @@ type Post = {
   id: string;
   title: string;
   excerpt: string | null;
-  slug: string;
+  slug: string | null;
   featured_image: string | null;
-  created_at: string;
+  created_at: string | null;
   author_id: string;
   author: {
     name: string | null;
@@ -37,7 +37,7 @@ export const PostList = ({
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [gridView, setGridView] = useState(true); // Default to grid view
-  const { toast } = useToast();
+  const { toast: showToast } = useToast();
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -119,10 +119,10 @@ export const PostList = ({
         }
       } catch (error) {
         console.error("Error fetching posts:", error);
-        toast({
+        showToast({
           title: "Ошибка загрузки постов",
           description: "Не удалось загрузить посты",
-          variant: "destructive",
+          variant: "destructive"
         });
       } finally {
         setIsLoading(false);
@@ -130,7 +130,7 @@ export const PostList = ({
     };
 
     fetchPosts();
-  }, [onlyMyPosts, publishedOnly, draftsOnly, toast]);
+  }, [onlyMyPosts, publishedOnly, draftsOnly, showToast]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -179,8 +179,8 @@ export const PostList = ({
                 : "Здесь пока нет опубликованных постов"}
           </p>
           {onlyMyPosts && (
-            <Button onClick={() => window.location.href = "/new-post"}>
-              Создать новый пост
+            <Button onClick={() => window.location.href = "/blog/new"}>
+              Create New Post
             </Button>
           )}
         </Card>
@@ -214,7 +214,7 @@ export const PostList = ({
           <Card key={post.id} className="w-full min-w-[280px] overflow-hidden">
             {post.featured_image ? (
               <div className="h-48 w-full overflow-hidden">
-                <Link href={`/posts/${post.slug}`}>
+                <Link href={`/blog/${post.slug}`}>
                   <img
                     src={post.featured_image}
                     alt={post.title}
@@ -227,7 +227,7 @@ export const PostList = ({
             )}
             <CardHeader>
               <CardTitle className="text-2xl">
-                <Link href={post.slug ? `/posts/${post.slug}` : `/edit-post/${post.id}`} className="hover:text-blue-600 transition-colors">
+                <Link href={post.slug ? `/blog/${post.slug}` : `/blog/edit/${post.id}`} className="hover:text-blue-600 transition-colors">
                   {post.title}
                 </Link>
               </CardTitle>
@@ -237,7 +237,7 @@ export const PostList = ({
               <div className="flex items-center gap-4">
                 <div className="flex items-center">
                    <Icon data={Calendar} size={16} />
-                  {formatDate(post.created_at)}
+                  {post.created_at ? formatDate(post.created_at) : 'Дата не указана'}
                 </div>
                 <div className="flex items-center">
                     <Icon data={Person} size={16} />
@@ -249,7 +249,7 @@ export const PostList = ({
                   view="outlined"
                   size="m"
                   className="flex items-center gap-1"
-                  onClick={() => window.location.href = `/edit-post/${post.id}`}
+                  onClick={() => window.location.href = `/blog/edit/${post.id}`}
                 >
                   <Icon data={Pencil} size={16} />
                   <span>Редактировать</span>
@@ -258,7 +258,7 @@ export const PostList = ({
                 <Button
                   view="normal"
                   size="m"
-                  onClick={() => window.location.href = `/posts/${post.slug}`}
+                  onClick={() => window.location.href = `/blog/${post.slug}`}
                 >
                   Читать далее
                 </Button>

@@ -2,6 +2,7 @@
 
 import { Text, Icon, Link } from '@gravity-ui/uikit';
 import { Globe } from '@gravity-ui/icons';
+
 export default function Home() {
   return (
     <div className="page-container">

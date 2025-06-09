@@ -1,65 +1,45 @@
 "use client";
 
-import React, { createContext, useContext, useRef } from 'react';
-import { Toaster, ToasterComponent } from '@gravity-ui/uikit';
+import React, { createContext, useContext, useState } from 'react';
 
-type ToastVariant = 'default' | 'destructive' | 'success' | 'info';
-
-type ToastProps = {
+type ToastOptions = {
   title?: string;
   description?: string;
-  variant?: ToastVariant;
-  duration?: number;
+  variant?: 'default' | 'destructive';
+  action?: React.ReactNode;
 };
 
+interface Toast extends ToastOptions {
+  id: string;
+}
+
 type ToastContextType = {
-  toast: (props: ToastProps) => void;
+  toast: (props: ToastOptions) => void;
   dismiss: (toastId?: string) => void;
+  toasts: Toast[];
 };
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const toasterRef = useRef<Toaster>(new Toaster());
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const toast = ({ 
-    title, 
-    description, 
-    variant = 'default',
-    duration = 5000 
-  }: ToastProps) => {
-    // Create toast options based on our variant
-    const options: Parameters<typeof toasterRef.current.add>[0] = {
-      name: title || 'notification',
-      title: title || '',
-      content: description || '',
-      autoHiding: duration > 0 ? duration : false,
-    };
-
-    // Set the notification type based on our variant
-    if (variant === 'success') {
-      options.theme = 'success';
-    } else if (variant === 'destructive') {
-      options.theme = 'danger';
-    } else if (variant === 'info') {
-      options.theme = 'info';
-    }
-    
-    toasterRef.current.add(options);
+  const toast = (options: ToastOptions) => {
+    const toastId = crypto.randomUUID();
+    setToasts(prev => [...prev, { ...options, id: toastId }]);
   };
 
   const dismiss = (toastId?: string) => {
     if (toastId) {
-      toasterRef.current.remove(toastId);
+      setToasts(prev => prev.filter(t => t.id !== toastId));
     } else {
-      toasterRef.current.removeAll();
+      setToasts([]);
     }
   };
 
   return (
-    <ToastContext.Provider value={{ toast, dismiss }}>
+    <ToastContext.Provider value={{ toast, dismiss, toasts }}>
       {children}
-      <ToasterComponent />
     </ToastContext.Provider>
   );
 }
@@ -74,33 +54,12 @@ export function useToast(): ToastContextType {
   return context;
 }
 
-// For direct usage without the hook
-const toasterInstance = new Toaster();
-
-export const toast = (props: ToastProps) => {
-  const { 
-    title, 
-    description, 
-    variant = 'default',
-    duration = 5000 
-  } = props;
-
-  // Create toast options based on our variant
-  const options: Parameters<typeof toasterInstance.add>[0] = {
-    name: title || 'notification',
-    title: title || '',
-    content: description || '',
-    autoHiding: duration > 0 ? duration : false,
-  };
-
-  // Set the notification type based on our variant
-  if (variant === 'success') {
-    options.theme = 'success';
-  } else if (variant === 'destructive') {
-    options.theme = 'danger';
-  } else if (variant === 'info') {
-    options.theme = 'info';
-  }
+export const toast = (options: ToastOptions) => {
+  const context = useContext(ToastContext);
   
-  toasterInstance.add(options);
+  if (context) {
+    context.toast(options);
+  } else {
+    console.warn('Toast used outside of ToastProvider');
+  }
 };

@@ -31,7 +31,7 @@ interface Subscription {
     id?: string;
     subscribe_status: boolean;
     mail: string;
-    user_id?: string;
+    user_id?: string | null;
     subscribe_started_date?: string | null; // Добавляем это поле
 }
 

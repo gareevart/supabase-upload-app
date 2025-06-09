@@ -1,11 +1,39 @@
 "use client"
 
-import PostList from "./PostList";
+import { useState, useEffect } from "react"
+import PostList from "./PostList"
+import { Button } from "@gravity-ui/uikit"
+import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"
 
-export default function Home() {
+export default function BlogPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const router = useRouter()
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      setIsAuthenticated(!!session?.user)
+    }
+    
+    checkAuth()
+  }, [])
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen pb-20 sm:p-20">
-      <main className="flex flex-col row-start-2 items-center sm:items-start w-full max-w-4xl">
+    <div className="min-h-screen pb-20 sm:p-20">
+      <main className="container mx-auto max-w-4xl">
+        <div className="flex justify-between items-center mb-6 px-4">
+          <h1 className="text-3xl font-bold">Blog</h1>
+          {isAuthenticated && (
+            <Button
+              view="action"
+              size="l"
+              onClick={() => router.push("/blog/new")}
+            >
+              Create New Post
+            </Button>
+          )}
+        </div>
         <PostList />
       </main>
     </div>
