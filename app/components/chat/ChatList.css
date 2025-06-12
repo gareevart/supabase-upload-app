@@ -1,0 +1,15 @@
+.list {
+    background-color: var(--g-color-branding-base-background);
+    border: 1px solid var(--g-color-line-generic);
+}
+
+.list:hover {
+    background-color: var(--g-color-base-simple-hover);
+    border: 1px solid var(--g-color-line-generic);
+    cursor: pointer;
+}
+
+.list.active {
+    background-color: var(--g-color-base-selection);
+    border: 1px solid var(--g-color-border-primary);
+}

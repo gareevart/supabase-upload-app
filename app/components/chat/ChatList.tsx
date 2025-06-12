@@ -1,27 +1,12 @@
-
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useChats } from "@/hooks/useChats";
-import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
-import {
-  Pencil,
-  Trash,
-  MessageSquarePlus,
-  Check,
-  X,
-  Loader2,
-} from "lucide-react";
-import { Skeleton } from "@gravity-ui/uikit";
-import { 
-  Select, 
-  SelectTrigger, 
-  SelectValue, 
-  SelectContent, 
-  SelectItem 
-} from "@/app/components/ui/select";
+import { Button, Skeleton, Select, Text, Icon, Spin, TextArea } from "@gravity-ui/uikit";
+import {Plus, Pencil, TrashBin, Xmark, Check } from '@gravity-ui/icons';
 import { useModelSelection } from "@/hooks/useModelSelection";
+import "./ChatList.css";
 
 export const ChatList = () => {
   const router = useRouter();
@@ -36,6 +21,7 @@ export const ChatList = () => {
   const { selectedModel, setSelectedModel } = useModelSelection();
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
+  const pathname = usePathname();
 
   const handleCreateChat = async () => {
     try {
@@ -73,15 +59,17 @@ export const ChatList = () => {
     }
   };
 
-  const handleModelChange = (value: string) => {
-    setSelectedModel(value as "yandexgpt" | "deepseek");
+  const handleModelChange = (value: string[]) => {
+    if (value.length > 0) {
+      setSelectedModel(value[0] as "yandexgpt" | "deepseek");
+    }
   };
 
   if (isLoading) {
     return (
       <div className="space-y-2">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Чаты</h2>
+          <Text variant="header-1">Чаты</Text>
           <Skeleton className="h-9 w-9" />
         </div>
         {Array.from({ length: 5 }).map((_, i) => (
@@ -102,30 +90,29 @@ export const ChatList = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Чаты</h2>
+        <Text variant="header-1">Чаты</Text>
         <div className="flex space-x-2">
-          <Select 
-            value={selectedModel} 
-            onValueChange={handleModelChange}
-          >
-            <SelectTrigger className="w-[120px]" title="Выбрать модель">
-              <SelectValue placeholder="Модель" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="yandexgpt">YandexGPT</SelectItem>
-              <SelectItem value="deepseek">Deepseek R1</SelectItem>
-            </SelectContent>
-          </Select>
+          <Select
+            value={[selectedModel]}
+            options={[
+              { value: 'yandexgpt', content: 'YandexGPT' },
+              { value: 'deepseek', content: 'Deepseek R1' }
+            ]}
+            onUpdate={handleModelChange}
+            size="m"
+            width="max"
+            placeholder="Модель"
+          />
           <Button
-            size="icon"
+            size="m"
             onClick={handleCreateChat}
             disabled={createChat.isPending}
             title="Создать новый чат"
           >
             {createChat.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Spin size="xs"/>
             ) : (
-              <MessageSquarePlus className="h-4 w-4" />
+               <Icon data={Plus} size={16} />
             )}
           </Button>
         </div>
@@ -136,9 +123,9 @@ export const ChatList = () => {
           <p className="text-muted-foreground mb-4">У вас пока нет чатов</p>
           <Button onClick={handleCreateChat} disabled={createChat.isPending}>
             {createChat.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Spin size="xs"/>
             ) : (
-              <MessageSquarePlus className="mr-2 h-4 w-4" />
+              <Icon data={Plus} size={16} />
             )}
             Создать чат
           </Button>
@@ -148,8 +135,8 @@ export const ChatList = () => {
           {chats.map((chat) => (
             <li key={chat.id}>
               {editingChatId === chat.id ? (
-                <div className="flex items-center gap-2 p-2 border rounded-md">
-                  <Input
+                <div className={`flex items-center gap-2 p-2 border rounded-md list ${pathname === `/chat/${chat.id}` ? "active" : ""}`}>
+                  <TextArea
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
                     placeholder="Название чата"
@@ -157,33 +144,33 @@ export const ChatList = () => {
                     autoFocus
                   />
                   <Button
-                    size="icon"
-                    variant="ghost"
+                    size="m"
+                    view="flat"
                     onClick={() => saveTitle(chat.id)}
                     disabled={updateChatTitle.isPending}
                   >
                     {updateChatTitle.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                       <Spin size="xs"/>
                     ) : (
-                      <Check className="h-4 w-4" />
+                      <Icon data={Check} size={16} />
                     )}
                   </Button>
-                  <Button size="icon" variant="ghost" onClick={cancelEditing}>
-                    <X className="h-4 w-4" />
+                  <Button size="m" view="flat" onClick={cancelEditing}>
+                    <Icon data={Xmark} size={16} />
                   </Button>
                 </div>
               ) : (
                 <Link
                   href={`/chat/${chat.id}`}
-                  className="flex items-center justify-between p-3 rounded-md hover:bg-muted"
+                  className={`flex items-center justify-between p-3 rounded-md list ${pathname === `/chat/${chat.id}` ? "active" : ""}`}
                 >
                   <div className="w-full overflow-hidden">
                     <div className="flex justify-between items-center">
                       <div className="font-medium truncate">{chat.title}</div>
                       <div className="flex items-center space-x-1 ml-2 shrink-0">
                         <Button
-                          size="icon"
-                          variant="ghost"
+                          size="m"
+                          view="flat-secondary"
                           className="h-8 w-8"
                           onClick={(e) => {
                             e.preventDefault();
@@ -191,15 +178,15 @@ export const ChatList = () => {
                             startEditing(chat.id, chat.title);
                           }}
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Icon data={Pencil} size={16} />
                         </Button>
                         <Button
-                          size="icon"
-                          variant="ghost"
+                          size="m"
+                          view="flat-danger"
                           className="h-8 w-8 text-destructive hover:text-destructive"
                           onClick={(e) => handleDeleteChat(chat.id, e)}
                         >
-                          <Trash className="h-4 w-4" />
+                          <Icon data={TrashBin} size={16} />
                         </Button>
                       </div>
                     </div>
