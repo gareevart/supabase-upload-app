@@ -11,5 +11,5 @@
 
 .list.active {
     background-color: var(--g-color-base-selection);
-    border: 1px solid var(--g-color-border-primary);
+    border: 1px solid var(--g-color-line-brand);
 }

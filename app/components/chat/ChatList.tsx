@@ -2,7 +2,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useChats } from "@/hooks/useChats";
-import { Input } from "@/app/components/ui/input";
 import { Button, Skeleton, Select, Text, Icon, Spin, TextArea } from "@gravity-ui/uikit";
 import {Plus, Pencil, TrashBin, Xmark, Check } from '@gravity-ui/icons';
 import { useModelSelection } from "@/hooks/useModelSelection";

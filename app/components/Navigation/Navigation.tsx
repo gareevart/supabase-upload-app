@@ -31,7 +31,7 @@ const Navigation: React.FC = () => {
 
   const allNavItems = [
     { id: 'home', icon: House, label: 'Home', link: '/' },
-    { id: 'projects', icon: Circles4Square, label: 'Projects', link: '/projects/uploader' },
+    { id: 'projects', icon: Circles4Square, label: 'Projects', link: '/projects' },
     { id: 'yaart', icon: MagicWand, label: 'Image Generator', link: '/yaart' },
     { id: 'game', icon: Ghost, label: 'Memory Game', link: '/game' },
     { id: 'search', icon: Magnifier, label: 'Search', link: '/search' },

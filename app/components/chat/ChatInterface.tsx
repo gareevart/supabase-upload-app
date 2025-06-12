@@ -1,15 +1,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useChat, Message } from "@/hooks/useChat";
-import { Button,TextArea  } from "@gravity-ui/uikit";
-import { Loader2, Send } from "lucide-react";
 import { ScrollArea } from "@/app/components/ui/scroll-area";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/app/components/ui/dialog";
-import { Label } from "@/app/components/ui/label";
+import { DialogFooter } from "@/app/components/ui/dialog";
 import { Badge } from "@/app/components/ui/badge";
 import ReactMarkdown from 'react-markdown';
-import {Toaster, Spin, Icon, Modal,Text } from '@gravity-ui/uikit';
-import {Gear, Copy} from '@gravity-ui/icons';
+import {Button, TextArea, Icon, Modal, Text, Spin, useToaster } from '@gravity-ui/uikit';
+import {Gear, Stop, Copy, ArrowUturnCwLeft } from '@gravity-ui/icons';
+import "./ChatInterface.css";
 
 interface ChatInterfaceProps {
   chatId: string;
@@ -27,7 +25,8 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
     isAssistantTyping,
   } = useChat(chatId);
   
-  const toaster = new Toaster();
+  // Use the toaster hook
+  const toaster = useToaster();
   const [messageText, setMessageText] = useState("");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState("");
@@ -73,14 +72,31 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
   };
 
   const handleSaveSettings = async () => {
-    await updateSystemPrompt.mutateAsync(systemPrompt);
-    setIsSettingsOpen(false);
+    try {
+      await updateSystemPrompt.mutateAsync(systemPrompt);
+      setOpen(false);
+      toaster.add({
+        name: 'settings-saved',
+        title: 'Системный промпт сохранен',
+        theme: 'success',
+        autoHiding: 3000,
+      });
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toaster.add({
+        name: 'settings-error',
+        title: 'Ошибка!',
+        content: 'Ошибка при сохранении настроек',
+        theme: 'danger',
+        autoHiding: 5000,
+      });
+    }
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Spin size="xs"/>
       </div>
     );
   }
@@ -142,7 +158,9 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
                   navigator.clipboard.writeText(content);
                   toaster.add({
                     name: 'copy-notification',
-                    title: 'Скопировано в буфер обмена',
+                    title: 'Успешно!',
+                    content: 'Скопировано в буфер обмена',
+                    theme: 'success',
                     autoHiding: 3000,
                   });
                 }}
@@ -151,7 +169,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
             {isAssistantTyping && (
               <div className="flex items-center gap-2 py-2 px-4 bg-muted rounded-lg w-fit">
                 <div className="text-sm">Ассистент печатает</div>
-                <Loader2 className="h-3 w-3 animate-spin" />
+                <Spin size="xs"/>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -168,8 +186,8 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
           value={messageText}
           onChange={(e) => setMessageText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Введите ваше сообщение..."
-          className="min-h-[60px] max-h-[200px] flex-1 resize-none"
+          placeholder="Писать сюда..."
+          maxRows={8}
         />
         <Button
           type="submit"
@@ -177,10 +195,10 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
           disabled={!messageText.trim() || isMessageSending}
         >
           {isMessageSending ? (
-
-            <Spin className="h-4 w-4 animate-spin" />
+            <Icon data={Stop} size={16} />
           ) : (
-            <Send className="h-4 w-4" />
+            <Icon data={ArrowUturnCwLeft} size={16} />
+            
           )}
         </Button>
       </form>
@@ -205,10 +223,10 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
             </div>
           </div>
           <DialogFooter>
-            <Button 
+            <Button
             size="l"
-              view="outlined" 
-              onClick={() => setIsSettingsOpen(false)}
+              view="outlined"
+              onClick={() => setOpen(false)}
             >
               Отмена
             </Button>
@@ -247,9 +265,9 @@ const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
         <div className="whitespace-pre-wrap break-words prose prose-sm dark:prose-invert max-w-none">
           <ReactMarkdown>{message.content}</ReactMarkdown>
         </div>
-        <Button 
-          variant="ghost" 
-          size="m" 
+        <Button
+          view="flat" 
+          size="s" 
           className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
           onClick={() => onCopy(message.content)}
         >

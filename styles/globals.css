@@ -74,14 +74,14 @@ body {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 16px;
   box-sizing: border-box;
 }
 
 .content-container {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  /*align-items: flex-start;*/
+  align-items: stretch;
   justify-content: center;
   gap: 24px;
   width: 100%;

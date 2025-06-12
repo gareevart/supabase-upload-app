@@ -3,12 +3,12 @@ import { useParams } from "next/navigation";
 import { ChatInterface } from "@/app/components/chat/ChatInterface";
 import { ChatList } from "@/app/components/chat/ChatList";
 import { Container } from "@/app/components/ui/container";
-import { Separator } from "@/app/components/ui/separator";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { redirect } from "next/navigation";
-import { Toaster } from "@/app/components/ui/toaster";
+import {Toaster, ToasterComponent, ToasterProvider} from '@gravity-ui/uikit';
 
 const ChatPage = () => {
+  const toaster = new Toaster();
   const { chatId } = useParams<{ chatId: string }>();
   const { user, loading: isAuthLoading } = useAuth();
 
@@ -26,8 +26,7 @@ const ChatPage = () => {
   }
 
   return (
-    <>
-      <Toaster />
+    <ToasterProvider toaster={toaster}>  
       <Container>
         <div className="py-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -46,7 +45,7 @@ const ChatPage = () => {
           </div>
         </div>
       </Container>
-    </>
+    </ToasterProvider>  
   );
 };
 

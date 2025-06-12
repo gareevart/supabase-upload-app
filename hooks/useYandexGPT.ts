@@ -32,16 +32,32 @@ export const useYandexGPT = () => {
     setError(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke('generate-text', {
-        body: {
+      // Get the current session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Пользователь не авторизован');
+      }
+
+      const response = await fetch('/api/generate-text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
           prompt,
           systemPrompt: systemPrompt || 'Ты профессиональный копирайтер. Твоя задача - создавать интересный и привлекательный контент для блога.',
           messageContext: messageContext || [],
-          model: selectedModel // Передаем выбранную модель в edge функцию
-        }
+          model: selectedModel
+        })
       });
 
-      if (error) throw new Error(error.message);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
       
       if (!data || !data.text) {
         throw new Error('Не удалось получить текст из ответа API');
