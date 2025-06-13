@@ -124,10 +124,10 @@ body {
   align-items: center;
   gap: 8px;
   text-decoration: none;
-  color: var(--foreground);
+  color: var(--g-color-base-brand);
 }
 
 .link-item:hover {
   text-decoration: underline;
-  color: var(--g-color-base-brand);
+  color: var(--g-color-base-brand-hover);
 }

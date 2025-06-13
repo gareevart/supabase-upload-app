@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const folder = formData.get('folder') as string || 'profiles';
+    const metadataStr = formData.get('metadata') as string;
     const userId = request.headers.get('x-user-id');
     if (!userId) {
       console.log('Blocked unauthorized upload attempt');
@@ -49,6 +50,34 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    // Parse metadata if provided
+    let metadata: Record<string, string> = {};
+    if (userId) {
+      metadata.userId = userId;
+    }
+    
+    if (metadataStr) {
+      try {
+        const parsedMetadata = JSON.parse(metadataStr);
+        // Ensure all metadata values are strings and valid for HTTP headers
+        Object.keys(parsedMetadata).forEach(key => {
+          // Sanitize metadata values to ensure they're valid for S3 headers
+          // Only use alphanumeric characters, hyphens, and spaces
+          let value = String(parsedMetadata[key]);
+          
+          // If the value contains potentially problematic characters, keep it encoded
+          if (value.includes('%')) {
+            metadata[key] = value;
+          } else {
+            // Otherwise, sanitize it by replacing problematic characters
+            metadata[key] = value.replace(/[^\w\s-]/g, '_');
+          }
+        });
+      } catch (e) {
+        console.error('Error parsing metadata:', e);
+      }
+    }
+
     // Upload file
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
@@ -56,7 +85,7 @@ export async function POST(request: NextRequest) {
       Body: buffer,
       ContentType: file.type,
       CacheControl: '3600',
-      Metadata: userId ? { userId } : undefined,
+      Metadata: metadata,
     });
 
     await s3Client.send(command);

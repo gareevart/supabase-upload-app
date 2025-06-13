@@ -1,16 +1,22 @@
 "use client" 
 import React from 'react';
-import { Flex, Text, Button, Alert, Spin, TextArea } from '@gravity-ui/uikit';
+import { Flex, Text, Button, Alert, Spin, TextArea, useToaster } from '@gravity-ui/uikit';
 import { supabase } from '@/lib/supabase';
+import { uploadFile } from '@/lib/yandexStorage';
 
 const Yaart = () => {
     const [prompt, setPrompt] = React.useState('');
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState('');
     const [generatedImage, setGeneratedImage] = React.useState('');
+    const [imageData, setImageData] = React.useState<string | null>(null);
     const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null);
     const [canGenerate, setCanGenerate] = React.useState(true);
     const [showLimitWarning, setShowLimitWarning] = React.useState(false);
+    const [isSaving, setIsSaving] = React.useState(false);
+    const [saveError, setSaveError] = React.useState('');
+    const [saveSuccess, setSaveSuccess] = React.useState(false);
+    const toaster = useToaster();
     
     React.useEffect(() => {
       const checkAuth = async () => {
@@ -71,6 +77,8 @@ const Yaart = () => {
         const data = await response.json();
         if (data.imageUrl) {
           setGeneratedImage(data.imageUrl);
+          setImageData(data.imageData || null);
+          setSaveSuccess(false); // Reset save success state
           
           // Сохраняем время генерации для неавторизованных пользователей
           if (!isAuthenticated) {
@@ -86,6 +94,94 @@ const Yaart = () => {
         setError(`Failed to generate image: ${errorMessage}`);
       } finally {
         setLoading(false);
+      }
+    };
+    
+    // Function to save the generated image to the user's gallery
+    const handleSaveToGallery = async () => {
+      if (!isAuthenticated) {
+        setError('Для сохранения изображения необходимо авторизоваться');
+        return;
+      }
+      
+      if (!generatedImage) {
+        setError('Нет изображения для сохранения');
+        return;
+      }
+      
+      setIsSaving(true);
+      setSaveError('');
+      setSaveSuccess(false);
+      
+      try {
+        // Get user ID from Supabase
+        const { data: { user } } = await supabase.auth.getUser();
+        const userId = user?.id;
+        
+        if (!userId) {
+          throw new Error('Не удалось получить ID пользователя');
+        }
+        
+        // Create a File object from the image data or URL
+        let imageFile: File;
+        
+        if (imageData) {
+          // Convert data URL to blob
+          const response = await fetch(imageData);
+          const blob = await response.blob();
+          imageFile = new File([blob], `generated-image-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        } else {
+          // Fallback to using the image URL
+          const response = await fetch(generatedImage);
+          const blob = await response.blob();
+          imageFile = new File([blob], `generated-image-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        }
+        
+        // Add metadata with the prompt (encode to avoid invalid characters in headers)
+        const metadata = {
+          prompt: encodeURIComponent(prompt),
+          generatedAt: new Date().toISOString(),
+          source: 'yaart'
+        };
+        
+        // Upload the file
+        const { error: uploadError, data } = await uploadFile(
+          imageFile,
+          `profiles/${userId}`,
+          userId,
+          metadata
+        );
+        
+        if (uploadError) {
+          throw uploadError;
+        }
+        
+        // Trigger the fileUploaded event to refresh the gallery
+        const fileUploadedEvent = new CustomEvent('fileUploaded');
+        window.dispatchEvent(fileUploadedEvent);
+        
+        // Show success message
+        setSaveSuccess(true);
+        toaster.add({
+          name: 'save-success',
+          title: 'Успешно!',
+          content: 'Изображение сохранено в галерею',
+          theme: 'success',
+          autoHiding: 5000
+        });
+        
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Произошла ошибка при сохранении изображения';
+        setSaveError(errorMessage);
+        toaster.add({
+          name: 'save-error',
+          title: 'Ошибка!',
+          content: errorMessage,
+          theme: 'danger',
+          autoHiding: 10000
+        });
+      } finally {
+        setIsSaving(false);
       }
     };
     
@@ -154,8 +250,8 @@ const Yaart = () => {
                       style={{ maxWidth: '100%', height: 'auto' }} 
                     />
                   </div>
-                  <Flex justifyContent="flex-end">
-                    <Button 
+                  <Flex justifyContent="flex-end" gap={2}>
+                    <Button
                       view="outlined"
                       onClick={() => {
                         const link = document.createElement('a');
@@ -168,7 +264,34 @@ const Yaart = () => {
                     >
                       Download Image
                     </Button>
+                    
+                    {isAuthenticated && (
+                      <Button
+                        view="action"
+                        onClick={handleSaveToGallery}
+                        loading={isSaving}
+                        disabled={isSaving || saveSuccess}
+                      >
+                        {saveSuccess ? 'Saved to gallery' : 'Save to my gallery'}
+                      </Button>
+                    )}
                   </Flex>
+                  
+                  {saveError && (
+                    <Alert
+                      theme="danger"
+                      message={saveError}
+                      onClose={() => setSaveError('')}
+                    />
+                  )}
+                  
+                  {saveSuccess && (
+                    <Alert
+                      theme="success"
+                      message="Изображение успешно сохранено в вашу галерею"
+                      onClose={() => setSaveSuccess(false)}
+                    />
+                  )}
                 </Flex>
               )}
             </Flex>

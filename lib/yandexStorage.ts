@@ -9,13 +9,23 @@ export interface FileObject {
 const FOLDER_PREFIX = 'profiles/';
 
 // Upload file using the API route
-export async function uploadFile(file: File, customPath?: string, userId?: string) {
+export async function uploadFile(
+  file: File,
+  customPath?: string,
+  userId?: string,
+  metadata?: Record<string, any>
+) {
   try {
     const formData = new FormData();
     formData.append('file', file);
     
     if (customPath) {
       formData.append('folder', customPath);
+    }
+    
+    // Add metadata if provided
+    if (metadata) {
+      formData.append('metadata', JSON.stringify(metadata));
     }
 
     const headers: HeadersInit = {};

@@ -21,8 +21,8 @@ export default function Home() {
         <Text className="link-item" variant='subheader-3'><Icon data={Globe} size={16} /> X.com </Text></Link>
         <Link href="https://t.me/gareev45" target="_blank" rel="noopener noreferrer">
         <Text className="link-item" variant='subheader-3'><Icon data={Globe} size={16} /> Telegram </Text></Link>
-
-
+        <Link href="https://www.linkedin.com/in/dmitrii-gareev-234146253" target="_blank" rel="noopener noreferrer">
+        <Text className="link-item" variant='subheader-3'><Icon data={Globe} size={16} /> Linkedin </Text></Link>
       </div>
       </div>
     </div>

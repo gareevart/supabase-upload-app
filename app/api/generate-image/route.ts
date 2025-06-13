@@ -44,8 +44,23 @@ export async function POST(request: Request) {
       );
     }
 
-    // Return the base64 image data directly
-    return NextResponse.json({ imageUrl: data.result.image.url });
+    // Fetch the image data from the URL to return both URL and data
+    try {
+      const imageResponse = await fetch(data.result.image.url);
+      const imageBuffer = await imageResponse.arrayBuffer();
+      const base64Data = Buffer.from(imageBuffer).toString('base64');
+      const dataUrl = `data:${imageResponse.headers.get('content-type') || 'image/jpeg'};base64,${base64Data}`;
+      
+      // Return both the URL and the base64 image data
+      return NextResponse.json({
+        imageUrl: data.result.image.url,
+        imageData: dataUrl
+      });
+    } catch (imageError) {
+      console.error('Error fetching image data:', imageError);
+      // If we can't fetch the image data, just return the URL
+      return NextResponse.json({ imageUrl: data.result.image.url });
+    }
   } catch (error) {
     console.error('Detailed error in generate-image:', error);
     return NextResponse.json(
