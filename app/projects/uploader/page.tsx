@@ -3,6 +3,7 @@
 import { Text, Icon, Flex, Link } from '@gravity-ui/uikit';
 import FileUpload from '@/app/components/bucket/FileUpload';
 import FileView from '@/app/components/bucket/FileView';
+import '../../auth/Auth.css';
 
 export default function Uploader() {
   return (

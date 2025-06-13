@@ -40,6 +40,8 @@ body {
   
   .navigation {
     grid-area: nav;
+    margin: 12px;
+    border-radius:  var(--g-spacing-4);
   }
   
   .main-content {
@@ -93,6 +95,15 @@ body {
   max-width: 968px;
   text-align: left;
   width: 100%;
+}
+
+.home-title {
+  display: ruby;
+}
+
+.infra-logo {
+  margin: 0 8px;
+  display: inline-block;
 }
 
 .links-container {

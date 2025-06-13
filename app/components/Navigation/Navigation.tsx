@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@gravity-ui/uikit';
-import {House, Circles4Square, Person, Magnifier, BookmarkFill, Plus, Bars, MagicWand, Ghost} from '@gravity-ui/icons';
+import {House, Circles4Square, Person, Magnifier, BookOpen, Plus, Bars } from '@gravity-ui/icons';
 import Image from 'next/image';
 import UserAvatar from '../UserAvatar';
 import Link from 'next/link';
@@ -32,16 +32,15 @@ const Navigation: React.FC = () => {
   const allNavItems = [
     { id: 'home', icon: House, label: 'Home', link: '/' },
     { id: 'projects', icon: Circles4Square, label: 'Projects', link: '/projects' },
-    { id: 'yaart', icon: MagicWand, label: 'Image Generator', link: '/yaart' },
-    { id: 'game', icon: Ghost, label: 'Memory Game', link: '/game' },
+    { id: 'blog', icon: BookOpen, label: 'Blog', link: '/blog' },
     { id: 'search', icon: Magnifier, label: 'Search', link: '/search' },
     { id: 'settings', icon: Plus, label: 'Settings', link: '/settings' },
     { id: 'profile', icon: Person, label: 'Profile', link: '/auth/profile' },
     { id: 'help', icon: Plus, label: 'Help', link: '/help' },
   ];
 
-  const mainNavItems = allNavItems.slice(0, 5);
-  const drawerNavItems = allNavItems.slice(5);
+  const mainNavItems = allNavItems.slice(0, 4);
+  const drawerNavItems = allNavItems.slice(4);
 
   const toggleDrawer = () => {
     setIsDrawerOpen(!isDrawerOpen);

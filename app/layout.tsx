@@ -11,7 +11,6 @@ import { AuthProvider } from './contexts/AuthContext';
 
 import '@gravity-ui/uikit/styles/styles.css';
 import "@/styles/globals.css";
-import './auth/Auth.css';
 import '@/styles/styles.css';
 
 const geistSans = Geist({

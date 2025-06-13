@@ -1,11 +1,11 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card";
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Icon, Button, Skeleton, SegmentedRadioGroup } from '@gravity-ui/uikit';
+import { Card, Icon, Button, Skeleton, SegmentedRadioGroup } from '@gravity-ui/uikit';
 import { Calendar, Pencil, Person, LayoutCellsLarge, ListUl } from '@gravity-ui/icons';
 
 type Post = {
@@ -237,11 +237,11 @@ export const PostList = ({
               <div className="flex items-center gap-4">
                 <div className="flex items-center">
                    <Icon data={Calendar} size={16} />
-                  {post.created_at ? formatDate(post.created_at) : 'Дата не указана'}
+                  {post.created_at ? formatDate(post.created_at) : 'Without date'}
                 </div>
                 <div className="flex items-center">
                     <Icon data={Person} size={16} />
-                  {post.author?.name || post.author?.username || "Анонимный автор"}
+                  {post.author?.name || post.author?.username || "Anon"}
                 </div>
               </div>
               {draftsOnly ? (
@@ -252,7 +252,7 @@ export const PostList = ({
                   onClick={() => window.location.href = `/blog/edit/${post.id}`}
                 >
                   <Icon data={Pencil} size={16} />
-                  <span>Редактировать</span>
+                  <span>Edit</span>
                 </Button>
               ) : (
                 <Button
@@ -260,7 +260,7 @@ export const PostList = ({
                   size="m"
                   onClick={() => window.location.href = `/blog/${post.slug}`}
                 >
-                  Читать далее
+                  Читать
                 </Button>
               )}
             </CardFooter>

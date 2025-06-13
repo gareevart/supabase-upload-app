@@ -281,7 +281,7 @@ export default function FileView() {
   );
 
   return (
-    <Card view="filled">
+    <Card type="container">
       <div className="file-view-header">
         <Text variant="header-1">Галерея изображений</Text>
         <Button 

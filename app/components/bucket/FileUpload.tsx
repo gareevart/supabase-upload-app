@@ -96,8 +96,8 @@ export default function FileUpload() {
   };
 
   return (
-     <Card type="container">
-      <Text variant="header-1">Загрузка изображений</Text>
+     <Card view="filled">
+      <Text variant="body-short">Загрузка изображений</Text>
       <div className="file-upload-field">
       <input
           type="file"

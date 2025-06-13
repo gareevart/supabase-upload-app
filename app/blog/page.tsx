@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import PostList from "./PostList"
-import { Button } from "@gravity-ui/uikit"
+import { Button, Text } from "@gravity-ui/uikit"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
@@ -23,7 +23,7 @@ export default function BlogPage() {
     <div className="min-h-screen pb-20 sm:p-20">
       <main className="container mx-auto max-w-4xl">
         <div className="flex justify-between items-center mb-6 px-4">
-          <h1 className="text-3xl font-bold">Blog</h1>
+          <Text variant="display-1">Blog</Text>
           {isAuthenticated && (
             <Button
               view="action"

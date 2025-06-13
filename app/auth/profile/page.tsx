@@ -18,6 +18,7 @@ import withAuth from '../withAuth';
 import FileUploader from '../components/FileUploader';
 import { useAuth } from '@/app/contexts/AuthContext';
 import Link from 'next/link';
+import '../Auth.css';
 // CSS import removed as it's now in the root layout
 
 interface Profile {
