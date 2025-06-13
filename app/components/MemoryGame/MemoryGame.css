@@ -32,6 +32,12 @@
   min-height: 60px;
 }
 
+.final-card {
+  display: flex;
+  flex-direction: final-card;
+  justify-content: start;
+  padding: 24px;
+}
 /* Мобильные устройства */
 @media (max-width: 768px) {
   .memory-game {

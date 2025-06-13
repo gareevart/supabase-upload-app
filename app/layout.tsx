@@ -32,38 +32,88 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Initialize with a default, but we'll update it based on system preference
-  const [isDarkTheme, setIsDarkTheme] = useState(false);
+  // Initialize with a default, but we'll update it based on saved preference or system preference
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
-  // Detect system theme preference and listen for changes
+  // Detect theme preference and listen for changes
   useEffect(() => {
     // Check if window is available (client-side)
     if (typeof window !== 'undefined') {
-      // Check if user prefers dark mode
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      // First check if there's a saved theme preference in localStorage
+      const savedTheme = localStorage.getItem('app-theme');
       
-      // Set initial theme based on system preference
-      setIsDarkTheme(mediaQuery.matches);
+      if (savedTheme === 'light' || savedTheme === 'dark') {
+        // Use saved theme preference
+        setTheme(savedTheme);
+      } else if (savedTheme === 'system') {
+        // Use system preference if theme is set to 'system'
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        setTheme(mediaQuery.matches ? 'dark' : 'light');
+        
+        // Add listener for system theme changes
+        const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+          setTheme(e.matches ? 'dark' : 'light');
+        };
+        
+        mediaQuery.addEventListener('change', handleSystemThemeChange);
+        return () => {
+          mediaQuery.removeEventListener('change', handleSystemThemeChange);
+        };
+      } else {
+        // Fallback to system preference if no saved theme
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        setTheme(mediaQuery.matches ? 'dark' : 'light');
+        
+        // Add listener for system theme changes
+        const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+          setTheme(e.matches ? 'dark' : 'light');
+        };
+        
+        mediaQuery.addEventListener('change', handleSystemThemeChange);
+        return () => {
+          mediaQuery.removeEventListener('change', handleSystemThemeChange);
+        };
+      }
       
-      // Add listener for theme changes
-      const handleThemeChange = (e: MediaQueryListEvent) => {
-        setIsDarkTheme(e.matches);
+      // Listen for storage events (theme changes from other components)
+      const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'app-theme') {
+          if (e.newValue === 'light' || e.newValue === 'dark') {
+            setTheme(e.newValue);
+          } else if (e.newValue === 'system') {
+            // If theme is set to system, use system preference
+            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            setTheme(mediaQuery.matches ? 'dark' : 'light');
+          }
+        }
       };
       
-      // Add event listener
-      mediaQuery.addEventListener('change', handleThemeChange);
+      // Add event listener for storage changes
+      window.addEventListener('storage', handleStorageChange);
       
-      // Clean up event listener on component unmount
+      // Also listen for custom storage events dispatched within the same window
+      const handleCustomStorageEvent = (e: Event) => {
+        const storageEvent = e as StorageEvent;
+        if (storageEvent.key === 'app-theme') {
+          if (storageEvent.newValue === 'light' || storageEvent.newValue === 'dark') {
+            setTheme(storageEvent.newValue);
+          } else if (storageEvent.newValue === 'system') {
+            // If theme is set to system, use system preference
+            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            setTheme(mediaQuery.matches ? 'dark' : 'light');
+          }
+        }
+      };
+      
+      window.addEventListener('storage', handleCustomStorageEvent);
+      
+      // Clean up event listeners on component unmount
       return () => {
-        mediaQuery.removeEventListener('change', handleThemeChange);
+        window.removeEventListener('storage', handleStorageChange);
+        window.removeEventListener('storage', handleCustomStorageEvent);
       };
     }
   }, []);
-
-  // Allow manual theme toggling
-  const toggleTheme = (newTheme: boolean) => {
-    setIsDarkTheme(newTheme);
-  };
   
   return (
     <html lang="en">
@@ -72,7 +122,7 @@ export default function RootLayout({
       >
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <ThemeWrapper theme={isDarkTheme ? "dark" : "light"}>
+            <ThemeWrapper theme={theme}>
               <ToastProvider>
                 <Toaster />
                 <Navigation />

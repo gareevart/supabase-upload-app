@@ -12,17 +12,16 @@ export default function Home() {
           <Text className="home-title" variant="display-1">
             Dmitrii Gareev is a Product Designer at
             <Image src="/infra-logo.svg" alt="Infra logo"
-            className='infra-logo' width={40} height={40} priority />
+            className='infra-logo' width={36} height={36} priority />
             Yandex Infrastructure. I work at the intersection of product design and AI, helping shape internal tools for developers. My focus is on making complex systems feel simple — designing scalable, intuitive interfaces that adapt to how people actually work.
           </Text>
         </div>
        <div className="links-container">
-        <Link href="/" target="_blank" rel="noopener noreferrer" className="link-item">
-          <Icon data={Globe} size={16} />X.com</Link>
-        <Link href="https://t.me/gareev45" target="_blank" rel="noopener noreferrer" className="link-item">
-          <Icon data={Globe} size={16} />
-          Telegram
-        </Link>
+        <Link href="https://x.com/gareev" target="_blank" rel="noopener noreferrer">
+        <Text className="link-item" variant='subheader-3'><Icon data={Globe} size={16} /> X.com </Text></Link>
+        <Link href="https://t.me/gareev45" target="_blank" rel="noopener noreferrer">
+        <Text className="link-item" variant='subheader-3'><Icon data={Globe} size={16} /> Telegram </Text></Link>
+
 
       </div>
       </div>

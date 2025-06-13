@@ -2,11 +2,12 @@
 import { Suspense } from 'react';
 import { ProfileForm } from './ProfileForm';
 import { ProfileLoading } from './ProfileLoading';
+import { Text } from '@gravity-ui/uikit';
 
 export default function ProfilePage() {
   return (
     <div className="container mx-auto py-8 px-4">
-      <h1 className="text-2xl font-bold mb-6">Профиль</h1>
+      <Text variant="display-1">Profile</Text>
       <Suspense fallback={<ProfileLoading />}>
         <ProfileForm />
       </Suspense>

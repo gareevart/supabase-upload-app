@@ -8,7 +8,6 @@ const MyProjects = () => {
 
   return (
     <div className="content-container">
-    <Text variant="header-1">Projects</Text>
     <Link href="/projects/uploader" rel="noopener noreferrer">
         <Card type="container" className='file-view-container'>My Gallery</Card>
     </Link>

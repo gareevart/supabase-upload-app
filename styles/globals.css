@@ -104,6 +104,12 @@ body {
 .infra-logo {
   margin: 0 8px;
   display: inline-block;
+  transform: rotate(3deg);
+  transition: transform 0.3s ease;
+}
+
+.infra-logo:hover {
+  transform: rotate(0deg);
 }
 
 .links-container {
@@ -123,4 +129,5 @@ body {
 
 .link-item:hover {
   text-decoration: underline;
+  color: var(--g-color-base-brand);
 }

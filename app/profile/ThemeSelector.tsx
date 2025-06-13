@@ -1,5 +1,4 @@
-import { SegmentedRadioGroup } from '@gravity-ui/uikit';
-import { Theme } from '@gravity-ui/uikit';
+import { SegmentedRadioGroup , Theme, Icon } from '@gravity-ui/uikit';
 import { Sun, Moon, Palette } from '@gravity-ui/icons';
 
 interface ThemeSelectorProps {
@@ -22,22 +21,22 @@ export const ThemeSelector = ({ value, onChange }: ThemeSelectorProps) => {
     >
       <SegmentedRadioGroup.Option value="light">
         <div className="flex items-center">
-          <Sun className="h-5 w-5 mr-2" />
-          Светлая
+          <Icon data={Sun} size={16} />
+          Light
         </div>
       </SegmentedRadioGroup.Option>
       
       <SegmentedRadioGroup.Option value="dark">
         <div className="flex items-center">
-          <Moon className="h-5 w-5 mr-2" />
-          Темная
+          <Icon data={Moon} size={16} />
+          Dark
         </div>
       </SegmentedRadioGroup.Option>
       
       <SegmentedRadioGroup.Option value="system">
         <div className="flex items-center">
-          <Palette className="h-5 w-5 mr-2" />
-          Системная
+          <Icon data={Palette} size={16} />
+          System
         </div>
       </SegmentedRadioGroup.Option>
     </SegmentedRadioGroup>

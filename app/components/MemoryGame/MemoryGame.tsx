@@ -122,7 +122,7 @@ const MemoryGame = () => {
       )}
         {gameOver && (
           <div className="game-over">
-            <Card size='l'> 
+            <Card size='l' className="final-card" view="outlined"> 
             <Text variant="display-1">Game Over!</Text>
             <Text variant="body-2">Your time: {(endTime && startTime) ? ((endTime - startTime) / 1000) : 0} seconds</Text>
             <div style={{ margin: '10px 0', width: '100%' }}>
