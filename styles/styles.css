@@ -316,7 +316,7 @@
 	--g-color-private-purple-50-solid: rgb(244, 238, 250);
 
 
-	--g-color-base-brand: #1bf9ab;
+	--g-color-base-brand: rgba(40, 218, 156, 1);
 	--g-color-base-background: rgb(255, 255, 255);
 	--g-color-base-brand-hover: var(--g-color-private-brand-750-solid);
 	--g-color-base-selection: var(--g-color-private-brand-200);

@@ -32,7 +32,7 @@ const Login = () => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      router.push('/auth/profile');
+      router.push('/profile');
     } catch (error: any) {
       setError(error.message);
     } finally {
@@ -48,7 +48,7 @@ const Login = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/profile`,
+          redirectTo: `${window.location.origin}/profile`,
         },
       });
 

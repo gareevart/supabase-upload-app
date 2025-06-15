@@ -115,20 +115,9 @@ export default async function BlogPostPage({ params }: PageProps) {
   };
 
   return (
-    <div className="container max-w-4xl mx-auto p-4 pb-20">
-      <div className="mb-6">
-        <Link href="/blog">
-          <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Blog
-          </button>
-        </Link>
-      </div>
-
-      <Card>
-        <CardHeader>
+    <div className="container max-w-4xl mx-auto mt-6">
           <CardTitle className="text-3xl font-bold mb-4">{post.title}</CardTitle>
-          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-4 mb-4 mb-6text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
               <span>{post.created_at ? formatDate(post.created_at) : 'Дата не указана'}</span>
@@ -138,7 +127,6 @@ export default async function BlogPostPage({ params }: PageProps) {
               <span>{post.author?.name || post.author?.username || "Anonymous"}</span>
             </div>
           </div>
-        </CardHeader>
 
         {post.featured_image && (
           <div className="w-full h-[300px] md:h-[400px] overflow-hidden">
@@ -160,16 +148,6 @@ export default async function BlogPostPage({ params }: PageProps) {
             }
           </div>
         </CardContent>
-
-        <CardFooter className="flex justify-between border-t pt-6 mt-6">
-          <Link href="/blog">
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Blog
-            </button>
-          </Link>
-        </CardFooter>
-      </Card>
     </div>
   );
 }

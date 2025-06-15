@@ -192,7 +192,7 @@ export const ProfileForm = () => {
         </Text>
       </div>
 
-      <div className="space-y-2">
+      <div className="flex flex-col items-start space-y-2">
         <Text variant="subheader-1" color="primary">Тема оформления</Text>
         <ThemeSelector
           value={formData.theme}
