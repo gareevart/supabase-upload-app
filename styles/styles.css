@@ -329,6 +329,7 @@
 	--g-color-text-link-hover: var(--g-color-private-brand-1000-solid);
 	--g-color-text-link-visited: var(--g-color-private-purple-550-solid);
 	--g-color-text-link-visited-hover: var(--g-color-private-purple-750-solid);
+	--g-text-input-border-color :var(--g-color-line-brand);
 }
 
 .g-root_theme_dark {
@@ -662,4 +663,5 @@
 	--g-color-text-link-hover: var(--g-color-private-brand-700-solid);
 	--g-color-text-link-visited: var(--g-color-private-purple-700-solid);
 	--g-color-text-link-visited-hover: var(--g-color-private-purple-850-solid);
+	--g-text-input-border-color :var(--g-color-line-brand);
 }
