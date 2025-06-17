@@ -5,9 +5,13 @@ import PostList from "./PostList"
 import { Button, Text } from "@gravity-ui/uikit"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import SearchComponent from "../components/SearchComponent"
+import type { SearchResult } from "../components/SearchComponent"
 
 export default function BlogPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [activeTab, setActiveTab] = useState<string>("posts")
+  const [searchActive, setSearchActive] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -18,6 +22,14 @@ export default function BlogPage() {
     
     checkAuth()
   }, [])
+
+  const handleSearchResultClick = (result: SearchResult) => {
+    router.push(`/blog/${result.slug}`)
+  }
+
+  const handleSearchQueryChange = (query: string) => {
+    setSearchActive(!!query.trim())
+  }
 
   return (
     <div className="min-h-screen pb-20">
@@ -34,7 +46,16 @@ export default function BlogPage() {
             </Button>
           )}
         </div>
-        <PostList />
+        <div className="px-4">
+          <SearchComponent
+            title=""
+            placeholder="Поиск по блогу..."
+            readButtonText="Читать"
+            onResultClick={handleSearchResultClick}
+            onUpdate={handleSearchQueryChange}
+          />
+        </div>
+        {!searchActive && <PostList />}
       </main>
     </div>
   );
