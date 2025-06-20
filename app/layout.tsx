@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Analytics } from '@vercel/analytics/next';
 import ThemeWrapper from './components/ThemeWrapper';
 import { ToastProvider } from '@/hooks/use-toast';
 import { Toaster } from './components/ui/toaster';
@@ -128,6 +129,7 @@ export default function RootLayout({
                 <Navigation />
                 <main className="main-content">
                   {children}
+                  <Analytics/>
                 </main>
               </ToastProvider>
             </ThemeWrapper>
