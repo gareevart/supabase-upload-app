@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useState, useMemo } from 'react';
+import Image from 'next/image';
 import '../components.css';
 import { listFiles, deleteFile, getPublicUrl, FileObject } from '@/lib/yandexStorage';
 import { supabase } from '@/lib/supabase';
@@ -27,6 +28,9 @@ export default function FileView() {
 
   // Получаем userId безопасно
   const [userId, setUserId] = useState<string | null>(null);
+  
+  // Кэш для URL изображений
+  const urlCache = useMemo(() => new Map<string, string>(), []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -91,15 +95,24 @@ export default function FileView() {
 
       const images = files || [];
 
-      // Параллельно получаем URL для всех изображений
+      // Параллельно получаем URL для всех изображений с кэшированием
       const urlPromises = images.map(async (image: FileObject) => {
-  try {
-    const url = await getPublicUrl(`profiles/${userId}/${image.name}`);
-    return { name: image.name, url };
-  } catch {
-    return { name: image.name, url: '' };
-  }
-});
+        const cacheKey = `${userId}/${image.name}`;
+        
+        // Проверяем кэш
+        if (urlCache.has(cacheKey)) {
+          return { name: image.name, url: urlCache.get(cacheKey)! };
+        }
+        
+        try {
+          const url = await getPublicUrl(`profiles/${userId}/${image.name}`);
+          // Сохраняем в кэш
+          urlCache.set(cacheKey, url);
+          return { name: image.name, url };
+        } catch {
+          return { name: image.name, url: '' };
+        }
+      });
 
       const urlResults = await Promise.allSettled(urlPromises);
       const imageUrls: Record<string, string> = {};
@@ -240,13 +253,20 @@ export default function FileView() {
       {state.images.map((image) => (
         <div key={image.name} className="file-view-item">
           <div className="file-view-image-container">
-            <img
-              src={state.imageUrls[image.name] || ''}
+            <Image
+              src={state.imageUrls[image.name] || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNlZWVlZWUiLz48dGV4dCB4PSI1MCIgeT0iNTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk5OSI+SW1hZ2Ugbm90IGZvdW5kPC90ZXh0Pjwvc3ZnPg=='}
               alt={image.name}
+              fill
+              sizes="100px"
               className="file-view-image"
-              loading="lazy" // Ленивая загрузка для оптимизации
+              style={{ objectFit: 'cover' }}
+              priority={false}
+              loading="lazy"
+              quality={75}
+              placeholder="blur"
+              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
               onError={(e) => {
-                const img = e.currentTarget;
+                const img = e.currentTarget as HTMLImageElement;
                 img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNlZWVlZWUiLz48dGV4dCB4PSI1MCIgeT0iNTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk5OSI+SW1hZ2Ugbm90IGZvdW5kPC90ZXh0Pjwvc3ZnPg==';
               }}
             />

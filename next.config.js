@@ -4,6 +4,20 @@ const nextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'public-gareevde.storage.yandexcloud.net',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'rajacaayhzgjoitquqvt.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
   },
   
   // Enable React strict mode for better development experience

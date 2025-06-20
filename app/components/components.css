@@ -104,6 +104,7 @@
 }
 
 .file-view-image-container {
+  position: relative;
   width: 100px;
   height: 100px;
   margin-left: auto;

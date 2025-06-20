@@ -9,13 +9,13 @@ const MyProjects = () => {
   return (
     <div className="content-container">
     <Link href="/projects/uploader" rel="noopener noreferrer">
-        <Card type="container" className='file-view-container'>My Gallery</Card>
+        <Card type="container" size="l" className='file-view-container'>Image Syncer</Card>
     </Link>
     <Link href="/yaart" rel="noopener noreferrer">
-        <Card type="container" className='file-view-container'>YaART Image Generator</Card>
+        <Card type="container" size="l" className='file-view-container'>YaART Image Generator</Card>
     </Link>
         <Link href="/chat" rel="noopener noreferrer">
-        <Card type="container" className='file-view-container'>AI Chat</Card>
+        <Card type="container" size="l" className='file-view-container'>AI Chat</Card>
     </Link>
     </div>
   );

@@ -13,7 +13,7 @@ export function generatePostMetadata({
   featuredImageUrl,
   postUrl,
 }: PostSEOData): Metadata {
-  const pageTitle = `${title} | Visual Scribe`;
+  const pageTitle = `${title} | Gareev Dmitrii Blog`;
   
   return {
     title: pageTitle,

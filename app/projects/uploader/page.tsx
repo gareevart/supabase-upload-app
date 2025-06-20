@@ -9,7 +9,7 @@ export default function Uploader() {
   return (
       <div className="page-container">
         <div className="content-container">
-        <Text variant="header-1">Uploader</Text>
+        <Text variant="header-1">Image Syncer</Text>
         <FileUpload />
         <FileView />
       </div>

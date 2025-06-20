@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import Image from "next/image";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, Icon, Button, Skeleton, SegmentedRadioGroup } from '@gravity-ui/uikit';
 import { Calendar, Pencil, Person, LayoutCellsLarge, ListUl } from '@gravity-ui/icons';
@@ -213,12 +214,17 @@ export const PostList = ({
         {posts.map((post) => (
           <Card key={post.id} className="w-full min-w-[280px] overflow-hidden">
             {post.featured_image ? (
-              <div className="h-48 w-full overflow-hidden">
+              <div className="h-48 w-full overflow-hidden relative">
                 <Link href={`/blog/${post.slug}`}>
-                  <img
+                  <Image
                     src={post.featured_image}
                     alt={post.title}
-                    className="w-full object-cover h-full transition-transform hover:scale-105"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover transition-transform hover:scale-105"
+                    priority={false}
+                    placeholder="blur"
+                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
                   />
                 </Link>
               </div>
