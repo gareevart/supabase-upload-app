@@ -1,10 +1,11 @@
+"use client";
+
 import React from "react";
-import { Button, Icon } from '@gravity-ui/uikit';
+import { Button } from '@gravity-ui/uikit';
 import { Card, CardContent } from "@/app/components/ui/card";
-import { usePostEditor } from "@/hooks/usePostEditor";
+import { useTipTapEditor } from "@/hooks/useTipTapEditor";
 import PostMetadata from "./editor/PostMetadata";
-import ContentBlock from "./editor/ContentBlock";
-import { EditorContent } from "./editor/types";
+import TipTapEditor from "./TipTapEditor";
 
 type PostEditorProps = {
   initialPost?: any;
@@ -16,30 +17,22 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
     title, setTitle,
     slug, setSlug,
     excerpt, setExcerpt,
-    content,
+    tipTapContent,
     featuredImageUrl,
     isLoading,
-    currentEditingIndex,
     imagePrompt, setImagePrompt,
     showGenerationDialog, setShowGenerationDialog,
     generatedImagePreview,
     activeImageTab, setActiveImageTab,
     isGenerating, isUploading,
     handleContentChange,
-    addContentBlock,
-    moveContentBlock,
+    handleFeaturedImageUpload,
+    handleDeleteFeaturedImage,
     handleGenerateImage,
     handleApplyGeneratedImage,
     handleSelectGalleryImage,
-    deleteContentBlock,
-    handleImageUpload,
-    handleFeaturedImageUpload,
-    handleDeleteFeaturedImage,
-    handleAltTextChange,
-    handleTextGenerated,
-    handleBlockTypeChange,
     savePost
-  } = usePostEditor(initialPost, onSave);
+  } = useTipTapEditor(initialPost, onSave);
 
   return (
     <div className="container max-w-4xl mx-auto p-4 space-y-6">
@@ -67,30 +60,12 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
         setShowGenerationDialog={setShowGenerationDialog}
       />
 
-      <Card className="mt-6">
-        <CardContent className="p-4">
-          <div className="mb-4">
             <h3 className="text-lg font-medium mb-2">Содержание поста</h3>
-            {content.map((block, index) => (
-              <ContentBlock
-                key={index}
-                block={block}
-                index={index}
-                isCurrentEditing={index === currentEditingIndex}
-                content={content}
-                onMoveBlock={moveContentBlock}
-                onDeleteBlock={deleteContentBlock}
-                onContentChange={handleContentChange}
-                onAddContentBlock={addContentBlock}
-                onBlockTypeChange={handleBlockTypeChange}
-                onImageUpload={handleImageUpload}
-                onAltTextChange={handleAltTextChange}
-                onTextGenerated={handleTextGenerated}
-              />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            <TipTapEditor 
+              content={tipTapContent}
+              onChange={handleContentChange}
+              placeholder="Начните писать содержание поста..."
+            />
 
       <div className="flex justify-start gap-4">
         <Button
@@ -109,7 +84,6 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
         >
           Сохранить черновик
         </Button>
-
       </div>
     </div>
   );

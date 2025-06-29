@@ -1,11 +1,16 @@
+"use client"
+
 import "../blog.css"
 import { supabase } from "@/lib/supabase"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card"
-import { ArrowLeft, Calendar, Person } from "@gravity-ui/icons"
+import { ArrowLeft, Calendar, Person, Pencil, TrashBin } from "@gravity-ui/icons"
 import Link from "next/link"
-import { generatePostMetadata } from "@/app/components/blog/components/PostSEO"
-import type { Metadata } from "next"
-import { notFound } from "next/navigation"
+import { notFound, useRouter } from "next/navigation"
+import TipTapContent from "@/app/components/blog/TipTapContent"
+import { useState, useEffect } from "react"
+import { Button, Icon } from "@gravity-ui/uikit"
+import { useToast } from "@/hooks/use-toast"
+import React from "react"
 
 interface BlogPost {
   id: string
@@ -25,85 +30,119 @@ interface BlogPost {
   }
 }
 
-interface PageProps {
-  params: Promise<{
-    slug: string
-  }>
-}
+export default function BlogPostPage({ params }: { params: any }) {
+  const [post, setPost] = useState<BlogPost | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const router = useRouter()
+  const { toast } = useToast()
+  // Use React.use to unwrap the params Promise
+  const unwrappedParams = React.use(params as any) as { slug: string }
+  const slug = unwrappedParams.slug
 
-async function getPost(slug: string): Promise<BlogPost | null> {
-  try {
-    // First fetch the blog post
-    const { data, error } = await supabase
-      .from("blog_posts")
-      .select(`
-        id,
-        title,
-        content,
-        excerpt,
-        slug,
-        featured_image,
-        created_at,
-        updated_at,
-        published,
-        author_id
-      `)
-      .eq("slug", slug)
-      .eq("published", true)
-      .single();
+  useEffect(() => {
+    const fetchPostAndUserRole = async () => {
+      try {
+        // Get the post
+        const { data, error } = await supabase
+          .from("blog_posts")
+          .select(`
+            id,
+            title,
+            content,
+            excerpt,
+            slug,
+            featured_image,
+            created_at,
+            updated_at,
+            published,
+            author_id
+          `)
+          .eq("slug", slug)
+          .eq("published", true)
+          .single();
 
-    if (error || !data) {
-      return null;
-    }
+        if (error || !data) {
+          router.push("/blog");
+          return;
+        }
 
-    // Then fetch the author information
-    const { data: authorData } = await supabase
-      .from("profiles")
-      .select("id, name, username, avatar_url")
-      .eq("id", data.author_id)
-      .single();
+        // Get the author information
+        const { data: authorData } = await supabase
+          .from("profiles")
+          .select("id, name, username, avatar_url")
+          .eq("id", data.author_id)
+          .single();
 
-    return {
-      ...data,
-      author: authorData || {
-        name: null,
-        username: null,
-        avatar_url: null
+        const postWithAuthor = {
+          ...data,
+          author: authorData || {
+            name: null,
+            username: null,
+            avatar_url: null
+          }
+        };
+
+        setPost(postWithAuthor);
+
+        // Check user role
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", session.user.id)
+            .single();
+          
+          setUserRole(profile?.role || null);
+        }
+      } catch (error) {
+        console.error("Error fetching post:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
-  } catch (error) {
-    console.error("Error fetching blog post:", error);
-    return null;
-  }
-}
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const post = await getPost(slug);
-  
-  if (!post) {
-    return {
-      title: "Post Not Found | Visual Scribe"
-    };
-  }
+    fetchPostAndUserRole();
+  }, [slug, router]);
 
-  const postUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/blog/${post.slug}`;
-  
-  return generatePostMetadata({
-    title: post.title,
-    excerpt: post.excerpt || undefined,
-    featuredImageUrl: post.featured_image,
-    postUrl
-  });
-}
+  const handleDelete = async () => {
+    if (!post) return;
+    
+    if (!confirm("Вы уверены, что хотите удалить этот пост?")) {
+      return;
+    }
 
-export default async function BlogPostPage({ params }: PageProps) {
-  const { slug } = await params;
-  const post = await getPost(slug);
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("blog_posts")
+        .delete()
+        .eq("id", post.id);
 
-  if (!post) {
-    notFound();
-  }
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Успех",
+        description: "Пост успешно удален",
+        variant: "default"
+      });
+      
+      router.push("/blog");
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить пост",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -114,40 +153,80 @@ export default async function BlogPostPage({ params }: PageProps) {
     });
   };
 
+  if (isLoading) {
+    return (
+      <div className="container max-w-4xl mx-auto mt-6 p-4">
+        <div className="animate-pulse">
+          <div className="h-10 bg-gray-200 rounded w-3/4 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
+          <div className="h-[300px] bg-gray-200 rounded mb-6"></div>
+          <div className="space-y-3">
+            <div className="h-4 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!post) {
+    return notFound();
+  }
+
+  const canEditPost = userRole === 'admin' || userRole === 'editor';
+
   return (
     <div className="container max-w-4xl mx-auto mt-6">
-          <CardTitle className="text-3xl font-bold mb-4">{post.title}</CardTitle>
-          <div className="flex flex-wrap items-center gap-4 mb-4 mb-6text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
-              <span>{post.created_at ? formatDate(post.created_at) : 'Дата не указана'}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Person className="w-4 h-4" />
-              <span>{post.author?.name || post.author?.username || "Anonymous"}</span>
-            </div>
-          </div>
-
-        {post.featured_image && (
-          <div className="w-full h-[300px] md:h-[400px] overflow-hidden">
-            <img
-              src={post.featured_image}
-              alt={post.title}
-              className="w-full h-full object-cover"
-            />
+      <div className="flex justify-between items-start mb-4">
+        <CardTitle className="text-3xl font-bold">{post.title}</CardTitle>
+        
+        {canEditPost && (
+          <div className="flex gap-2">
+            <Link href={`/blog/edit/${post.id}`} passHref>
+              <Button view="normal" size="m">
+                 <Icon data={Pencil} size={16} />
+                Edit
+              </Button>
+            </Link>
+            <Button 
+              view="outlined-danger" 
+              size="m" 
+              onClick={handleDelete}
+              loading={isDeleting}
+              disabled={isDeleting}
+            >
+              <Icon data={TrashBin} size={16} />
+            </Button>
           </div>
         )}
+      </div>
+      
+      <div className="flex flex-wrap items-center gap-4 mb-4 mb-6 text-sm text-muted-foreground">
+        <div className="flex items-center gap-1">
+          <Calendar className="w-4 h-4" />
+          <span>{post.created_at ? formatDate(post.created_at) : 'Дата не указана'}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Person className="w-4 h-4" />
+          <span>{post.author?.name || post.author?.username || "Anonymous"}</span>
+        </div>
+      </div>
 
-        <CardContent className="prose prose-lg max-w-none pt-6">
-          <div className="tiptap-content">
-            {typeof post.content === 'string'
-              ? <div dangerouslySetInnerHTML={{ __html: post.content }} />
-              : typeof post.content === 'object' && post.content?.html
-                ? <div dangerouslySetInnerHTML={{ __html: post.content.html }} />
-                : <pre>{JSON.stringify(post.content, null, 2)}</pre>
-            }
-          </div>
-        </CardContent>
+      {post.featured_image && (
+        <div className="w-full h-[300px] md:h-[400px] rounded-lg overflow-hidden ">
+          <img
+            src={post.featured_image}
+            alt={post.title}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
+      <CardContent className="prose prose-lg max-w-none">
+        {/* Use TipTapContent to render content regardless of format */}
+        <TipTapContent content={post.content} />
+      </CardContent>
     </div>
   );
 }

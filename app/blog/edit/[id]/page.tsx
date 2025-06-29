@@ -7,6 +7,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { isTipTapContent } from "@/lib/tiptapConverter"
 
 export default function EditBlogPost() {
   const params = useParams<{ id: string }>()
@@ -14,6 +15,7 @@ export default function EditBlogPost() {
   const [post, setPost] = useState<any>(null);
   const router = useRouter()
   const { toast } = useToast()
+  const postId = params?.id // Use optional chaining to avoid errors
 
   useEffect(() => {
     const checkAuthorizationAndFetchPost = async () => {
@@ -25,18 +27,29 @@ export default function EditBlogPost() {
           return
         }
 
-        // Fetch the post data and check authorization
+        // Fetch the post data
         const { data, error } = await supabase
           .from("blog_posts")
           .select("*")
-          .eq("id", params.id)
+          .eq("id", postId)
           .single()
 
         if (error) {
           throw error
         }
 
-        setIsAuthorized(data.author_id === session.user.id)
+        // Get user's profile to check role
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single()
+
+        // Check if user is author, admin, or editor
+        const isAuthor = data.author_id === session.user.id
+        const isAdminOrEditor = profile?.role === 'admin' || profile?.role === 'editor'
+        
+        setIsAuthorized(isAuthor || isAdminOrEditor)
         setPost(data);
       } catch (error) {
         console.error("Error checking authorization or fetching post:", JSON.stringify(error, null, 2))
@@ -49,10 +62,10 @@ export default function EditBlogPost() {
       }
     }
 
-    if (params.id) {
+    if (postId) {
       checkAuthorizationAndFetchPost()
     }
-  }, [params.id, toast])
+  }, [postId, toast])
 
   if (isAuthorized === null || post === null) {
     return (
@@ -92,7 +105,7 @@ export default function EditBlogPost() {
 
   return (
     <div className="min-h-screen py-8">
-      <PostEditor initialPost={post} onSave={() => router.push(`/blog/posts/${post.slug}`)} />
+      <PostEditor initialPost={post} onSave={() => router.push(`/blog/${post.slug}`)} />
     </div>
   )
 }

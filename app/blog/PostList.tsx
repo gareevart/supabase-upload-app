@@ -214,8 +214,8 @@ export const PostList = ({
         {posts.map((post) => (
           <Card key={post.id} className="w-full min-w-[280px] overflow-hidden">
             {post.featured_image ? (
-              <div className="h-48 w-full overflow-hidden relative">
-                <Link href={`/blog/${post.slug}`}>
+              <div className="h-48 w-full overflow-hidden">
+                <Link href={`/blog/${post.slug}`} style={{ position: 'relative', display: 'block', height: '100%', width: '100%' }}>
                   <Image
                     src={post.featured_image}
                     alt={post.title}

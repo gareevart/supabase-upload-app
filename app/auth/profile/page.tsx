@@ -229,7 +229,6 @@ const Profile = () => {
 
     const handleLogout = async () => {
         await signOut();
-        // Контекст авторизации автоматически обработает очистку состояния и перенаправление
     };
 
     // Don't render until client-side to avoid hydration issues

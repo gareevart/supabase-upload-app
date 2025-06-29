@@ -86,17 +86,24 @@ export async function POST(request: NextRequest) {
       ContentType: file.type,
       CacheControl: '3600',
       Metadata: metadata,
+      ACL: 'public-read', // Make the file publicly accessible
     });
 
     await s3Client.send(command);
 
     // Generate and return public URL with cache buster
+    // Use a different URL format that works better with Yandex Cloud Object Storage
     const publicUrl = `https://storage.yandexcloud.net/${BUCKET_NAME}/${filePath}?${Date.now()}`;
+    const directUrl = `https://${BUCKET_NAME}.storage.yandexcloud.net/${filePath}?${Date.now()}`;
+    
+    console.log('Generated URLs:', { publicUrl, directUrl });
+    
     return NextResponse.json({
       data: {
         path: filePath,
         publicUrl: publicUrl,
-        directUrl: publicUrl
+        directUrl: directUrl,
+        url: directUrl // Fallback URL
       },
     });
   } catch (error) {
