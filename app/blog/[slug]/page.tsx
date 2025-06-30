@@ -8,7 +8,7 @@ import Link from "next/link"
 import { notFound, useRouter } from "next/navigation"
 import TipTapContent from "@/app/components/blog/TipTapContent"
 import { useState, useEffect } from "react"
-import { Button, Icon } from "@gravity-ui/uikit"
+import { Button, Icon, Skeleton } from "@gravity-ui/uikit"
 import { useToast } from "@/hooks/use-toast"
 import React from "react"
 
@@ -156,14 +156,14 @@ export default function BlogPostPage({ params }: { params: any }) {
   if (isLoading) {
     return (
       <div className="container max-w-4xl mx-auto mt-6 p-4">
-        <div className="animate-pulse">
-          <div className="h-10 bg-gray-200 rounded w-3/4 mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
-          <div className="h-[300px] bg-gray-200 rounded mb-6"></div>
+        <div>
+          <Skeleton className="h-10 w-3/4 mb-4"/>
+          <Skeleton className="h-4 mb-6"/>
+          <Skeleton className="h-[300px] rounded mb-6" />
           <div className="space-y-3">
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded"></div>
+            <Skeleton className="h-4"/>
+            <Skeleton className="h-4"/>
+            <Skeleton className="h-4 mb-6"/>
           </div>
         </div>
       </div>

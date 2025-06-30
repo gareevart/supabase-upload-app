@@ -2,12 +2,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card";
+import { Card, Icon, Button, Skeleton, SegmentedRadioGroup } from '@gravity-ui/uikit';
+import { Calendar, Pencil, Person, LayoutCellsLarge, ListUl } from '@gravity-ui/icons';
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import Image from "next/image";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Card, Icon, Button, Skeleton, SegmentedRadioGroup } from '@gravity-ui/uikit';
-import { Calendar, Pencil, Person, LayoutCellsLarge, ListUl } from '@gravity-ui/icons';
 
 type Post = {
   id: string;
@@ -145,6 +145,7 @@ export const PostList = ({
   if (isLoading) {
     return (
       <div className="container max-w-4xl w-full mx-auto p-4">
+        <Skeleton   className="h-10 rounded w-24 mb-2" />
         <div className={`${!isMobile ? 'grid grid-cols-2 gap-4' : 'space-y-4'}`}>
           {[1, 2, 3, 4].map((index) => (
             <Card key={index} className="w-full min-w-[280px] overflow-hidden">
@@ -155,9 +156,6 @@ export const PostList = ({
                 <Skeleton className="h-6 w-3/4 mb-2" />
                 <Skeleton className="h-4 w-1/2" />
               </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-full" />
-              </CardContent>
               <CardFooter>
                 <Skeleton className="h-4 w-24" />
               </CardFooter>

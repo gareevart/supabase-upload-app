@@ -9,18 +9,18 @@ import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
-import { Button, Icon } from '@gravity-ui/uikit';
-import {Bold} from '@gravity-ui/icons';
+import { Button, Icon, TextInput,Text, Modal } from '@gravity-ui/uikit';
+import {Bold, Italic, Picture, Xmark} from '@gravity-ui/icons';
+import "./editor/editor.css";
 
 // Yandex Cloud Object Storage bucket name
 const BUCKET_NAME = 'public-gareevde';
 import {
-  Italic, Underline as UnderlineIcon, AlignLeft, AlignCenter,
+  Underline as UnderlineIcon, AlignLeft, AlignCenter,
   AlignRight, List, ListOrdered, Heading1, Heading2, Image as ImageIcon,
   Link as LinkIcon, Code, Undo, Redo
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/app/components/ui/dialog';
-import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -39,6 +39,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [linkText, setLinkText] = useState('');
+  const [open, setOpen] = useState(false);
   
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
@@ -260,7 +261,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
 
   return (
     <div className="tiptap-editor border rounded-md">
-      <div className="toolbar flex flex-wrap gap-1 p-2 border-b bg-gray-50">
+      <div className="toolbar flex flex-wrap gap-1 p-2 border-b">
         <Button
           view="flat"
           size="m"
@@ -276,7 +277,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           onClick={() => editor.chain().focus().toggleItalic().run()}
           className={editor.isActive('italic') ? 'is-active' : ''}
         >
-          <Italic className="h-4 w-4" />
+           <Icon data={Italic} size={16} />
         </Button>
         
         <Button
@@ -390,9 +391,10 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         <Button
           view="flat"
           size="m"
-          onClick={() => setIsImageDialogOpen(true)}
+          onClick={() => setOpen(true)}
         >
-          <ImageIcon className="h-4 w-4" /> URL
+          <Icon data={Picture} size={16} />
+          URL
         </Button>
         
         <div className="ml-auto flex gap-1">
@@ -486,18 +488,19 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
       )}
       
       {/* Link Dialog */}
-      <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
-        <DialogContent aria-describedby="link-dialog-description">
-          <DialogHeader>
-            <DialogTitle>Add Link</DialogTitle>
-          </DialogHeader>
-          <p id="link-dialog-description" className="sr-only">
-            Add a link to your content. Enter the URL and optional text for the link.
-          </p>
+      <Modal open={isLinkDialogOpen} onClose={() => setIsLinkDialogOpen(false)}>
+        <div className='modal-content'>
+        <div className='top-modal'>
+          <Text variant="subheader-3">Add Link</Text>
+          <Button size='xl' view='flat' onClick={() => setIsLinkDialogOpen(false)}>
+          <Icon data={Xmark} size={18} /></Button>
+        </div>
+        
+        <Text variant="body-1">Add a link to your content. Enter the URL and optional text for the link.</Text>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label>URL</Label>
-              <Input
+              <Text variant="body-1">URL</Text>
+              <TextInput
                 id="link-url"
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
@@ -505,8 +508,8 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               />
             </div>
             <div className="grid gap-2">
-              <Label>Text (optional)</Label>
-              <Input
+              <Text variant="body-1">Text (optional)</Text>
+              <TextInput
                 id="link-text"
                 value={linkText}
                 onChange={(e) => setLinkText(e.target.value)}
@@ -517,23 +520,23 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           <DialogFooter>
             <Button
               view="outlined"
-              size="m"
+              size="l"
               onClick={() => setIsLinkDialogOpen(false)}
             >
               Cancel
             </Button>
             <Button
               view="action"
-              size="m"
+              size="l"
               onClick={addLink}
             >
               Add Link
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+      </Modal>
       
-      {/* Image Dialog */}
+      {/* Image URL Dialog */}
       <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
         <DialogContent aria-describedby="image-dialog-description">
           <DialogHeader>
@@ -545,7 +548,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label>Image URL</Label>
-              <Input
+              <TextInput
                 id="image-url"
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
@@ -554,7 +557,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             </div>
             <div className="grid gap-2">
               <Label>Alt Text</Label>
-              <Input
+              <TextInput
                 id="image-alt"
                 value={imageAlt}
                 onChange={(e) => setImageAlt(e.target.value)}
@@ -565,14 +568,14 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           <DialogFooter>
             <Button
               view="outlined"
-              size="m"
+              size="l"
               onClick={() => setIsImageDialogOpen(false)}
             >
               Cancel
             </Button>
             <Button
               view="action"
-              size="m"
+              size="l"
               onClick={addImageFromUrl}
             >
               Add Image

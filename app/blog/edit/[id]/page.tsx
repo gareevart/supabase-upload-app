@@ -7,6 +7,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { Skeleton } from "@gravity-ui/uikit"
 import { isTipTapContent } from "@/lib/tiptapConverter"
 
 export default function EditBlogPost() {
@@ -75,7 +76,7 @@ export default function EditBlogPost() {
             <CardTitle>Loading...</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-96 w-full bg-gray-100 animate-pulse"></div>
+             <Skeleton  className="h-96 w-full"/>
           </CardContent>
         </Card>
       </div>

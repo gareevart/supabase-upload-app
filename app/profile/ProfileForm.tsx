@@ -41,7 +41,7 @@ export const ProfileForm = () => {
         username: profile.username || "",
         bio: profile.bio || "",
         website: profile.website || "",
-        theme: (profile.theme as Theme) || "system",
+        theme: (profile.theme as Theme) || "dark",
         avatar_url: profile.avatar_url || null,
       });
     }

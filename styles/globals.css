@@ -40,8 +40,7 @@ body {
   
   .navigation {
     grid-area: nav;
-    margin: 12px;
-    border-radius:  var(--g-spacing-4);
+    border-radius:  0 var(--g-spacing-4) var(--g-spacing-4) 0 ;
   }
   
   .main-content {
