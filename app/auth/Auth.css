@@ -133,7 +133,6 @@ p {
 .g-card {
     display: flex;
     flex-direction: column;
-    padding: 16px;
 }
 
 .profile-field {
