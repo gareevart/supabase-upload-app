@@ -20,7 +20,7 @@ export default function SearchPage() {
           noResultsText="Ничего не найдено"
           noResultsSubText="Попробуйте изменить поисковый запрос"
           startSearchText="Начните поиск"
-          startSearchSubText="Введите ключевые слова для поиска по заголовкам и описаниям постов"
+          startSearchSubText="Введите ключевые слова для поиска по заголовкам, описаниям и содержимому постов"
           readButtonText="Читать"
           onResultClick={handleSearchResultClick}
         />

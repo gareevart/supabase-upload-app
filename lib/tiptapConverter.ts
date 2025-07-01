@@ -305,6 +305,136 @@ export function renderContent(content: any): string {
 }
 
 /**
+ * Extracts plain text from content for search purposes
+ * @param content Content to extract text from (TipTap JSON, legacy blocks, or string)
+ * @returns Plain text string
+ */
+export function extractPlainText(content: any): string {
+  if (!content) return '';
+  
+  // If content is a string, try to parse it as TipTap JSON
+  if (typeof content === 'string') {
+    try {
+      if (isTipTapContent(content)) {
+        const parsed = JSON.parse(content);
+        return extractTextFromTipTapNode(parsed);
+      } else {
+        // Plain text or HTML - strip HTML tags
+        return content.replace(/<[^>]*>/g, '').trim();
+      }
+    } catch (error) {
+      // If parsing fails, treat as plain text
+      return content.replace(/<[^>]*>/g, '').trim();
+    }
+  }
+  
+  // If content is an array (legacy blocks)
+  if (Array.isArray(content)) {
+    return content.map(block => {
+      if (block.content) {
+        return block.content;
+      }
+      return '';
+    }).join(' ').trim();
+  }
+  
+  // If content is an object (TipTap JSON object)
+  if (typeof content === 'object' && content !== null) {
+    try {
+      return extractTextFromTipTapNode(content);
+    } catch (error) {
+      return '';
+    }
+  }
+  
+  return '';
+}
+
+/**
+ * Helper function to extract text from TipTap node recursively
+ */
+function extractTextFromTipTapNode(node: any): string {
+  if (!node) return '';
+  
+  // If it's a text node, return the text
+  if (node.type === 'text') {
+    return node.text || '';
+  }
+  
+  // If it has content, recursively extract text from children
+  if (node.content && Array.isArray(node.content)) {
+    return node.content.map((child: any) => extractTextFromTipTapNode(child)).join(' ');
+  }
+  
+  return '';
+}
+
+/**
+ * Extracts context around a search term in text
+ * @param text Full text to search in
+ * @param searchTerm Term to find
+ * @param wordsBefore Number of words to include before the match (default: 3)
+ * @param wordsAfter Number of words to include after the match (default: 5)
+ * @returns Object with context and highlighted text, or null if not found
+ */
+export function extractSearchContext(
+  text: string, 
+  searchTerm: string, 
+  wordsBefore: number = 3, 
+  wordsAfter: number = 5
+): { context: string; highlightedContext: string } | null {
+  if (!text || !searchTerm) return null;
+  
+  const lowerText = text.toLowerCase();
+  const lowerSearchTerm = searchTerm.toLowerCase();
+  
+  // Find the position of the search term
+  const matchIndex = lowerText.indexOf(lowerSearchTerm);
+  if (matchIndex === -1) return null;
+  
+  // Split text into words
+  const words = text.split(/\s+/);
+  const lowerWords = words.map(word => word.toLowerCase());
+  
+  // Find which word contains the search term
+  let matchWordIndex = -1;
+  for (let i = 0; i < lowerWords.length; i++) {
+    if (lowerWords[i].includes(lowerSearchTerm)) {
+      matchWordIndex = i;
+      break;
+    }
+  }
+  
+  if (matchWordIndex === -1) return null;
+  
+  // Calculate start and end indices for context
+  const startIndex = Math.max(0, matchWordIndex - wordsBefore);
+  const endIndex = Math.min(words.length, matchWordIndex + wordsAfter + 1);
+  
+  // Extract context words
+  const contextWords = words.slice(startIndex, endIndex);
+  const context = contextWords.join(' ');
+  
+  // Create highlighted version
+  const highlightedContext = context.replace(
+    new RegExp(`(${escapeRegExp(searchTerm)})`, 'gi'),
+    '<mark class="search-highlight">$1</mark>'
+  );
+  
+  return {
+    context,
+    highlightedContext
+  };
+}
+
+/**
+ * Escapes special regex characters in a string
+ */
+function escapeRegExp(string: string): string {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
  * Ensures content is properly formatted for TipTap editor
  * Handles cases where content might be double-serialized
  * @param content Content to normalize

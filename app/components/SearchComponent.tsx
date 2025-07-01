@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Text, TextInput, Card, Button, Skeleton, Icon } from '@gravity-ui/uikit';
 import { Magnifier, Calendar, Person } from '@gravity-ui/icons';
 import { supabase } from '@/lib/supabase';
+import { extractPlainText, extractSearchContext } from '@/lib/tiptapConverter';
 import Link from 'next/link';
 import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/app/components/ui/card';
 import './components.css';
@@ -20,6 +21,10 @@ export type SearchResult = {
     username: string | null;
     avatar_url: string | null;
   };
+  searchContext?: {
+    context: string;
+    highlightedContext: string;
+  } | null;
 };
 
 interface SearchComponentProps {
@@ -41,7 +46,7 @@ export default function SearchComponent({
   noResultsText = "Ничего не найдено",
   noResultsSubText = "Попробуйте изменить поисковый запрос",
   startSearchText = "Начните поиск",
-  startSearchSubText = "Введите ключевые слова для поиска по заголовкам и описаниям постов",
+  startSearchSubText = "Введите ключевые слова для поиска по заголовкам, описаниям и содержимому постов",
   readButtonText = "Читать",
   className = "",
   onResultClick,
@@ -66,8 +71,10 @@ export default function SearchComponent({
     setHasSearched(true);
 
     try {
-      // Поиск по заголовку и описанию
-      const { data, error } = await supabase
+      const searchTerm = query.toLowerCase();
+      
+      // Сначала поиск по заголовку и описанию в базе данных
+      const { data: titleExcerptResults, error: titleError } = await supabase
         .from('blog_posts')
         .select(`
           id, 
@@ -80,14 +87,83 @@ export default function SearchComponent({
         `)
         .eq('published', true)
         .or(`title.ilike.%${query}%,excerpt.ilike.%${query}%`)
-        .order('created_at', { ascending: false })
-        .limit(20);
+        .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (titleError) throw titleError;
+
+      // Затем получаем все опубликованные посты для поиска по содержимому
+      const { data: allPosts, error: contentError } = await supabase
+        .from('blog_posts')
+        .select(`
+          id, 
+          title, 
+          excerpt, 
+          content,
+          slug, 
+          featured_image,
+          created_at,
+          author_id
+        `)
+        .eq('published', true)
+        .order('created_at', { ascending: false });
+
+      if (contentError) throw contentError;
+
+      // Поиск по содержимому на клиенте с извлечением контекста
+      const contentResults: Array<{
+        id: string;
+        title: string;
+        excerpt: string | null;
+        slug: string | null;
+        featured_image: string | null;
+        created_at: string | null;
+        author_id: string;
+        searchContext: { context: string; highlightedContext: string } | null;
+      }> = [];
+
+      for (const post of allPosts || []) {
+        // Пропускаем посты, которые уже найдены по заголовку/описанию
+        const alreadyFound = (titleExcerptResults || []).some(found => found.id === post.id);
+        if (alreadyFound) continue;
+
+        // Извлекаем текст из содержимого и ищем в нем
+        try {
+          const plainText = extractPlainText(post.content);
+          if (plainText.toLowerCase().includes(searchTerm)) {
+            // Извлекаем контекст вокруг найденного термина
+            const searchContext = extractSearchContext(plainText, query, 3, 5);
+            
+            contentResults.push({
+              id: post.id,
+              title: post.title,
+              excerpt: post.excerpt,
+              slug: post.slug,
+              featured_image: post.featured_image,
+              created_at: post.created_at,
+              author_id: post.author_id,
+              searchContext
+            });
+          }
+        } catch (error) {
+          console.error('Error extracting text from content:', error);
+        }
+      }
+
+      // Объединяем результаты (сначала по заголовку/описанию, затем по содержимому)
+      const combinedResults = [
+        ...(titleExcerptResults || []).map(post => ({
+          ...post,
+          searchContext: null
+        })),
+        ...contentResults
+      ];
+
+      // Ограничиваем количество результатов
+      const limitedResults = combinedResults.slice(0, 20);
 
       // Получаем информацию об авторах
-      if (data && data.length > 0) {
-        const authorIds = [...new Set(data.map(post => post.author_id))];
+      if (limitedResults.length > 0) {
+        const authorIds = [...new Set(limitedResults.map(post => post.author_id))];
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
           .select('id, name, username, avatar_url')
@@ -104,7 +180,7 @@ export default function SearchComponent({
         }, {} as Record<string, any>);
 
         // Объединяем посты с информацией об авторах
-        const resultsWithAuthors = data.map(post => ({
+        const resultsWithAuthors = limitedResults.map(post => ({
           ...post,
           author: profilesMap[post.author_id] || {
             name: null,
@@ -223,9 +299,19 @@ export default function SearchComponent({
                           {post.title}
                         </Link>
                       </CardTitle>
-                      {post.excerpt && (
+                      {post.excerpt && !post.searchContext && (
                         <CardDescription className="line-clamp-2">
                           {post.excerpt}
+                        </CardDescription>
+                      )}
+                      {post.searchContext && (
+                        <CardDescription className="line-clamp-2">
+                          <span 
+                            className="search-context"
+                            dangerouslySetInnerHTML={{ 
+                              __html: post.searchContext.highlightedContext 
+                            }}
+                          />
                         </CardDescription>
                       )}
                     </CardHeader>
