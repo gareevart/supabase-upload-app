@@ -5,7 +5,6 @@ import { ThemeSelector } from "./ThemeSelector";
 import { useProfile } from "../../hooks/useProfile";
 import { useAuth } from "../contexts/AuthContext";
 import FileUploader from '../auth/components/FileUploader';
-import { FaceAlien } from '@gravity-ui/icons';
 
 type FormData = {
   name: string;

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import './Auth.css';
 import Image from 'next/image';
+import AuthDebugger from './components/AuthDebugger';
 
 const Login = () => {
   const router = useRouter();
@@ -48,7 +49,10 @@ const Login = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/profile`,
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            prompt: 'select_account', // Force Google to show account selection
+          },
         },
       });
 
@@ -146,6 +150,9 @@ const Login = () => {
           <Link className="link g-color-text_color_secondary" href="/auth/signup">Sign Up</Link>
         </div>
       </Card>
+      
+      {/* Add Auth Debugger for troubleshooting */}
+      <AuthDebugger />
     </div>
   );
 };

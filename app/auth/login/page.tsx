@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 // CSS import removed as it's now in the root layout
 import Image from 'next/image';
+import AuthDebugger from '../components/AuthDebugger';
 
 // Memoized logo component to prevent unnecessary re-renders
 const LogoImage = memo(({ theme }: { theme: string }) => {
@@ -69,6 +70,9 @@ const Login = () => {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/profile`,
+          queryParams: {
+            prompt: 'select_account', // Force Google to show account selection
+          },
         },
       });
 
@@ -169,6 +173,9 @@ const Login = () => {
           <Link className="link g-color-text_color_secondary" href="/auth/signup">Sign Up</Link>
         </div>
       </Card>
+      
+      {/* Add Auth Debugger for troubleshooting */}
+      <AuthDebugger />
     </div>
   );
 };

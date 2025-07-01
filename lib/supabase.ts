@@ -9,7 +9,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    detectSessionInUrl: true,
     // Use cookies for session storage to ensure proper authentication with API routes
     storageKey: 'supabase-auth',
     flowType: 'pkce',

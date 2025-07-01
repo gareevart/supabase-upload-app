@@ -16,6 +16,7 @@ import {
 } from '@gravity-ui/uikit';
 import withAuth from '../withAuth';
 import FileUploader from '../components/FileUploader';
+import AuthDebugger from '../components/AuthDebugger';
 import { useAuth } from '@/app/contexts/AuthContext';
 import Link from 'next/link';
 import '../Auth.css';
@@ -467,6 +468,9 @@ const Profile = () => {
                     </div>
                 </>
             )}
+            
+            {/* Add Auth Debugger for troubleshooting */}
+            <AuthDebugger />
         </div>
     );
 };
