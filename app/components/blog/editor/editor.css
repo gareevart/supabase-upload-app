@@ -15,3 +15,33 @@
     justify-content: space-between;
     
 }
+
+/* Стили для зафиксированной панели инструментов */
+.toolbar {
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.toolbar.scrolled {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Обеспечиваем правильное отображение кнопок в панели */
+.toolbar .is-active {
+  background-color: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+}
+
+/* Темная тема для панели инструментов */
+@media (prefers-color-scheme: dark) {
+  .toolbar {
+    background-color: #1a1a1a;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .toolbar .is-active {
+    background-color: rgba(0, 123, 255, 0.2);
+    color: #4dabf7;
+  }
+}

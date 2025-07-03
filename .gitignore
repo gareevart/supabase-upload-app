@@ -43,3 +43,7 @@ next-env.d.ts
 .codeassistant/mcp.json
 .vscode/settings.json
 GOOGLE_OAUTH_SETUP.md
+
+# ML&AI
+.rules
+.continue/mcpServers/new-mcp-server.yaml

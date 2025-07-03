@@ -21,7 +21,6 @@ import {
   Link as LinkIcon, Code, Undo, Redo
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/app/components/ui/dialog';
-import { Label } from '@/app/components/ui/label';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -45,6 +44,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   const [imageUrl, setImageUrl] = useState('');
   const [imageAlt, setImageAlt] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   
   const { toast } = useToast();
 
@@ -104,6 +104,17 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
       }
     }
   }, [editor, content]);
+
+  // Отслеживание скролла для изменения стилей панели инструментов
+  React.useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      setIsScrolled(scrollTop > 100);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   if (!editor) {
     return null;
@@ -261,7 +272,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
 
   return (
     <div className="tiptap-editor border rounded-md">
-      <div className="toolbar flex flex-wrap gap-1 p-2 border-b">
+      <div className={`toolbar flex flex-wrap gap-1 p-2 border-b sticky top-0 bg-white z-10 shadow-sm ${isScrolled ? 'scrolled' : ''}`}>
         <Button
           view="flat"
           size="m"
@@ -547,7 +558,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           </p>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label>Image URL</Label>
+              <Text variant="body-1">Image URL</Text>
               <TextInput
                 id="image-url"
                 value={imageUrl}
@@ -556,7 +567,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               />
             </div>
             <div className="grid gap-2">
-              <Label>Alt Text</Label>
+               <Text variant="body-1">Alt Text</Text>
               <TextInput
                 id="image-alt"
                 value={imageAlt}

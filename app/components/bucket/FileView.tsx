@@ -301,7 +301,7 @@ export default function FileView() {
   );
 
   return (
-    <Card type="container">
+    <Card type="container" className='responsive-card'>
       <div className="file-view-header">
         <Text variant="header-1">Галерея изображений</Text>
         <Button 

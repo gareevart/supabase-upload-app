@@ -96,7 +96,7 @@ export default function FileUpload() {
   };
 
   return (
-     <Card view="filled">
+     <Card view="filled" className='responsive-card'>
       <Text variant="body-short">Загрузка изображений</Text>
       <div className="file-upload-field">
       <input

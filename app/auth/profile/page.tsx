@@ -247,8 +247,7 @@ const Profile = () => {
     return (
         <div className="profile pb2">
             <Text variant="header-2">Profile</Text>
-            <Alert theme="info" layout="horizontal" align="center" title="New profile page is avaliable" actions={<Alert.Action><Link href="/profile">New Profile</Link></Alert.Action>} style={{ width: '100%' }} />
-            
+
             {isEditing ? (
                 <>
                     <div className="profile-field">
