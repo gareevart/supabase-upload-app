@@ -4,11 +4,13 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { convertBlocksToTipTap, convertTipTapToBlocks, normalizeTipTapContent } from "@/lib/tiptapConverter";
 import { EditorContent } from "@/app/components/blog/editor/types";
+import { transliterate } from "@/lib/transliterate";
 
 export const useTipTapEditor = (initialPost?: any, onSave?: () => void) => {
   const [title, setTitle] = useState(initialPost?.title || "");
   const [slug, setSlug] = useState(initialPost?.slug || "");
   const [excerpt, setExcerpt] = useState(initialPost?.excerpt || "");
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(!!initialPost?.slug);
   
   // Initialize content based on the format of initialPost.content
   const [tipTapContent, setTipTapContent] = useState(() => {
@@ -74,9 +76,17 @@ export const useTipTapEditor = (initialPost?: any, onSave?: () => void) => {
       // Generate slug if not provided
       let finalSlug = slug;
       if (!finalSlug.trim()) {
-        finalSlug = title
+        // Check if title contains Cyrillic characters
+        const hasCyrillic = /[а-яА-ЯёЁ]/.test(title);
+        
+        // If title has Cyrillic characters, transliterate them
+        const processedTitle = hasCyrillic ? transliterate(title) : title;
+        
+        finalSlug = processedTitle
           .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/[^\w\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
           .replace(/^-+|-+$/g, '')
           .substring(0, 50);
       }
@@ -257,21 +267,35 @@ export const useTipTapEditor = (initialPost?: any, onSave?: () => void) => {
     setFeaturedImageUrl(imageUrl);
   };
 
+  // Custom setSlug function that tracks manual edits
+  const handleSlugChange = (newSlug: string) => {
+    setSlug(newSlug);
+    setSlugManuallyEdited(true);
+  };
+
   // Generate slug from title
   useEffect(() => {
-    if (title && !slug && !initialPost?.slug) {
-      // Only auto-generate slug if it's a new post and slug is empty
-      const generatedSlug = title
+    // Only auto-generate slug if it hasn't been manually edited
+    if (title && !slugManuallyEdited) {
+      // Check if title contains Cyrillic characters
+      const hasCyrillic = /[а-яА-ЯёЁ]/.test(title);
+      
+      // If title has Cyrillic characters, transliterate them
+      const processedTitle = hasCyrillic ? transliterate(title) : title;
+      
+      const generatedSlug = processedTitle
         .toLowerCase()
-        .replace(/[^\w\s]/gi, '')
-        .replace(/\s+/g, '-');
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '');
       setSlug(generatedSlug);
     }
-  }, [title, slug, initialPost?.slug]);
+  }, [title, slugManuallyEdited]);
 
   return {
     title, setTitle,
-    slug, setSlug,
+    slug, setSlug: handleSlugChange,
     excerpt, setExcerpt,
     tipTapContent,
     featuredImageUrl,

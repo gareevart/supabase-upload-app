@@ -4,8 +4,8 @@ import PostEditor from "@/app/components/blog/PostEditor"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card"
-import { Skeleton } from "@gravity-ui/uikit"
+import { CardContent, CardHeader, CardTitle } from "@/app/components/ui/card"
+import { Button, Skeleton, Card, Text } from "@gravity-ui/uikit"
 
 export default function NewBlogPost() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
@@ -44,18 +44,15 @@ export default function NewBlogPost() {
     return (
       <div className="container max-w-4xl mx-auto p-4">
         <Card>
-          <CardHeader>
-            <CardTitle>Authentication Required</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>You need to be logged in to create a blog post.</p>
-            <button 
+         <Text variant="display-1">Authentication Required</Text>
+         <Text variant="body-1">You need to be logged in to create a blog post</Text>
+            <Button
+              size="l"
               className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-              onClick={() => router.push("/auth/login?redirect=/blog/new")}
+              onClick={() => router.push("/auth/profile")}
             >
               Log In
-            </button>
-          </CardContent>
+            </Button>
         </Card>
       </div>
     )

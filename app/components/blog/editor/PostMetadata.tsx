@@ -53,7 +53,7 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        <div className="w-[200px]"><Text color="secondary" variant="subheader-1">Заголовок поста</Text></div>
+        <div className="min-w-[180px]"><Text color="secondary" variant="subheader-1">Заголовок поста</Text></div>
         <TextInput
           size="l"
           value={title}
@@ -64,7 +64,7 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
       </div>
 
       <div className="flex gap-2">
-        <div className="w-[200px]"><Text color="secondary" variant="subheader-1">URL поста</Text></div>
+        <div className="min-w-[180px]"><Text color="secondary" variant="subheader-1">URL поста</Text></div>
         <TextInput
           size="l"
           value={slug}
@@ -91,8 +91,8 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
         showGenerationDialog={showGenerationDialog}
         setShowGenerationDialog={setShowGenerationDialog}
       />
-      <div className="flex">
-        <div className="w-[200px]"><Text color="secondary" variant="subheader-1">Краткое описание поста (не обязательно)</Text></div>
+      <div className="flex gap-2">
+        <div className="min-w-[180px]"><Text color="secondary" variant="subheader-1">Описание</Text></div>
         <TextArea
           size="l"
           value={excerpt}

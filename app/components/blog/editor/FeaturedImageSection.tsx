@@ -42,7 +42,7 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
 }) => {
   return (
     <div className="flex gap-2">
-      <div className="w-[200px]"><Text color="secondary" variant="subheader-1">Главное изображение</Text></div>
+      <div className="min-w-[180px]"><Text color="secondary" variant="subheader-1">Обложка</Text></div>
       {featuredImageUrl ? (
         <div className="relative">
           <img
@@ -85,7 +85,7 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
               input.click();
             }}
           >
-            Загрузить изображение
+            Загрузить
           </Button>
           <Button
             size="l"
