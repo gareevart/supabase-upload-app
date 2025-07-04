@@ -1,9 +1,11 @@
 
-import React, { useState } from "react";
-import { Button, Text, TextArea } from '@gravity-ui/uikit';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/components/ui/dialog";
+import React, { useState, useEffect } from "react";
+import { Button, Text, TextArea, Modal, Icon } from '@gravity-ui/uikit';
+import { Xmark } from '@gravity-ui/icons';
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/app/components/ui/tabs";
 import StoredImageGallery from "../StoredImageGallery";
+import { useToast } from "@/hooks/use-toast";
+import { DialogFooter } from "@/app/components/ui/dialog";
 
 interface FeaturedImageSectionProps {
   featuredImageUrl: string | null;
@@ -24,7 +26,7 @@ interface FeaturedImageSectionProps {
 }
 
 const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
-  featuredImageUrl,
+  featuredImageUrl: propFeaturedImageUrl,
   onDeleteImage,
   onUploadImage,
   onGenerateImage,
@@ -40,15 +42,47 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
   showGenerationDialog,
   setShowGenerationDialog
 }) => {
+  // Maintain local state for the featured image URL
+  const [localFeaturedImageUrl, setLocalFeaturedImageUrl] = useState<string | null>(propFeaturedImageUrl);
+  
+  // Update local state when prop changes
+  useEffect(() => {
+    setLocalFeaturedImageUrl(propFeaturedImageUrl);
+  }, [propFeaturedImageUrl]);
+  
+  // Local handler for deleting the image
+  const handleDeleteImage = async () => {
+    setLocalFeaturedImageUrl(null);
+    await onDeleteImage();
+  };
+  
+  // Direct handler for selecting a gallery image
+  const handleSelectGalleryImage = (imageUrl: string) => {
+    console.log("FeaturedImageSection: handleSelectGalleryImage called with URL:", imageUrl);
+    
+    // Update local state immediately
+    setLocalFeaturedImageUrl(imageUrl);
+    console.log("FeaturedImageSection: local state updated with URL:", imageUrl);
+    
+    // Call the parent handler
+    console.log("FeaturedImageSection: calling onSelectGalleryImage with URL:", imageUrl);
+    onSelectGalleryImage(imageUrl);
+    
+    // Close the dialog immediately
+    setShowGenerationDialog(false);
+    console.log("FeaturedImageSection: dialog closed, image selection completed");
+  };
+
   return (
     <div className="flex gap-2">
       <div className="min-w-[180px]"><Text color="secondary" variant="subheader-1">Обложка</Text></div>
-      {featuredImageUrl ? (
-        <div className="relative">
+      {localFeaturedImageUrl ? (
+        <div className="relative featured-image-container">
           <img
-            src={featuredImageUrl}
+            src={localFeaturedImageUrl}
             alt="Featured"
             className="max-h-60 object-contain mx-auto mb-2"
+            onError={(e) => console.error("Image failed to load:", localFeaturedImageUrl)}
           />
           <div className="flex gap-2">
             <Button
@@ -61,7 +95,7 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
             <Button
               size="l"
               view="outlined-danger"
-              onClick={onDeleteImage}
+              onClick={handleDeleteImage}
             >
               Удалить
             </Button>
@@ -108,8 +142,14 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
         isGenerating={isGenerating}
         isUploading={isUploading}
         onGenerateImage={onGenerateImage}
-        onApplyGeneratedImage={onApplyGeneratedImage}
-        onSelectGalleryImage={onSelectGalleryImage}
+        onApplyGeneratedImage={() => {
+          // Apply the generated image to our local state
+          if (generatedImagePreview) {
+            setLocalFeaturedImageUrl(generatedImagePreview);
+            onApplyGeneratedImage();
+          }
+        }}
+        onSelectGalleryImage={handleSelectGalleryImage}
       />
     </div>
   );
@@ -144,12 +184,16 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
   onApplyGeneratedImage,
   onSelectGalleryImage
 }) => {
+  const { toast } = useToast();
   return (
-    <Dialog open={showDialog} onOpenChange={setShowDialog}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Изображение для обложки</DialogTitle>
-        </DialogHeader>
+    <Modal open={showDialog} onClose={() => setShowDialog(false)}>
+      <div className='modal-content'>
+        <div className='top-modal'>
+          <Text variant="subheader-3">Изображение для обложки</Text>
+          <Button size='xl' view='flat' onClick={() => setShowDialog(false)}>
+            <Icon data={Xmark} size={18} />
+          </Button>
+        </div>
 
         <Tabs defaultValue="prompt" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
@@ -159,9 +203,9 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
 
           <TabsContent value="prompt" className="space-y-4 mt-4">
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <Text variant="body-1" className="block mb-2">
                 Опишите желаемое изображение
-              </label>
+              </Text>
               <TextArea
                 value={imagePrompt}
                 onChange={(e) => setImagePrompt(e.target.value)}
@@ -172,7 +216,7 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
 
             {generatedImagePreview && (
               <div className="mt-4">
-                <p className="text-sm font-medium mb-2">Предпросмотр:</p>
+                <Text variant="body-1" className="block mb-2">Предпросмотр:</Text>
                 <div className="relative">
                   <img
                     src={generatedImagePreview}
@@ -191,10 +235,10 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
               </div>
             )}
 
-            <div className="flex justify-end gap-2 mt-4">
+            <DialogFooter>
               <Button view="outlined" size="l" onClick={() => setShowDialog(false)}>
                 Отмена
-              </Button >
+              </Button>
               {generatedImagePreview ? (
                 <Button view="action" size="l" onClick={onApplyGeneratedImage}>
                   Применить
@@ -215,16 +259,29 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
                   ) : "Сгенерировать"}
                 </Button>
               )}
-            </div>
+            </DialogFooter>
           </TabsContent>
 
           <TabsContent value="gallery" className="mt-4">
-            <p className="text-sm mb-4">Выберите изображение из галереи:</p>
-            <StoredImageGallery onImageSelect={onSelectGalleryImage} />
+            <Text variant="body-1" className="block mb-4">Выберите изображение из галереи:</Text>
+            <div className="gallery-container" style={{ minHeight: "300px" }}>
+              <StoredImageGallery
+                onImageSelect={onSelectGalleryImage}
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                view="action"
+                size="l"
+                onClick={() => setShowDialog(false)}
+              >
+                Закрыть
+              </Button>
+            </DialogFooter>
           </TabsContent>
         </Tabs>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </Modal>
   );
 };
 

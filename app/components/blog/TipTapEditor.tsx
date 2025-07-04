@@ -9,7 +9,7 @@ import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
-import { Button, Icon, TextInput,Text, Modal } from '@gravity-ui/uikit';
+import { Button, Icon, TextInput,Text, Modal, Card } from '@gravity-ui/uikit';
 import {Bold, Italic, Picture, Xmark} from '@gravity-ui/icons';
 import "./editor/editor.css";
 
@@ -271,7 +271,8 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   };
 
   return (
-    <div className="tiptap-editor border rounded-md">
+    <Card>
+    <div className="tiptap-editor">
       <div className={`toolbar flex flex-wrap gap-1 p-2 border-b sticky top-0 bg-white z-10 shadow-sm ${isScrolled ? 'scrolled' : ''}`}>
         <Button
           view="flat"
@@ -303,7 +304,10 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         <Button
           view="flat"
           size="m"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          onClick={() => {
+            // Убедимся, что редактор в фокусе и применим стиль к текущему блоку
+            editor.chain().focus().toggleHeading({ level: 1 }).run();
+          }}
           className={editor.isActive('heading', { level: 1 }) ? 'is-active' : ''}
         >
           <Heading1 className="h-4 w-4" />
@@ -312,7 +316,10 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         <Button
           view="flat"
           size="m"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          onClick={() => {
+            // Убедимся, что редактор в фокусе и применим стиль к текущему блоку
+            editor.chain().focus().toggleHeading({ level: 2 }).run();
+          }}
           className={editor.isActive('heading', { level: 2 }) ? 'is-active' : ''}
         >
           <Heading2 className="h-4 w-4" />
@@ -321,7 +328,10 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         <Button
           view="flat"
           size="m"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          onClick={() => {
+            // Убедимся, что редактор в фокусе и применим стиль списка к текущему блоку
+            editor.chain().focus().toggleBulletList().run();
+          }}
           className={editor.isActive('bulletList') ? 'is-active' : ''}
         >
           <List className="h-4 w-4" />
@@ -330,7 +340,10 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         <Button
           view="flat"
           size="m"
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          onClick={() => {
+            // Убедимся, что редактор в фокусе и применим стиль списка к текущему блоку
+            editor.chain().focus().toggleOrderedList().run();
+          }}
           className={editor.isActive('orderedList') ? 'is-active' : ''}
         >
           <ListOrdered className="h-4 w-4" />
@@ -459,7 +472,8 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
       
       {editor && (
         <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
-          <div className="flex bg-white shadow rounded border p-1 gap-1">
+          <Card>
+          <div className="flex shadow BubbleMenu p-1 gap-1">
             <Button
               view="flat"
               size="s"
@@ -495,6 +509,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               <LinkIcon className="h-3 w-3" />
             </Button>
           </div>
+           </Card>
         </BubbleMenu>
       )}
       
@@ -595,6 +610,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         </DialogContent>
       </Dialog>
     </div>
+    </Card>
   );
 };
 

@@ -22,7 +22,7 @@ export const useTipTapEditor = (initialPost?: any, onSave?: () => void) => {
   const [imagePrompt, setImagePrompt] = useState("");
   const [showGenerationDialog, setShowGenerationDialog] = useState(false);
   const [generatedImagePreview, setGeneratedImagePreview] = useState("");
-  const [activeImageTab, setActiveImageTab] = useState("upload");
+  const [activeImageTab, setActiveImageTab] = useState("prompt");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   
@@ -188,7 +188,6 @@ export const useTipTapEditor = (initialPost?: any, onSave?: () => void) => {
       }
       
       const responseData = await response.json();
-      console.log('Image upload response:', responseData);
       
       if (!responseData.data) {
         throw new Error('Invalid response format from upload API');
@@ -263,8 +262,44 @@ export const useTipTapEditor = (initialPost?: any, onSave?: () => void) => {
     setShowGenerationDialog(false);
   };
 
+  // Implementation to set the featured image URL from gallery
   const handleSelectGalleryImage = (imageUrl: string) => {
-    setFeaturedImageUrl(imageUrl);
+    console.log("handleSelectGalleryImage called with URL:", imageUrl);
+    
+    // Make sure we're getting a valid URL
+    if (!imageUrl || typeof imageUrl !== 'string') {
+      console.error("Invalid image URL:", imageUrl);
+      toast({
+        title: "Ошибка",
+        description: "Неверный URL изображения",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      // Set the featured image URL directly
+      console.log("Setting featured image URL to:", imageUrl);
+      setFeaturedImageUrl(imageUrl);
+      
+      // Notify with a toast message for confirmation
+      toast({
+        title: "Изображение установлено",
+        description: "Изображение из галереи установлено как обложка"
+      });
+      
+      // Close the dialog
+      setShowGenerationDialog(false);
+      
+      console.log("Featured image URL updated successfully");
+    } catch (error) {
+      console.error("Error in handleSelectGalleryImage:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось установить изображение как обложку",
+        variant: "destructive"
+      });
+    }
   };
 
   // Custom setSlug function that tracks manual edits

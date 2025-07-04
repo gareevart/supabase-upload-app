@@ -2,13 +2,12 @@
 
 import { useParams } from "next/navigation"
 import PostEditor from "@/app/components/blog/PostEditor"
-import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card"
+import { CardContent, CardHeader, CardTitle } from "@/app/components/ui/card"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import { Skeleton } from "@gravity-ui/uikit"
-import { isTipTapContent } from "@/lib/tiptapConverter"
+import { Card, Skeleton } from "@gravity-ui/uikit"
 
 export default function EditBlogPost() {
   const params = useParams<{ id: string }>()
@@ -71,14 +70,7 @@ export default function EditBlogPost() {
   if (isAuthorized === null || post === null) {
     return (
       <div className="container max-w-4xl mx-auto p-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Loading...</CardTitle>
-          </CardHeader>
-          <CardContent>
              <Skeleton  className="h-96 w-full"/>
-          </CardContent>
-        </Card>
       </div>
     )
   }

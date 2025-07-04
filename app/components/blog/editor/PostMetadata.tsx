@@ -53,7 +53,7 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        <div className="min-w-[180px]"><Text color="secondary" variant="subheader-1">Заголовок поста</Text></div>
+        <div className="min-w-[180px]"><Text color="secondary" variant="subheader-1">Заголовок</Text></div>
         <TextInput
           size="l"
           value={title}
@@ -64,12 +64,12 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
       </div>
 
       <div className="flex gap-2">
-        <div className="min-w-[180px]"><Text color="secondary" variant="subheader-1">URL поста</Text></div>
+        <div className="min-w-[180px]"><Text color="secondary" variant="subheader-1">URL</Text></div>
         <TextInput
           size="l"
           value={slug}
           onChange={(e) => setSlug(e.target.value)}
-          placeholder="url-posta"
+          placeholder="slug-url"
           className="text-sm font-mono"
         />
       </div>
