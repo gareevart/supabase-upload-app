@@ -9,6 +9,7 @@ import { ToastProvider } from '@/hooks/use-toast';
 import { Toaster } from './components/ui/toaster';
 import Navigation from './components/Navigation/Navigation';
 import { AuthProvider } from './contexts/AuthContext';
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 import '@gravity-ui/uikit/styles/styles.css';
 import "@/styles/globals.css";
@@ -130,6 +131,7 @@ export default function RootLayout({
                 <main className="main-content">
                   {children}
                   <Analytics/>
+                  <SpeedInsights/>
                 </main>
               </ToastProvider>
             </ThemeWrapper>
