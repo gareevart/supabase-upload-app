@@ -443,7 +443,7 @@ const Profile = () => {
                     </Card>
                     <div className="subscribe-view pb2">
                         <Text variant="body-2">Рассылка</Text>
-                        <DefinitionList contentMaxWidth={400} responsive={true}>
+                        <DefinitionList responsive={true} direction='vertical' className="responsive-definition-list">
                             <DefinitionList.Item name="Status">
                                 {subscription?.subscribe_status ? 'Subscribed' : 'Unsubscribed'}
                             </DefinitionList.Item>

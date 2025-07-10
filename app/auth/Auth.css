@@ -123,11 +123,13 @@ p {
 .profile {
     display: flex;
     flex-direction: column;
-    min-width: fit-content;
     align-items: flex-start;
     gap: var(--g-spacing-5);
     max-width: 600px;
+    width: 100%;
     margin: 0 auto;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 .g-card {
@@ -183,24 +185,36 @@ p {
     width: 100%;
     max-width: 100%;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 /* Ensure DefinitionList fits on mobile screens */
 .responsive-definition-list {
     width: 100%;
+    max-width: 100%;
     overflow-wrap: break-word;
     word-wrap: break-word;
     word-break: break-word;
+    box-sizing: border-box;
 }
 
 .responsive-definition-list a {
     word-break: break-all;
+    max-width: 100%;
+    display: inline-block;
 }
 
 @media (max-width: 480px) {
+    .profile {
+        padding: 0 16px;
+        max-width: calc(100vw - 32px);
+        margin: 0 auto;
+    }
+    
     .profile-view {
         flex-direction: column;
         width: 100%;
+        max-width: 100%;
     }
     
     .profile-avatar {
@@ -208,20 +222,54 @@ p {
         height: 60px !important;
     }
     
+    .responsive-card {
+        padding: 12px;
+        margin: 0;
+        max-width: 100%;
+    }
+    
     /* Adjust DefinitionList for mobile */
     .g-definition-list__item {
         flex-direction: column !important;
         align-items: flex-start !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
     
     .g-definition-list__item-name {
         margin-bottom: 4px !important;
         padding-right: 0 !important;
+        width: 100% !important;
     }
     
     .g-definition-list__item-content {
         width: 100% !important;
         max-width: 100% !important;
+        word-break: break-all;
+        overflow-wrap: break-word;
+    }
+    
+    /* Force text inputs and buttons to fit */
+    .profile-field input,
+    .profile-field textarea {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    .profile-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .profile-actions button {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .subscribe-view {
+        width: 100%;
+        max-width: 100%;
     }
 }
 

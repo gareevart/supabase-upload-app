@@ -2,17 +2,24 @@
 
 import { Text, Icon, Link } from '@gravity-ui/uikit';
 import { Globe } from '@gravity-ui/icons';
-import Image from 'next/image';
+import GradientHoverImage from './components/GradientHoverImage';
 
 export default function Home() {
+
   return (
     <div className="page-container">
       <div className="content-container">
         <div className="text-container">
           <Text className="home-title" variant="display-1">
             Dmitrii Gareev is a Product Designer at
-            <Image src="/infra-logo.svg" alt="Infra logo"
-            className='infra-logo' width={36} height={36} priority />
+            <GradientHoverImage 
+              src="/infra-logo.svg" 
+              alt="Infra logo"
+              className='infra-logo' 
+              width={36} 
+              height={36} 
+              priority 
+            />
             Yandex Infrastructure. I work at the intersection of product design and AI, helping shape internal tools for developers. My focus is on making complex systems feel simple — designing scalable, intuitive interfaces that adapt to how people actually work.
           </Text>
         </div>

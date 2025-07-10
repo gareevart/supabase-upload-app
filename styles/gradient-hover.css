@@ -1,0 +1,11 @@
+/* Градиентный эффект при ховере - теперь управляется через GSAP */
+
+/* Стили для изменения цвета ссылок при активном градиенте */
+body.gradient-active .links-container .link-item {
+  color: var(--g-color-private-white-600) !important;
+  transition: color 0.3s ease;
+}
+
+body.gradient-active .links-container .link-item:hover {
+  color: var(--g-color-private-white-800) !important;
+}
