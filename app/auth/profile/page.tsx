@@ -30,6 +30,8 @@ interface Profile {
     website: string | null;
     theme: string | null;
     role: string | null;
+    daily_image_quota_remaining?: number;
+    quota_last_updated?: string;
 }
 
 interface Subscription {
@@ -49,6 +51,8 @@ const Profile = () => {
     const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [remainingGenerations, setRemainingGenerations] = useState(10);
+    const [dailyQuota, setDailyQuota] = useState('10/10 remaining today');
     const { add } = useToaster();
     const router = useRouter();
 
@@ -125,6 +129,46 @@ const Profile = () => {
         
         if (mounted) {
             fetchUserAndProfile();
+            
+            // Fetch quota when user changes
+            if (user) {
+                const fetchQuota = async () => {
+                    try {
+                        const { data, error } = await supabase
+                            .from('profiles')
+                            .select('daily_image_quota_remaining, quota_last_updated')
+                            .eq('id', user.id)
+                            .single();
+
+                        if (!error && data) {
+                            const profile = data as unknown as { daily_image_quota_remaining: number, quota_last_updated: string };
+                            const today = new Date().toISOString().split('T')[0];
+                            const lastUpdated = new Date(profile.quota_last_updated).toISOString().split('T')[0];
+
+                            if (lastUpdated === today) {
+                                setDailyQuota(`${profile.daily_image_quota_remaining}/10 remaining today`);
+                                return;
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error fetching quota:', err);
+                    }
+
+                    // Fallback to localStorage
+                    const quotaData = localStorage.getItem(`yaart_quota_${user.id}`);
+                    if (quotaData) {
+                        const { lastUpdated, count } = JSON.parse(quotaData);
+                        const today = new Date().toISOString().split('T')[0];
+                        if (lastUpdated.split('T')[0] === today) {
+                            setDailyQuota(`${10 - count}/10 remaining today`);
+                            return;
+                        }
+                    }
+                    setDailyQuota('10/10 remaining today');
+                };
+
+                fetchQuota();
+            }
         }
     }, [mounted, user]);
 
@@ -456,6 +500,14 @@ const Profile = () => {
                         >
                             {subscription?.subscribe_status ? 'Unsubscribe' : 'Subscribe'}
                         </Button>
+                        
+                        {user && (
+                            <DefinitionList responsive={true} direction='vertical' className="responsive-definition-list">
+                                <DefinitionList.Item name="Image Generations">
+                                    <Text>{dailyQuota}</Text>
+                                </DefinitionList.Item>
+                            </DefinitionList>
+                        )}
                     </div>
                     <div className="profile-actions">
                         <Button size="l" view="action" onClick={() => setIsEditing(true)}>
