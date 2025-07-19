@@ -339,8 +339,9 @@ const Profile = () => {
                     </div>
                     </Card>
                     <div className="subscribe-view pb2">
-                        <Text variant="body-2">Рассылка</Text>
-                        <DefinitionList contentMaxWidth={400} responsive={true}>
+                        <Card theme="normal" size="l">
+                            <Text variant="body-2">Рассылка</Text>
+                            <DefinitionList contentMaxWidth={400} responsive={true}>
                             <DefinitionList.Item name="Status">
                                 {subscription?.subscribe_status ? 'Subscribed' : 'Unsubscribed'}
                             </DefinitionList.Item>
@@ -353,6 +354,7 @@ const Profile = () => {
                         >
                             {subscription?.subscribe_status ? 'Unsubscribe' : 'Subscribe'}
                         </Button>
+                        </Card>
                     </div>
                     <div className="profile-actions">
                         <Button size="l" view="action" onClick={() => setIsEditing(true)}>

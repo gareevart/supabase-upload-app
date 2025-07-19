@@ -40,6 +40,22 @@ input, textarea, select {
   max-width: 100%;
 }
 
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.875em;
+  background-color: var(--g-color-base-float-announcement);
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+a {
+  color: var(--g-color-text-link);
+  text-decoration: none;
+}
+
 @media screen and (max-width: 768px) {
   html {
     -webkit-text-size-adjust: none;

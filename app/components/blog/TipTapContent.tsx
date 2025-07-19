@@ -67,7 +67,7 @@ const TipTapContent: React.FC<TipTapContentProps> = ({ content, className = '' }
     <>
       <div
         ref={contentRef}
-        className={`tiptap-content prose prose-lg max-w-none ${className}`}
+        className={`tiptap-content mt-4 prose prose-lg max-w-none ${className}`}
       />
       
       {/* Add global styles for the content */}
@@ -81,12 +81,13 @@ const TipTapContent: React.FC<TipTapContentProps> = ({ content, className = '' }
         }
         
         .tiptap-content a {
-          color: #3b82f6;
-          text-decoration: underline;
+          color: var(--g-color-text-link);
+          text-decoration: none;
+          font-size: 1rem;
         }
         
         .tiptap-content a:hover {
-          text-decoration: none;
+          text-decoration: underline;
         }
       `}</style>
     </>

@@ -228,7 +228,8 @@ export default function SearchComponent({
   return (
     <div className={`search-container ${className}`}>
       <TextInput
-        size="xl"
+        size="l"
+        hasClear={true}
         placeholder={placeholder}
         value={searchQuery}
         onUpdate={(value) => {

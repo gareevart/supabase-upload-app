@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from '@tiptap/react';
+import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { normalizeTipTapContent } from '@/lib/tiptapConverter';
 import Image from '@tiptap/extension-image';
@@ -9,18 +9,17 @@ import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
-import { Button, Icon, TextInput,Text, Modal, Card } from '@gravity-ui/uikit';
-import {Bold, Italic, Picture, Xmark} from '@gravity-ui/icons';
+import { Button, Icon, TextInput, Text, Modal, Card, DropdownMenu } from '@gravity-ui/uikit';
+import {Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Picture, Xmark, ChevronDown, Heading1, Heading2, Heading3, Heading4} from '@gravity-ui/icons';
 import "./editor/editor.css";
 
 // Yandex Cloud Object Storage bucket name
 const BUCKET_NAME = 'public-gareevde';
 import {
-  Underline as UnderlineIcon, AlignLeft, AlignCenter,
-  AlignRight, List, ListOrdered, Heading1, Heading2, Image as ImageIcon,
-  Link as LinkIcon, Code, Undo, Redo
+  AlignLeft, AlignCenter,
+  AlignRight, List as ListIcon, ListOrdered, Code, Undo, Redo
 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/app/components/ui/dialog';
+import { DialogFooter } from '@/app/components/ui/dialog';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -38,7 +37,6 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [linkText, setLinkText] = useState('');
-  const [open, setOpen] = useState(false);
   
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
@@ -50,7 +48,11 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        heading: {
+          levels: [1, 2, 3, 4],
+        },
+      }),
       Image.configure({
         inline: true,
         allowBase64: true,
@@ -60,9 +62,6 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
       }),
       Link.configure({
         openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-blue-500 underline',
-        },
       }),
       Placeholder.configure({
         placeholder,
@@ -115,6 +114,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
 
   if (!editor) {
     return null;
@@ -223,6 +223,27 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
     }
   };
 
+  const openLinkDialog = () => {
+    // Check if cursor is on an existing link
+    const { href } = editor.getAttributes('link');
+    const selectedText = editor.state.doc.textBetween(
+      editor.state.selection.from,
+      editor.state.selection.to
+    );
+    
+    if (href) {
+      // If editing existing link, populate fields
+      setLinkUrl(href);
+      setLinkText(selectedText || '');
+    } else {
+      // If creating new link, clear fields but keep selected text
+      setLinkUrl('');
+      setLinkText(selectedText || '');
+    }
+    
+    setIsLinkDialogOpen(true);
+  };
+
   const addLink = () => {
     try {
       if (!linkUrl) {
@@ -270,10 +291,59 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
     }
   };
 
+  // Get current heading level or return null if not a heading
+  const getCurrentHeadingLevel = () => {
+    for (let level = 1; level <= 4; level++) {
+      if (editor.isActive('heading', { level })) {
+        return level;
+      }
+    }
+    return null;
+  };
+
+  // Get heading icon based on level
+  const getHeadingIcon = (level: number | null) => {
+    switch (level) {
+      case 1: return <Icon data={Heading1} size={16} />;
+      case 2: return <Icon data={Heading2} size={16}/>;
+      case 3: return <Icon data={Heading3} size={16} />;
+      case 4: return <Icon data={Heading4} size={16} />;
+      default: return <Icon data={Heading1} size={16} />;
+    }
+  };
+
+  // Handle heading selection
+  const handleHeadingSelect = (level: number) => {
+    editor.chain().focus().toggleHeading({ level: level as 1 | 2 | 3 | 4 | 5 | 6 }).run();
+  };
+
+  const headingMenuItems = [
+    {
+      iconStart: <Icon size={16} data={Heading1}/>,
+      action: () => handleHeadingSelect(1),
+      text: 'Heading 1',
+    },
+    {
+      iconStart: <Icon size={16} data={Heading2}/>,
+      action: () => handleHeadingSelect(2),
+      text: 'Heading 2',
+    },
+    {
+      action: () => handleHeadingSelect(3),
+      text: 'Heading 3',
+      iconStart: <Icon size={16} data={Heading3}/>,
+    },
+    {
+      action: () => handleHeadingSelect(4),
+      text: 'Heading 4',
+      iconStart: <Icon size={16} data={Heading4}/>,
+    },
+  ];
+
   return (
     <Card>
     <div className="tiptap-editor">
-      <div className={`toolbar flex flex-wrap gap-1 p-2 border-b sticky top-0 bg-white z-10 shadow-sm ${isScrolled ? 'scrolled' : ''}`}>
+      <div className={`toolbar flex flex-wrap gap-1 p-2 border-b sticky top-0 z-10 shadow-sm ${isScrolled ? 'scrolled' : ''}`}>
         <Button
           view="flat"
           size="m"
@@ -298,32 +368,24 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           onClick={() => editor.chain().focus().toggleUnderline().run()}
           className={editor.isActive('underline') ? 'is-active' : ''}
         >
-          <UnderlineIcon className="h-4 w-4" />
+          <Icon data={UnderlineIcon} size={16} />
+          
         </Button>
         
-        <Button
-          view="flat"
-          size="m"
-          onClick={() => {
-            // Убедимся, что редактор в фокусе и применим стиль к текущему блоку
-            editor.chain().focus().toggleHeading({ level: 1 }).run();
-          }}
-          className={editor.isActive('heading', { level: 1 }) ? 'is-active' : ''}
-        >
-          <Heading1 className="h-4 w-4" />
-        </Button>
-        
-        <Button
-          view="flat"
-          size="m"
-          onClick={() => {
-            // Убедимся, что редактор в фокусе и применим стиль к текущему блоку
-            editor.chain().focus().toggleHeading({ level: 2 }).run();
-          }}
-          className={editor.isActive('heading', { level: 2 }) ? 'is-active' : ''}
-        >
-          <Heading2 className="h-4 w-4" />
-        </Button>
+        <DropdownMenu
+          items={headingMenuItems}
+          renderSwitcher={(props) => (
+            <Button
+              {...props}
+              view="flat"
+              size="m"
+              className={getCurrentHeadingLevel() ? 'is-active' : ''}
+            >
+              {getHeadingIcon(getCurrentHeadingLevel())}
+              <Icon data={ChevronDown} size={16} />
+            </Button>
+          )}
+        />
         
         <Button
           view="flat"
@@ -334,7 +396,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           }}
           className={editor.isActive('bulletList') ? 'is-active' : ''}
         >
-          <List className="h-4 w-4" />
+          <ListIcon className="h-4 w-4" />
         </Button>
         
         <Button
@@ -388,9 +450,10 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         <Button
           view="flat"
           size="m"
-          onClick={() => setIsLinkDialogOpen(true)}
+          onClick={openLinkDialog}
+          className={editor.isActive('link') ? 'is-active' : ''}
         >
-          <LinkIcon className="h-4 w-4" />
+          <Icon data={LinkIcon} size={16} />
         </Button>
         
         <Button
@@ -408,14 +471,14 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           }}
           disabled={isUploading}
         >
-          <ImageIcon className="h-4 w-4" />
+          <Icon data={Picture} size={16} />
           {isUploading && <span className="ml-2">Uploading...</span>}
         </Button>
         
         <Button
           view="flat"
           size="m"
-          onClick={() => setOpen(true)}
+          onClick={() => setIsImageDialogOpen(true)}
         >
           <Icon data={Picture} size={16} />
           URL
@@ -468,6 +531,34 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           pointer-events: none;
           height: 0;
         }
+        
+        .tiptap-editor-content .ProseMirror h1 {
+          font-size: 2rem;
+          font-weight: 700;
+          line-height: 1.2;
+          margin: 1.5rem 0 1rem 0;
+        }
+        
+        .tiptap-editor-content .ProseMirror h2 {
+          font-size: 1.5rem;
+          font-weight: 600;
+          line-height: 1.3;
+          margin: 1.25rem 0 0.75rem 0;
+        }
+        
+        .tiptap-editor-content .ProseMirror h3 {
+          font-size: 1.25rem;
+          font-weight: 600;
+          line-height: 1.4;
+          margin: 1rem 0 0.5rem 0;
+        }
+        
+        .tiptap-editor-content .ProseMirror h4 {
+          font-size: 1.125rem;
+          font-weight: 500;
+          line-height: 1.4;
+          margin: 0.75rem 0 0.5rem 0;
+        }
       `}</style>
       
       {editor && (
@@ -504,7 +595,8 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             <Button
               view="flat"
               size="s"
-              onClick={() => setIsLinkDialogOpen(true)}
+              onClick={openLinkDialog}
+              className={editor.isActive('link') ? 'is-active' : ''}
             >
               <LinkIcon className="h-3 w-3" />
             </Button>
@@ -562,15 +654,16 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           </div>
       </Modal>
       
-      {/* Image URL Dialog */}
-      <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
-        <DialogContent aria-describedby="image-dialog-description">
-          <DialogHeader>
-            <DialogTitle>Add Image from URL</DialogTitle>
-          </DialogHeader>
-          <p id="image-dialog-description" className="sr-only">
-            Add an image to your content. Enter the image URL and alt text for accessibility.
-          </p>
+      {/* Image URL Modal */}
+      <Modal open={isImageDialogOpen} onClose={() => setIsImageDialogOpen(false)}>
+        <div className='modal-content'>
+        <div className='top-modal'>
+          <Text variant="subheader-3">Add Image from URL</Text>
+          <Button size='xl' view='flat' onClick={() => setIsImageDialogOpen(false)}>
+          <Icon data={Xmark} size={18} /></Button>
+        </div>
+        
+        <Text variant="body-1">Add an image to your content. Enter the image URL and alt text for accessibility.</Text>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Text variant="body-1">Image URL</Text>
@@ -582,7 +675,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               />
             </div>
             <div className="grid gap-2">
-               <Text variant="body-1">Alt Text</Text>
+              <Text variant="body-1">Alt Text</Text>
               <TextInput
                 id="image-alt"
                 value={imageAlt}
@@ -607,8 +700,8 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               Add Image
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+      </Modal>
     </div>
     </Card>
   );

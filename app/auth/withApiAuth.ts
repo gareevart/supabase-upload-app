@@ -10,16 +10,18 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 export const withApiAuth = (handler: (req: NextRequest, user: { id: string }) => Promise<NextResponse>) => {
   return async (req: NextRequest) => {
     try {
-      // Log all request headers for debugging
-      const headers: Record<string, string> = {};
-      req.headers.forEach((value, key) => {
-        headers[key] = value;
-      });
-      console.log('Auth middleware headers:', {
-        ...headers,
-        timestamp: new Date().toISOString(),
+      // Enhanced debug logging
+      console.log('Auth middleware request details:', {
+        url: req.url,
+        method: req.method,
         path: req.nextUrl.pathname,
-        method: req.method
+        timestamp: new Date().toISOString(),
+        headers: Object.fromEntries(req.headers.entries()),
+        cookies: req.cookies.getAll().map(c => ({ name: c.name, value: c.value })),
+        env: {
+          NODE_ENV: process.env.NODE_ENV,
+          SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL
+        }
       });
 
       // Get user with automatic token refresh

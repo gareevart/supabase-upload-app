@@ -4,7 +4,7 @@ import { ScrollArea } from "@/app/components/ui/scroll-area";
 import { DialogFooter } from "@/app/components/ui/dialog";
 import { Badge } from "@/app/components/ui/badge";
 import ReactMarkdown from 'react-markdown';
-import {Button, TextArea, Icon, Modal, Text, Spin, useToaster } from '@gravity-ui/uikit';
+import {Button, TextArea, Icon, Modal, Text, Spin, Label, useToaster } from '@gravity-ui/uikit';
 import {Gear, Stop, Copy, ArrowUturnCwLeft } from '@gravity-ui/icons';
 import "./ChatInterface.css";
 
@@ -123,9 +123,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
           <h2 className="text-xl font-bold">{chat.title}</h2>
           {chat.tokens_used && (
             <div className="text-xs text-muted-foreground mt-1 flex items-center">
-              <Badge variant="outline" className="text-xs">
-                Использовано токенов: {chat.tokens_used}
-              </Badge>
+              <Label theme="unknown" value={chat.tokens_used.toString()}>Использовано токенов</Label>
             </div>
           )}
         </div>

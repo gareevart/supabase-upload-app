@@ -155,7 +155,7 @@ export default function BlogPostPage({ params }: { params: any }) {
 
   if (isLoading) {
     return (
-      <div className="container max-w-4xl mx-auto mt-6 p-4">
+      <div className="container max-w-4xl mx-auto mt-6">
         <div>
           <Skeleton className="h-10 w-3/4 mb-4"/>
           <Skeleton className="h-4 mb-6"/>

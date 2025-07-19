@@ -45,6 +45,7 @@ next-env.d.ts
 GOOGLE_OAUTH_SETUP.md
 
 # ML&AI
+changelog.md
 .rules
 .codeassistant/prompts
 .continue/mcpServers/new-mcp-server.yaml

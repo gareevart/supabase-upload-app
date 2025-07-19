@@ -13,14 +13,15 @@ import {
     TextArea,
     TextInput,
     useToaster,
+    Theme,
+    useThemeValue,
 } from '@gravity-ui/uikit';
 import withAuth from '../withAuth';
-import FileUploader from '../components/FileUploader';
+import YandexFileUploader from '../components/YandexFileUploader';
 import AuthDebugger from '../components/AuthDebugger';
 import { useAuth } from '@/app/contexts/AuthContext';
-import Link from 'next/link';
+import { ThemeSelector } from '@/app/profile/ThemeSelector';
 import '../Auth.css';
-// CSS import removed as it's now in the root layout
 
 interface Profile {
     name: string | null;
@@ -53,6 +54,8 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [remainingGenerations, setRemainingGenerations] = useState(10);
     const [dailyQuota, setDailyQuota] = useState('10/10 remaining today');
+    const currentTheme = useThemeValue();
+    const [selectedTheme, setSelectedTheme] = useState<Theme>(currentTheme);
     const { add } = useToaster();
     const router = useRouter();
 
@@ -102,6 +105,38 @@ const Profile = () => {
                 autoHiding: 5000,
             });
         }
+    };
+
+    // Initialize theme from profile when it loads
+    useEffect(() => {
+        if (profile) {
+            setSelectedTheme((profile.theme as Theme) || currentTheme);
+        }
+    }, [profile, currentTheme]);
+
+    const handleThemeChange = (theme: Theme) => {
+        setSelectedTheme(theme);
+        setProfile(prev => prev ? { ...prev, theme } : null);
+
+        // Save theme to localStorage
+        localStorage.setItem('app-theme', theme);
+
+        // Dispatch a storage event to notify other components
+        // Use both the standard storage event and a custom event for same-window communication
+        const storageEvent = new StorageEvent('storage', {
+            key: 'app-theme',
+            newValue: theme,
+            oldValue: localStorage.getItem('app-theme'),
+            storageArea: localStorage,
+            url: window.location.href
+        });
+        
+        window.dispatchEvent(storageEvent);
+        
+        // Also dispatch a custom event as a fallback
+        window.dispatchEvent(new CustomEvent('theme-change', {
+            detail: { theme }
+        }));
     };
 
     useEffect(() => {
@@ -255,20 +290,60 @@ const Profile = () => {
         if (!user || !profile) return;
 
         setIsSaving(true);
-        const { error } = await supabase
-            .from('profiles')
-            .update({
-                name: profile.name,
-                username: profile.username,
-                avatar_url: profile.avatar_url,
-                bio: profile.bio,
-                website: profile.website,
-            })
-            .eq('id', user.id);
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    name: profile.name,
+                    username: profile.username,
+                    avatar_url: profile.avatar_url,
+                    bio: profile.bio,
+                    website: profile.website,
+                    theme: selectedTheme,
+                })
+                .eq('id', user.id);
 
-        setIsSaving(false);
-        if (!error) {
+            if (error) throw error;
+
+            // Save theme to localStorage
+            localStorage.setItem('app-theme', selectedTheme);
+
+            // Dispatch a storage event to notify other components
+            const storageEvent = new StorageEvent('storage', {
+                key: 'app-theme',
+                newValue: selectedTheme,
+                oldValue: localStorage.getItem('app-theme'),
+                storageArea: localStorage,
+                url: window.location.href
+            });
+            
+            window.dispatchEvent(storageEvent);
+            
+            // Also dispatch a custom event as a fallback
+            window.dispatchEvent(new CustomEvent('theme-change', {
+                detail: { theme: selectedTheme }
+            }));
+
+            add({
+                name: 'profile-success',
+                title: 'Успех',
+                content: 'Профиль успешно обновлен',
+                theme: 'success',
+                autoHiding: 5000,
+            });
+
             setIsEditing(false);
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            add({
+                name: 'profile-error',
+                title: 'Ошибка',
+                content: 'Не удалось обновить профиль',
+                theme: 'danger',
+                autoHiding: 5000,
+            });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -294,36 +369,30 @@ const Profile = () => {
 
             {isEditing ? (
                 <>
-                    <div className="profile-field">
+                    <div className="flex-col profile-field w-full">
                         <Text variant="body-2">Name</Text>
                         <TextInput
+                            size='l'
                             value={profile.name || ''}
                             onChange={(e) => setProfile({...profile, name: e.target.value})}
                         />
                     </div>
 
-                    <div className="profile-field">
+                    <div className="flex-col profile-field w-full">
                         <Text variant="body-2">Username</Text>
                         <TextInput
+                            size='l'
                             value={profile.username || ''}
                             onChange={(e) => setProfile({...profile, username: e.target.value})}
                         />
                     </div>
 
-                    <div className="profile-field">
+                        <div className="flex-col profile-field w-full">
                         <Text variant="body-2">Avatar</Text>
-                        <FileUploader
-                            bucketName="avatars"
+                        <YandexFileUploader
                             folderPath="profiles"
-                            onUploadComplete={(url) => {
+                            onUploadComplete={(url: string) => {
                                 setProfile({...profile, avatar_url: url});
-                                add({
-                                    name: 'upload-avatar-success',
-                                    title: 'Успех',
-                                    content: 'Аватар успешно загружен',
-                                    theme: 'success',
-                                    autoHiding: 5000,
-                                });
                             }}
                             existingFileUrl={profile.avatar_url || ''}
                             acceptedFileTypes="image/*"
@@ -331,29 +400,7 @@ const Profile = () => {
                             allowDelete={true}
                             onDeleteComplete={async () => {
                                 try {
-                                    // 1. Delete file from storage if it exists
-                                    if (profile.avatar_url) {
-                                        const filePath = profile.avatar_url.split('/').pop();
-                                        if (filePath) {
-                                            const { error: storageError } = await supabase.storage
-                                                .from('avatars')
-                                                .remove([filePath]);
-                                            
-                                            if (storageError) {
-                                                console.error('Error removing file from storage:', storageError);
-                                                add({
-                                                    name: 'delete-avatar-error',
-                                                    title: 'Ошибка',
-                                                    content: 'Не удалось удалить файл аватара: ' + storageError.message,
-                                                    theme: 'danger',
-                                                    autoHiding: 5000,
-                                                });
-                                                return;
-                                            }
-                                        }
-                                    }
-                                    
-                                    // 2. Update profile in database directly
+                                    // Update profile in database to remove avatar_url
                                     if (!user) return;
                                     
                                     const { error: updateError } = await supabase
@@ -375,20 +422,8 @@ const Profile = () => {
                                         return;
                                     }
                                     
-                                    // 3. Update local state only after successful database update
+                                    // Update local state
                                     setProfile({...profile, avatar_url: null});
-                                    
-                                    // 4. Show success message
-                                    add({
-                                        name: 'delete-avatar-success',
-                                        title: 'Успех',
-                                        content: 'Аватар удален',
-                                        theme: 'danger',
-                                        autoHiding: 5000,
-                                    });
-                                    
-                                    // 5. Exit edit mode
-                                    setIsEditing(false);
                                 } catch (err) {
                                     console.error('Unexpected error during avatar deletion:', err);
                                     add({
@@ -406,19 +441,30 @@ const Profile = () => {
                         </Text>
                     </div>
 
-                    <div className="profile-field">
-                        <Text variant="body-2">Bio:</Text>
+                    <div className="flex-col profile-field w-full">
+                        <Text variant="body-2">Bio</Text>
                         <TextArea
+                            size='l'
                             value={profile.bio || ''}
                             onChange={(e) => setProfile({...profile, bio: e.target.value})}
                         />
                     </div>
 
-                    <div className="profile-field">
-                        <Text variant="body-2">Site:</Text>
+                    <div className="flex-col profile-field w-full">
+                        <Text variant="body-2">Site</Text>
                         <TextInput
+                            size='l'
+                            placeholder='https://mamkin-hacker.io'
                             value={profile.website || ''}
                             onChange={(e) => setProfile({...profile, website: e.target.value})}
+                        />
+                    </div>
+
+                    <div className="flex-col profile-field">
+                        <Text variant="body-2" color="primary">Theme</Text>
+                        <ThemeSelector
+                            value={selectedTheme}
+                            onChange={handleThemeChange}
                         />
                     </div>
 
@@ -440,7 +486,7 @@ const Profile = () => {
                 <>
                     <Card theme="normal" size="l" className="responsive-card">
                     <div className="profile-view pb2">
-                    <Text variant='subheader-3'>Basic Information</Text>
+                    <Text variant='subheader-3'>User</Text>
                         <div className="flex-col" style={{ width: '100%' }}>
                         {profile.avatar_url && (
                             <img 
@@ -484,9 +530,18 @@ const Profile = () => {
                             </div>
                         </div>
                     </div>
+                    <div className="profile-actions">
+                    <Button size="l" view="action" onClick={() => setIsEditing(true)}>
+                        Edit
+                    </Button>
+                    <Button size="l" view="normal" onClick={handleLogout}>
+                        Logout
+                    </Button>
+                    </div>
                     </Card>
-                    <div className="subscribe-view pb2">
-                        <Text variant="body-2">Рассылка</Text>
+                    <Card theme="normal" size="l" className="responsive-card">
+                    <div className="subscribe-view">
+                        <Text variant='subheader-3'>Email Newsletter</Text>
                         <DefinitionList responsive={true} direction='vertical' className="responsive-definition-list">
                             <DefinitionList.Item name="Status">
                                 {subscription?.subscribe_status ? 'Subscribed' : 'Unsubscribed'}
@@ -499,24 +554,22 @@ const Profile = () => {
                             loading={isSubscriptionLoading}
                         >
                             {subscription?.subscribe_status ? 'Unsubscribe' : 'Subscribe'}
-                        </Button>
-                        
+                        </Button>   
+                    </div>
+                    </Card>
+                    <Card theme="normal" size="l" className="responsive-card">                     
+                    <div className="subscribe-view">
+                        <Text variant="subheader-3">AI Image Generation</Text>
+                      
                         {user && (
                             <DefinitionList responsive={true} direction='vertical' className="responsive-definition-list">
-                                <DefinitionList.Item name="Image Generations">
+                                <DefinitionList.Item name="Daily Limit">
                                     <Text>{dailyQuota}</Text>
                                 </DefinitionList.Item>
                             </DefinitionList>
                         )}
                     </div>
-                    <div className="profile-actions">
-                        <Button size="l" view="action" onClick={() => setIsEditing(true)}>
-                            Edit
-                        </Button>
-                        <Button size="l" view="normal" onClick={handleLogout}>
-                            Logout
-                        </Button>
-                    </div>
+                    </Card>
                 </>
             )}
             

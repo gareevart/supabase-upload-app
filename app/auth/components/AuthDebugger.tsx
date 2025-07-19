@@ -99,7 +99,7 @@ const AuthDebugger = () => {
 
   return (
     <div style={{ marginTop: '20px', maxWidth: '400px' }}>
-      <Card theme="normal">
+      <Card theme="normal" size="l" className="responsive-card"> 
         <div style={{ padding: '10px' }}>
           <Text variant="subheader-2" color="secondary">
             🔧 Auth Debugger (Dev Mode)

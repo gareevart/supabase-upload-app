@@ -2,6 +2,7 @@
 import React from 'react';
 import { Flex, Text, Button, Alert, Spin, Label, TextArea, useToaster, Skeleton } from '@gravity-ui/uikit';
 import { supabase } from '@/lib/supabase';
+import CustomBreadcrumbs from '@/app/components/Breadcrumbs/Breadcrumbs';
 import { uploadFile } from '@/lib/yandexStorage';
 
 type ProfileWithQuota = {
@@ -11,6 +12,10 @@ type ProfileWithQuota = {
 };
 
 const Yaart = () => {
+  const segmentLabels = {
+    'projects': 'Projects',
+    'yaart': 'Image Generator'
+  };
     const [prompt, setPrompt] = React.useState('');
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState('');
@@ -282,6 +287,7 @@ const Yaart = () => {
     return (
         <div className="page-container">
           <div className="content-container">
+            <CustomBreadcrumbs segmentLabels={segmentLabels}/>
             <Flex direction="column" gap={2}>
               <Text variant="display-1">Image Generator</Text>
               

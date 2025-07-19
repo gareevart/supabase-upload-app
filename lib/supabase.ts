@@ -11,7 +11,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: true,
     // Use cookies for session storage to ensure proper authentication with API routes
-    storageKey: 'supabase-auth',
+    storageKey: `sb-${new URL(supabaseUrl).hostname.split('.')[0]}-auth-token`,
     flowType: 'pkce',
     // Keep localStorage for backward compatibility
     storage: {
@@ -27,15 +27,22 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       },
       setItem: (key, value) => {
         if (typeof window !== 'undefined') {
-          // Set in both cookies and localStorage
-          document.cookie = `${key}=${value}; path=/; max-age=2592000; SameSite=Lax; secure`;
+          const cookieSettings = [
+            `${key}=${value}`,
+            'path=/',
+            `domain=${process.env.NEXT_PUBLIC_COOKIE_DOMAIN || window.location.hostname}`,
+            'max-age=2592000', // 30 days
+            'SameSite=Lax',
+            process.env.NODE_ENV === 'production' ? 'secure' : ''
+          ].filter(Boolean).join('; ');
+          document.cookie = cookieSettings;
           localStorage.setItem(key, value);
         }
       },
       removeItem: (key) => {
         if (typeof window !== 'undefined') {
           // Remove from both cookies and localStorage
-          document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; secure`;
+          document.cookie = `${key}=; path=/; domain=${process.env.NEXT_PUBLIC_COOKIE_DOMAIN || window.location.hostname}; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; secure`;
           localStorage.removeItem(key);
         }
       }

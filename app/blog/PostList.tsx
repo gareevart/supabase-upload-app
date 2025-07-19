@@ -1,9 +1,9 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card";
-import { Card, Icon, Button, Skeleton, SegmentedRadioGroup } from '@gravity-ui/uikit';
-import { Calendar, Pencil, Person, LayoutCellsLarge, ListUl } from '@gravity-ui/icons';
+import { CardDescription, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card";
+import { Card, Icon, Button, Skeleton, Text } from '@gravity-ui/uikit';
+import { Calendar, Pencil, Person } from '@gravity-ui/icons';
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import Image from "next/image";
@@ -28,25 +28,19 @@ interface PostListProps {
   onlyMyPosts?: boolean;
   publishedOnly?: boolean;
   draftsOnly?: boolean;
+  gridView?: boolean;
 }
 
 export const PostList = ({
   onlyMyPosts = false,
   publishedOnly = false,
-  draftsOnly = false
+  draftsOnly = false,
+  gridView = true
 }: PostListProps) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [gridView, setGridView] = useState(true); // Default to grid view
   const { toast: showToast } = useToast();
   const isMobile = useIsMobile();
-
-  useEffect(() => {
-    // Mobile devices should default to list view
-    if (isMobile) {
-      setGridView(false);
-    }
-  }, [isMobile]);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -144,13 +138,14 @@ export const PostList = ({
 
   if (isLoading) {
     return (
-      <div className="container max-w-4xl w-full mx-auto p-4">
-        <Skeleton   className="h-10 rounded w-24 mb-2" />
+      <div className="container max-w-4xl w-full mx-auto">
         <div className={`${!isMobile ? 'grid grid-cols-2 gap-4' : 'space-y-4'}`}>
-          {[1, 2, 3, 4].map((index) => (
+          {[1, 2, 3, 4, 5, 6].map((index) => (
             <Card key={index} className="w-full min-w-[280px] overflow-hidden">
-              <div className="h-48 w-full">
-                <Skeleton className="h-full w-full" />
+              <div className="p-2">
+                <div className="h-48 w-full rounded-lg">
+                  <Skeleton className="h-full w-full" />
+                </div>
               </div>
               <CardHeader>
                 <Skeleton className="h-6 w-3/4 mb-2" />
@@ -179,7 +174,7 @@ export const PostList = ({
           </p>
           {onlyMyPosts && (
             <Button onClick={() => window.location.href = "/blog/new"}>
-              Create New Post
+              Create Post
             </Button>
           )}
         </Card>
@@ -188,50 +183,33 @@ export const PostList = ({
   }
 
   return (
-    <div className="container max-w-4xl w-full mx-auto p-4">
-      {/* Hide view toggle on mobile */}
-      {!isMobile && (
-        <div className="flex justify-end mb-4">
-          <SegmentedRadioGroup
-            size="l"
-            name="group1"
-            defaultValue="grid"
-            value={gridView ? 'grid' : 'list'}
-            onUpdate={(value) => setGridView(value === 'grid')}>
-            <SegmentedRadioGroup.Option value="list">
-              <Icon data={ListUl} size={18} />
-              Список</SegmentedRadioGroup.Option>
-            <SegmentedRadioGroup.Option value="grid">
-              <Icon data={LayoutCellsLarge} size={18} />
-              Сетка</SegmentedRadioGroup.Option>
-          </SegmentedRadioGroup>
-        </div>
-      )}
-
+    <div className="container max-w-4xl w-full mx-auto">
       <div className={`${!isMobile && gridView ? 'grid grid-cols-2 gap-4' : 'space-y-6'}`}>
         {posts.map((post) => (
-          <Card key={post.id} className="w-full min-w-[280px] overflow-hidden">
-            {post.featured_image ? (
-              <div className="h-48 w-full overflow-hidden">
-                <Link href={`/blog/${post.slug}`} style={{ position: 'relative', display: 'block', height: '100%', width: '100%' }}>
-                  <Image
-                    src={post.featured_image}
-                    alt={post.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-cover transition-all duration-300 hover:scale-105"
-                    priority={false}
-                    loading="lazy"
-                  />
-                </Link>
-              </div>
-            ) : (
-              <div className="h-48 w-full bg-gray-100"></div>
-            )}
+          <Card size="l" key={post.id} className="w-full min-w-[280px] overflow-hidden">
+            <div className="p-2">
+              {post.featured_image ? (
+                <div className="h-48 w-full overflow-hidden rounded-lg">
+                  <Link href={`/blog/${post.slug}`} style={{ position: 'relative', display: 'block', height: '100%', width: '100%' }}>
+                    <Image
+                      src={post.featured_image}
+                      alt={post.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover transition-all duration-300 hover:scale-105"
+                      priority={false}
+                      loading="lazy"
+                    />
+                  </Link>
+                </div>
+              ) : (
+                <div className="h-48 w-full bg-gray-100 rounded-lg"></div>
+              )}
+            </div>
             <CardHeader>
               <CardTitle className="text-2xl">
-                <Link href={post.slug ? `/blog/${post.slug}` : `/blog/edit/${post.id}`} className="hover:text-blue-600 transition-colors">
-                  {post.title}
+                <Link href={post.slug ? `/blog/${post.slug}` : `/blog/edit/${post.id}`}>
+                  <Text ellipsis={true} whiteSpace="break-spaces" ellipsisLines={2} variant="header-1">{post.title}</Text>
                 </Link>
               </CardTitle>
               {post.excerpt && <CardDescription>{post.excerpt}</CardDescription>}
