@@ -158,6 +158,58 @@ function renderNodeToHtml(node: any): string {
       html = '<br>';
       break;
       
+    case 'imageGenerator':
+      // Render the image generator component for display
+      const prompt = node.attrs?.prompt || '';
+      const generatedImageUrl = node.attrs?.generatedImageUrl || '';
+      
+      if (generatedImageUrl && prompt) {
+        html = `
+          <div class="image-generator-display" data-prompt="${encodeURIComponent(prompt)}" data-image-url="${generatedImageUrl}">
+            <div class="image-generator-content">
+              <div class="generated-image-container">
+                <img src="${generatedImageUrl}" alt="Generated from prompt: ${prompt}" class="generated-image" />
+              </div>
+              <div class="prompt-display">
+                <div class="prompt-label">AI Generated Image Prompt:</div>
+                <div class="prompt-text">${prompt}</div>
+                <button 
+                  class="try-prompt-button"
+                  onclick="window.open('/yaart?prompt=${encodeURIComponent(prompt)}', '_blank')"
+                  style="
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 8px 16px;
+                    background: #f0f0f0;
+                    border: 1px solid #d0d0d0;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    color: #333;
+                    text-decoration: none;
+                    margin-top: 8px;
+                    transition: background-color 0.2s;
+                  "
+                  onmouseover="this.style.backgroundColor='#e0e0e0'"
+                  onmouseout="this.style.backgroundColor='#f0f0f0'"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="17" y1="10" x2="3" y2="10"></line>
+                    <polyline points="3,6 3,14"></polyline>
+                  </svg>
+                  Try this prompt
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        // If no image generated yet, don't render anything in the published view
+        html = '';
+      }
+      break;
+      
     default:
       // For unknown types, render children
       html = renderChildrenToHtml(node);

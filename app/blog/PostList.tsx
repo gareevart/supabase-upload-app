@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { CardDescription, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Card, Icon, Button, Skeleton, Text } from '@gravity-ui/uikit';
 import { Calendar, Pencil, Person } from '@gravity-ui/icons';
 import { useToast } from "@/hooks/use-toast";
@@ -142,18 +141,18 @@ export const PostList = ({
         <div className={`${!isMobile ? 'grid grid-cols-2 gap-4' : 'space-y-4'}`}>
           {[1, 2, 3, 4, 5, 6].map((index) => (
             <Card key={index} className="w-full min-w-[280px] overflow-hidden">
-              <div className="p-2">
-                <div className="h-48 w-full rounded-lg">
+              <div className="p-4">
+                <div className="h-48 w-full rounded-lg pb-2">
                   <Skeleton className="h-full w-full" />
                 </div>
               </div>
-              <CardHeader>
+              <div className="p-4">
                 <Skeleton className="h-6 w-3/4 mb-2" />
                 <Skeleton className="h-4 w-1/2" />
-              </CardHeader>
-              <CardFooter>
+              </div>
+              <div className="p-4">
                 <Skeleton className="h-4 w-24" />
-              </CardFooter>
+              </div>
             </Card>
           ))}
         </div>
@@ -206,15 +205,17 @@ export const PostList = ({
                 <div className="h-48 w-full bg-gray-100 rounded-lg"></div>
               )}
             </div>
-            <CardHeader>
-              <CardTitle className="text-2xl">
+            
+              <div className="p-4">
+                <div className="mb-2">
                 <Link href={post.slug ? `/blog/${post.slug}` : `/blog/edit/${post.id}`}>
                   <Text ellipsis={true} whiteSpace="break-spaces" ellipsisLines={2} variant="header-1">{post.title}</Text>
                 </Link>
-              </CardTitle>
-              {post.excerpt && <CardDescription>{post.excerpt}</CardDescription>}
-            </CardHeader>
-            <CardFooter className="flex justify-between text-sm text-muted-foreground">
+                  {post.excerpt}
+                </div>
+
+              
+            <div className="flex justify-between text-sm text-muted-foreground">
               <div className="flex items-center gap-4">
                 <div className="flex items-center">
                    <Icon data={Calendar} size={16} />
@@ -244,7 +245,8 @@ export const PostList = ({
                   Читать
                 </Button>
               )}
-            </CardFooter>
+            </div>
+            </div>
           </Card>
         ))}
       </div>

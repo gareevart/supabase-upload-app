@@ -544,7 +544,7 @@ const Profile = () => {
                         <Text variant='subheader-3'>Email Newsletter</Text>
                         <DefinitionList responsive={true} direction='vertical' className="responsive-definition-list">
                             <DefinitionList.Item name="Status">
-                                {subscription?.subscribe_status ? 'Subscribed' : 'Unsubscribed'}
+                                {subscription?.subscribe_status ? 'Subscribed' : 'Not subscribed'}
                             </DefinitionList.Item>
                         </DefinitionList>
                         <Button

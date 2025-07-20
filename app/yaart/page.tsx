@@ -1,5 +1,6 @@
 "use client"
 import React from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Flex, Text, Button, Alert, Spin, Label, TextArea, useToaster, Skeleton } from '@gravity-ui/uikit';
 import { supabase } from '@/lib/supabase';
 import CustomBreadcrumbs from '@/app/components/Breadcrumbs/Breadcrumbs';
@@ -16,6 +17,7 @@ const Yaart = () => {
     'projects': 'Projects',
     'yaart': 'Image Generator'
   };
+    const searchParams = useSearchParams();
     const [prompt, setPrompt] = React.useState('');
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState('');
@@ -29,6 +31,14 @@ const Yaart = () => {
     const [saveError, setSaveError] = React.useState('');
     const [saveSuccess, setSaveSuccess] = React.useState(false);
     const toaster = useToaster();
+
+    // Получаем промпт из URL параметров при загрузке компонента
+    React.useEffect(() => {
+      const urlPrompt = searchParams.get('prompt');
+      if (urlPrompt) {
+        setPrompt(decodeURIComponent(urlPrompt));
+      }
+    }, [searchParams]);
     
     React.useEffect(() => {
       const checkAuth = async () => {

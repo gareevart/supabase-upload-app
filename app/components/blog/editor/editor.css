@@ -107,3 +107,48 @@
   align-items: center;
   background-color: var(--g-color-base-float);
 }
+
+/* Image Generator Component Styles */
+.image-generator-wrapper {
+  margin: 16px 0;
+}
+
+.image-generator-card {
+  border: 2px dashed var(--g-color-line-generic);
+  border-radius: 8px;
+  background-color: var(--g-color-base-float);
+  transition: border-color 0.2s ease-in-out;
+}
+
+.image-generator-card:hover {
+  border-color: var(--g-color-base-brand);
+}
+
+.image-generator-card .g-card__content {
+  padding: 16px;
+}
+
+/* Стили для активной кнопки AI генератора */
+.toolbar button[title="Добавить генератор изображений"] {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+}
+
+.toolbar button[title="Добавить генератор изображений"]:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Темная тема для генератора изображений */
+@media (prefers-color-scheme: dark) {
+  .image-generator-card {
+    background-color: var(--g-color-base-float);
+    border-color: var(--g-color-line-generic);
+  }
+  
+  .image-generator-card:hover {
+    border-color: var(--g-color-base-brand);
+  }
+}

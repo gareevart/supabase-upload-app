@@ -9,8 +9,9 @@ import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
+import { ImageGenerator } from './extensions/ImageGeneratorExtension';
 import { Button, Icon, TextInput, Text, Modal, Card, DropdownMenu } from '@gravity-ui/uikit';
-import {Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Picture, Xmark, ChevronDown, Heading1, Heading2, Heading3, Heading4} from '@gravity-ui/icons';
+import {Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Picture, Xmark, ChevronDown, Heading1, Heading2, Heading3, Heading4, MagicWand} from '@gravity-ui/icons';
 import "./editor/editor.css";
 
 // Yandex Cloud Object Storage bucket name
@@ -70,6 +71,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         types: ['heading', 'paragraph'],
       }),
       Underline,
+      ImageGenerator,
     ],
     content: normalizeTipTapContent(content),
     onUpdate: ({ editor }) => {
@@ -482,6 +484,20 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         >
           <Icon data={Picture} size={16} />
           URL
+        </Button>
+        
+        <Button
+          view="flat"
+          size="m"
+          onClick={() => {
+            // Устанавливаем глобальную ссылку на редактор для компонента генератора
+            (window as any).currentTipTapEditor = editor;
+            editor.chain().focus().insertImageGenerator().run();
+          }}
+          title="Добавить генератор изображений"
+        >
+          <Icon data={MagicWand} size={16} />
+          AI
         </Button>
         
         <div className="ml-auto flex gap-1">
