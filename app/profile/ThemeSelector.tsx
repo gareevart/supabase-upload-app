@@ -7,6 +7,9 @@ interface ThemeSelectorProps {
 }
 
 export const ThemeSelector = ({ value, onChange }: ThemeSelectorProps) => {
+  // Ensure we have a valid theme value
+  const safeValue: Theme = ['light', 'dark', 'system'].includes(value) ? value : 'system';
+  
   const handleThemeChange = (newTheme: Theme) => {
     onChange(newTheme);
   };
@@ -14,7 +17,7 @@ export const ThemeSelector = ({ value, onChange }: ThemeSelectorProps) => {
   return (
     <SegmentedRadioGroup
       name="theme-selector"
-      value={value}
+      value={safeValue}
       onUpdate={handleThemeChange}
       size="l"
       width="auto"

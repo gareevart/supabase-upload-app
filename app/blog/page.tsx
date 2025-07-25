@@ -10,7 +10,7 @@ import SearchComponent from "../components/SearchComponent"
 import type { SearchResult } from "../components/SearchComponent"
 import { useIsMobile } from "@/hooks/use-mobile"
 
-export default function BlogPage() {
+function BlogPageContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [activeTab, setActiveTab] = useState<string>("posts")
   const [searchActive, setSearchActive] = useState(false)
@@ -80,3 +80,5 @@ export default function BlogPage() {
     </div>
   );
 }
+
+export default BlogPageContent;

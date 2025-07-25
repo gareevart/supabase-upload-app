@@ -85,6 +85,84 @@ export interface Database {
           updated_at?: string | null
         }
       }
+      tags: {
+        Row: {
+          id: string
+          name: string
+          color: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          color?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          color?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      images: {
+        Row: {
+          id: string
+          user_id: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          mime_type: string | null
+          public_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          mime_type?: string | null
+          public_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          mime_type?: string | null
+          public_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      image_tags: {
+        Row: {
+          id: string
+          image_id: string
+          tag_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          image_id: string
+          tag_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          image_id?: string
+          tag_id?: string
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

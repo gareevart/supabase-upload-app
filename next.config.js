@@ -1,3 +1,5 @@
+const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Optimize image loading
@@ -41,5 +43,4 @@ const nextConfig = {
   },
 };
 
-const path = require('path');
 module.exports = nextConfig;

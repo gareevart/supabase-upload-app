@@ -11,7 +11,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import { ImageGenerator } from './extensions/ImageGeneratorExtension';
 import { Button, Icon, TextInput, Text, Modal, Card, DropdownMenu } from '@gravity-ui/uikit';
-import {Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Picture, Xmark, ChevronDown, Heading1, Heading2, Heading3, Heading4, MagicWand} from '@gravity-ui/icons';
+import {Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Picture, Xmark, ChevronDown, Heading1, Heading2, Heading3, Heading4, MagicWand, ListUl} from '@gravity-ui/icons';
 import "./editor/editor.css";
 
 // Yandex Cloud Object Storage bucket name
@@ -398,7 +398,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           }}
           className={editor.isActive('bulletList') ? 'is-active' : ''}
         >
-          <ListIcon className="h-4 w-4" />
+          <Icon data={ListUl} size={16} />
         </Button>
         
         <Button

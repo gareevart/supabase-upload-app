@@ -3,3 +3,32 @@
 	color: var(--g-color-text-hint);
     width: 20px;
 }
+
+/* Стили для вкладок поиска */
+.search-tabs-container {
+  margin-top: 24px;
+}
+
+.search-tab-list {
+  display: flex;
+}
+
+.search-tab-content {
+  min-height: 400px;
+  padding-top: 16px;
+}
+
+/* Адаптивные стили для вкладок */
+@media (max-width: 768px) {
+  .search-tabs-container {
+    margin-top: 16px;
+  }
+  
+  .search-tab-list {
+    margin-bottom: 16px;
+  }
+  
+  .search-tab-content {
+    padding-top: 12px;
+  }
+}

@@ -1,0 +1,154 @@
+.tag-selector {
+  margin-bottom: 16px;
+  padding: 16px;
+}
+
+.tag-selector-title {
+  margin-bottom: 12px;
+}
+
+.tag-selector-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* Выбранные теги */
+.selected-tags {
+  margin-bottom: 16px;
+}
+
+.selected-tags-label {
+  margin-bottom: 8px;
+  color: var(--g-color-text-secondary);
+}
+
+.selected-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.selected-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.selected-tag-name {
+  line-height: 1;
+}
+
+.selected-tag-remove {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  transition: color 0.2s ease;
+}
+
+.selected-tag-remove:hover {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Доступные теги */
+.available-tags {
+  margin-bottom: 16px;
+}
+
+.available-tags-label {
+  margin-bottom: 8px;
+  color: var(--g-color-text-secondary);
+}
+
+.available-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.available-tag {
+  padding: 6px 12px;
+  border: 1px solid;
+  border-radius: 16px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.available-tag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.available-tag.selected {
+  transform: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.available-tag:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Создание нового тега */
+.new-tag-section {
+  border-top: 1px solid var(--g-color-line-generic);
+  padding-top: 16px;
+}
+
+.new-tag-input {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.new-tag-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .tag-selector {
+    padding: 12px;
+  }
+  
+  .selected-tags-list,
+  .available-tags-list {
+    gap: 6px;
+  }
+  
+  .selected-tag {
+    padding: 3px 6px;
+    font-size: 11px;
+  }
+  
+  .available-tag {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+  
+  .new-tag-buttons {
+    flex-direction: column;
+  }
+}

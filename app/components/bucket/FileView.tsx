@@ -7,8 +7,19 @@ import { supabase } from '@/lib/supabase';
 import { TrashBin, Copy } from '@gravity-ui/icons';
 import { Button, Icon, Card, Text, Skeleton, useToaster } from '@gravity-ui/uikit';
 
+interface Tag {
+  id: string;
+  name: string;
+  color: string;
+}
+
+interface ImageWithTags extends FileObject {
+  id?: string;
+  tags?: Tag[];
+}
+
 interface FileViewState {
-  images: FileObject[];
+  images: ImageWithTags[];
   loading: boolean;
   error: string | null;
   imageUrls: Record<string, string>;
@@ -70,14 +81,29 @@ export default function FileView() {
     try {
       updateState({ loading: true, error: null });
 
-      // Параллельно получаем роль пользователя и список файлов
-      const [profileResult, filesResult] = await Promise.allSettled([
+      // Параллельно получаем роль пользователя, список файлов и информацию об изображениях из БД
+      const [profileResult, filesResult, dbImagesResult] = await Promise.allSettled([
         supabase
           .from('profiles')
           .select('role')
           .eq('id', userId)
           .single(),
-        listFiles(`profiles/${userId}/`, 'public-gareevde', userId)
+        listFiles(`profiles/${userId}/`, 'public-gareevde', userId),
+        supabase
+          .from('images')
+          .select(`
+            id,
+            file_name,
+            image_tags (
+              tag_id,
+              tags (
+                id,
+                name,
+                color
+              )
+            )
+          `)
+          .eq('user_id', userId)
       ]);
 
       // Обрабатываем результат получения профиля
@@ -93,10 +119,30 @@ export default function FileView() {
       const { data: files, error: filesError } = filesResult.value;
       if (filesError) throw new Error(typeof filesError === 'string' ? filesError : 'Ошибка при загрузке файлов');
 
-      const images = files || [];
+      // Обрабатываем результат получения данных из БД
+      const dbImages = dbImagesResult.status === 'fulfilled' 
+        ? dbImagesResult.value.data || [] 
+        : [];
+
+      // Создаем карту тегов для каждого изображения
+      const imageTagsMap: Record<string, { id: string; tags: Tag[] }> = {};
+      dbImages.forEach((dbImage: any) => {
+        const tags = dbImage.image_tags?.map((it: any) => it.tags).filter(Boolean) || [];
+        imageTagsMap[dbImage.file_name] = {
+          id: dbImage.id,
+          tags
+        };
+      });
+
+      // Объединяем данные из файлового хранилища с данными из БД
+      const imagesWithTags: ImageWithTags[] = (files || []).map((file: FileObject) => ({
+        ...file,
+        id: imageTagsMap[file.name]?.id,
+        tags: imageTagsMap[file.name]?.tags || []
+      }));
 
       // Параллельно получаем URL для всех изображений с кэшированием
-      const urlPromises = images.map(async (image: FileObject) => {
+      const urlPromises = imagesWithTags.map(async (image: ImageWithTags) => {
         const cacheKey = `${userId}/${image.name}`;
         
         // Проверяем кэш
@@ -124,7 +170,7 @@ export default function FileView() {
       });
 
       updateState({
-        images,
+        images: imagesWithTags,
         imageUrls,
         userRole,
         loading: false,
@@ -152,6 +198,19 @@ export default function FileView() {
     }
 
     try {
+      // Сначала удаляем запись из базы данных (это автоматически удалит связанные теги благодаря CASCADE)
+      const { error: dbError } = await supabase
+        .from('images')
+        .delete()
+        .eq('user_id', userId)
+        .eq('file_name', fileName);
+
+      if (dbError) {
+        console.error('Ошибка удаления из БД:', dbError);
+        // Не прерываем процесс, если не удалось удалить из БД
+      }
+
+      // Затем удаляем файл из хранилища
       const { error } = await deleteFile(`profiles/${userId}/${fileName}`, userId);
       if (error) throw new Error(typeof error === 'string' ? error : 'Ошибка при удалении файла');
       
@@ -295,6 +354,21 @@ export default function FileView() {
               )}
             </div>
           </div>
+          
+          {/* Отображение тегов */}
+          {image.tags && image.tags.length > 0 && (
+            <div className="file-view-tags">
+              {image.tags.map(tag => (
+                <span
+                  key={tag.id}
+                  className="file-view-tag"
+                  style={{ backgroundColor: tag.color }}
+                >
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       ))}
     </div>
