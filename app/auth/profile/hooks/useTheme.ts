@@ -3,16 +3,12 @@ import { Theme, useThemeValue } from '@gravity-ui/uikit';
 import { Profile } from '../types';
 
 export const useThemeManagement = (profile: Profile | null) => {
-    const currentTheme = useThemeValue();
-    const [selectedTheme, setSelectedTheme] = useState<Theme>(currentTheme);
+    const [selectedTheme, setSelectedTheme] = useState<Theme>('system');
 
     useEffect(() => {
-        if (profile && profile.theme) {
-            // Ensure we're using a valid Theme value
-            const profileTheme = profile.theme as Theme;
-            if (['light', 'dark', 'system'].includes(profileTheme)) {
-                setSelectedTheme(profileTheme);
-            }
+        // Initialize with profile theme if available
+        if (profile?.theme && ['light', 'dark', 'system'].includes(profile.theme)) {
+            setSelectedTheme(profile.theme as Theme);
         }
     }, [profile]);
 

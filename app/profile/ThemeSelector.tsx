@@ -1,17 +1,24 @@
-import { SegmentedRadioGroup , Theme, Icon } from '@gravity-ui/uikit';
+import { SegmentedRadioGroup, Icon } from '@gravity-ui/uikit';
 import { Sun, Moon, Palette } from '@gravity-ui/icons';
 
+type ThemeOption = 'light' | 'dark' | 'system';
+
 interface ThemeSelectorProps {
-  value: Theme;
-  onChange: (theme: Theme) => void;
+  value: string;
+  onChange: (theme: ThemeOption) => void;
 }
 
 export const ThemeSelector = ({ value, onChange }: ThemeSelectorProps) => {
   // Ensure we have a valid theme value
-  const safeValue: Theme = ['light', 'dark', 'system'].includes(value) ? value : 'system';
+  const safeValue: ThemeOption =
+    value === 'light' || value === 'dark' || value === 'system'
+      ? value
+      : 'system';
   
-  const handleThemeChange = (newTheme: Theme) => {
-    onChange(newTheme);
+  const handleThemeChange = (newTheme: string) => {
+    if (newTheme === 'light' || newTheme === 'dark' || newTheme === 'system') {
+      onChange(newTheme);
+    }
   };
 
   return (

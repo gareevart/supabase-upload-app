@@ -11,7 +11,6 @@ import '../Auth.css';
 import { useClientSideRendering, useUserProfile } from './hooks/useProfile';
 import { useSubscription } from './hooks/useSubscription';
 import { useQuotaInfo } from './hooks/useQuota';
-import { useThemeManagement } from './hooks/useTheme';
 
 // Import components
 import { ProfileView } from './components/ProfileView';
@@ -29,21 +28,13 @@ const Profile = () => {
     const { profile, setProfile, loading, saveProfile } = useUserProfile(user?.id, mounted);
     const { subscription, isSubscriptionLoading, handleSubscriptionToggle } = useSubscription(user?.id, user?.email, mounted);
     const dailyQuota = useQuotaInfo(user?.id, mounted);
-    const { selectedTheme, handleThemeChange, dispatchThemeEvents } = useThemeManagement(profile);
 
     const handleSaveProfile = async () => {
         if (!user || !profile) return;
 
         setIsSaving(true);
-        
-        // Make sure we're saving a valid theme value
-        const themeToSave = ['light', 'dark', 'system'].includes(selectedTheme)
-            ? selectedTheme
-            : 'system';
             
-        const success = await saveProfile(user.id, { ...profile, theme: themeToSave }, () => {
-            // Update theme in localStorage and dispatch events
-            dispatchThemeEvents(themeToSave);
+        const success = await saveProfile(user.id, profile, () => {
             setIsEditing(false);
         });
         
@@ -76,8 +67,6 @@ const Profile = () => {
                 <ProfileEditForm 
                     profile={profile}
                     setProfile={setProfile}
-                    selectedTheme={selectedTheme}
-                    handleThemeChange={handleThemeChange}
                     onSave={handleSaveProfile}
                     onCancel={() => setIsEditing(false)}
                     isSaving={isSaving}

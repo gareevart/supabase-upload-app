@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Icon } from '@gravity-ui/uikit';
+import { Icon, DropdownMenu } from '@gravity-ui/uikit';
 import {House, Circles4Square, Person, Magnifier, BookOpen,  Bars } from '@gravity-ui/icons';
 import Image from 'next/image';
 import UserAvatar from '../UserAvatar';
-import Link from 'next/link';
 import NavigationItem from './NavigationItem';
+import { ThemeToggle } from './ThemeToggle';
 import './Navigation.css';
 
 const Navigation: React.FC = () => {
@@ -87,16 +87,31 @@ const Navigation: React.FC = () => {
             >
                <Icon data={Bars} size={24} />
             </button>
-          <Link
-            href="/auth/profile"
-            className={`avatarWrapper nav-item ${activeItem === 'profile' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveItem('profile');
-              localStorage.setItem('activeItem', 'profile');
-            }}
-          >
-            <UserAvatar />
-          </Link>
+            
+            <ThemeToggle />
+            
+            <DropdownMenu
+              renderSwitcher={(props) => (
+                <div
+                  {...props}
+                  className={`avatarWrapper nav-item ${activeItem === 'profile' ? 'active' : ''}`}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <UserAvatar />
+                </div>
+              )}
+              items={[
+                {
+                  iconStart: <Icon size={16} data={Person} />,
+                  action: () => {
+                    setActiveItem('profile');
+                    localStorage.setItem('activeItem', 'profile');
+                    router.push('/auth/profile');
+                  },
+                  text: 'Profile',
+                },
+              ]}
+            />
           </div>
           </div>
       </nav>
@@ -121,6 +136,10 @@ const Navigation: React.FC = () => {
               showLabel
             />
           ))}
+          
+          <div className="drawer-theme-toggle">
+            <ThemeToggle />
+          </div>
         </div>
         <div className="drawer-overlay" onClick={toggleDrawer} />
       </div>

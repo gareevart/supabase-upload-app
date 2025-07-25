@@ -8,15 +8,12 @@ import {
     Theme,
     useToaster,
 } from '@gravity-ui/uikit';
-import { ThemeSelector } from '@/app/profile/ThemeSelector';
 import YandexFileUploader from '../../components/YandexFileUploader';
 import { Profile } from '../types';
 
 interface ProfileEditFormProps {
     profile: Profile;
     setProfile: React.Dispatch<React.SetStateAction<Profile | null>>;
-    selectedTheme: Theme;
-    handleThemeChange: (theme: Theme) => void;
     onSave: () => void;
     onCancel: () => void;
     isSaving: boolean;
@@ -25,8 +22,6 @@ interface ProfileEditFormProps {
 export const ProfileEditForm = ({
     profile,
     setProfile,
-    selectedTheme,
-    handleThemeChange,
     onSave,
     onCancel,
     isSaving
@@ -127,13 +122,6 @@ export const ProfileEditForm = ({
                 />
             </div>
 
-            <div className="flex-col profile-field">
-                <Text variant="body-2" color="primary">Theme</Text>
-                <ThemeSelector
-                    value={selectedTheme}
-                    onChange={handleThemeChange}
-                />
-            </div>
 
             <div className="profile-actions">
                 <Button
