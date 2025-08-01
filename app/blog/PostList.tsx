@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Card, Icon, Button, Skeleton, Text } from '@gravity-ui/uikit';
+import { Card, Icon, Button, Skeleton, Text, Pagination } from '@gravity-ui/uikit';
 import { Calendar, Pencil, Person } from '@gravity-ui/icons';
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -38,24 +38,56 @@ export const PostList = ({
 }: PostListProps) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPosts, setTotalPosts] = useState(0);
   const { toast: showToast } = useToast();
   const isMobile = useIsMobile();
+
+  const POSTS_PER_PAGE = 10;
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
+        // First, get the total count
+        let countQuery = supabase
+          .from("blog_posts")
+          .select("*", { count: 'exact', head: true });
+
+        // Apply the same filters for count
+        if (publishedOnly) {
+          countQuery = countQuery.eq("published", true);
+        } else if (draftsOnly) {
+          countQuery = countQuery.eq("published", false);
+        } else if (!draftsOnly && !publishedOnly) {
+          countQuery = countQuery.eq("published", true);
+        }
+
+        if (onlyMyPosts) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user?.id) {
+            countQuery = countQuery.eq("author_id", session.user.id);
+          }
+        }
+
+        const { count, error: countError } = await countQuery;
+        if (countError) throw countError;
+        
+        setTotalPosts(count || 0);
+
+        // Then get the paginated data
         let query = supabase
           .from("blog_posts")
           .select(`
-            id, 
-            title, 
-            excerpt, 
-            slug, 
+            id,
+            title,
+            excerpt,
+            slug,
             featured_image,
             created_at,
             author_id
           `)
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false })
+          .range((currentPage - 1) * POSTS_PER_PAGE, currentPage * POSTS_PER_PAGE - 1);
 
         // Apply filters for published/drafts
         if (publishedOnly) {
@@ -124,7 +156,7 @@ export const PostList = ({
     };
 
     fetchPosts();
-  }, [onlyMyPosts, publishedOnly, draftsOnly, showToast]);
+  }, [onlyMyPosts, publishedOnly, draftsOnly, showToast, currentPage]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -250,6 +282,19 @@ export const PostList = ({
           </Card>
         ))}
       </div>
+      
+      {/* Пагинация - показывать только если постов больше 10 */}
+      {totalPosts > POSTS_PER_PAGE && (
+        <div className="flex justify-center mt-8">
+          <Pagination
+            page={currentPage}
+            pageSize={POSTS_PER_PAGE}
+            total={totalPosts}
+            onUpdate={(page) => setCurrentPage(page)}
+            compact={isMobile}
+          />
+        </div>
+      )}
     </div>
   );
 };

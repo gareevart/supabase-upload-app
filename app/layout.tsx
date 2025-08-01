@@ -10,7 +10,6 @@ import { Toaster } from './components/ui/toaster';
 import Navigation from './components/Navigation/Navigation';
 import { AuthProvider } from './contexts/AuthContext';
 import { SpeedInsights } from "@vercel/speed-insights/next"
-
 import '@gravity-ui/uikit/styles/styles.css';
 import "@/styles/globals.css";
 import '@/styles/styles.css';

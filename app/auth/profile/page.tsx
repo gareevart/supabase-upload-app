@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Spin, Text } from '@gravity-ui/uikit';
 import withAuth from '../withAuth';
-import AuthDebugger from '../components/AuthDebugger';
 import { useAuth } from '@/app/contexts/AuthContext';
 import '../Auth.css';
 
@@ -89,9 +88,6 @@ const Profile = () => {
                     <QuotaSection dailyQuota={dailyQuota} />
                 </>
             )}
-            
-            {/* Add Auth Debugger for troubleshooting */}
-            <AuthDebugger />
         </div>
     );
 };

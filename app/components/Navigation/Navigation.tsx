@@ -1,31 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Icon, DropdownMenu } from '@gravity-ui/uikit';
+import { Icon, Button } from '@gravity-ui/uikit';
 import {House, Circles4Square, Person, Magnifier, BookOpen,  Bars } from '@gravity-ui/icons';
 import Image from 'next/image';
 import UserAvatar from '../UserAvatar';
 import NavigationItem from './NavigationItem';
 import { ThemeToggle } from './ThemeToggle';
+import Link from 'next/link'
 import './Navigation.css';
 
 const Navigation: React.FC = () => {
   const router = useRouter();
-  const [activeItem, setActiveItem] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('activeItem') || 'home';
-    }
-    return 'home';
-  });
+  const [activeItem, setActiveItem] = useState('home');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Check if we're on the profile page when the component mounts or the URL changes
+  // Function to determine active item based on current path
+  const getActiveItemFromPath = (pathname: string): string => {
+    if (pathname === '/') return 'home';
+    if (pathname.startsWith('/blog')) return 'blog';
+    if (pathname.startsWith('/projects')) return 'projects';
+    if (pathname.startsWith('/search')) return 'search';
+    if (pathname.startsWith('/auth/profile')) return 'profile';
+    return 'home'; // default fallback
+  };
+
+  // Set active item based on current URL when component mounts
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const path = window.location.pathname;
-      if (path === '/auth/profile') {
-        setActiveItem('profile');
-        localStorage.setItem('activeItem', 'profile');
-      }
+      const currentPath = window.location.pathname;
+      const activeFromPath = getActiveItemFromPath(currentPath);
+      setActiveItem(activeFromPath);
+      localStorage.setItem('activeItem', activeFromPath);
+    }
+  }, []);
+
+  // Listen for route changes to update active item
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleRouteChange = () => {
+        const currentPath = window.location.pathname;
+        const activeFromPath = getActiveItemFromPath(currentPath);
+        setActiveItem(activeFromPath);
+        localStorage.setItem('activeItem', activeFromPath);
+      };
+
+      // Listen for popstate events (back/forward navigation)
+      window.addEventListener('popstate', handleRouteChange);
+      
+      return () => {
+        window.removeEventListener('popstate', handleRouteChange);
+      };
     }
   }, []);
 
@@ -52,6 +76,7 @@ const Navigation: React.FC = () => {
         <div className="nav-container">
           <div className="logo-area">
             <div className="logo-wrapper">
+              <Link href="/">
               <Image 
                 src="/g-logo.svg" 
                 alt="Logo" 
@@ -59,16 +84,16 @@ const Navigation: React.FC = () => {
                 height={32}
                 priority
               />
+              </Link>
             </div>
           </div>
 
           <div className="nav-items">
             {mainNavItems.map((item) => (
-              <NavigationItem
+              <Button
                 key={item.id}
-                icon={item.icon}
-                label={item.label}
-                isActive={activeItem === item.id}
+                view={activeItem === item.id ? "action" : "flat"}
+                size="xl"
                 onClick={() => {
                   setActiveItem(item.id);
                   localStorage.setItem('activeItem', item.id);
@@ -76,42 +101,24 @@ const Navigation: React.FC = () => {
                     router.push(item.link);
                   }
                 }}
-              />
+              >
+                <Icon data={item.icon} size={20} />
+                
+              </Button>
             ))}
             
-            <button
+            <Button
+              view="flat"
               className="menu-button"
               onClick={toggleDrawer}
               aria-label="Open menu"
               aria-expanded={isDrawerOpen}
             >
                <Icon data={Bars} size={24} />
-            </button>
-            
-            <ThemeToggle />
-            
-            <DropdownMenu
-              renderSwitcher={(props) => (
-                <div
-                  {...props}
-                  className={`avatarWrapper nav-item ${activeItem === 'profile' ? 'active' : ''}`}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <UserAvatar />
-                </div>
-              )}
-              items={[
-                {
-                  iconStart: <Icon size={16} data={Person} />,
-                  action: () => {
-                    setActiveItem('profile');
-                    localStorage.setItem('activeItem', 'profile');
-                    router.push('/auth/profile');
-                  },
-                  text: 'Profile',
-                },
-              ]}
-            />
+            </Button>
+              <Link href="/auth/profile">
+                <UserAvatar />
+              </Link>
           </div>
           </div>
       </nav>
