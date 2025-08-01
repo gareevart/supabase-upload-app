@@ -72,6 +72,7 @@ const Navigation: React.FC = () => {
               <Button
                 key={item.id}
                 view={activeItem === item.id ? "action" : "flat"}
+                selected={activeItem === item.id}
                 size="xl"
                 onClick={() => {
                   setActiveItem(item.id);

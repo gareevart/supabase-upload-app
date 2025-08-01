@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Card, Text, Button, Icon } from '@gravity-ui/uikit';
-import { Pencil, TrashBin, ArrowUturnCwLeft, Plus, ChevronDown } from '@gravity-ui/icons';
+import { Pencil, TrashBin, ArrowUturnCwLeft, Plus, ChevronRight } from '@gravity-ui/icons';
 import { Broadcast, BroadcastListProps } from './types';
 
 const BroadcastList: React.FC<BroadcastListProps> = ({
@@ -48,8 +48,16 @@ const BroadcastList: React.FC<BroadcastListProps> = ({
         return (
           <>
             <Button
+              view="flat-danger"
+              size="m"
+              onClick={() => onDelete && onDelete(id)}
+              title="Delete"
+            >
+              <Icon data={TrashBin} size={16} />
+            </Button>
+            <Button
               view="flat"
-              size="s"
+              size="m"
               onClick={() => onEdit && onEdit(id)}
               title="Edit"
             >
@@ -57,20 +65,12 @@ const BroadcastList: React.FC<BroadcastListProps> = ({
             </Button>
             <Button
               view="flat"
-              size="s"
+              size="m"
               onClick={() => onSend && onSend(id)}
               title="Send"
             >
               <Icon data={ArrowUturnCwLeft} size={16} />
-            </Button>
-            <Button
-              view="flat"
-              size="s"
-              onClick={() => onDelete && onDelete(id)}
-              title="Delete"
-            >
-              <Icon data={TrashBin} size={16} />
-            </Button>
+            </Button>          
           </>
         );
       case 'scheduled':
@@ -78,15 +78,15 @@ const BroadcastList: React.FC<BroadcastListProps> = ({
           <>
             <Button
               view="flat"
-              size="s"
+              size="m"
               onClick={() => onCancelSchedule && onCancelSchedule(id)}
               title="Cancel Schedule"
             >
-              <Icon data={ChevronDown} size={16} />
+              <Icon data={ChevronRight} size={16} />
             </Button>
             <Button
               view="flat"
-              size="s"
+              size="m"
               onClick={() => onSend && onSend(id)}
               title="Send Now"
             >
@@ -96,33 +96,43 @@ const BroadcastList: React.FC<BroadcastListProps> = ({
         );
       case 'sent':
         return (
-          <Button
-            view="flat"
-            size="s"
-            onClick={() => onView && onView(id)}
-            title="View Details"
-          >
-            <Icon data={ChevronDown} size={16} />
-          </Button>
+          <>
+             <Button
+              view="flat-danger"
+              size="m"
+              onClick={() => onDelete && onDelete(id)}
+              title="Delete"
+            >
+              <Icon data={TrashBin} size={16} />
+            </Button>
+            <Button
+              view="flat"
+              size="m"
+              onClick={() => onView && onView(id)}
+              title="View Details"
+            >
+              <Icon data={ChevronRight} size={16} />
+            </Button>
+          </>
         );
       case 'failed':
         return (
           <>
             <Button
               view="flat"
-              size="s"
-              onClick={() => onSend && onSend(id)}
-              title="Retry"
-            >
-              <Icon data={ArrowUturnCwLeft} size={16} />
-            </Button>
-            <Button
-              view="flat"
-              size="s"
+              size="m"
               onClick={() => onDelete && onDelete(id)}
               title="Delete"
             >
               <Icon data={TrashBin} size={16} />
+            </Button>
+            <Button
+              view="flat"
+              size="m"
+              onClick={() => onSend && onSend(id)}
+              title="Retry"
+            >
+              <Icon data={ArrowUturnCwLeft} size={16} />
             </Button>
           </>
         );
@@ -133,8 +143,8 @@ const BroadcastList: React.FC<BroadcastListProps> = ({
 
   if (broadcasts.length === 0) {
     return (
-      <Card className="p-6 text-center">
-        <Text variant="body-1">No broadcasts found</Text>
+      <Card className="flex flex-col gap-2 p-6 text-center">
+        <Text variant="subheader-2">No broadcasts found</Text>
         <Button
           view="action"
           size="m"

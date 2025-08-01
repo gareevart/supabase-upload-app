@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Text } from '@gravity-ui/uikit';
+import { Text, Spin } from '@gravity-ui/uikit';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -88,11 +88,10 @@ export const withBroadcastAuth = <P extends object>(
     // Show loading state while checking authorization
     if (isAuthorized === null) {
       return (
-        <div className="container mx-auto py-8 px-4">
-          <div className="text-center py-8">
+        <div className="flex flex-col gap-4 py-8 px-4 text-center justify-center items-center">
+            <Spin size="l" />
             <Text variant="body-1">Checking permissions...</Text>
           </div>
-        </div>
       );
     }
     

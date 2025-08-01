@@ -281,16 +281,16 @@ function BroadcastsPage() {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
+        <div className="flex flex-col text-start">
           <Text variant="display-1" className="mb-2">Email Broadcasts</Text>
-          <Text variant="body-1" className="text-gray-500">
+          <Text variant="body-1"  color="secondary">
             Create, schedule, and manage email broadcasts
           </Text>
         </div>
         
         <Button
           view="action"
-          size="m"
+          size="l"
           onClick={handleCreateNew}
         >
           <Icon data={Plus} size={16} />
@@ -302,7 +302,7 @@ function BroadcastsPage() {
         <SegmentedRadioGroup
           size="m"
           value={statusFilter}
-          onChange={(value) => setStatusFilter(value as unknown as StatusFilter)}
+          onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
           options={[
             { value: 'all', content: 'All' },
             { value: 'draft', content: 'Drafts' },
@@ -318,7 +318,7 @@ function BroadcastsPage() {
           <Text variant="body-1" className="mb-4">You need to be logged in to access this feature</Text>
           <Button
             view="action"
-            size="m"
+            size="l"
             onClick={() => router.push('/auth')}
           >
             Go to Login Page
@@ -333,21 +333,21 @@ function BroadcastsPage() {
           <Text variant="body-1" className="text-red-500 mb-4">{error}</Text>
           <Button
             view="normal"
-            size="m"
+            size="l"
             onClick={() => router.push('/debug')}
           >
             Go to Debug Page
           </Button>
         </div>
       ) : broadcasts.length === 0 ? (
-        <div className="text-center py-8">
-          <Text variant="body-1" className="mb-4">No broadcasts found</Text>
+        <div className="flex flex-col gap-2 items-center text-center py-8">
+          <Text variant="header-2" className="mb-4">No broadcasts found</Text>
           <Button
             view="action"
-            size="m"
+            size="l"
             onClick={handleCreateNew}
           >
-            Create Your First Broadcast
+            New Broadcast
           </Button>
         </div>
       ) : (
