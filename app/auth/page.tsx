@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import './Auth.css';
 import Image from 'next/image';
-import AuthDebugger from './components/AuthDebugger';
 
 const Login = () => {
   const router = useRouter();
@@ -151,8 +150,6 @@ const Login = () => {
         </div>
       </Card>
       
-      {/* Add Auth Debugger for troubleshooting */}
-      <AuthDebugger />
     </div>
   );
 };

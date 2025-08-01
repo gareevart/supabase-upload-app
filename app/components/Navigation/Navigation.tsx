@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Icon, Button } from '@gravity-ui/uikit';
 import {House, Circles4Square, Person, Magnifier, BookOpen,  Bars } from '@gravity-ui/icons';
 import Image from 'next/image';
@@ -11,6 +11,7 @@ import './Navigation.css';
 
 const Navigation: React.FC = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const [activeItem, setActiveItem] = useState('home');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -20,38 +21,16 @@ const Navigation: React.FC = () => {
     if (pathname.startsWith('/blog')) return 'blog';
     if (pathname.startsWith('/projects')) return 'projects';
     if (pathname.startsWith('/search')) return 'search';
-    if (pathname.startsWith('/auth/profile')) return 'profile';
+    if (pathname.startsWith('/auth/profile')) return ''; // No active item for profile page
     return 'home'; // default fallback
   };
 
-  // Set active item based on current URL when component mounts
+  // Update active item when pathname changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const currentPath = window.location.pathname;
-      const activeFromPath = getActiveItemFromPath(currentPath);
-      setActiveItem(activeFromPath);
-      localStorage.setItem('activeItem', activeFromPath);
-    }
-  }, []);
-
-  // Listen for route changes to update active item
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const handleRouteChange = () => {
-        const currentPath = window.location.pathname;
-        const activeFromPath = getActiveItemFromPath(currentPath);
-        setActiveItem(activeFromPath);
-        localStorage.setItem('activeItem', activeFromPath);
-      };
-
-      // Listen for popstate events (back/forward navigation)
-      window.addEventListener('popstate', handleRouteChange);
-      
-      return () => {
-        window.removeEventListener('popstate', handleRouteChange);
-      };
-    }
-  }, []);
+    const activeFromPath = getActiveItemFromPath(pathname);
+    setActiveItem(activeFromPath);
+    localStorage.setItem('activeItem', activeFromPath);
+  }, [pathname]);
 
   const allNavItems = [
     { id: 'home', icon: House, label: 'Home', link: '/' },
