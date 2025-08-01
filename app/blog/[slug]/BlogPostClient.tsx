@@ -19,6 +19,7 @@ interface BlogPost {
   excerpt: string | null
   slug: string | null
   featured_image: string | null
+  show_featured_image: boolean | null
   created_at: string | null
   updated_at: string | null
   published: boolean | null
@@ -54,6 +55,7 @@ export default function BlogPostClient({ params }: { params: any }) {
             excerpt,
             slug,
             featured_image,
+            show_featured_image,
             created_at,
             updated_at,
             published,
@@ -213,7 +215,7 @@ export default function BlogPostClient({ params }: { params: any }) {
         </div>
       </div>
 
-      {post.featured_image && (
+      {post.featured_image && post.show_featured_image !== false && (
         <div className="w-full h-[300px] md:h-[400px] rounded-lg overflow-hidden ">
           <img
             src={post.featured_image}

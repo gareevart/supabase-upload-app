@@ -74,14 +74,14 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-col gap-2">
       <div className="min-w-[180px]"><Text color="secondary" variant="subheader-1">Обложка</Text></div>
       {localFeaturedImageUrl ? (
-        <div className="relative featured-image-container">
+        <div className="relative featured-image-container flex flex-col items-start">
           <img
             src={localFeaturedImageUrl}
             alt="Featured"
-            className="max-h-60 object-contain mx-auto mb-2"
+            className="max-h-60 rounded-lg object-contain mb-2"
             onError={(e) => console.error("Image failed to load:", localFeaturedImageUrl)}
           />
           <div className="flex gap-2">
@@ -90,14 +90,14 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
               view="outlined"
               onClick={() => setShowGenerationDialog(true)}
             >
-              Сгенерировать
+              Generate
             </Button>
             <Button
               size="l"
               view="outlined-danger"
               onClick={handleDeleteImage}
             >
-              Удалить
+              Delete
             </Button>
           </div>
         </div>
@@ -119,14 +119,14 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
               input.click();
             }}
           >
-            Загрузить
+            Upload
           </Button>
           <Button
             size="l"
             view="outlined"
             onClick={() => setShowGenerationDialog(true)}
           >
-            Сгенерировать
+            Generate
           </Button>
         </div>
       )}
@@ -237,11 +237,11 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
 
             <DialogFooter>
               <Button view="outlined" size="l" onClick={() => setShowDialog(false)}>
-                Отмена
+                Cancel
               </Button>
               {generatedImagePreview ? (
                 <Button view="action" size="l" onClick={onApplyGeneratedImage}>
-                  Применить
+                  Apply
                 </Button>
               ) : (
                 <Button
@@ -286,3 +286,4 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
 };
 
 export default FeaturedImageSection;
+

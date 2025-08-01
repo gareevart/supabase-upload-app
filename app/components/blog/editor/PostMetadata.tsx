@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Text, TextInput, TextArea } from '@gravity-ui/uikit';
+import { Text, TextInput, TextArea, Checkbox } from '@gravity-ui/uikit';
 import FeaturedImageSection from "./FeaturedImageSection";
 
 interface PostMetadataProps {
@@ -11,6 +11,8 @@ interface PostMetadataProps {
   excerpt: string;
   setExcerpt: (excerpt: string) => void;
   featuredImageUrl: string | null;
+  showFeaturedImage: boolean;
+  setShowFeaturedImage: (show: boolean) => void;
   onDeleteFeaturedImage: () => Promise<void>;
   onUploadFeaturedImage: (file: File) => void;
   onGenerateImage: () => Promise<void>;
@@ -35,6 +37,8 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
   excerpt,
   setExcerpt,
   featuredImageUrl,
+  showFeaturedImage,
+  setShowFeaturedImage,
   onDeleteFeaturedImage,
   onUploadFeaturedImage,
   onGenerateImage,
@@ -52,8 +56,8 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
 }) => {
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        <div className="min-w-[180px]"><Text color="secondary" variant="subheader-1">Заголовок</Text></div>
+      <div className="flex flex-col gap-2">
+        <div><Text color="secondary" variant="subheader-1">Заголовок</Text></div>
         <TextInput
           size="l"
           value={title}
@@ -63,7 +67,7 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
         />
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-2">
         <div className="min-w-[180px]"><Text color="secondary" variant="subheader-1">URL</Text></div>
         <TextInput
           size="l"
@@ -91,7 +95,19 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
         showGenerationDialog={showGenerationDialog}
         setShowGenerationDialog={setShowGenerationDialog}
       />
-      <div className="flex gap-2">
+      
+      {featuredImageUrl && (
+        <div className="flex flex-col gap-2">
+          <Checkbox
+            checked={showFeaturedImage}
+            onUpdate={setShowFeaturedImage}
+            size="l"
+          >
+            <Text variant="subheader-1">Отображать обложку на странице поста</Text>
+          </Checkbox>
+        </div>
+      )}
+      <div className="flex flex-col gap-2">
         <div className="min-w-[180px]"><Text color="secondary" variant="subheader-1">Описание</Text></div>
         <TextArea
           size="l"

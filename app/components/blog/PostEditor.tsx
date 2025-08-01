@@ -2,7 +2,6 @@
 
 import React from "react";
 import { Button } from '@gravity-ui/uikit';
-import { Card, CardContent } from "@/app/components/ui/card";
 import { useTipTapEditor } from "@/hooks/useTipTapEditor";
 import PostMetadata from "./editor/PostMetadata";
 import TipTapEditor from "./TipTapEditor";
@@ -19,6 +18,7 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
     excerpt, setExcerpt,
     tipTapContent,
     featuredImageUrl,
+    showFeaturedImage, setShowFeaturedImage,
     isLoading,
     imagePrompt, setImagePrompt,
     showGenerationDialog, setShowGenerationDialog,
@@ -44,6 +44,8 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
         excerpt={excerpt}
         setExcerpt={setExcerpt}
         featuredImageUrl={featuredImageUrl}
+        showFeaturedImage={showFeaturedImage}
+        setShowFeaturedImage={setShowFeaturedImage}
         onDeleteFeaturedImage={handleDeleteFeaturedImage}
         onUploadFeaturedImage={handleFeaturedImageUpload}
         onGenerateImage={handleGenerateImage}
@@ -60,12 +62,12 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
         setShowGenerationDialog={setShowGenerationDialog}
       />
 
-            <h3 className="text-lg font-medium mb-2">Содержание поста</h3>
-            <TipTapEditor 
-              content={tipTapContent}
-              onChange={handleContentChange}
-              placeholder="Начните писать содержание поста..."
-            />
+      <h3 className="text-lg font-medium mb-2">Содержание поста</h3>
+      <TipTapEditor 
+        content={tipTapContent}
+        onChange={handleContentChange}
+        placeholder="Type your post content here..."
+      />
 
       <div className="flex justify-start gap-4">
         <Button
@@ -74,7 +76,7 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
           onClick={() => savePost(true)}
           disabled={isLoading}
         >
-          Опубликовать
+          Publish
         </Button>
         <Button
           size="l"
@@ -82,7 +84,7 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
           onClick={() => savePost(false)}
           disabled={isLoading}
         >
-          Сохранить черновик
+          Save as draft
         </Button>
       </div>
     </div>

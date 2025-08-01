@@ -18,6 +18,7 @@ export const useTipTapEditor = (initialPost?: any, onSave?: () => void) => {
   });
   
   const [featuredImageUrl, setFeaturedImageUrl] = useState(initialPost?.featured_image || null);
+  const [showFeaturedImage, setShowFeaturedImage] = useState(initialPost?.show_featured_image ?? true);
   const [isLoading, setIsLoading] = useState(false);
   const [imagePrompt, setImagePrompt] = useState("");
   const [showGenerationDialog, setShowGenerationDialog] = useState(false);
@@ -98,6 +99,7 @@ export const useTipTapEditor = (initialPost?: any, onSave?: () => void) => {
         excerpt,
         content: tipTapContent,
         featured_image: featuredImageUrl,
+        show_featured_image: showFeaturedImage,
         published: publish,
         updated_at: new Date().toISOString()
       };
@@ -334,6 +336,7 @@ export const useTipTapEditor = (initialPost?: any, onSave?: () => void) => {
     excerpt, setExcerpt,
     tipTapContent,
     featuredImageUrl,
+    showFeaturedImage, setShowFeaturedImage,
     isLoading,
     imagePrompt, setImagePrompt,
     showGenerationDialog, setShowGenerationDialog,
