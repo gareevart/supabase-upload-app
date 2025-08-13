@@ -47,7 +47,8 @@ GOOGLE_OAUTH_SETUP.md
 # ML&AI
 changelog.md
 .rules
-.codeassistant/prompts
+.codeassistant
+..continue
 .continue/mcpServers/new-mcp-server.yaml
 .vscode
 .cursor

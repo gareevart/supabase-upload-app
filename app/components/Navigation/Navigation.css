@@ -14,12 +14,13 @@
 
   .nav-container {
     display: flex;
+    align-items: center;
     flex-direction: column;
     height: 100%;
+    padding: var(--g-spacing-6);
   }
 
   .logo-area {
-    padding: 24px 0;
     display: flex;
     justify-content: center;
   }
@@ -199,4 +200,9 @@
 
 .drawer-theme-toggle .theme-toggle:hover {
   background-color: var(--g-color-base-generic-hover);
+}
+
+.profile-popup {
+  padding: 8px 12px;
+  color: var(--g-color-text-light-primary);
 }

@@ -329,6 +329,7 @@
 	--g-color-text-link-hover: var(--g-color-private-brand-1000-solid);
 	--g-color-text-link-visited: var(--g-color-private-purple-550-solid);
 	--g-color-text-link-visited-hover: var(--g-color-private-purple-750-solid);
+	--g-popup-background-color: var(--g-color-base-float-heavy);
 }
 
 .g-root_theme_dark {

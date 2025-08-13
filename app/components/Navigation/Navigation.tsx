@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Icon, Button } from '@gravity-ui/uikit';
+import { Icon, Button, Popover } from '@gravity-ui/uikit';
 import {House, Circles4Square, Person, Magnifier, BookOpen,  Bars } from '@gravity-ui/icons';
 import Image from 'next/image';
 import UserAvatar from '../UserAvatar';
@@ -69,38 +69,64 @@ const Navigation: React.FC = () => {
 
           <div className="nav-items">
             {mainNavItems.map((item) => (
-              <Button
+              <Popover
                 key={item.id}
-                view={activeItem === item.id ? "action" : "flat"}
-                selected={activeItem === item.id}
-                size="xl"
-                onClick={() => {
-                  setActiveItem(item.id);
-                  localStorage.setItem('activeItem', item.id);
-                  if (item.link) {
-                    router.push(item.link);
-                  }
-                }}
+                content={item.label}
+                placement="right"
+                hasArrow
+                openDelay={50}
+                closeDelay={100}
+                className='profile-popup'
               >
-                <Icon data={item.icon} size={20} />
-                
-              </Button>
+                <Button
+                  view={activeItem === item.id ? "action" : "flat"}
+                  selected={activeItem === item.id}
+                  size="xl"
+                  onClick={() => {
+                    setActiveItem(item.id);
+                    localStorage.setItem('activeItem', item.id);
+                    if (item.link) {
+                      router.push(item.link);
+                    }
+                  }}
+                >
+                  <Icon data={item.icon} size={20} />
+                </Button>
+              </Popover>
             ))}
             
-            <Button
-              view="flat"
-              className="menu-button"
-              onClick={toggleDrawer}
-              aria-label="Open menu"
-              aria-expanded={isDrawerOpen}
+            <Popover
+              content="Menu"
+              placement="bottom"
+              hasArrow
+              openDelay={50}
+              closeDelay={100}
+              className='profile-popup'
             >
-               <Icon data={Bars} size={24} />
-            </Button>
-              <Link href="/auth/profile">
-                <UserAvatar />
-              </Link>
+              <Button
+                view="flat"
+                className="menu-button"
+                onClick={toggleDrawer}
+                aria-label="Open menu"
+                aria-expanded={isDrawerOpen}
+              >
+                <Icon data={Bars} size={24} />
+              </Button>
+            </Popover>
           </div>
-          </div>
+               <Popover
+                content="Profile"
+                placement="right"
+                hasArrow
+                openDelay={50}
+                closeDelay={100}
+                className='profile-popup'
+              >
+                <Link href="/auth/profile">
+                  <UserAvatar />
+                </Link>
+              </Popover>
+        </div>
       </nav>
 
       {/* Drawer Menu */}
