@@ -5,12 +5,15 @@ import { ChatList } from "@/app/components/chat/ChatList";
 import { Container } from "@/app/components/ui/container";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { redirect } from "next/navigation";
-import {Toaster, ToasterComponent, ToasterProvider} from '@gravity-ui/uikit';
+import { useCreateChat } from "@/hooks/useCreateChat";
+import {Toaster, Button, Text, ToasterComponent, ToasterProvider, Spin, Icon} from '@gravity-ui/uikit';
+import {Plus} from '@gravity-ui/icons';
 
 const ChatPage = () => {
   const toaster = new Toaster();
   const { chatId } = useParams<{ chatId: string }>();
   const { user, loading: isAuthLoading } = useAuth();
+  const { handleCreateChat, createChat } = useCreateChat();
 
   if (isAuthLoading) {
     return (
@@ -37,8 +40,23 @@ const ChatPage = () => {
               {chatId ? (
                 <ChatInterface chatId={chatId} />
               ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  Выберите чат или создайте новый
+                <div className="flex flex-column center-container h-full">
+                  <Text variant="header-1">Выберите чат или создайте новый</Text>
+                  
+                    <Button
+                    view="action"
+                    size="m"
+                    onClick={handleCreateChat}
+                    disabled={createChat.isPending}
+                    title="Создать новый чат"
+                    >
+                    {createChat.isPending ? (
+                    <Spin size="xs"/>
+                    ) : (
+                    <Icon data={Plus} size={16} />
+                    )}
+                    Создать чат
+                    </Button>
                 </div>
               )}
             </div>

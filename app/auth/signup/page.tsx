@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase';
 import { Card, Text, Button, TextInput, PasswordInput, useToaster } from '@gravity-ui/uikit'
 import Link from 'next/link';
-// CSS import removed as it's now in the root layout
+import '../Auth.css';
 
 const SignUp = () => {
   const [password, setPassword] = React.useState('');
@@ -96,7 +96,7 @@ const SignUp = () => {
           <Text variant="subheader-1" color="primary">
             Have an account?
           </Text>
-          <Link className="link g-color-text_color_secondary" href="/auth/login">Login</Link>
+          <Link className="link g-color-text_color_secondary" href="/auth">Login</Link>
         </div>
       </Card>
     </div>

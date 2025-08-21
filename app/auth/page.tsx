@@ -1,12 +1,12 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import { Button, Card, Icon, Text, TextInput, useThemeValue } from '@gravity-ui/uikit';
-import { Eye, EyeSlash } from '@gravity-ui/icons';
+import { Eye, EyeSlash, ArrowUpRightFromSquare } from '@gravity-ui/icons';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import './Auth.css';
 import Image from 'next/image';
+import './Auth.css';
 
 const Login = () => {
   const router = useRouter();
@@ -69,7 +69,7 @@ const Login = () => {
         <Image src={logo} alt="Application Logo" width={180} height={60} />
       </div>
 
-      <Card className='login' maxWidth="400px" theme="normal" size="l">
+      <Card className='login' maxWidth="360px" theme="normal" size="l">
         <div className="title">
           <Text variant="header-1" color="primary">
             Welcome back
@@ -81,6 +81,7 @@ const Login = () => {
 
         <Button size="l" onClick={handleGoogleLogin} loading={isLoading}>
           Login with Google
+          <Icon data={ArrowUpRightFromSquare} size={16} />
         </Button>
 
         <div className="continue">

@@ -1,37 +1,26 @@
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useChats } from "@/hooks/useChats";
+import { useCreateChat } from "@/hooks/useCreateChat";
 import { Button, Skeleton, Select, Text, Icon, Spin, TextArea } from "@gravity-ui/uikit";
 import {Plus, Pencil, TrashBin, Xmark, Check } from '@gravity-ui/icons';
 import { useModelSelection } from "@/hooks/useModelSelection";
 import "./ChatList.css";
 
 export const ChatList = () => {
-  const router = useRouter();
   const {
     chats,
     isLoading,
     error,
-    createChat,
     updateChatTitle,
     deleteChat,
   } = useChats();
+  const { handleCreateChat, createChat } = useCreateChat();
   const { selectedModel, setSelectedModel } = useModelSelection();
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const pathname = usePathname();
-
-  const handleCreateChat = async () => {
-    try {
-      const result = await createChat.mutateAsync();
-      if (result && result.id) {
-        router.push(`/chat/${result.id}`);
-      }
-    } catch (error) {
-      console.error("Failed to create chat:", error);
-    }
-  };
 
   const startEditing = (chatId: string, currentTitle: string) => {
     setEditingChatId(chatId);
@@ -54,7 +43,7 @@ export const ChatList = () => {
     e.stopPropagation();
     if (window.confirm("Вы уверены, что хотите удалить этот чат?")) {
       await deleteChat.mutateAsync(chatId);
-      router.push("/chat");
+      // Навигация будет обработана автоматически через useChats
     }
   };
 

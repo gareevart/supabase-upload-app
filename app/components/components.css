@@ -13,7 +13,6 @@
   max-width: 1152px; /* max-w-6xl */
   margin-right: auto;
   padding: 1.5rem; /* p-6 */
-  border-radius: var(--g-spacing-3);
   display: flex;
   align-items: flex-start;
   gap: var(--g-spacing-3);
@@ -273,6 +272,8 @@
 }
 
 .search-results-container {
+  display: flex;
+  flex-wrap: wrap;
   margin-top: 1.5rem;
 }
 

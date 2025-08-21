@@ -4,11 +4,13 @@ import MyProjects  from '../components/MyProjects/MyProjects';
 
 export default function Home() {
   return (
-    <div className="page-container">
-      <div className="content-container">
-        <Text variant="display-1">Projects</Text>
+    <div className="min-h-screen pb-20">
+      <main className="container mx-auto max-w-4xl">
+        <div className="flex flex-col justify-between items-start">
+        <Text className="mb-6" variant="display-1">Projects</Text>
             <MyProjects />
-      </div>
+        </div>    
+      </main>
     </div>
   );
 }

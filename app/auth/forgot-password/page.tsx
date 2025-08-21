@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Card, Text, TextInput } from '@gravity-ui/uikit';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-// CSS import removed as it's now in the root layout
+import '../Auth.css';
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState('');
@@ -51,7 +51,8 @@ const ForgotPassword = () => {
 
     return (
         <div className="login-container">
-            <Card className='login' maxWidth="400px" theme="normal" size="l">
+
+            <Card className='login' maxWidth="360px" theme="normal" size="l">
                 <div className="title">
                     <Text variant="header-1" color="primary">
                         Forgot Password
@@ -119,7 +120,7 @@ const ForgotPassword = () => {
                             <Text variant="subheader-1" color="primary">
                                 Remember your password?
                             </Text>
-                            <Link className="link g-color-text_color_secondary" href="/auth/login">Sign In</Link>
+                            <Link className="link g-color-text_color_secondary" href="/auth">Sign In</Link>
                         </div>
                     </>
                 )}
