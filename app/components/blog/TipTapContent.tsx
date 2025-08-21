@@ -83,6 +83,7 @@ const TipTapContent: React.FC<TipTapContentProps> = ({ content, className = '' }
           height: auto;
           border-radius: 0.375rem;
           display: block;
+          border: 1px solid var(--g-color-line-generic); 
         }
         
         .tiptap-content a {
