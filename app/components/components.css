@@ -385,3 +385,33 @@
     border-radius: 10px;
   }
 }
+
+/* Parallax effect for AI background with GSAP */
+.ai-bg-gsap {
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  right: -20px;
+  bottom: -20px;
+  background-image: url(/ai-bg.webp);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: inherit;
+  z-index: 1;
+  transform: translateZ(0); /* Hardware acceleration */
+}
+
+.parallax-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.parallax-card .ai-bg-gsap {
+  z-index: 0;
+}
+
+.parallax-card > div:last-child {
+  position: relative;
+  z-index: 2;
+}
