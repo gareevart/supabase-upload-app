@@ -170,6 +170,7 @@ const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
           title="Insert Image"
           className="h-8 px-2 min-w-8"
         >
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image className="h-4 w-4" />
         </Button>
       </div>

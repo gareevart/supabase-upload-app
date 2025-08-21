@@ -1,4 +1,5 @@
 import {useEffect, useState} from 'react';
+import Image from 'next/image';
 import {useNavigate} from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import {
@@ -104,7 +105,7 @@ const Profile = () => {
             }
         };
         fetchUserAndProfile();
-    }, [user]);
+    }, [user, fetchSubscription]);
 
     const handleSubscriptionToggle = async () => {
         if (!user || !user.email || !subscription) return;
@@ -297,11 +298,12 @@ const Profile = () => {
                     <div className="profile-view pb2">
                     <Text variant='subheader-3'>Basic Information</Text>
                         {profile.avatar_url && (
-                            <img 
-                                src={profile.avatar_url} 
-                                alt="Avatar" 
-                                className="profile-avatar" 
-                                style={{ width: '80px', height: '80px' }}
+                            <Image
+                                src={profile.avatar_url}
+                                alt="Avatar"
+                                className="profile-avatar"
+                                width={80}
+                                height={80}
                             />
                         )}
                         <div className="flex-col">

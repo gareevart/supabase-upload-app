@@ -145,7 +145,7 @@ const Login = () => {
 
         <div className="signup">
           <Text variant="subheader-1" color="primary">
-            Don't have an account?
+            Don{'\'t'} have an account?
           </Text>
           <Link className="link g-color-text_color_secondary" href="/auth/signup">Sign Up</Link>
         </div>

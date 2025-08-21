@@ -63,7 +63,7 @@ export default function DebugPage() {
       <Card className="p-6 mb-6">
         <Text variant="subheader-1" className="mb-4">Set Admin Role</Text>
         <Text variant="body-1" className="mb-4">
-          This tool will check your user profile and set your role to 'admin' if it's not already set.
+          This tool will check your user profile and set your role to {'"admin"'} if it{"'"}s not already set.
           This will give you access to the broadcast features.
         </Text>
         
@@ -117,28 +117,28 @@ export default function DebugPage() {
       <Card className="p-6">
         <Text variant="subheader-1" className="mb-4">Troubleshooting</Text>
         <Text variant="body-1" className="mb-2">
-          If you're experiencing issues with the broadcast feature, try the following:
+          If you{"'"}re experiencing issues with the broadcast feature, try the following:
         </Text>
         
         <ul className="list-disc pl-6 mb-4">
           <li className="mb-2">
             <Text variant="body-1">
-              Make sure you're logged in by visiting the <a href="/auth" className="text-blue-600 hover:underline">login page</a>
+              Make sure you{"'"}re logged in by visiting the <a href="/auth" className="text-blue-600 hover:underline">login page</a>
             </Text>
           </li>
           <li className="mb-2">
             <Text variant="body-1">
-              Set your role to 'admin' using the button above
+              Set your role to {'"admin"'} using the button above
             </Text>
           </li>
           <li className="mb-2">
             <Text variant="body-1">
-              Check that the 'sent_mails' table exists in your Supabase database
+              Check that the {'"sent_mails"'} table exists in your Supabase database
             </Text>
           </li>
           <li className="mb-2">
             <Text variant="body-1">
-              Verify that you're properly authenticated
+              Verify that you{"'"}re properly authenticated
             </Text>
           </li>
           <li className="mb-2">

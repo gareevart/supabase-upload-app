@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import './components.css';
 import { supabase } from '@/lib/supabase';
+import Image from 'next/image';
 import {Button, Card, Text, Skeleton} from '@gravity-ui/uikit';
 
 interface FileObject {
@@ -32,7 +33,7 @@ export default function FileView() {
       if (error) throw error;
       
       // Фильтруем служебный файл .emptyFolderPlaceholder, который Supabase создает автоматически
-      const filteredData = data ? data.filter(file => file.name !== '.emptyFolderPlaceholder') : [];
+      const filteredData = data ? data.filter(file => file.name !== ".emptyFolderPlaceholder") : [];
       setImages(filteredData);
     } catch (err: any) {
       // Более информативное сообщение об ошибке для проблем с RLS
@@ -98,7 +99,7 @@ export default function FileView() {
         </div>
       ) : images.length === 0 ? (
         <div className="file-view-empty">
-          Нет изображений в папке "profiles" бакета "avatars"
+          Нет изображений в папке {'"profiles"'} бакета {'"avatars"'}
         </div>
       ) : (
         <div className="file-view-grid">
@@ -108,10 +109,12 @@ export default function FileView() {
               className="file-view-item"
             >
               <div className="file-view-image-container">
-                <img 
-                  src={getImageUrl(image.name)} 
+                <Image
+                  src={getImageUrl(image.name)}
                   alt={image.name}
                   className="file-view-image"
+                  width={100}
+                  height={100}
                 />
               </div>
               

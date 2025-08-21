@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button, Text, useToaster } from '@gravity-ui/uikit';
 import { supabase } from '@/lib/supabase';
+import Image from 'next/image';
 
 interface FileUploaderProps {
   bucketName: string;
@@ -26,6 +27,7 @@ const FileUploader = ({
   onDeleteComplete
 }: FileUploaderProps) => {
   const [file, setFile] = useState<File | null>(null);
+  const { add } = useToaster();
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(existingFileUrl || null);
@@ -106,7 +108,11 @@ const FileUploader = ({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (addToast: typeof add) => {
+    console.log('handleDelete called');
+    console.log('addToast function:', addToast);
+    console.log('existingFileUrl:', existingFileUrl);
+    console.log('allowDelete:', allowDelete);
     if (!existingFileUrl || !allowDelete) return;
     
     try {
@@ -133,8 +139,7 @@ const FileUploader = ({
       }
 
       // Show a success toast for file deletion
-      const toaster = useToaster();
-      toaster.add({
+      addToast({
         name: 'delete-file-success',
         title: 'Успех',
         content: 'Файл удален',
@@ -152,21 +157,21 @@ const FileUploader = ({
     <div>
       {preview && preview.startsWith('http') && (
         <div style={{ marginBottom: '12px' }}>
-          <img 
-            src={preview} 
-            alt="Preview" 
-            style={{ 
-              maxWidth: '80px', 
-              maxHeight: '80px', 
+          <Image
+            src={preview}
+            alt="Preview"
+            width={80}
+            height={80}
+            style={{
               borderRadius: '6px',
               objectFit: 'cover'
-            }} 
+            }}
           />
           {allowDelete && (
             <Button 
               size="m" 
               view="outlined-danger" 
-              onClick={handleDelete}
+              onClick={() => handleDelete(add)}
               loading={uploading}
               style={{ marginLeft: '8px' }}
             >

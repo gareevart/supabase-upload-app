@@ -125,6 +125,7 @@ const BlockToolbar: React.FC<{
           input.click();
         }}
       >
+        {/* eslint-disable-next-line jsx-a11y/alt-text */}
         <Image className="h-4 w-4 mr-1" />
         <span className="hidden sm:inline">Изображение</span>
       </Button>
@@ -160,10 +161,10 @@ const BlockContent: React.FC<{
     return (
       <div className="flex flex-col items-center">
         {block.url && (
-          <img 
-            src={block.url} 
-            alt={block.alt || ""} 
-            className="max-h-80 object-contain mb-2" 
+          <img
+            src={block.url}
+            alt={block.alt || "Загруженное изображение"}
+            className="max-h-80 object-contain mb-2"
           />
         )}
         <TextArea
