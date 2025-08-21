@@ -25,7 +25,7 @@ export default function HomeClient() {
           Yandex Infrastructure. I work at the intersection of product design and AI, helping shape internal tools for developers. My focus is on making complex systems feel simple — designing scalable, intuitive interfaces that adapt to how people actually work.
         </Text>
 
-        <div className="links-container bg-emerald-100 dark:bg-emerald-800">
+        <div className="links-container bg-emerald-100 dark:bg-emerald-900">
           <Link href="https://x.com/gareev" target="_blank" rel="noopener noreferrer">
             <Text className="link-item" variant='subheader-3'><Icon data={Globe} size={16} /> X.com </Text>
           </Link>

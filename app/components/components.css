@@ -18,6 +18,10 @@
   gap: var(--g-spacing-3);
 }
 
+.ai-bg {
+  background-image: url(/ai-bg.webp);
+}
+
 .ai-image-card {
   max-width: 1152px; /* max-w-6xl */
   margin-right: auto;

@@ -18,10 +18,9 @@ const MyProjects = () => {
         </Card>
     </Link>
         <Link href="/chat" rel="noopener noreferrer">
-        <Card type="container" size="l" view="filled" theme="info" className='project-card'>
+        <Card type="container" size="l" view="filled" theme="info" className='project-card ai-bg'>
           <div className='flex row gap-2'>
           <Text color="primary" variant="header-1">AI Chat </Text>
-          <Label size="m" theme="info">New</Label>
           </div>
         </Card>
     </Link>
