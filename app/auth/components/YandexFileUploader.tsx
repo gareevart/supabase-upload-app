@@ -199,16 +199,12 @@ const YandexFileUploader = ({
   return (
     <div>
       {preview && preview.startsWith('http') && (
-        <div style={{ marginBottom: '12px' }}>
+        <div className='flex pb-4 items-center'>
           <img 
             src={preview} 
-            alt="Preview" 
-            style={{ 
-              maxWidth: '80px', 
-              maxHeight: '80px', 
-              borderRadius: '6px',
-              objectFit: 'cover'
-            }} 
+            alt="Preview"
+            className="profile-avatar" 
+            style={{ width: '80px', height: '80px' }}
           />
           {allowDelete && (
             <Button 

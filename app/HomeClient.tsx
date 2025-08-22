@@ -25,15 +25,15 @@ export default function HomeClient() {
           Yandex Infrastructure. I work at the intersection of product design and AI, helping shape internal tools for developers. My focus is on making complex systems feel simple — designing scalable, intuitive interfaces that adapt to how people actually work.
         </Text>
 
-        <div className="links-container bg-emerald-100 dark:bg-emerald-900">
+        <div className="links-container bg-emerald-50 dark:bg-emerald-900">
           <Link href="https://x.com/gareev" target="_blank" rel="noopener noreferrer">
-            <Text className="link-item" variant='subheader-3'><Icon data={Globe} size={16} /> X.com </Text>
+            <Text className="LinkHover" variant='subheader-3'><Icon data={Globe} size={16} /> X.com </Text>
           </Link>
           <Link href="https://t.me/gareev45" target="_blank" rel="noopener noreferrer">
-            <Text className="link-item" variant='subheader-3'><Icon data={Globe} size={16} /> Telegram </Text>
+            <Text className="LinkHover" variant='subheader-3'><Icon data={Globe} size={16} /> Telegram </Text>
           </Link>
           <Link href="https://www.linkedin.com/in/dmitrii-gareev-234146253" target="_blank" rel="noopener noreferrer">
-            <Text className="link-item" variant='subheader-3'><Icon data={Globe} size={16} /> Linkedin </Text>
+            <Text className="LinkHover" variant='subheader-3'><Icon data={Globe} size={16} /> Linkedin </Text>
           </Link>
         </div>
       </div>

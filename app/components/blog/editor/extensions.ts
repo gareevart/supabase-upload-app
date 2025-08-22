@@ -1,4 +1,5 @@
 import { StarterKit } from '@tiptap/starter-kit';
+import Strike from '@tiptap/extension-strike';
 import { Color } from '@tiptap/extension-color';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { TextAlign } from '@tiptap/extension-text-align';
@@ -44,4 +45,5 @@ export const extensions = [
   Placeholder.configure({
     placeholder: 'Начните писать...',
   }),
+  Strike,
 ];

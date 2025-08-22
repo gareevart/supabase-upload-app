@@ -11,7 +11,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import { ImageGenerator } from './extensions/ImageGeneratorExtension';
 import { Button, Icon, TextInput, Text, Modal, Card, DropdownMenu } from '@gravity-ui/uikit';
-import {Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Picture, Xmark, ChevronDown, Heading1, Heading2, Heading3, Heading4, MagicWand, ListUl} from '@gravity-ui/icons';
+import {Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Picture, Xmark, ChevronDown, Heading1, Heading2, Heading3, Heading4, MagicWand, ListUl, Strikethrough} from '@gravity-ui/icons';
 import "./editor/editor.css";
 
 // Yandex Cloud Object Storage bucket name
@@ -367,6 +367,15 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         <Button
           view="flat"
           size="m"
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+          className={editor.isActive('strike') ? 'is-active' : ''}
+        >
+          <Icon data={Strikethrough} size={16} />
+        </Button>
+        
+        <Button
+          view="flat"
+          size="m"
           onClick={() => editor.chain().focus().toggleUnderline().run()}
           className={editor.isActive('underline') ? 'is-active' : ''}
         >
@@ -588,6 +597,15 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               className={editor.isActive('bold') ? 'is-active' : ''}
             >
               <Bold className="h-3 w-3" />
+            </Button>
+            
+            <Button
+              view="flat"
+              size="s"
+              onClick={() => editor.chain().focus().toggleStrike().run()}
+              className={editor.isActive('strike') ? 'is-active' : ''}
+            >
+              <Strikethrough className="h-3 w-3" />
             </Button>
             
             <Button
