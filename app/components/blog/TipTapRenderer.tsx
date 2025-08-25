@@ -9,7 +9,7 @@ interface TipTapRendererProps {
 }
 
 const TipTapRenderer: React.FC<TipTapRendererProps> = ({ content }) => {
-  const renderNode = (node: any, index: number): React.ReactNode => {
+  const renderNode = (node: any, index: string | number): React.ReactNode => {
     if (!node) return null;
 
     // Handle text nodes
@@ -55,8 +55,8 @@ const TipTapRenderer: React.FC<TipTapRendererProps> = ({ content }) => {
     }
 
     // Handle block nodes
-    const children = node.content ? node.content.map((child: any, childIndex: number) => 
-      renderNode(child, childIndex)
+    const children = node.content ? node.content.map((child: any, childIndex: number) =>
+      renderNode(child, `${index}-${childIndex}`)
     ) : [];
 
     switch (node.type) {
@@ -126,16 +126,18 @@ const TipTapRenderer: React.FC<TipTapRendererProps> = ({ content }) => {
         // In that case, we'll use Next.js Image with unoptimized prop
         if (src.startsWith('/') || src.startsWith('./') || src.startsWith('../')) {
           return (
-            <Image
-              key={`image-${index}`}
-              src={src}
-              alt={alt}
-              title={title}
-              width={0}
-              height={0}
-              unoptimized
-              style={{ maxWidth: '100%', height: 'auto' }}
-            />
+            <div style={{ position: 'relative', width: '100%', height: 'auto' }}>
+              <Image
+                key={`image-${index}`}
+                src={src}
+                alt={alt}
+                title={title}
+                width={0}
+                height={0}
+                unoptimized
+                style={{ width: '100%', height: 'auto' }}
+              />
+            </div>
           );
         }
         
@@ -147,8 +149,9 @@ const TipTapRenderer: React.FC<TipTapRendererProps> = ({ content }) => {
               src={src}
               alt={alt}
               title={title}
-              fill
-              style={{ objectFit: 'contain' }}
+              width={0}
+              height={0}
+              style={{ width: '100%', height: 'auto' }}
               sizes="100vw"
             />
           </div>
@@ -180,7 +183,7 @@ const TipTapRenderer: React.FC<TipTapRendererProps> = ({ content }) => {
 
   try {
     const parsedContent = JSON.parse(content);
-    return <div className="tiptap-renderer">{renderNode(parsedContent, 0)}</div>;
+    return <div className="tiptap-renderer">{renderNode(parsedContent, "root")}</div>;
   } catch (error) {
     console.error("Error parsing TipTap content:", error);
     return <p>Error rendering content</p>;

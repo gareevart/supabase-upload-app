@@ -1,65 +1,108 @@
 "use client";
 
-import React, { createContext, useContext, useState } from 'react';
+import { useToaster } from '@gravity-ui/uikit';
 
-type ToastOptions = {
+// Типы для совместимости с существующим кодом
+type ToastVariant = 'default' | 'destructive' | 'success' | 'info' | 'warning';
+
+interface ToastOptions {
   title?: string;
   description?: string;
-  variant?: 'default' | 'destructive';
+  variant?: ToastVariant;
   action?: React.ReactNode;
-};
-
-interface Toast extends ToastOptions {
-  id: string;
+  timeout?: number;
 }
 
-type ToastContextType = {
-  toast: (props: ToastOptions) => void;
-  dismiss: (toastId?: string) => void;
-  toasts: Toast[];
-};
-
-const ToastContext = createContext<ToastContextType | undefined>(undefined);
-
-export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = useState<Toast[]>([]);
-
+export function useToast() {
+  const toaster = useToaster();
+  
   const toast = (options: ToastOptions) => {
-    const toastId = crypto.randomUUID();
-    setToasts(prev => [...prev, { ...options, id: toastId }]);
-  };
-
-  const dismiss = (toastId?: string) => {
-    if (toastId) {
-      setToasts(prev => prev.filter(t => t.id !== toastId));
-    } else {
-      setToasts([]);
+    const { title, description, variant = 'default', timeout = 5000 } = options;
+    
+    // Объединяем заголовок и описание в одно сообщение
+    const content = title && description 
+      ? `${title}: ${description}` 
+      : title || description || '';
+    
+    // Определяем тему для тоста
+    let theme: any = 'normal';
+    switch (variant) {
+      case 'destructive':
+        theme = 'danger';
+        break;
+      case 'success':
+        theme = 'success';
+        break;
+      case 'warning':
+        theme = 'warning';
+        break;
+      case 'info':
+        theme = 'info';
+        break;
+      default:
+        theme = 'normal';
     }
+    
+    toaster.add({
+      name: 'app-toast',
+      title: content,
+      theme: theme,
+      autoHiding: timeout > 0 ? timeout : false,
+    });
   };
-
-  return (
-    <ToastContext.Provider value={{ toast, dismiss, toasts }}>
-      {children}
-    </ToastContext.Provider>
-  );
+  
+  // Для совместимости с существующим кодом
+  const dismiss = () => {
+    // Gravity UI Toaster не требует явного закрытия тостов
+    // Они автоматически закрываются по таймауту
+  };
+  
+  return {
+    toast,
+    dismiss,
+    toasts: [] // Пустой массив для совместимости
+  };
 }
 
-export function useToast(): ToastContextType {
-  const context = useContext(ToastContext);
-  
-  if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
-  }
-  
-  return context;
-}
-
+// Экспортируем также как отдельную функцию для удобства
 export const toast = (options: ToastOptions) => {
-  const context = useContext(ToastContext);
+  // Создаем новый экземпляр тостера
+  const toaster = (window as any).toaster;
   
-  if (context) {
-    context.toast(options);
+  if (toaster) {
+    const { title, description, variant = 'default', timeout = 5000 } = options;
+    
+    // Объединяем заголовок и описание в одно сообщение
+    const content = title && description 
+      ? `${title}: ${description}` 
+      : title || description || '';
+    
+    // Определяем тему для тоста
+    let theme: any = 'normal';
+    switch (variant) {
+      case 'destructive':
+        theme = 'danger';
+        break;
+      case 'success':
+        theme = 'success';
+        break;
+      case 'warning':
+        theme = 'warning';
+        break;
+      case 'info':
+        theme = 'info';
+        break;
+      default:
+        theme = 'normal';
+    }
+    
+    toaster.add({
+      name: 'app-toast',
+      title: content,
+      theme: theme,
+      autoHiding: timeout > 0 ? timeout : false,
+    });
   } else {
-    console.warn('Toast used outside of ToastProvider');
+    console.warn('Toaster not available');
   }
 };
