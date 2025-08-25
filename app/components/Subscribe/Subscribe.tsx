@@ -25,12 +25,17 @@ export const Subscribe = () => {
         setError('');
 
         try {
-            // Проверяем, существует ли уже подписка с таким email
-            const { data: existingSubscription } = await supabase
+            // Проверяем, существует ли уже подписка с таким email (проверяем оба поля)
+            const { data: existingSubscription, error: checkError } = await supabase
                 .from('subscribe')
                 .select('id')
-                .eq('mail', email)
+                .or(`mail.eq.${email},email.eq.${email}`)
                 .single();
+
+            // Если ошибка не связана с отсутствием записи, выбрасываем её
+            if (checkError && checkError.code !== 'PGRST116') {
+                throw checkError;
+            }
 
             if (existingSubscription) {
                 // Если подписка уже существует, показываем сообщение
@@ -45,76 +50,20 @@ export const Subscribe = () => {
                 return;
             }
 
-            // Проверяем, существует ли уже пользователь с таким email
-            const { data: existingUser } = await supabase
-                .from('users')
-                .select('id')
-                .eq('email', email)
-                .single();
+            // Добавляем новую подписку, используя существующую структуру таблицы
+            const { error: insertError } = await supabase.from('subscribe').insert([
+                {
+                    mail: email, // Используем поле mail (основное)
+                    email: email, // Также заполняем поле email для совместимости
+                    subscribe_started_date: new Date().toISOString(),
+                    subscribe_status: true,
+                    name: null, // Можно добавить поле для имени в форму позже
+                    is_active: true,
+                    subscribed_at: new Date().toISOString(),
+                },
+            ]);
 
-            if (existingUser) {
-                // Если пользователь существует, просто добавляем запись в таблицу subscribe
-                const { error: dbError } = await supabase.from('subscribe').insert([
-                    {
-                        mail: email,
-                        subscribe_started_date: new Date().toISOString(),
-                        subscribe_status: true,
-                        user_id: existingUser.id,
-                    },
-                ]);
-
-                if (dbError) throw dbError;
-            } else {
-                // Если пользователя нет, создаем его через Auth
-                const { error: authError } = await supabase.auth.signUp({
-                    email: email,
-                    password: crypto.randomUUID(), // Генерируем случайный пароль
-                    options: {
-                        emailRedirectTo: `${window.location.origin}/auth/callback`,
-                        data: {
-                            subscribe_status: true,
-                        },
-                    },
-                });
-
-                if (authError) throw authError;
-
-                // Ждем некоторое время, чтобы триггер успел создать запись в users
-                await new Promise((resolve) => setTimeout(resolve, 1000));
-
-                // Проверяем, создалась ли запись в таблице users
-                const { data: newUser, error: userCheckError } = await supabase
-                    .from('users')
-                    .select('id')
-                    .eq('email', email)
-                    .single();
-
-                if (userCheckError) {
-                    // Если записи нет, добавляем запись в таблицу subscribe без user_id
-                    const { error: dbError } = await supabase.from('subscribe').insert([
-                        {
-                            mail: email,
-                            subscribe_started_date: new Date().toISOString(),
-                            subscribe_status: true,
-                            // user_id опущен
-                        },
-                    ]);
-
-                    if (dbError) throw dbError;
-                } else {
-                    // Если запись есть, добавляем с user_id
-                    const { error: dbError } = await supabase.from('subscribe').insert([
-                        {
-                            mail: email,
-                            subscribe_started_date: new Date().toISOString(),
-                            subscribe_status: true,
-                            user_id: newUser.id,
-                        },
-                    ]);
-
-                    if (dbError) throw dbError;
-                }
-            }
+            if (insertError) throw insertError;
 
             setEmail('');
             add({
@@ -126,7 +75,7 @@ export const Subscribe = () => {
             });
         } catch (err: any) {
             // Обработка ошибки дублирования почты
-            if (err?.code === '23505' && err?.message?.includes('subscribe_mail_key')) {
+            if (err?.code === '23505' && err?.message?.includes('subscribe_email_unique')) {
                 add({
                     name: 'subscribe-already-exists',
                     title: 'Already Subscribed',
@@ -139,7 +88,13 @@ export const Subscribe = () => {
             }
 
             setError('Sorry bro, please try again.');
-            console.error('Error:', err);
+            console.error('Subscribe Error Details:', {
+                error: err,
+                code: err?.code,
+                message: err?.message,
+                details: err?.details,
+                hint: err?.hint
+            });
         } finally {
             setIsLoading(false);
         }

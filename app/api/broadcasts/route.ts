@@ -197,12 +197,23 @@ export const GET = withApiAuth(async (request: NextRequest, user: { id: string }
 export const POST = withApiAuth(async (request: NextRequest, user: { id: string }) => {
   try {
     const body = await request.json();
-    const { subject, content, recipients, scheduled_for } = body;
+    const { subject, content, recipients, group_ids, scheduled_for } = body;
     
     // Validate required fields
-    if (!subject || !content || !recipients || !Array.isArray(recipients) || recipients.length === 0) {
+    if (!subject || !content) {
       return NextResponse.json(
-        { error: 'Missing required fields: subject, content, recipients' },
+        { error: 'Missing required fields: subject, content' },
+        { status: 400 }
+      );
+    }
+
+    // Validate that we have either recipients or group_ids
+    const hasRecipients = recipients && Array.isArray(recipients) && recipients.length > 0;
+    const hasGroups = group_ids && Array.isArray(group_ids) && group_ids.length > 0;
+    
+    if (!hasRecipients && !hasGroups) {
+      return NextResponse.json(
+        { error: 'At least one recipient or group must be specified' },
         { status: 400 }
       );
     }
@@ -243,6 +254,46 @@ export const POST = withApiAuth(async (request: NextRequest, user: { id: string 
       );
     }
     
+    // Collect all emails from groups and manual recipients
+    let allEmails = new Set<string>();
+    
+    // Add manual recipients
+    if (hasRecipients) {
+      recipients.forEach((email: string) => allEmails.add(email));
+    }
+    
+    // Add emails from groups
+    if (hasGroups) {
+      for (const groupId of group_ids) {
+        try {
+          // Use the database function to get group emails
+          const { data: groupEmails, error: groupError } = await supabase
+            .rpc('get_group_emails', { group_id_param: groupId });
+          
+          if (groupError) {
+            console.error('Error getting group emails:', groupError);
+            continue; // Skip this group but continue with others
+          }
+          
+          if (groupEmails && Array.isArray(groupEmails)) {
+            groupEmails.forEach((email: string) => allEmails.add(email));
+          }
+        } catch (error) {
+          console.error('Error processing group:', groupId, error);
+          continue; // Skip this group but continue with others
+        }
+      }
+    }
+    
+    const finalRecipients = Array.from(allEmails);
+    
+    if (finalRecipients.length === 0) {
+      return NextResponse.json(
+        { error: 'No valid recipients found' },
+        { status: 400 }
+      );
+    }
+    
     // Determine status based on scheduled_for
     const status = scheduled_for ? 'scheduled' : 'draft';
     
@@ -254,8 +305,8 @@ export const POST = withApiAuth(async (request: NextRequest, user: { id: string 
         subject,
         content,
         content_html: tiptapToHtml(content),
-        recipients,
-        total_recipients: recipients.length,
+        recipients: finalRecipients,
+        total_recipients: finalRecipients.length,
         status,
         scheduled_for: scheduled_for || null
       })

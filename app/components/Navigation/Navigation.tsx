@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Icon, Button, Popover } from '@gravity-ui/uikit';
-import {House, Circles4Square, Person, Magnifier, BookOpen,  Bars } from '@gravity-ui/icons';
+import {House, Circles4Square, Person, Magnifier, BookOpen, Envelope, Bars } from '@gravity-ui/icons';
 import Image from 'next/image';
 import UserAvatar from '../UserAvatar';
 import NavigationItem from './NavigationItem';
@@ -21,6 +21,8 @@ const Navigation: React.FC = () => {
     if (pathname.startsWith('/blog')) return 'blog';
     if (pathname.startsWith('/projects')) return 'projects';
     if (pathname.startsWith('/search')) return 'search';
+    if (pathname.startsWith('/broadcasts')) return 'broadcasts';
+    if (pathname.startsWith('/subscribers')) return 'subscribers';
     if (pathname.startsWith('/auth/profile')) return ''; // No active item for profile page
     return 'home'; // default fallback
   };
@@ -37,6 +39,8 @@ const Navigation: React.FC = () => {
     { id: 'blog', icon: BookOpen, label: 'Blog', link: '/blog' },
     { id: 'projects', icon: Circles4Square, label: 'Projects', link: '/projects' },
     { id: 'search', icon: Magnifier, label: 'Search', link: '/search' },
+    { id: 'broadcasts', icon: Envelope, label: 'Broadcasts', link: '/broadcasts' },
+    { id: 'subscribers', icon: Person, label: 'Subscribers', link: '/subscribers' },
     { id: 'profile', icon: Person, label: 'Profile', link: '/auth/profile' },
   ];
 

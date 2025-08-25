@@ -163,12 +163,98 @@ export interface Database {
           created_at?: string
         }
       }
+      subscribe: {
+        Row: {
+          id: string
+          email: string
+          name: string | null
+          is_active: boolean
+          subscribed_at: string
+          unsubscribed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          name?: string | null
+          is_active?: boolean
+          subscribed_at?: string
+          unsubscribed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          name?: string | null
+          is_active?: boolean
+          subscribed_at?: string
+          unsubscribed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      broadcast_groups: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          user_id: string | null
+          is_default: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          user_id?: string | null
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          user_id?: string | null
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      group_subscribers: {
+        Row: {
+          id: string
+          group_id: string
+          subscriber_id: string
+          added_at: string
+        }
+        Insert: {
+          id?: string
+          group_id: string
+          subscriber_id: string
+          added_at?: string
+        }
+        Update: {
+          id?: string
+          group_id?: string
+          subscriber_id?: string
+          added_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_group_emails: {
+        Args: {
+          group_id_param: string
+        }
+        Returns: string[]
+      }
     }
     Enums: {
       [_ in never]: never

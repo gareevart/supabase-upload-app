@@ -6,6 +6,7 @@ import { ArrowUturnCwLeft, Pencil, Plus, ChevronDown, Eye, Bug } from '@gravity-
 import TipTapEditor from '@/app/components/blog/TipTapEditor';
 import TagInput from './TagInput';
 import DateTimePicker from './DateTimePicker';
+import GroupSelector from './GroupSelector';
 import { BroadcastFormProps, NewBroadcast } from './types';
 import { tiptapToHtml, renderEmailPreview } from '@/app/utils/tiptapToHtml';
 
@@ -20,6 +21,8 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
   const [subject, setSubject] = useState<string>(initialData?.subject || '');
   const [content, setContent] = useState<any>(initialData?.content || '');
   const [recipients, setRecipients] = useState<string[]>(initialData?.recipients || []);
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+  const [groupEmails, setGroupEmails] = useState<string[]>([]);
   const [showScheduler, setShowScheduler] = useState<boolean>(false);
   const [scheduledDate, setScheduledDate] = useState<Date | null>(
     initialData?.scheduled_for ? new Date(initialData.scheduled_for) : null
@@ -48,6 +51,18 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
     recipients?: string;
   }>({});
   
+  // Handle group selection changes
+  const handleGroupsChange = (groupIds: string[], emails: string[]) => {
+    setSelectedGroups(groupIds);
+    setGroupEmails(emails);
+  };
+
+  // Get all recipients (manual + groups)
+  const getAllRecipients = (): string[] => {
+    const allEmails = new Set([...recipients, ...groupEmails]);
+    return Array.from(allEmails);
+  };
+  
   // Validate form
   const validateForm = (): boolean => {
     const newErrors: {
@@ -64,7 +79,8 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
       newErrors.content = 'Content is required';
     }
     
-    if (recipients.length === 0) {
+    const allRecipients = getAllRecipients();
+    if (allRecipients.length === 0) {
       newErrors.recipients = 'At least one recipient is required';
     }
     
@@ -76,10 +92,12 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
   const handleSaveDraft = async () => {
     if (!validateForm()) return;
     
+    const allRecipients = getAllRecipients();
     const broadcastData: NewBroadcast = {
       subject,
       content,
-      recipients,
+      recipients: allRecipients,
+      group_ids: selectedGroups,
     };
     
     if (onSave) {
@@ -95,10 +113,12 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
       return;
     }
     
+    const allRecipients = getAllRecipients();
     const broadcastData: NewBroadcast = {
       subject,
       content,
-      recipients,
+      recipients: allRecipients,
+      group_ids: selectedGroups,
       scheduled_for: scheduledDate.toISOString(),
     };
     
@@ -111,10 +131,12 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
   const handleSendNow = async () => {
     if (!validateForm()) return;
     
+    const allRecipients = getAllRecipients();
     const broadcastData: NewBroadcast = {
       subject,
       content,
-      recipients,
+      recipients: allRecipients,
+      group_ids: selectedGroups,
     };
     
     if (onSend) {
@@ -126,16 +148,16 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
     <Card className="p-4">
       <div className="space-y-6">
         <div>
-          <Text variant="subheader-1" className="mb-4">Create Email Broadcast</Text>
+          <Text variant="subheader-1" className="mb-4">Создать Email рассылку</Text>
           
           <div className="space-y-4">
             {/* Subject */}
             <div>
-              <Text variant="body-2" className="mb-1">Subject</Text>
+              <Text variant="body-2" className="mb-1">Тема письма</Text>
               <TextInput
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                placeholder="Enter email subject"
+                placeholder="Введите тему письма"
                 disabled={isSubmitting}
                 error={errors.subject}
                 size="m"
@@ -147,15 +169,40 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
               )}
             </div>
             
-            {/* Recipients */}
+            {/* Group Selector */}
             <div>
-              <Text variant="body-2" className="mb-1">Recipients</Text>
+              <GroupSelector
+                selectedGroups={selectedGroups}
+                onGroupsChange={handleGroupsChange}
+                disabled={isSubmitting}
+              />
+            </div>
+            
+            {/* Manual Recipients */}
+            <div>
+              <Text variant="body-2" className="mb-1">
+                Дополнительные получатели
+                <Text variant="caption-1" color="secondary" className="ml-2">
+                  (добавьте email адреса вручную)
+                </Text>
+              </Text>
               <TagInput
                 tags={recipients}
                 setTags={setRecipients}
-                placeholder="Add email addresses..."
+                placeholder="Добавьте email адреса..."
                 disabled={isSubmitting}
               />
+              
+              {/* Show total recipients count */}
+              <div className="mt-2">
+                <Text variant="caption-1" color="secondary">
+                  Всего получателей: {getAllRecipients().length}
+                  {groupEmails.length > 0 && (
+                    <span> (из групп: {groupEmails.length}, вручную: {recipients.length})</span>
+                  )}
+                </Text>
+              </div>
+              
               {errors.recipients && (
                 <Text variant="caption-1" className="text-red-500 mt-1">
                   {errors.recipients}
@@ -165,12 +212,12 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
             
             {/* Content */}
             <div>
-              <Text variant="body-2" className="mb-1">Email Content</Text>
+              <Text variant="body-2" className="mb-1">Содержание письма</Text>
               <div className="border rounded-md">
                 <TipTapEditor
                   content={content}
                   onChange={setContent}
-                  placeholder="Compose your email content here..."
+                  placeholder="Напишите содержание письма..."
                 />
               </div>
               {errors.content && (
@@ -200,7 +247,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
                 disabled={!content || isSubmitting}
               >
                 <Icon data={Eye} size={16} />
-                Preview
+                Предпросмотр
               </Button>
               <Button
                 view="outlined"
@@ -208,7 +255,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
                 disabled={!content || isSubmitting}
               >
                 <Icon data={Bug} size={16} />
-                Debug
+                Отладка
               </Button>
               <Button
                 view="outlined"
@@ -216,7 +263,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
                 disabled={isSubmitting}
               >
                 <Icon data={Pencil} size={16} />
-                Save as Draft
+                Сохранить черновик
               </Button>
               
               {!showScheduler ? (
@@ -226,7 +273,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
                   disabled={isSubmitting}
                 >
                   <Icon data={Plus} size={16} />
-                  Schedule
+                  Запланировать
                 </Button>
               ) : (
                 <Button
@@ -235,7 +282,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
                   disabled={isSubmitting || !scheduledDate}
                 >
                   <Icon data={ChevronDown} size={16} />
-                  Confirm Schedule
+                  Подтвердить планирование
                 </Button>
               )}
               
@@ -245,7 +292,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
                 disabled={isSubmitting}
               >
                 <Icon data={ArrowUturnCwLeft} size={16} />
-                Send Now
+                Отправить сейчас
               </Button>
             </div>
           </div>

@@ -3,11 +3,20 @@ import { Database } from '@/lib/types';
 // Type for a broadcast from the database
 export type Broadcast = Database['public']['Tables']['sent_mails']['Row'];
 
+// Type for subscriber
+export type Subscriber = Database['public']['Tables']['subscribe']['Row'];
+
+// Type for broadcast group
+export type BroadcastGroup = Database['public']['Tables']['broadcast_groups']['Row'] & {
+  subscriber_count?: number;
+};
+
 // Type for creating a new broadcast
 export type NewBroadcast = {
   subject: string;
   content: any;
   recipients: string[];
+  group_ids?: string[];
   scheduled_for?: string | null;
 };
 
