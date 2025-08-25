@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import React from 'react';
 import GeneratedImageDisplay from './components/GeneratedImageDisplay';
 
@@ -116,14 +117,41 @@ const TipTapRenderer: React.FC<TipTapRendererProps> = ({ content }) => {
         );
         
       case 'image':
+        // For images, we'll use Next.js Image component for optimization
+        const src = node.attrs?.src || '';
+        const alt = node.attrs?.alt || '';
+        const title = node.attrs?.title || '';
+        
+        // If it's a local image (relative path), we can't use Next.js Image optimization
+        // In that case, we'll use Next.js Image with unoptimized prop
+        if (src.startsWith('/') || src.startsWith('./') || src.startsWith('../')) {
+          return (
+            <Image
+              key={`image-${index}`}
+              src={src}
+              alt={alt}
+              title={title}
+              width={0}
+              height={0}
+              unoptimized
+              style={{ maxWidth: '100%', height: 'auto' }}
+            />
+          );
+        }
+        
+        // For external images, use Next.js Image component
         return (
-          <img 
-            key={`image-${index}`}
-            src={node.attrs?.src || ''} 
-            alt={node.attrs?.alt || ''} 
-            title={node.attrs?.title || ''} 
-            style={{ maxWidth: '100%', height: 'auto' }}
-          />
+          <div style={{ position: 'relative', width: '100%', height: 'auto' }}>
+            <Image
+              key={`image-${index}`}
+              src={src}
+              alt={alt}
+              title={title}
+              fill
+              style={{ objectFit: 'contain' }}
+              sizes="100vw"
+            />
+          </div>
         );
         
       case 'hardBreak':

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button, Text, TextArea, Modal, Icon } from '@gravity-ui/uikit';
 import { Xmark } from '@gravity-ui/icons';
@@ -6,6 +5,8 @@ import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/app/components/ui/ta
 import StoredImageGallery from "../StoredImageGallery";
 import { useToast } from "@/hooks/use-toast";
 import { DialogFooter } from "@/app/components/ui/dialog";
+import NextImage from "next/image";
+
 
 interface FeaturedImageSectionProps {
   featuredImageUrl: string | null;
@@ -78,9 +79,13 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
       <div className="min-w-[180px]"><Text color="secondary" variant="subheader-1">Обложка</Text></div>
       {localFeaturedImageUrl ? (
         <div className="relative featured-image-container flex flex-col items-start">
-          <img
+          <NextImage
             src={localFeaturedImageUrl}
             alt="Featured"
+            width={0}
+            height={0}
+            sizes="100vw"
+            style={{ width: 'auto', height: 'auto', maxHeight: '15rem' }}
             className="max-h-60 rounded-lg object-contain mb-2"
             onError={(e) => console.error("Image failed to load:", localFeaturedImageUrl)}
           />
@@ -218,9 +223,13 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
               <div className="mt-4">
                 <Text variant="body-1" className="block mb-2">Предпросмотр:</Text>
                 <div className="relative">
-                  <img
+                  <NextImage
                     src={generatedImagePreview}
                     alt="Generated preview"
+                    width={0}
+                    height={0}
+                    sizes="100vw"
+                    style={{ width: '100%', height: 'auto' }}
                     className="w-full h-auto rounded-lg"
                   />
                   <Button

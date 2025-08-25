@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import {
     Avatar,
     Button,
@@ -21,12 +22,16 @@ export const ProfileView = ({ profile, user, onEdit, onLogout }: ProfileViewProp
                 <Text variant='subheader-3'>User</Text>
                 <div className="flex-col" style={{ width: '100%' }}>
                     {profile.avatar_url && (
-                        <img 
-                            src={profile.avatar_url} 
-                            alt="Avatar" 
-                            className="profile-avatar" 
-                            style={{ width: '80px', height: '80px' }}
-                        />
+                        <div style={{ position: 'relative', width: '80px', height: '80px' }}>
+                            <Image
+                                src={profile.avatar_url}
+                                alt="Avatar"
+                                fill
+                                className="profile-avatar"
+                                style={{ objectFit: 'cover' }}
+                                sizes="80px"
+                            />
+                        </div>
                     )}
                     <div className="responsive-definition-list">
                         <DefinitionList responsive={true} direction='vertical'>

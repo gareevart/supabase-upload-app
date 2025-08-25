@@ -5,6 +5,7 @@ import { NodeViewWrapper, ReactNodeViewProps } from '@tiptap/react';
 import { Button, TextArea, Card, Text, Alert, Spin, Flex, Icon } from '@gravity-ui/uikit';
 import { Picture, ArrowUpRightFromSquare, Xmark } from '@gravity-ui/icons';
 import { useRouter } from 'next/navigation';
+import NextImage from 'next/image';
 
 const ImageGeneratorComponent: React.FC<ReactNodeViewProps> = ({
   node,
@@ -169,20 +170,23 @@ const ImageGeneratorComponent: React.FC<ReactNodeViewProps> = ({
               <Text variant="body-2" color="secondary" style={{ marginBottom: '8px' }}>
                 Сгенерированное изображение:
               </Text>
-              <div style={{ 
-                border: '1px solid var(--g-color-line-generic)', 
-                borderRadius: '8px', 
+              <div style={{
+                border: '1px solid var(--g-color-line-generic)',
+                borderRadius: '8px',
                 padding: '8px',
                 marginBottom: '12px'
               }}>
-                <img 
-                  src={generatedImageUrl} 
+                <NextImage
+                  src={generatedImageUrl}
                   alt={prompt}
-                  style={{ 
-                    maxWidth: '100%', 
+                  width={0}
+                  height={0}
+                  sizes="100vw"
+                  style={{
+                    width: '100%',
                     height: 'auto',
                     borderRadius: '4px'
-                  }} 
+                  }}
                 />
               </div>
               <Flex direction="row" gap={2}>

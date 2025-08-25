@@ -46,7 +46,7 @@ const WYSIWYGEditor: React.FC<WYSIWYGEditorProps> = ({
     
     textarea.style.height = 'auto';
     textarea.style.height = `${textarea.scrollHeight}px`;
-  }, [text]);
+  }, [text, textareaRef]);
   
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;

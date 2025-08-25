@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from '@gravity-ui/uikit';
 import { TextArea } from '@gravity-ui/uikit';
@@ -6,6 +5,8 @@ import { EditorContent } from "@/app/components/blog/editor/types";
 import { ChevronDown, ChevronUp, Image } from "lucide-react";
 import YandexGPTTextGenerator from "../YandexGPTTextGenerator";
 import MarkdownEditor from "../MarkdownEditor";
+import NextImage from "next/image";
+
 
 interface ContentBlockProps {
   block: EditorContent;
@@ -161,9 +162,13 @@ const BlockContent: React.FC<{
     return (
       <div className="flex flex-col items-center">
         {block.url && (
-          <img
+          <NextImage
             src={block.url}
             alt={block.alt || "Загруженное изображение"}
+            width={0}
+            height={0}
+            sizes="100vw"
+            style={{ width: 'auto', height: 'auto', maxHeight: '20rem' }}
             className="max-h-80 object-contain mb-2"
           />
         )}
@@ -175,7 +180,7 @@ const BlockContent: React.FC<{
         />
       </div>
     );
-  } 
+  }
   
   if (block.type === "heading") {
     return (

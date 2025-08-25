@@ -83,7 +83,7 @@ export const withBroadcastAuth = <P extends object>(
       return () => {
         if (timeoutId) clearTimeout(timeoutId);
       };
-    }, [isAuthorized, authError]);
+    }, [isAuthorized, authError, router, toast]);
     
     // Show loading state while checking authorization
     if (isAuthorized === null) {

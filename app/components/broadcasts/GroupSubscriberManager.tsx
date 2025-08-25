@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button, Text, Icon, Modal, TextInput, TextArea, Table, TableColumnConfig, Checkbox } from '@gravity-ui/uikit';
 import { Plus, TrashBin, Person } from '@gravity-ui/icons';
 import { Subscriber } from './types';
@@ -29,7 +29,7 @@ const GroupSubscriberManager: React.FC<GroupSubscriberManagerProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch group subscribers
-  const fetchGroupSubscribers = async () => {
+  const fetchGroupSubscribers = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/broadcast-groups/${groupId}/subscribers`, {
@@ -45,10 +45,10 @@ const GroupSubscriberManager: React.FC<GroupSubscriberManagerProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [groupId]);
 
   // Fetch all subscribers
-  const fetchAllSubscribers = async () => {
+  const fetchAllSubscribers = useCallback(async () => {
     try {
       const response = await fetch('/api/subscribers?active_only=true', {
         credentials: 'include',
@@ -61,14 +61,14 @@ const GroupSubscriberManager: React.FC<GroupSubscriberManagerProps> = ({
     } catch (error) {
       console.error('Error fetching all subscribers:', error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
       fetchGroupSubscribers();
       fetchAllSubscribers();
     }
-  }, [isOpen, groupId]);
+  }, [isOpen, groupId, fetchGroupSubscribers, fetchAllSubscribers]);
 
   // Add subscribers by email
   const handleAddByEmail = async () => {

@@ -1,5 +1,6 @@
 
 import React from "react";
+import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import { Card } from "@/app/components/ui/card";
 
@@ -36,11 +37,15 @@ export const PostContent: React.FC<PostContentProps> = ({ content }) => {
       } else if (block.type === "image" && block.url) {
         return (
           <figure key={index} className="my-6">
-            <img
-              src={block.url}
-              alt={block.alt || ""}
-              className="w-full rounded object-cover mb-2"
-            />
+            <div style={{ position: 'relative', width: '100%', height: '400px' }}>
+              <Image
+                src={block.url}
+                alt={block.alt || ""}
+                fill
+                className="rounded object-cover mb-2"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              />
+            </div>
             {block.alt && (
               <figcaption className="text-sm text-center text-gray-500">{block.alt}</figcaption>
             )}

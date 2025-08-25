@@ -52,7 +52,7 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
     fetchTags();
   }, [fetchTags]);
 
-  const performSearch = async (query: string, tagIds: string[]) => {
+  const performSearch = useCallback(async (query: string, tagIds: string[]) => {
     if (!userId) {
       setSearchResults([]);
       setHasSearched(false);
@@ -123,7 +123,7 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId]);
 
   // Debounced search
   useEffect(() => {
@@ -132,7 +132,7 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, selectedTagIds, userId]);
+  }, [searchQuery, selectedTagIds, performSearch]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

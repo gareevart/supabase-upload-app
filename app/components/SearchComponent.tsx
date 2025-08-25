@@ -1,10 +1,11 @@
 "use client"
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Text, TextInput, Card, Button, Skeleton, Icon } from '@gravity-ui/uikit';
 import { Magnifier, Calendar, Person } from '@gravity-ui/icons';
 import { supabase } from '@/lib/supabase';
 import { extractPlainText, extractSearchContext } from '@/lib/tiptapConverter';
 import Link from 'next/link';
+import Image from 'next/image';
 import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/app/components/ui/card';
 import './components.css';
 
@@ -57,7 +58,7 @@ export default function SearchComponent({
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const performSearch = async (query: string) => {
+  const performSearch = useCallback(async (query: string) => {
     if (!query.trim()) {
       setSearchResults([]);
       setHasSearched(false);
@@ -199,7 +200,7 @@ export default function SearchComponent({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // Debounced search
   useEffect(() => {
@@ -208,7 +209,7 @@ export default function SearchComponent({
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+  }, [searchQuery, performSearch]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -282,9 +283,11 @@ export default function SearchComponent({
                   {post.featured_image && (
                     <div className="w-48 h-32 flex-shrink-0 overflow-hidden">
                       <Link href={`/blog/${post.slug}`}>
-                        <img
+                        <Image
                           src={post.featured_image}
                           alt={post.title}
+                          width={192}
+                          height={128}
                           className="search-result-image"
                         />
                       </Link>

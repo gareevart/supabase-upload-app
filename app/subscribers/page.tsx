@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Text, Icon, Table, TableColumnConfig, Spin, Modal, TextInput, TextArea, Checkbox } from '@gravity-ui/uikit';
 import { Plus, Person, TrashBin, Pencil, Gear } from '@gravity-ui/icons';
@@ -60,14 +60,7 @@ function SubscribersPage() {
     checkAuth();
   }, [router, toast]);
   
-  // Fetch data
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchData();
-    }
-  }, [isAuthenticated]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -100,7 +93,14 @@ function SubscribersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  // Fetch data
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchData();
+    }
+  }, [isAuthenticated, fetchData]);
 
   const handleAddSubscriber = async () => {
     if (!newSubscriberEmail.trim()) {

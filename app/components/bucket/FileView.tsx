@@ -184,7 +184,7 @@ export default function FileView() {
         error: err.message || 'Ошибка при загрузке списка изображений'
       });
     }
-  }, [userId, updateState]);
+  }, [userId, updateState, urlCache]);
 
   const handleDelete = useCallback(async (fileName: string) => {
     if (!userId) {

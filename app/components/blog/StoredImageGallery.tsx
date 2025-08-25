@@ -1,4 +1,5 @@
 
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { supabase } from "@/lib/supabase";
 import { Card, Skeleton } from '@gravity-ui/uikit';
@@ -115,10 +116,12 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
             }`}
           >
             <div className="aspect-square w-full relative">
-              <img
+              <Image
                 src={image.url}
                 alt={image.name}
-                className="object-cover absolute inset-0 w-full h-full"
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 16vw"
               />
             </div>
           </Card>

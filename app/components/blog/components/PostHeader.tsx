@@ -1,7 +1,8 @@
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { Button } from "@gravity-ui/uikit";
+import Image from "next/image";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +39,7 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
   onDelete,
   featuredImage,
 }) => {
-  const navigate = useNavigate();
+  const router = useRouter();
   
   return (
     <div className="mb-8">
@@ -46,11 +47,15 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center space-x-2">
           {authorProfile?.avatar_url ? (
-            <img
-              src={authorProfile.avatar_url}
-              alt={authorProfile.name || ""}
-              className="w-8 h-8 rounded-full object-cover"
-            />
+            <div style={{ position: 'relative', width: '32px', height: '32px' }}>
+              <Image
+                src={authorProfile.avatar_url}
+                alt={authorProfile.name || ""}
+                fill
+                className="rounded-full object-cover"
+                sizes="32px"
+              />
+            </div>
           ) : (
             <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
               {authorProfile?.name?.charAt(0) || "?"}
@@ -70,7 +75,7 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
         <div className="flex gap-2 mb-6">
           <Button
             variant="outline"
-            onClick={() => navigate(`/edit-post/${postId}`)}
+            onClick={() => router.push(`/edit-post/${postId}`)}
           >
             Редактировать
           </Button>
@@ -99,11 +104,13 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
 
       {/* Featured Image */}
       {featuredImage && (
-        <div className="mb-6">
-          <img
+        <div className="mb-6" style={{ position: 'relative', width: '100%', height: '384px' }}>
+          <Image
             src={featuredImage}
             alt={title}
-            className="w-full rounded-lg object-cover max-h-96"
+            fill
+            className="rounded-lg object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </div>
       )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import './components.css';
 import { supabase } from '@/lib/supabase';
 import { Button, Card, Text, useToaster } from '@gravity-ui/uikit';
@@ -117,11 +118,14 @@ export default function FileUpload() {
       {uploadedFilePath && (
         <div className="file-upload-success">
            <Text variant="body-1">Изображение загружено!</Text>
-          <div className="file-upload-image-container">
-            <img 
-              src={uploadedFilePath} 
-              alt="Загруженное изображение" 
+          <div className="file-upload-image-container" style={{ position: 'relative', width: '200px', height: '200px' }}>
+            <Image
+              src={uploadedFilePath}
+              alt="Загруженное изображение"
+              fill
               className="file-upload-image"
+              style={{ objectFit: 'cover' }}
+              sizes="200px"
             />
           </div>
         </div>

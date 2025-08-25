@@ -4,6 +4,7 @@ import "../blog.css"
 import { supabase } from "@/lib/supabase"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card"
 import { ArrowLeft, Calendar, Person, Pencil, TrashBin } from "@gravity-ui/icons"
+import Image from "next/image"
 import Link from "next/link"
 import { notFound, useRouter } from "next/navigation"
 import TipTapContent from "@/app/components/blog/TipTapContent"
@@ -216,11 +217,13 @@ export default function BlogPostClient({ params }: { params: any }) {
       </div>
 
       {post.featured_image && post.show_featured_image !== false && (
-        <div className="w-full h-[300px] md:h-[400px] rounded-lg overflow-hidden ">
-          <img
+        <div className="w-full h-[300px] md:h-[400px] rounded-lg overflow-hidden relative">
+          <Image
             src={post.featured_image}
             alt={post.title}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </div>
       )}

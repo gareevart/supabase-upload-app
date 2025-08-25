@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button, Text, Icon, Modal, TextInput, TextArea, Checkbox, Card, Spin } from '@gravity-ui/uikit';
 import { Plus, Person, ChevronDown, ChevronUp } from '@gravity-ui/icons';
 import { BroadcastGroup, Subscriber } from './types';
@@ -30,13 +30,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
   const [selectedSubscribers, setSelectedSubscribers] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
 
-  // Fetch groups and subscribers
-  useEffect(() => {
-    fetchGroups();
-    fetchSubscribers();
-  }, []);
-
-  const fetchGroups = async () => {
+  const fetchGroups = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch('/api/broadcast-groups', {
@@ -65,9 +59,9 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
-  const fetchSubscribers = async () => {
+  const fetchSubscribers = useCallback(async () => {
     try {
       const response = await fetch('/api/subscribers?active_only=true', {
         credentials: 'include',
@@ -82,7 +76,13 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
     } catch (error) {
       console.error('Error fetching subscribers:', error);
     }
-  };
+  }, []);
+
+  // Fetch groups and subscribers
+  useEffect(() => {
+    fetchGroups();
+    fetchSubscribers();
+  }, [fetchGroups, fetchSubscribers]);
 
   const handleGroupToggle = async (groupId: string) => {
     const newSelectedGroups = selectedGroups.includes(groupId)

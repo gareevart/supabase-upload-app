@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Button, Text, useToaster } from '@gravity-ui/uikit';
 import { useAuth } from '@/app/contexts/AuthContext';
 
@@ -200,15 +201,19 @@ const YandexFileUploader = ({
     <div>
       {preview && preview.startsWith('http') && (
         <div className='flex pb-4 items-center'>
-          <img 
-            src={preview} 
-            alt="Preview"
-            className="profile-avatar" 
-            style={{ width: '80px', height: '80px' }}
-          />
+          <div style={{ position: 'relative', width: '80px', height: '80px' }}>
+            <Image
+              src={preview}
+              alt="Preview"
+              fill
+              className="profile-avatar"
+              style={{ objectFit: 'cover' }}
+              sizes="80px"
+            />
+          </div>
           {allowDelete && (
-            <Button 
-              size="m" 
+            <Button
+              size="m"
               view="outlined-danger" 
               onClick={handleDelete}
               loading={uploading}

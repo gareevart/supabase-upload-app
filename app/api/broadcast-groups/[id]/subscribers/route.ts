@@ -12,10 +12,13 @@ const supabaseServer = createClient(
 // GET - получить подписчиков группы
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     console.log('GET /api/broadcast-groups/[id]/subscribers - Starting request');
+    
+    // Await params to get the actual values
+    const resolvedParams = await params;
     
     // Create a server-side Supabase client with cookies
     const supabaseServerWithAuth = createServerClient<Database>(
@@ -48,7 +51,7 @@ export async function GET(
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
-    const groupId = params.id;
+    const groupId = resolvedParams.id;
 
     // Get subscribers for this group
     const { data: subscribers, error } = await supabaseServer
@@ -81,10 +84,13 @@ export async function GET(
 // POST - добавить подписчиков в группу
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     console.log('POST /api/broadcast-groups/[id]/subscribers - Starting request');
+    
+    // Await params to get the actual values
+    const resolvedParams = await params;
     
     // Create a server-side Supabase client with cookies
     const supabaseServerWithAuth = createServerClient<Database>(
@@ -117,7 +123,7 @@ export async function POST(
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
-    const groupId = params.id;
+    const groupId = resolvedParams.id;
     const body = await request.json();
     const { emails, subscriber_ids } = body;
 
@@ -209,10 +215,13 @@ export async function POST(
 // DELETE - удалить подписчиков из группы
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     console.log('DELETE /api/broadcast-groups/[id]/subscribers - Starting request');
+    
+    // Await params to get the actual values
+    const resolvedParams = await params;
     
     // Create a server-side Supabase client with cookies
     const supabaseServerWithAuth = createServerClient<Database>(
@@ -245,7 +254,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
-    const groupId = params.id;
+    const groupId = resolvedParams.id;
     const body = await request.json();
     const { subscriber_ids } = body;
 

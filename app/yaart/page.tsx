@@ -1,5 +1,6 @@
 "use client"
 import React from 'react';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { Flex, Text, Button, Alert, Spin, Label, TextArea, useToaster, Skeleton } from '@gravity-ui/uikit';
 import { supabase } from '@/lib/supabase';
@@ -362,11 +363,13 @@ const Yaart = () => {
               {generatedImage && !loading && (
                 <Flex direction="column" gap={10}>
                   <Text variant="body-1" color="secondary">Generated Image:</Text>
-                  <div style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '16px' }}>
-                    <img 
-                      src={generatedImage} 
-                      alt="Generated from prompt" 
-                      style={{ maxWidth: '100%', height: 'auto' }} 
+                  <div style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '16px', position: 'relative', width: '100%', minHeight: '400px' }}>
+                    <Image
+                      src={generatedImage}
+                      alt="Generated from prompt"
+                      fill
+                      style={{ objectFit: 'contain' }}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
                     />
                   </div>
                   <Flex justifyContent="flex-end" gap={2}>
