@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Icon, DropdownMenu } from '@gravity-ui/uikit';
+import { Icon, SegmentedRadioGroup } from '@gravity-ui/uikit';
 import { Sun, Moon, Palette } from '@gravity-ui/icons';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -63,79 +63,53 @@ export const ThemeToggle = () => {
     }));
   };
 
-  const handleThemeChange = async (theme: ThemeOption) => {
-    setCurrentTheme(theme);
-    dispatchThemeEvents(theme);
+  const handleThemeChange = async (theme: string) => {
+    if (theme === 'light' || theme === 'dark' || theme === 'system') {
+      setCurrentTheme(theme);
+      dispatchThemeEvents(theme);
 
-    // Save to profile if user is logged in
-    if (user) {
-      try {
-        await supabase
-          .from('profiles')
-          .update({ theme })
-          .eq('id', user.id);
-      } catch (error) {
-        console.error('Error saving theme to profile:', error);
+      // Save to profile if user is logged in
+      if (user) {
+        try {
+          await supabase
+            .from('profiles')
+            .update({ theme })
+            .eq('id', user.id);
+        } catch (error) {
+          console.error('Error saving theme to profile:', error);
+        }
       }
     }
   };
 
-  const getThemeIcon = (theme: ThemeOption) => {
-    switch (theme) {
-      case 'light':
-        return Sun;
-      case 'dark':
-        return Moon;
-      case 'system':
-      default:
-        return Palette;
-    }
-  };
-
-  const getThemeLabel = (theme: ThemeOption) => {
-    switch (theme) {
-      case 'light':
-        return 'Light';
-      case 'dark':
-        return 'Dark';
-      case 'system':
-      default:
-        return 'System';
-    }
-  };
-
   return (
-    <DropdownMenu
-      renderSwitcher={(props) => (
-        <div
-          {...props}
-          className="nav-item theme-toggle"
-          style={{ cursor: 'pointer' }}
-          title="Change theme"
-        >
-          <Icon data={getThemeIcon(currentTheme)} size={20} />
+    <SegmentedRadioGroup
+      name="theme-toggle"
+      value={currentTheme}
+      onUpdate={handleThemeChange}
+      size="m"
+      width="auto"
+    >
+      <SegmentedRadioGroup.Option value="light">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <Icon data={Sun} size={16} />
+          Light
         </div>
-      )}
-      items={[
-        {
-          iconStart: <Icon size={16} data={Sun} />,
-          action: () => handleThemeChange('light'),
-          text: 'Light',
-          selected: currentTheme === 'light',
-        },
-        {
-          iconStart: <Icon size={16} data={Moon} />,
-          action: () => handleThemeChange('dark'),
-          text: 'Dark',
-          selected: currentTheme === 'dark',
-        },
-        {
-          iconStart: <Icon size={16} data={Palette} />,
-          action: () => handleThemeChange('system'),
-          text: 'System',
-          selected: currentTheme === 'system',
-        },
-      ]}
-    />
+      </SegmentedRadioGroup.Option>
+      
+      <SegmentedRadioGroup.Option value="dark">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <Icon data={Moon} size={16} />
+          Dark
+        </div>
+      </SegmentedRadioGroup.Option>
+      
+      <SegmentedRadioGroup.Option value="system">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <Icon data={Palette} size={16} />
+          System
+        </div>
+      </SegmentedRadioGroup.Option>
+    </SegmentedRadioGroup>
   );
 };

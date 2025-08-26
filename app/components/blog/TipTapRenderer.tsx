@@ -101,7 +101,7 @@ const TipTapRenderer: React.FC<TipTapRendererProps> = ({ content }) => {
         return <ol key={`orderedList-${index}`}>{children}</ol>;
         
       case 'listItem':
-        return <li key={`listItem-${index}`}>{children}</li>;
+        return <li key={index.toString()}>{children}</li>;
         
       case 'blockquote':
         return <blockquote key={`blockquote-${index}`}>{children}</blockquote>;

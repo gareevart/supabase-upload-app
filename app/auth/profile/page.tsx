@@ -5,6 +5,7 @@ import { Spin, Text } from '@gravity-ui/uikit';
 import withAuth from '../withAuth';
 import { useAuth } from '@/app/contexts/AuthContext';
 import '../Auth.css';
+import { ThemeToggle } from '@/app/components/Navigation/ThemeToggle';
 
 // Import custom hooks
 import { useClientSideRendering, useUserProfile } from './hooks/useProfile';
@@ -61,6 +62,7 @@ const Profile = () => {
     return (
         <div className="profile pb2">
             <Text variant="header-2">Profile</Text>
+            <ThemeToggle />
 
             {isEditing ? (
                 <ProfileEditForm 
