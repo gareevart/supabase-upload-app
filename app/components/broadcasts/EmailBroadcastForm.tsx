@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Button, Card, Text, TextInput, Icon, Modal } from '@gravity-ui/uikit';
 import { ArrowUturnCwLeft, Pencil, Plus, ChevronDown, Eye, Bug } from '@gravity-ui/icons';
 import TipTapEditor from '@/app/components/blog/TipTapEditor';
@@ -32,17 +32,22 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
   const previewRef = useRef<HTMLIFrameElement>(null);
   const [htmlContent, setHtmlContent] = useState<string>('');
   
-  // Update HTML content whenever TipTap content changes
-  useEffect(() => {
-    if (content) {
-      try {
-        const html = tiptapToHtml(content);
-        setHtmlContent(html);
-      } catch (error) {
-        console.error('Error converting content to HTML:', error);
-      }
+  // Memoized HTML content generation
+  const memoizedHtml = useMemo(() => {
+    if (!content) return '';
+
+    try {
+      return tiptapToHtml(content);
+    } catch (error) {
+      console.error('Error converting content to HTML:', error);
+      return '';
     }
   }, [content]);
+
+  // Update HTML content whenever TipTap content changes
+  useEffect(() => {
+    setHtmlContent(memoizedHtml);
+  }, [memoizedHtml]);
   
   // Form validation
   const [errors, setErrors] = useState<{

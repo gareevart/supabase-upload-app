@@ -22,35 +22,35 @@ export const withBroadcastAuth = <P extends object>(
         try {
           // Get the current user session
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-          
+
           if (sessionError || !session) {
             setAuthError('Not authenticated');
             setIsAuthorized(false);
             return;
           }
-          
+
           // Get the user's profile to check their role
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('role')
             .eq('id', session.user.id)
             .single();
-          
+
           if (profileError || !profile) {
             setAuthError('Failed to fetch user profile');
             setIsAuthorized(false);
             return;
           }
-          
+
           // Check if the user has the required role (admin or editor)
           const hasRequiredRole = profile.role === 'admin' || profile.role === 'editor';
-          
+
           if (!hasRequiredRole) {
             setAuthError('Insufficient permissions');
             setIsAuthorized(false);
             return;
           }
-          
+
           setIsAuthorized(true);
           setAuthError(null);
         } catch (error) {
@@ -59,31 +59,25 @@ export const withBroadcastAuth = <P extends object>(
           setIsAuthorized(false);
         }
       };
-      
+
       checkAuth();
     }, []);
     
     // Second effect: Handle redirect and toast when authorization fails
     useEffect(() => {
       let timeoutId: NodeJS.Timeout;
-      
+
       if (isAuthorized === false && authError) {
         timeoutId = setTimeout(() => {
-          toast({
-            title: 'Access Denied',
-            description: 'You do not have permission to access this feature',
-            variant: 'destructive',
-          });
-          
           // Redirect to home page
           router.push('/');
         }, 0);
       }
-      
+
       return () => {
         if (timeoutId) clearTimeout(timeoutId);
       };
-    }, [isAuthorized, authError, router, toast]);
+    }, [isAuthorized, authError, router]); // Remove toast from dependencies to prevent infinite re-renders
     
     // Show loading state while checking authorization
     if (isAuthorized === null) {
@@ -94,12 +88,12 @@ export const withBroadcastAuth = <P extends object>(
           </div>
       );
     }
-    
+
     // If authorized, render the component
     if (isAuthorized) {
       return <Component {...props} />;
     }
-    
+
     // If not authorized, this will be shown briefly before redirect
     return (
       <div className="container mx-auto py-8 px-4">

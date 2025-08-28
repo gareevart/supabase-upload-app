@@ -27,33 +27,21 @@ function BroadcastsPage() {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         setIsAuthenticated(!!session);
-        
-        // If not authenticated, redirect to login page
+
+        // If not authenticated, redirect to home page to avoid redirect loop
         if (!session) {
-          toast({
-            title: 'Authentication Required',
-            description: 'Please log in to access the broadcast features',
-            variant: 'destructive',
-          });
-          
-          router.push('/auth');
+          console.log('User not authenticated, redirecting to /');
+          router.push('/');
         }
       } catch (error) {
         console.error('Error checking authentication:', error);
         setIsAuthenticated(false);
-        
-        toast({
-          title: 'Authentication Error',
-          description: 'Failed to check authentication status',
-          variant: 'destructive',
-        });
-        
         router.push('/auth');
       }
     };
     
     checkAuth();
-  }, [router, toast]);
+  }, [router]); // Remove toast from dependencies to prevent infinite re-renders
   
   // Fetch broadcasts
   useEffect(() => {
@@ -127,6 +115,8 @@ function BroadcastsPage() {
         
         // Only update state if component is still mounted
         if (isMounted) {
+          console.log('Setting broadcasts data:', data.data);
+          console.log('Broadcasts count:', data.data?.length || 0);
           setBroadcasts(data.data || []);
         }
       } catch (error) {
@@ -177,8 +167,11 @@ function BroadcastsPage() {
   
   // Handle delete broadcast
   const handleDelete = async (id: string) => {
+    console.log('Starting broadcast deletion for ID:', id);
+
     // In a real app, you would show a confirmation dialog here
     try {
+      console.log('Sending DELETE request to:', `/api/broadcasts/${id}`);
       const response = await fetch(`/api/broadcasts/${id}`, {
         method: 'DELETE',
         credentials: 'include', // Include cookies for authentication
@@ -186,23 +179,37 @@ function BroadcastsPage() {
           'Content-Type': 'application/json',
         },
       });
-      
+
+      console.log('DELETE response status:', response.status);
+      console.log('DELETE response ok:', response.ok);
+
       if (!response.ok) {
-        throw new Error('Failed to delete broadcast');
+        const errorText = await response.text();
+        console.error('DELETE error response:', errorText);
+        throw new Error(`Failed to delete broadcast: ${response.status} - ${errorText}`);
       }
-      
+
+      const responseData = await response.json();
+      console.log('DELETE response data:', responseData);
+
       // Remove the deleted broadcast from the list
-      setBroadcasts(broadcasts.filter(broadcast => broadcast.id !== id));
-      
+      setBroadcasts(prevBroadcasts => {
+        const filtered = prevBroadcasts.filter(broadcast => broadcast.id !== id);
+        console.log('Updated broadcasts list:', filtered);
+        return filtered;
+      });
+
       toast({
         title: 'Success',
         description: 'Broadcast deleted successfully',
       });
+
+      console.log('Broadcast deletion completed successfully');
     } catch (error) {
       console.error('Error deleting broadcast:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete broadcast',
+        description: error instanceof Error ? error.message : 'Failed to delete broadcast',
         variant: 'destructive',
       });
     }
@@ -349,7 +356,12 @@ function BroadcastsPage() {
             key="delete"
             view="flat-danger"
             size="s"
-            onClick={() => handleDelete(id)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Delete button clicked for ID:', id);
+              handleDelete(id);
+            }}
             title="Удалить"
           >
             <Icon data={TrashBin} size={16} />
@@ -393,7 +405,12 @@ function BroadcastsPage() {
             key="delete"
             view="flat-danger"
             size="s"
-            onClick={() => handleDelete(id)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Delete button clicked for ID:', id);
+              handleDelete(id);
+            }}
             title="Удалить"
           >
             <Icon data={TrashBin} size={16} />
@@ -415,7 +432,12 @@ function BroadcastsPage() {
             key="delete"
             view="flat-danger"
             size="s"
-            onClick={() => handleDelete(id)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Delete button clicked for ID:', id);
+              handleDelete(id);
+            }}
             title="Удалить"
           >
             <Icon data={TrashBin} size={16} />
@@ -437,7 +459,12 @@ function BroadcastsPage() {
       id: 'subject',
       name: 'Тема',
       template: (item) => (
-        <Text variant="body-2" className="font-medium">
+        <Text
+          variant="body-2"
+          className="font-medium cursor-pointer text-blue-600 hover:text-blue-800 hover:underline"
+          onClick={() => handleView(item.id)}
+          title="Кликните для просмотра рассылки"
+        >
           {item.subject}
         </Text>
       ),

@@ -108,7 +108,7 @@ function BroadcastDetailClientBase({ id }: BroadcastDetailClientProps) {
     return () => {
       isMounted = false;
     };
-  }, [id, router, toast]);
+  }, [id]); // Remove router and toast from dependencies to prevent infinite re-renders
   
   // Handle navigation back to broadcasts list
   const handleBack = () => {
@@ -169,8 +169,8 @@ function BroadcastDetailClientBase({ id }: BroadcastDetailClientProps) {
         description: 'Broadcast sent successfully',
       });
       
-      // Refresh the page to show updated status
-      router.refresh();
+      // Update broadcast status locally instead of refreshing
+      setBroadcast(prev => prev ? { ...prev, status: 'sent' } : prev);
     } catch (error) {
       console.error('Error sending broadcast:', error);
       toast({
@@ -202,8 +202,8 @@ function BroadcastDetailClientBase({ id }: BroadcastDetailClientProps) {
         description: 'Broadcast scheduled successfully',
       });
       
-      // Refresh the page to show updated status
-      router.refresh();
+      // Update broadcast status locally instead of refreshing
+      setBroadcast(prev => prev ? { ...prev, status: 'scheduled', scheduled_for: date.toISOString() } : prev);
     } catch (error) {
       console.error('Error scheduling broadcast:', error);
       toast({
@@ -231,8 +231,8 @@ function BroadcastDetailClientBase({ id }: BroadcastDetailClientProps) {
         description: 'Broadcast schedule cancelled',
       });
       
-      // Refresh the page to show updated status
-      router.refresh();
+      // Update broadcast status locally instead of refreshing
+      setBroadcast(prev => prev ? { ...prev, status: 'draft', scheduled_for: null } : prev);
     } catch (error) {
       console.error('Error cancelling schedule:', error);
       toast({

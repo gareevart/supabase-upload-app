@@ -169,6 +169,8 @@ export const DELETE = withApiAuth(async (request: NextRequest, user: { id: strin
   try {
     // Extract id from URL path parameter
     const id = request.nextUrl.pathname.split('/').pop();
+    console.log('DELETE broadcast - ID extracted:', id);
+    console.log('DELETE broadcast - User ID:', user.id);
 
     const supabase = createServerClient<Database>(
       supabaseUrl,
@@ -197,32 +199,68 @@ export const DELETE = withApiAuth(async (request: NextRequest, user: { id: strin
       .eq('id', user.id)
       .single();
 
+    console.log('DELETE broadcast - User profile:', profile);
+
     // Check if user has admin or editor role
     if (!profile || !profile.role || !['admin', 'editor'].includes(profile.role)) {
+      console.error('DELETE broadcast - Forbidden: User role check failed');
       return NextResponse.json(
         { error: 'Forbidden: Requires admin or editor role' },
         { status: 403 }
       );
     }
 
+    // Check if broadcast exists before deletion
+    const { data: existingBroadcast, error: fetchError } = await supabase
+      .from('sent_mails')
+      .select('id, subject, status')
+      .eq('id', id)
+      .single();
+
+    console.log('DELETE broadcast - Existing broadcast:', existingBroadcast);
+
+    if (fetchError) {
+      console.error('DELETE broadcast - Error fetching broadcast before deletion:', fetchError);
+      if (fetchError.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: 'Broadcast not found' },
+          { status: 404 }
+        );
+      }
+    }
+
+    if (!existingBroadcast) {
+      console.error('DELETE broadcast - Broadcast not found');
+      return NextResponse.json(
+        { error: 'Broadcast not found' },
+        { status: 404 }
+      );
+    }
+
     // Delete the broadcast
+    console.log('DELETE broadcast - Executing deletion query');
     const { error } = await supabase
       .from('sent_mails')
       .delete()
       .eq('id', id);
 
     if (error) {
-      console.error('Error deleting broadcast:', error);
+      console.error('DELETE broadcast - Error during deletion:', error);
       return NextResponse.json(
         { error: 'Failed to delete broadcast', details: error.message },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ success: true });
+    console.log('DELETE broadcast - Deletion successful');
+
+    return NextResponse.json({
+      success: true,
+      message: 'Broadcast deleted successfully'
+    });
 
   } catch (error) {
-    console.error('Error in DELETE /api/broadcasts/[id]:', error);
+    console.error('DELETE broadcast - Unexpected error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

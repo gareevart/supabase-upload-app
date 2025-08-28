@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button, Text, Icon, Modal, TextInput, TextArea, Checkbox, Card, Spin } from '@gravity-ui/uikit';
 import { Plus, Person, ChevronDown, ChevronUp } from '@gravity-ui/icons';
 import { BroadcastGroup, Subscriber } from './types';
@@ -21,6 +21,8 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
   const [groups, setGroups] = useState<BroadcastGroup[]>([]);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const groupsLoaded = useRef(false);
+  const subscribersLoaded = useRef(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showGroupDetails, setShowGroupDetails] = useState<string | null>(null);
   
@@ -32,6 +34,12 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
 
   const fetchGroups = useCallback(async () => {
     try {
+      // Prevent duplicate requests if already loaded
+      if (groupsLoaded.current) return;
+
+      // Check if already loading to prevent concurrent requests
+      if (isLoading) return;
+
       setIsLoading(true);
       const response = await fetch('/api/broadcast-groups', {
         credentials: 'include',
@@ -49,6 +57,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
 
       const data = await response.json();
       setGroups(data.data || []);
+      groupsLoaded.current = true;
     } catch (error) {
       console.error('Error fetching groups:', error);
       toast({
@@ -59,10 +68,13 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   const fetchSubscribers = useCallback(async () => {
     try {
+      // Prevent duplicate requests if already loaded
+      if (subscribersLoaded.current) return;
+
       const response = await fetch('/api/subscribers?active_only=true', {
         credentials: 'include',
       });
@@ -73,16 +85,18 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
 
       const data = await response.json();
       setSubscribers(data.data || []);
+      subscribersLoaded.current = true;
     } catch (error) {
       console.error('Error fetching subscribers:', error);
     }
   }, []);
 
-  // Fetch groups and subscribers
+  // Fetch groups and subscribers only once on mount
   useEffect(() => {
     fetchGroups();
     fetchSubscribers();
-  }, [fetchGroups, fetchSubscribers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleGroupToggle = async (groupId: string) => {
     const newSelectedGroups = selectedGroups.includes(groupId)
@@ -94,7 +108,9 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
     onGroupsChange(newSelectedGroups, emails);
   };
 
-  const getEmailsFromGroups = async (groupIds: string[]): Promise<string[]> => {
+  const [groupSubscribersCache, setGroupSubscribersCache] = useState<Record<string, Subscriber[]>>({});
+
+  const getEmailsFromGroups = useCallback(async (groupIds: string[]): Promise<string[]> => {
     if (groupIds.length === 0) return [];
 
     try {
@@ -109,19 +125,30 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
           const activeSubscribers = subscribers.filter(s => s.is_active);
           activeSubscribers.forEach(s => allEmails.add(s.email));
         } else {
-          // For custom groups, fetch group subscribers
-          const response = await fetch(`/api/subscribers?group_id=${groupId}&active_only=true`, {
-            credentials: 'include',
-          });
+          // For custom groups, use cached data or fetch once
+          let groupSubscribers: Subscriber[] = groupSubscribersCache[groupId];
 
-          if (response.ok) {
-            const data = await response.json();
-            data.data?.forEach((subscriber: Subscriber) => {
-              if (subscriber.is_active) {
-                allEmails.add(subscriber.email);
-              }
+          if (!groupSubscribers) {
+            console.log(`Fetching subscribers for group ${groupId}`);
+            const response = await fetch(`/api/subscribers?group_id=${groupId}&active_only=true`, {
+              credentials: 'include',
             });
+
+            if (response.ok) {
+              const data = await response.json();
+              groupSubscribers = data.data || [];
+              setGroupSubscribersCache(prev => ({
+                ...prev,
+                [groupId]: groupSubscribers
+              }));
+            }
           }
+
+          groupSubscribers?.forEach((subscriber: Subscriber) => {
+            if (subscriber.is_active) {
+              allEmails.add(subscriber.email);
+            }
+          });
         }
       }
 
@@ -130,7 +157,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
       console.error('Error getting emails from groups:', error);
       return [];
     }
-  };
+  }, [groups, subscribers, groupSubscribersCache]);
 
   const handleCreateGroup = async () => {
     if (!newGroupName.trim()) {
@@ -180,7 +207,8 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
       setSelectedSubscribers([]);
       setShowCreateModal(false);
 
-      // Refresh groups
+      // Refresh groups and reset loaded flag
+      groupsLoaded.current = false;
       await fetchGroups();
     } catch (error) {
       console.error('Error creating group:', error);

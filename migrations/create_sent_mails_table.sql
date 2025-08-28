@@ -34,23 +34,40 @@ CREATE POLICY "Admin and editors can view broadcasts"
   );
 
 -- Policy to allow admin and editor roles to insert broadcasts
-CREATE POLICY "Admin and editors can insert broadcasts" 
-  ON public.sent_mails 
-  FOR INSERT 
+CREATE POLICY "Admin and editors can insert broadcasts"
+  ON public.sent_mails
+  FOR INSERT
   WITH CHECK (
     auth.uid() IN (
-      SELECT id FROM public.profiles 
+      SELECT id FROM public.profiles
       WHERE role IN ('admin', 'editor')
     )
   );
 
 -- Policy to allow admin and editor roles to update broadcasts
-CREATE POLICY "Admin and editors can update broadcasts" 
-  ON public.sent_mails 
-  FOR UPDATE 
+CREATE POLICY "Admin and editors can update broadcasts"
+  ON public.sent_mails
+  FOR UPDATE
   USING (
     auth.uid() IN (
-      SELECT id FROM public.profiles 
+      SELECT id FROM public.profiles
+      WHERE role IN ('admin', 'editor')
+    )
+  )
+  WITH CHECK (
+    auth.uid() IN (
+      SELECT id FROM public.profiles
+      WHERE role IN ('admin', 'editor')
+    )
+  );
+
+-- Policy to allow admin and editor roles to delete broadcasts
+CREATE POLICY "Admin and editors can delete broadcasts"
+  ON public.sent_mails
+  FOR DELETE
+  USING (
+    auth.uid() IN (
+      SELECT id FROM public.profiles
       WHERE role IN ('admin', 'editor')
     )
   );
