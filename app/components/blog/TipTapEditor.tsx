@@ -10,6 +10,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import { ImageGenerator } from './extensions/ImageGeneratorExtension';
+import { ResizableImage } from './editor/extensions';
 import { Button, Icon, TextInput, Text, Modal, Card, DropdownMenu } from '@gravity-ui/uikit';
 import {Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Picture, Xmark, ChevronDown, Heading1, Heading2, Heading3, Heading4, MagicWand, ListUl, Strikethrough} from '@gravity-ui/icons';
 import "./editor/editor.css";
@@ -44,8 +45,17 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   const [imageAlt, setImageAlt] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+
+  // Resize functionality state
+  const [isImageResizeModalOpen, setIsImageResizeModalOpen] = useState(false);
+  const [currentImageWidth, setCurrentImageWidth] = useState(0);
+  const [currentImageHeight, setCurrentImageHeight] = useState(0);
+  const [currentImageId, setCurrentImageId] = useState<string | null>(null);
   
   const { toast } = useToast();
+
+  // Use ref to prevent unnecessary re-renders
+  const lastContentString = React.useRef<string>('');
 
   const editor = useEditor({
     extensions: [
@@ -54,7 +64,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           levels: [1, 2, 3, 4],
         },
       }),
-      Image.configure({
+      ResizableImage.configure({
         inline: true,
         allowBase64: true,
         HTMLAttributes: {
@@ -74,9 +84,14 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
       ImageGenerator,
     ],
     content: normalizeTipTapContent(content),
-    onUpdate: ({ editor }) => {
-      onChange(JSON.stringify(editor.getJSON()));
-    },
+    // Debounced content update to prevent infinite loops
+    onUpdate: React.useCallback(({ editor }: { editor: any }) => {
+      const newContent = JSON.stringify(editor.getJSON());
+      if (newContent !== lastContentString.current) {
+        lastContentString.current = newContent;
+        onChange(newContent);
+      }
+    }, [onChange]),
     editorProps: {
       attributes: {
         class: 'focus:outline-none',
@@ -86,19 +101,25 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
     immediatelyRender: false,
   });
 
-  // Initialize editor with content if it changes
+  // Initialize editor with content if it changes - prevent infinite loops
+  const previousNormalizedContent = React.useRef<string>('');
+
   React.useEffect(() => {
     if (editor && content) {
       try {
-        // Only update if content has changed to avoid cursor jumping
-        const currentContent = JSON.stringify(editor.getJSON());
+        // Normalize the incoming content
         const normalizedContent = normalizeTipTapContent(content);
-        
-        // Parse the normalized content to get the actual object
-        const parsedContent = JSON.parse(normalizedContent);
-        
-        if (currentContent !== normalizedContent) {
-          editor.commands.setContent(parsedContent);
+
+        // Only update if the normalized content has actually changed
+        // This prevents infinite loops where editor.getJSON() !== normalized content
+        if (normalizedContent !== previousNormalizedContent.current) {
+          previousNormalizedContent.current = normalizedContent;
+
+          // Parse the normalized content to get the actual object
+          const parsedContent = JSON.parse(normalizedContent);
+
+          // Set content without triggering onUpdate
+          editor.commands.setContent(parsedContent, false);
         }
       } catch (e) {
         console.error('Error setting editor content:', e);
@@ -291,6 +312,67 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         variant: "destructive"
       });
     }
+  };
+
+  const openImageResizeDialog = () => {
+    const { from, to } = editor.state.selection;
+    const node = editor.state.doc.nodeAt(from);
+    if (node && node.type.name === 'resizableImage') {
+      const attrs = node.attrs;
+      setCurrentImageWidth(attrs.width || 0);
+      setCurrentImageHeight(attrs.height || 0);
+      setCurrentImageId(attrs.src || null);
+      setIsImageResizeModalOpen(true);
+    }
+  };
+
+  const applyImageResize = () => {
+    try {
+      // First select the image node properly
+      const { from, to } = editor.state.selection;
+      if (from !== to) {
+        // If selection spans multiple nodes, focus on the image
+        const startNode = editor.state.doc.nodeAt(from);
+        if (startNode && startNode.type.name === 'resizableImage') {
+          editor.commands.setNodeSelection(from);
+        }
+      }
+
+      // Now update the attributes
+      editor
+        .chain()
+        .focus()
+        .updateAttributes('resizableImage', {
+          width: currentImageWidth || null,
+          height: currentImageHeight || null,
+        })
+        .run();
+
+      toast({
+        title: "Success",
+        description: "Image size updated successfully"
+      });
+
+      setIsImageResizeModalOpen(false);
+      setCurrentImageWidth(0);
+      setCurrentImageHeight(0);
+      setCurrentImageId(null);
+    } catch (error) {
+      console.error('Error updating image size:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update image size",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const isImageCursorOnElement = () => {
+    const { from, to } = editor.state.selection;
+    if (from !== to) return false;
+
+    const node = editor.state.doc.nodeAt(from);
+    return node?.type.name === 'resizableImage';
   };
 
   // Get current heading level or return null if not a heading
@@ -584,10 +666,37 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           line-height: 1.4;
           margin: 0.75rem 0 0.5rem 0;
         }
+
+        /* Resize handles styles */
+        .image-resizer-container:hover .resize-handle {
+          opacity: 1 !important;
+        }
+
+        .resize-handle {
+          transition: opacity 0.2s ease;
+        }
+
+        .resize-handle:hover {
+          background-color: #2563eb !important;
+          transform: scale(1.1);
+        }
+
+        /* Ensure proper selection behavior for images */
+        .tiptap-editor-content .ProseMirror-selected.resizable-image {
+          outline: 2px solid #3b82f6;
+          outline-offset: 2px;
+        }
       `}</style>
       
       {editor && (
-        <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
+        <BubbleMenu
+          editor={editor}
+          tippyOptions={{ duration: 100 }}
+          shouldShow={({ state, from, to }) => {
+            const node = state.doc.nodeAt(from);
+            return node?.type.name === 'resizableImage';
+          }}
+        >
           <Card>
           <div className="flex shadow BubbleMenu p-1 gap-1">
             <Button
@@ -633,6 +742,17 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               className={editor.isActive('link') ? 'is-active' : ''}
             >
               <LinkIcon className="h-3 w-3" />
+            </Button>
+
+            <Button
+              view="flat"
+              size="s"
+              onClick={openImageResizeDialog}
+              className={isImageCursorOnElement() ? 'is-active' : ''}
+              disabled={!isImageCursorOnElement()}
+              title="Изменить размер"
+            >
+              <Icon data={Picture} size={14} />
             </Button>
           </div>
            </Card>
@@ -732,6 +852,61 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               onClick={addImageFromUrl}
             >
               Add Image
+            </Button>
+          </DialogFooter>
+          </div>
+      </Modal>
+
+      {/* Image Resize Modal */}
+      <Modal open={isImageResizeModalOpen} onClose={() => setIsImageResizeModalOpen(false)}>
+        <div className='modal-content'>
+        <div className='top-modal'>
+          <Text variant="subheader-3">Изменить размер изображения</Text>
+          <Button size='xl' view='flat' onClick={() => setIsImageResizeModalOpen(false)}>
+          <Icon data={Xmark} size={18} /></Button>
+        </div>
+
+        <Text variant="body-1">Введите новую ширину и высоту для изображения в пикселях. Оставьте поле пустым, чтобы использовать автоматический размер.</Text>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Text variant="body-1">Ширина (px)</Text>
+              <TextInput
+                type="number"
+                value={currentImageWidth.toString()}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setCurrentImageWidth(val === '' ? 0 : Number(val) || 0);
+                }}
+                placeholder="автоматически (0 или пустое поле)"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Text variant="body-1">Высота (px)</Text>
+              <TextInput
+                type="number"
+                value={currentImageHeight.toString()}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setCurrentImageHeight(val === '' ? 0 : Number(val) || 0);
+                }}
+                placeholder="автоматически (0 или пустое поле)"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              view="outlined"
+              size="l"
+              onClick={() => setIsImageResizeModalOpen(false)}
+            >
+              Отмена
+            </Button>
+            <Button
+              view="action"
+              size="l"
+              onClick={applyImageResize}
+            >
+              Применить
             </Button>
           </DialogFooter>
           </div>

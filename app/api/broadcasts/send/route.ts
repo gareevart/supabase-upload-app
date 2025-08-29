@@ -5,6 +5,7 @@ import type { Database } from '@/lib/types';
 import { withApiAuth } from '@/app/auth/withApiAuth';
 import { getResend } from '@/lib/resend';
 import { tiptapToHtml } from '@/app/utils/tiptapToHtml';
+import { processBase64Images } from '@/app/utils/imageProcessor';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
@@ -95,13 +96,24 @@ export const POST = withApiAuth(async (request: NextRequest, user: { id: string 
     }
     
     try {
+      // Process base64 images in HTML content before sending
+      let emailHtml = broadcast.content_html || tiptapToHtml(broadcast.content);
+
+      // Process base64 images and upload them to storage
+      const { html: processedHtml, uploadedImages } = await processBase64Images(emailHtml, broadcast.user_id);
+
+      console.log('Email sending - base64 images processed:', {
+        originalImageCount: uploadedImages.length,
+        processedHtmlLength: processedHtml.length
+      });
+
       // Send the broadcast using Resend API
       const resendClient = getResend();
       const { data: resendData, error: resendError } = await resendClient.emails.send({
         from: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
         to: broadcast.recipients,
         subject: broadcast.subject,
-        html: broadcast.content_html || tiptapToHtml(broadcast.content),
+        html: processedHtml,
       });
       
       if (resendError) {

@@ -64,8 +64,18 @@ const TipTapRenderer: React.FC<TipTapRendererProps> = ({ content }) => {
         return <div key={`doc-${index}`}>{children}</div>;
         
       case 'paragraph':
+        // Check if this paragraph contains ONLY one image child (regular image or resizable)
+        const isParagraphWithSingleImage = node.content &&
+          node.content.length === 1 &&
+          (node.content[0].type === 'image' || node.content[0].type === 'resizableImage');
+
+        if (isParagraphWithSingleImage) {
+          // If paragraph contains only an image, don't wrap in <p> tag to avoid DOM nesting error
+          return <div key={`paragraph-${index}`}>{children}</div>;
+        }
+
         return (
-          <p 
+          <p
             key={`paragraph-${index}`}
             style={node.attrs?.textAlign ? { textAlign: node.attrs.textAlign } : undefined}
           >
@@ -156,7 +166,64 @@ const TipTapRenderer: React.FC<TipTapRendererProps> = ({ content }) => {
             />
           </div>
         );
-        
+
+      case 'resizableImage':
+        // Handle resizableImage with size attributes
+        const resizableSrc = node.attrs?.src || '';
+        const resizableAlt = node.attrs?.alt || '';
+        const resizableTitle = node.attrs?.title || '';
+        const resizableWidth = node.attrs?.width;
+        const resizableHeight = node.attrs?.height;
+        const resizableAlignment = node.attrs?.['data-alignment'] || 'center';
+
+        const imageStyle: any = {};
+        if (resizableWidth) {
+          imageStyle.width = resizableWidth;
+        }
+        if (resizableHeight) {
+          imageStyle.height = resizableHeight;
+        }
+
+        const containerStyle: any = {};
+        containerStyle.textAlign = resizableAlignment;
+        containerStyle.display = 'block';
+        containerStyle.margin = '1rem 0';
+
+        if (resizableSrc.startsWith('/') || resizableSrc.startsWith('./') || resizableSrc.startsWith('../')) {
+          return (
+            <div key={`resizable-image-${index}`} style={containerStyle}>
+              <div style={{ position: 'relative', width: '100%', height: 'auto' }}>
+                <Image
+                  src={resizableSrc}
+                  alt={resizableAlt}
+                  title={resizableTitle}
+                  width={0}
+                  height={0}
+                  unoptimized
+                  style={{ ...imageStyle, maxWidth: '100%', height: 'auto' }}
+                />
+              </div>
+            </div>
+          );
+        }
+
+        // For external images
+        return (
+          <div key={`resizable-image-${index}`} style={containerStyle}>
+            <div style={{ position: 'relative', width: '100%', height: 'auto' }}>
+              <Image
+                src={resizableSrc}
+                alt={resizableAlt}
+                title={resizableTitle}
+                width={0}
+                height={0}
+                style={{ ...imageStyle, maxWidth: '100%', height: 'auto' }}
+                sizes="100vw"
+              />
+            </div>
+          </div>
+        );
+
       case 'hardBreak':
         return <br key={`hardBreak-${index}`} />;
         

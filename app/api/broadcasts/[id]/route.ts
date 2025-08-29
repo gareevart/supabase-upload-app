@@ -53,11 +53,12 @@ export const GET = withApiAuth(async (request: NextRequest, user: { id: string }
       );
     }
 
-    // Fetch the broadcast
+    // Fetch the broadcast - ensuring user owns it or is admin
     const { data, error } = await supabase
       .from('sent_mails')
       .select('*')
       .eq('id', id)
+      .eq('user_id', user.id)  // Only allow users to access their own broadcasts
       .single();
 
     if (error) {
@@ -129,7 +130,7 @@ export const PUT = withApiAuth(async (request: NextRequest, user: { id: string }
       );
     }
 
-    // Update the broadcast
+    // Update the broadcast - ensuring user owns it
     const { data, error } = await supabase
       .from('sent_mails')
       .update({
@@ -142,6 +143,7 @@ export const PUT = withApiAuth(async (request: NextRequest, user: { id: string }
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
+      .eq('user_id', user.id)  // Only allow updates to user's own broadcasts
       .select()
       .single();
 
@@ -210,11 +212,12 @@ export const DELETE = withApiAuth(async (request: NextRequest, user: { id: strin
       );
     }
 
-    // Check if broadcast exists before deletion
+    // Check if broadcast exists and user owns it before deletion
     const { data: existingBroadcast, error: fetchError } = await supabase
       .from('sent_mails')
-      .select('id, subject, status')
+      .select('id, subject, status, user_id')
       .eq('id', id)
+      .eq('user_id', user.id)  // Ensure user owns this broadcast
       .single();
 
     console.log('DELETE broadcast - Existing broadcast:', existingBroadcast);
@@ -237,12 +240,13 @@ export const DELETE = withApiAuth(async (request: NextRequest, user: { id: strin
       );
     }
 
-    // Delete the broadcast
+    // Delete the broadcast - ensuring user owns it
     console.log('DELETE broadcast - Executing deletion query');
     const { error } = await supabase
       .from('sent_mails')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('user_id', user.id);  // Only delete user's own broadcasts
 
     if (error) {
       console.error('DELETE broadcast - Error during deletion:', error);

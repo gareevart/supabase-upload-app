@@ -90,10 +90,11 @@ export const GET = withApiAuth(async (request: NextRequest, user: { id: string }
       );
     }
     
-    // Build query
+    // Build query - filter by user ownership
     let query = supabase
       .from('sent_mails')
-      .select('*', { count: 'exact' });
+      .select('*', { count: 'exact' })
+      .eq('user_id', user.id);  // Only show broadcasts created by this user
     
     // Apply status filter if provided
     if (status) {

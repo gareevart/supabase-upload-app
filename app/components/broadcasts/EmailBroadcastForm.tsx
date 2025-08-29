@@ -44,9 +44,14 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
     }
   }, [content]);
 
-  // Update HTML content whenever TipTap content changes
+  // Update HTML content whenever TipTap content changes - with optimization
+  const previousMemoizedHtml = React.useRef<string>('');
+
   useEffect(() => {
-    setHtmlContent(memoizedHtml);
+    if (memoizedHtml !== previousMemoizedHtml.current) {
+      previousMemoizedHtml.current = memoizedHtml;
+      setHtmlContent(memoizedHtml);
+    }
   }, [memoizedHtml]);
   
   // Form validation

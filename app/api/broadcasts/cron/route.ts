@@ -3,6 +3,8 @@ import type { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/types';
 import { getResend } from '@/lib/resend';
+import { tiptapToHtml } from '@/app/utils/tiptapToHtml';
+import { processBase64Images } from '@/app/utils/imageProcessor';
 
 // Create a Supabase client with service role for background job
 // This allows the cron job to run without user authentication
@@ -64,15 +66,32 @@ export async function GET(request: NextRequest) {
             .update({ status: 'sending' })
             .eq('id', broadcast.id);
           
+          // Prepare email HTML content
+          let emailHtml: string;
+          if (broadcast.content_html) {
+            emailHtml = broadcast.content_html;
+          } else {
+            emailHtml = typeof broadcast.content === 'string'
+              ? broadcast.content
+              : tiptapToHtml(broadcast.content);
+          }
+
+          // Process base64 images in HTML content before sending
+          const { html: processedHtml, uploadedImages } = await processBase64Images(emailHtml, broadcast.user_id);
+
+          console.log('Cron email sending - base64 images processed:', {
+            broadcastId: broadcast.id,
+            originalImageCount: uploadedImages.length,
+            processedHtmlLength: processedHtml.length
+          });
+
           // Send the broadcast using Resend API
           const resendClient = getResend();
           const { data: resendData, error: resendError } = await resendClient.emails.send({
             from: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
             to: broadcast.recipients,
             subject: broadcast.subject,
-            html: typeof broadcast.content === 'string' 
-              ? broadcast.content 
-              : JSON.stringify(broadcast.content),
+            html: processedHtml,
           });
           
           if (resendError) {
