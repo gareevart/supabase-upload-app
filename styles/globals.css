@@ -187,6 +187,11 @@ a {
   gap: 24px;
   border-radius: var(--g-border-radius-2xl);
   padding: 24px;
+  background-color: var(--g-color-base-positive-light);
+}
+
+.subscribe-container {
+  background-color: var(--g-color-base-neutral-light);
 }
 
 

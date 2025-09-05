@@ -26,12 +26,13 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="page-container">
-      <div className="content-container">
-        <Text variant="display-1">Search</Text>
-        
-        <div className="search-tabs-container">
-          <TabProvider value={activeTab} onUpdate={(value: string) => setActiveTab(value as SearchTab)}>
+    <div className="min-h-screen pb-20">
+    <main className="container mx-auto max-w-4xl">
+      <div className="flex flex-col justify-between items-start">
+      <Text className="mb-6" variant="display-1">Search</Text>
+      </div>
+      <div className="search-tabs-container">
+        <TabProvider value={activeTab} onUpdate={(value: string) => setActiveTab(value as SearchTab)}>
             <TabList size="l" className="search-tab-list">
               <Tab value="blog">Search arcticles</Tab>
               <Tab value="images">Search images</Tab>
@@ -55,8 +56,9 @@ export default function SearchPage() {
               />
             </TabPanel>
           </TabProvider>
-        </div>
-      </div>
-    </div>
+        </div>   
+    </main>
+  </div>
+  
   );
 }
