@@ -64,21 +64,48 @@ export async function POST(request: Request) {
     // Call YandexGPT API using the new endpoint
     const folderId = process.env.YANDEX_FOLDER_ID || 'b1gb5lrqp1jr1tmamu2t';
     
+    // Determine the model URI based on the selected model
+    let modelUri: string;
+    switch (model) {
+      case 'gpt-oss-20b':
+        modelUri = `gpt://${folderId}/gpt-oss-20b/latest`;
+        break;
+      case 'deepseek':
+        // Assuming deepseek uses a different endpoint or model URI
+        // Fallback to yandexgpt for now as deepseek may not be available
+        console.log('Warning: deepseek requested, falling back to yandexgpt');
+        modelUri = `gpt://${folderId}/yandexgpt/latest`;
+        break;
+      case 'yandexgpt':
+      default:
+        modelUri = `gpt://${folderId}/yandexgpt/latest`;
+        break;
+    }
+    
+    const requestBody = {
+      modelUri,
+      completionOptions: {
+        stream: false,
+        temperature: 0.6,
+        maxTokens: '2000'
+      },
+      messages
+    };
+
+    console.log('Yandex API request:', {
+      modelUri,
+      messagesCount: messages.length,
+      selectedModel: model,
+      folderId: folderId
+    });
+
     const yandexGPTResponse = await fetch('https://llm.api.cloud.yandex.net/foundationModels/v1/completion', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Api-Key ${apiKey}`
       },
-      body: JSON.stringify({
-        modelUri: `gpt://${folderId}/yandexgpt/latest`,
-        completionOptions: {
-          stream: false,
-          temperature: 0.6,
-          maxTokens: '2000'
-        },
-        messages
-      })
+      body: JSON.stringify(requestBody)
     });
 
     if (!yandexGPTResponse.ok) {

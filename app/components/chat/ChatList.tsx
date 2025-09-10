@@ -49,7 +49,7 @@ export const ChatList = () => {
 
   const handleModelChange = (value: string[]) => {
     if (value.length > 0) {
-      setSelectedModel(value[0] as "yandexgpt" | "deepseek");
+      setSelectedModel(value[0] as "yandexgpt" | "deepseek" | "gpt-oss-20b");
     }
   };
 
@@ -84,7 +84,8 @@ export const ChatList = () => {
             value={[selectedModel]}
             options={[
               { value: 'yandexgpt', content: 'YandexGPT' },
-              { value: 'deepseek', content: 'Deepseek R1' }
+              { value: 'deepseek', content: 'Deepseek R1' },
+              { value: 'gpt-oss-20b', content: 'GPT OSS 20B' }
             ]}
             onUpdate={handleModelChange}
             size="m"

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 
-export type ModelType = "yandexgpt" | "deepseek";
+export type ModelType = "yandexgpt" | "deepseek" | "gpt-oss-20b";
 
 export const useModelSelection = () => {
   const [selectedModel, setSelectedModel] = useState<ModelType>(() => {
