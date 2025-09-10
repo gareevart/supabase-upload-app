@@ -87,7 +87,7 @@ export const ThemeToggle = () => {
       name="theme-toggle"
       value={currentTheme}
       onUpdate={handleThemeChange}
-      size="m"
+      size="l"
       width="auto"
     >
       <SegmentedRadioGroup.Option value="light">

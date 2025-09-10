@@ -44,8 +44,8 @@ const Navigation: React.FC = () => {
     { id: 'profile', icon: Person, label: 'Profile', link: '/auth/profile' },
   ];
 
-  const mainNavItems = allNavItems.slice(0, 4);
-  const drawerNavItems = allNavItems.slice(4);
+  const mainNavItems = allNavItems.slice(0, 3);
+  const drawerNavItems = allNavItems.slice(0, 3);
 
   
 
