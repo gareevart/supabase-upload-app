@@ -5,7 +5,7 @@ import { useChats } from "@/hooks/useChats";
 import { useCreateChat } from "@/hooks/useCreateChat";
 import { Button, Skeleton, Select, Text, Icon, Spin, TextArea } from "@gravity-ui/uikit";
 import {Plus, Pencil, TrashBin, Xmark, Check } from '@gravity-ui/icons';
-import { useModelSelection } from "@/hooks/useModelSelection";
+import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
 import "./ChatList.css";
 
 export const ChatList = () => {
@@ -49,7 +49,9 @@ export const ChatList = () => {
 
   const handleModelChange = (value: string[]) => {
     if (value.length > 0) {
-      setSelectedModel(value[0] as "yandexgpt" | "deepseek" | "gpt-oss-20b");
+      const newModel = value[0] as "yandexgpt" | "deepseek" | "gpt-oss-20b";
+      console.log('ChatList: Changing model to:', newModel);
+      setSelectedModel(newModel);
     }
   };
 

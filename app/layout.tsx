@@ -7,6 +7,7 @@ import { Analytics } from '@vercel/analytics/next';
 import ThemeWrapper from './components/ThemeWrapper';
 import Navigation from './components/Navigation/Navigation';
 import { AuthProvider } from './contexts/AuthContext';
+import { ModelSelectionProvider } from './contexts/ModelSelectionContext';
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import '@gravity-ui/uikit/styles/styles.css';
 import "@/styles/globals.css";
@@ -159,15 +160,17 @@ export default function RootLayout({
       >
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-                      <ThemeWrapper theme={theme}>
-                        <Navigation />
-                        <main className="main-content">
-                          {children}
-                          <Analytics/>
-                          <SpeedInsights/>
-                        </main>
-                      </ThemeWrapper>
-                    </AuthProvider>
+            <ModelSelectionProvider>
+              <ThemeWrapper theme={theme}>
+                <Navigation />
+                <main className="main-content">
+                  {children}
+                  <Analytics/>
+                  <SpeedInsights/>
+                </main>
+              </ThemeWrapper>
+            </ModelSelectionProvider>
+          </AuthProvider>
         </QueryClientProvider>
       </body>
     </html>

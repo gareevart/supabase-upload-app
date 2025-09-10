@@ -10,10 +10,26 @@ export const useModelSelection = () => {
     return (savedModel as ModelType) || "yandexgpt";
   });
 
+  const [reasoningMode, setReasoningMode] = useState<boolean>(() => {
+    // Получаем сохраненное состояние режима рассуждений из localStorage
+    const savedReasoningMode = localStorage.getItem("reasoningMode");
+    return savedReasoningMode === "true";
+  });
+
   // Сохраняем выбранную модель в localStorage при каждом изменении
   useEffect(() => {
     localStorage.setItem("selectedModel", selectedModel);
   }, [selectedModel]);
 
-  return { selectedModel, setSelectedModel };
+  // Сохраняем состояние режима рассуждений в localStorage при каждом изменении
+  useEffect(() => {
+    localStorage.setItem("reasoningMode", reasoningMode.toString());
+  }, [reasoningMode]);
+
+  return { 
+    selectedModel, 
+    setSelectedModel, 
+    reasoningMode, 
+    setReasoningMode 
+  };
 };

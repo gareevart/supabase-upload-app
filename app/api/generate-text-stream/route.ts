@@ -61,31 +61,27 @@ export async function POST(request: Request) {
       messages.push({ role: 'user', text: prompt });
     }
 
-    // Call YandexGPT API using the new endpoint
     const folderId = process.env.YANDEX_FOLDER_ID || 'b1gb5lrqp1jr1tmamu2t';
     
-    // Determine the model URI based on the selected model
+    // Determine the model URI
     let modelUri: string;
     switch (model) {
       case 'gpt-oss-20b':
         modelUri = `gpt://${folderId}/gpt-oss-20b/latest`;
         break;
       case 'deepseek':
-        // Assuming deepseek uses a different endpoint or model URI
-        // Fallback to yandexgpt for now as deepseek may not be available
         console.log('Warning: deepseek requested, falling back to yandexgpt');
         modelUri = `gpt://${folderId}/yandexgpt/latest`;
         break;
       case 'yandexgpt':
       default:
-        // Use regular YandexGPT model (Pro version may not be available)
         modelUri = `gpt://${folderId}/yandexgpt/latest`;
         break;
     }
     
-    // Prepare completion options
+    // Prepare completion options for streaming
     const completionOptions: any = {
-      stream: false,
+      stream: true,
       temperature: reasoningMode ? 0.1 : 0.6,
       maxTokens: reasoningMode ? '1000' : '2000'
     };
@@ -93,13 +89,11 @@ export async function POST(request: Request) {
     // Add reasoning options if reasoning mode is enabled
     // Only YandexGPT supports reasoning mode
     if (reasoningMode && model === 'yandexgpt') {
-      console.log('Adding reasoning options for YandexGPT');
+      console.log('Adding reasoning options for YandexGPT streaming');
       completionOptions.reasoningOptions = {
         mode: "ENABLED_HIDDEN"
       };
       completionOptions.reasoning_effort = "low";
-      // Don't enable streaming for now, use regular mode
-      // completionOptions.stream = true;
     } else if (reasoningMode && model !== 'yandexgpt') {
       console.log('Reasoning mode requested but only supported for YandexGPT, current model:', model);
     }
@@ -110,63 +104,96 @@ export async function POST(request: Request) {
       messages
     };
 
-    console.log('Yandex API request:', {
+    console.log('Yandex API streaming request:', {
       modelUri,
       messagesCount: messages.length,
       selectedModel: model,
-      folderId: folderId,
       reasoningMode: reasoningMode,
-      completionOptions
+      streaming: true
     });
 
-    const yandexGPTResponse = await fetch('https://llm.api.cloud.yandex.net/foundationModels/v1/completion', {
-      method: 'POST',
+    // Create a ReadableStream for Server-Sent Events
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          const yandexGPTResponse = await fetch('https://llm.api.cloud.yandex.net/foundationModels/v1/completion', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Api-Key ${apiKey}`
+            },
+            body: JSON.stringify(requestBody)
+          });
+
+          if (!yandexGPTResponse.ok) {
+            const errorText = await yandexGPTResponse.text();
+            console.error('YandexGPT API error:', yandexGPTResponse.status, errorText);
+            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ error: `YandexGPT API error: ${yandexGPTResponse.status}` })}\n\n`));
+            controller.close();
+            return;
+          }
+
+          const reader = yandexGPTResponse.body?.getReader();
+          if (!reader) {
+            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ error: 'No response body' })}\n\n`));
+            controller.close();
+            return;
+          }
+
+          const decoder = new TextDecoder();
+          let buffer = '';
+
+          while (true) {
+            const { done, value } = await reader.read();
+            
+            if (done) {
+              controller.close();
+              break;
+            }
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (line.trim() === '') continue;
+              
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') {
+                  controller.close();
+                  return;
+                }
+                
+                try {
+                  const parsed = JSON.parse(data);
+                  
+                  // Forward the streaming data to the client
+                  controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(parsed)}\n\n`));
+                } catch (e) {
+                  console.error('Error parsing streaming data:', e);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Streaming error:', error);
+          controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ error: 'Streaming error' })}\n\n`));
+          controller.close();
+        }
+      }
+    });
+
+    return new Response(stream, {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Api-Key ${apiKey}`
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
       },
-      body: JSON.stringify(requestBody)
-    });
-
-    if (!yandexGPTResponse.ok) {
-      const errorText = await yandexGPTResponse.text();
-      console.error('YandexGPT API error:', yandexGPTResponse.status, errorText);
-      throw new Error(`YandexGPT API error: ${yandexGPTResponse.status} ${errorText}`);
-    }
-
-    const result = await yandexGPTResponse.json();
-    console.log('YandexGPT API response:', result);
-    
-    // Extract the text from the response
-    const generatedText = result.result?.alternatives?.[0]?.message?.text;
-    
-    if (!generatedText) {
-      throw new Error('No text found in the response');
-    }
-
-    // Extract token usage information
-    const usage = result.result?.usage ? {
-      inputTextTokens: result.result.usage.inputTextTokens,
-      completionTokens: result.result.usage.completionTokens,
-      totalTokens: result.result.usage.totalTokens,
-      reasoningTokens: result.result.usage.reasoningTokens || 0
-    } : undefined;
-
-    // Log reasoning information
-    if (reasoningMode) {
-      console.log('Reasoning mode result:', {
-        reasoningTokens: result.result?.usage?.reasoningTokens || 0,
-        reasoningUsed: (result.result?.usage?.reasoningTokens || 0) > 0
-      });
-    }
-    
-    return NextResponse.json({
-      text: generatedText,
-      usage
     });
 
   } catch (error) {
-    console.error('Error in generate-text API:', error);
+    console.error('Error in generate-text-stream API:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

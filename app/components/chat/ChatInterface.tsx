@@ -5,7 +5,9 @@ import { DialogFooter } from "@/app/components/ui/dialog";
 import { Badge } from "@/app/components/ui/badge";
 import ReactMarkdown from 'react-markdown';
 import {Button, TextArea, Icon, Modal, Text, Spin, Label, useToaster } from '@gravity-ui/uikit';
-import {Gear, Stop, Copy, ArrowUturnCwLeft } from '@gravity-ui/icons';
+import {Gear, Stop, Copy, ArrowUturnCwLeft, GearBranches } from '@gravity-ui/icons';
+import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
+import { ReasoningBlock } from "./ReasoningBlock";
 import "./ChatInterface.css";
 
 interface ChatInterfaceProps {
@@ -26,9 +28,12 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
   
   // Use the toaster hook
   const toaster = useToaster();
+  const { reasoningMode, setReasoningMode, selectedModel } = useModelSelection();
   const [messageText, setMessageText] = useState("");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState("");
+  const [currentReasoning, setCurrentReasoning] = useState("");
+  const [isReasoningActive, setIsReasoningActive] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [open, setOpen] = useState(false);
@@ -38,6 +43,16 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
       setSystemPrompt(chat.system_prompt);
     }
   }, [chat]);
+
+  // Log model changes for debugging
+  useEffect(() => {
+    console.log('ChatInterface: selectedModel changed to:', selectedModel);
+  }, [selectedModel]);
+
+  // Log reasoning mode changes for debugging
+  useEffect(() => {
+    console.log('ChatInterface: reasoningMode changed to:', reasoningMode);
+  }, [reasoningMode]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -55,11 +70,24 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
     const message = messageText;
     setMessageText("");
     
+    // Reset reasoning state
+    setCurrentReasoning("");
+    setIsReasoningActive(false);
+    
     try {
+      // Start reasoning if in reasoning mode and using YandexGPT
+      if (reasoningMode && selectedModel === 'yandexgpt') {
+        setIsReasoningActive(true);
+      }
+      
       await sendMessage.mutateAsync(message);
+      
+      // Stop reasoning when done
+      setIsReasoningActive(false);
     } catch (error) {
       console.error("Error sending message:", error);
       setMessageText(message); // Restore message if failed
+      setIsReasoningActive(false);
     }
   };
 
@@ -120,7 +148,14 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
     <div className="flex flex-col h-full">
       <header className="border-b p-4 flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-bold">{chat.title}</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold">{chat.title}</h2>
+            {reasoningMode && selectedModel === 'yandexgpt' && (
+              <Label theme="info" size="s">
+                Режим рассуждений
+              </Label>
+            )}
+          </div>
           {chat.tokens_used && (
             <div className="text-xs text-muted-foreground mt-1 flex items-center">
               <Label theme="unknown" value={chat.tokens_used.toString()}>Использовано токенов</Label>
@@ -163,6 +198,12 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
                 }}
               />
             ))}
+            {isReasoningActive && selectedModel === 'yandexgpt' && (
+              <ReasoningBlock 
+                content={currentReasoning} 
+                isStreaming={isReasoningActive}
+              />
+            )}
             {isAssistantTyping && (
               <div className="flex items-center gap-2 py-2 px-4 bg-muted rounded-lg w-fit">
                 <div className="text-sm">Ассистент печатает</div>
@@ -186,6 +227,17 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
           placeholder="Писать сюда..."
           maxRows={8}
         />
+        {/* Show reasoning button only for YandexGPT */}
+        {selectedModel === 'yandexgpt' && (
+          <Button
+            size="m"
+            view={reasoningMode ? "action" : "outlined"}
+            onClick={() => setReasoningMode(!reasoningMode)}
+            title={reasoningMode ? "Отключить режим рассуждений" : "Включить режим рассуждений"}
+          >
+            <Icon data={GearBranches} size={16} />
+          </Button>
+        )}
         <Button
           type="submit"
           size="m"

@@ -153,10 +153,19 @@ export const useChat = (chatId: string) => {
 
         // Get system prompt from chat settings or use default
         const systemPrompt = chat?.system_prompt || "Ты полезный ассистент. Отвечай на вопросы пользователя чётко и лаконично.";
+        
+        // Create a temporary reasoning message to show thinking process
+        let reasoningMessageId: string | null = null;
+        
         const { text, error, usage } = await generateText(
           content, 
           systemPrompt,
-          messageHistory // Pass message history for context
+          messageHistory, // Pass message history for context
+          (reasoningChunk: string) => {
+            // Handle reasoning chunks in real-time
+            console.log('Reasoning chunk:', reasoningChunk);
+            // TODO: Update UI with reasoning chunks
+          }
         );
 
         if (error) {

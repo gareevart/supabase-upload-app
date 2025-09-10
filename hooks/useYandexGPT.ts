@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { supabase } from "@/lib/client-supabase";
-import { useModelSelection } from "./useModelSelection";
+import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
 
 interface YandexGPTResponse {
   text: string;
@@ -18,15 +18,73 @@ interface MessageContext {
   text: string;
 }
 
+// Helper function to handle streaming response
+const handleStreamingResponse = async (
+  response: Response, 
+  onReasoningChunk?: (chunk: string) => void
+): Promise<YandexGPTResponse> => {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error('No response body for streaming');
+  }
+
+  const decoder = new TextDecoder();
+  let fullText = '';
+  let reasoningText = '';
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      if (line.trim() === '') continue;
+      
+      if (line.startsWith('data: ')) {
+        const data = line.slice(6);
+        if (data === '[DONE]') {
+          return { text: fullText, usage: undefined };
+        }
+        
+        try {
+          const parsed = JSON.parse(data);
+          
+          // Handle reasoning chunks
+          if (parsed.result?.alternatives?.[0]?.message?.reasoning) {
+            const reasoningChunk = parsed.result.alternatives[0].message.reasoning;
+            reasoningText += reasoningChunk;
+            onReasoningChunk?.(reasoningChunk);
+          }
+          
+          // Handle final text
+          if (parsed.result?.alternatives?.[0]?.message?.text) {
+            fullText = parsed.result.alternatives[0].message.text;
+          }
+        } catch (e) {
+          console.error('Error parsing streaming data:', e);
+        }
+      }
+    }
+  }
+
+  return { text: fullText, usage: undefined };
+};
+
 export const useYandexGPT = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { selectedModel } = useModelSelection();
+  const { selectedModel, reasoningMode } = useModelSelection();
 
   const generateText = async (
     prompt: string, 
     systemPrompt?: string,
-    messageContext?: MessageContext[]
+    messageContext?: MessageContext[],
+    onReasoningChunk?: (chunk: string) => void
   ): Promise<YandexGPTResponse> => {
     setIsGenerating(true);
     setError(null);
@@ -38,7 +96,10 @@ export const useYandexGPT = () => {
         throw new Error('Пользователь не авторизован');
       }
 
-      const response = await fetch('/api/generate-text', {
+      // Use regular API for now, streaming will be added later
+      const apiEndpoint = '/api/generate-text';
+      
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -46,9 +107,12 @@ export const useYandexGPT = () => {
         },
         body: JSON.stringify({
           prompt,
-          systemPrompt: systemPrompt || 'Ты профессиональный копирайтер. Твоя задача - создавать интересный и привлекательный контент для блога.',
+          systemPrompt: reasoningMode 
+            ? (systemPrompt || 'Ты аналитический помощник. Решай задачи пошагово, объясняя каждый шаг своих рассуждений. Будь точным и логичным в своих выводах.')
+            : (systemPrompt || 'Ты профессиональный копирайтер. Твоя задача - создавать интересный и привлекательный контент для блога.'),
           messageContext: messageContext || [],
-          model: selectedModel
+          model: selectedModel,
+          reasoningMode: reasoningMode
         })
       });
 
@@ -57,6 +121,12 @@ export const useYandexGPT = () => {
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
+      // Handle streaming response for reasoning mode
+      if (reasoningMode && response.headers.get('content-type')?.includes('text/event-stream')) {
+        return await handleStreamingResponse(response, onReasoningChunk);
+      }
+
+      // Handle regular response
       const data = await response.json();
       
       if (!data || !data.text) {
