@@ -16,6 +16,7 @@ import { ProfileView } from './components/ProfileView';
 import { ProfileEditForm } from './components/ProfileEditForm';
 import { SubscriptionSection } from './components/SubscriptionSection';
 import { QuotaSection } from './components/QuotaSection';
+import { ApiKeysManager } from '@/app/components/profile/ApiKeysManager';
 
 const Profile = () => {
     const { user, signOut } = useAuth();
@@ -79,13 +80,14 @@ const Profile = () => {
                         onLogout={handleLogout}
                     />
                     
-                    <SubscriptionSection 
+                    <SubscriptionSection
                         subscription={subscription}
                         isLoading={isSubscriptionLoading}
                         onToggle={handleSubscriptionToggle}
                     />
                     
                     <QuotaSection dailyQuota={dailyQuota} />
+                    <ApiKeysManager />
                 </>
             )}
         </div>

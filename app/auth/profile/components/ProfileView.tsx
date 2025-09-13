@@ -18,14 +18,7 @@ interface ProfileViewProps {
 
 export const ProfileView = ({ profile, user, onEdit, onLogout }: ProfileViewProps) => {
     return (
-        <div className="flex-col gap-5">
-        <Card theme="normal" size="l" className="responsive-card">
-            <div className="profile-view pb2">
-                <Text variant='subheader-3'>Theme</Text>
-            </div>
-            <ThemeToggle />
-        </Card>
-        
+        <>
         <Card theme="normal" size="l" className="responsive-card">
                 <div className="profile-view pb2">
                     <Text variant='subheader-3'>User</Text>
@@ -84,6 +77,12 @@ export const ProfileView = ({ profile, user, onEdit, onLogout }: ProfileViewProp
                     </Button>
                 </div>
         </Card>
-        </div>
+        <Card theme="normal" size="l" className="responsive-card">
+           <div className="profile-view pb2">
+                <Text variant='subheader-3'>Appearance</Text>
+            </div>
+            <ThemeToggle />
+        </Card>
+        </>
     );
 };

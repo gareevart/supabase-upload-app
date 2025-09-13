@@ -55,9 +55,10 @@ const TipTapRenderer: React.FC<TipTapRendererProps> = ({ content }) => {
     }
 
     // Handle block nodes
-    const children = node.content ? node.content.map((child: any, childIndex: number) =>
-      renderNode(child, `${index}-${childIndex}`)
-    ) : [];
+    const children = node.content ? node.content.map((child: any, childIndex: number) => {
+      const childKey = `${index}-${childIndex}`;
+      return <React.Fragment key={childKey}>{renderNode(child, childKey)}</React.Fragment>;
+    }) : [];
 
     switch (node.type) {
       case 'doc':

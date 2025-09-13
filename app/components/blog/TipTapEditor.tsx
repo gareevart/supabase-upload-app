@@ -64,6 +64,13 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           levels: [1, 2, 3, 4],
         },
       }),
+      Image.configure({
+        inline: false,
+        allowBase64: true,
+        HTMLAttributes: {
+          class: 'max-w-full h-auto rounded',
+        },
+      }),
       ResizableImage.configure({
         inline: true,
         allowBase64: true,

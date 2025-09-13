@@ -3,13 +3,13 @@ import type { NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import type { Database } from '@/lib/types';
-import { withApiAuth } from '@/app/auth/withApiAuth';
+import { withAuth } from '@/app/auth/withApiKeyAuth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 
 // GET a single blog post by ID
-export const GET = withApiAuth(async (request: NextRequest, user: { id: string }) => {
+export const GET = withAuth(async (request: NextRequest, user: { id: string }) => {
   try {
     const url = new URL(request.url);
     const id = url.pathname.split('/').pop();
@@ -45,7 +45,7 @@ export const GET = withApiAuth(async (request: NextRequest, user: { id: string }
     // First check if the post exists
     const { data, error } = await supabase
       .from('blog_posts')
-      .select('*, author:author_id(name, username, avatar_url)')
+      .select('*')
       .eq('id', id)
       .single();
 
@@ -68,7 +68,28 @@ export const GET = withApiAuth(async (request: NextRequest, user: { id: string }
       );
     }
 
-    return NextResponse.json(data);
+    // Get author information
+    const { data: author, error: authorError } = await supabase
+      .from('profiles')
+      .select('name, username, avatar_url')
+      .eq('id', data.author_id)
+      .single();
+
+    if (authorError) {
+      console.error('Error fetching author:', authorError);
+      // Continue without author data rather than failing completely
+    }
+
+    const postWithAuthor = {
+      ...data,
+      author: author || {
+        name: null,
+        username: null,
+        avatar_url: null
+      }
+    };
+
+    return NextResponse.json(postWithAuthor);
   } catch (error) {
     console.error('Error fetching blog post:', error);
     return NextResponse.json(
@@ -79,7 +100,7 @@ export const GET = withApiAuth(async (request: NextRequest, user: { id: string }
 });
 
 // PUT (update) a blog post
-export const PUT = withApiAuth(async (request: NextRequest, user: { id: string }) => {
+export const PUT = withAuth(async (request: NextRequest, user: { id: string }) => {
   try {
     const url = new URL(request.url);
     const id = url.pathname.split('/').pop();
@@ -238,7 +259,7 @@ export const PUT = withApiAuth(async (request: NextRequest, user: { id: string }
 });
 
 // DELETE a blog post
-export const DELETE = withApiAuth(async (request: NextRequest, user: { id: string }) => {
+export const DELETE = withAuth(async (request: NextRequest, user: { id: string }) => {
   try {
     const url = new URL(request.url);
     const id = url.pathname.split('/').pop();

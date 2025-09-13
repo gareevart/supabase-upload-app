@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/types';
-import { withApiAuth } from '@/app/auth/withApiAuth';
+import { withAuth } from '@/app/auth/withApiKeyAuth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
 
 // Generate a slug from a title
 const generateSlug = (title: string) => {
@@ -39,7 +41,7 @@ const generateUniqueSlug = async (supabase: any, title: string) => {
 };
 
 // GET all blog posts (with filtering options)
-export const GET = withApiAuth(async (request: NextRequest, user: { id: string }) => {
+export const GET = withAuth(async (request: NextRequest, user: { id: string }) => {
   try {
     const url = new URL(request.url);
     const onlyMine = url.searchParams.get('onlyMine') === 'true';
@@ -47,24 +49,15 @@ export const GET = withApiAuth(async (request: NextRequest, user: { id: string }
     const draftsOnly = url.searchParams.get('draftsOnly') === 'true';
     const inspectSchema = url.searchParams.get('inspectSchema') === 'true';
     
-    // Create a new supabase client for this request
-    const supabase = createServerClient<Database>(
+    // Use service role client to bypass RLS for authenticated API requests
+    const supabase = createClient<Database>(
       supabaseUrl,
-      supabaseAnonKey,
+      supabaseServiceKey,
       {
-        cookies: {
-          get: (name: string) => request.cookies.get(name)?.value,
-          set: (name: string, value: string, options: CookieOptions) => {
-            request.cookies.set({
-              name,
-              value,
-              ...options,
-            });
-          },
-          remove: (name: string, options: CookieOptions) => {
-            request.cookies.delete(name);
-          },
-        },
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
       }
     );
 
@@ -131,16 +124,15 @@ export const GET = withApiAuth(async (request: NextRequest, user: { id: string }
     let query = supabase
       .from('blog_posts')
       .select(`
-        id, 
-        title, 
-        excerpt, 
-        slug, 
+        id,
+        title,
+        excerpt,
+        slug,
         featured_image,
         created_at,
         updated_at,
         published,
-        author_id,
-        author:author_id(name, username, avatar_url)
+        author_id
       `)
       .order('created_at', { ascending: false });
 
@@ -168,6 +160,33 @@ export const GET = withApiAuth(async (request: NextRequest, user: { id: string }
       throw error;
     }
 
+    // Get author information for each post
+    if (data && data.length > 0) {
+      const authorIds = [...new Set(data.map(post => post.author_id))];
+      
+      const { data: authors, error: authorsError } = await supabase
+        .from('profiles')
+        .select('id, name, username, avatar_url')
+        .in('id', authorIds);
+
+      if (authorsError) {
+        console.error('Error fetching authors:', authorsError);
+        // Continue without author data rather than failing completely
+      }
+
+      // Map author data to posts
+      const postsWithAuthors = data.map(post => ({
+        ...post,
+        author: authors?.find(author => author.id === post.author_id) || {
+          name: null,
+          username: null,
+          avatar_url: null
+        }
+      }));
+
+      return NextResponse.json(postsWithAuthors);
+    }
+
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error fetching blog posts:', error);
@@ -179,13 +198,35 @@ export const GET = withApiAuth(async (request: NextRequest, user: { id: string }
 });
 
 // POST (create) a new blog post
-export const POST = withApiAuth(async (request: NextRequest, user: { id: string }) => {
+export const POST = withAuth(async (request: NextRequest, user: { id: string }) => {
   let body: any;
   try {
-    body = await request.json();
+    // Try to parse JSON body first, fallback to URL parameters
+    const contentType = request.headers.get('content-type');
+    const url = new URL(request.url);
     
+    if (contentType && contentType.includes('application/json')) {
+      // Parse JSON body
+      const text = await request.text();
+      if (text.trim()) {
+        body = JSON.parse(text);
+      } else {
+        body = {};
+      }
+    } else {
+      // Use URL parameters as fallback
+      body = {};
+    }
+    
+    // Get data from body or URL parameters
+    const title = body.title || url.searchParams.get('title');
+    const content = body.content || url.searchParams.get('content');
+    const excerpt = body.excerpt || url.searchParams.get('excerpt');
+    const slug = body.slug || url.searchParams.get('slug');
+    const featured_image = body.featured_image || url.searchParams.get('featured_image');
+    const published = body.published !== undefined ? body.published :
+                     (url.searchParams.get('published') === 'true');
     // Validate required fields
-    const { title, content } = body;
     if (!title?.trim()) {
       return NextResponse.json(
         { error: 'Title is required' },
@@ -228,41 +269,32 @@ export const POST = withApiAuth(async (request: NextRequest, user: { id: string 
       );
     }
 
-    // Create a new supabase client for this request
-    const supabase = createServerClient<Database>(
+    // Create a service role client for creating posts (bypasses RLS)
+    const supabase = createClient<Database>(
       supabaseUrl,
-      supabaseAnonKey,
+      supabaseServiceKey,
       {
-        cookies: {
-          get: (name: string) => request.cookies.get(name)?.value,
-          set: (name: string, value: string, options: CookieOptions) => {
-            request.cookies.set({
-              name,
-              value,
-              ...options,
-            });
-          },
-          remove: (name: string, options: CookieOptions) => {
-            request.cookies.delete(name);
-          },
-        },
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
       }
     );
 
     // Generate a slug if not provided
-    let slug = body.slug?.trim();
-    if (!slug) {
-      slug = await generateUniqueSlug(supabase, title);
+    let finalSlug = slug?.trim();
+    if (!finalSlug) {
+      finalSlug = await generateUniqueSlug(supabase, title);
     } else {
       // Validate slug format
-      if (!/^[a-z0-9-]+$/.test(slug)) {
+      if (!/^[a-z0-9-]+$/.test(finalSlug)) {
         return NextResponse.json(
           { error: 'Slug can only contain lowercase letters, numbers and hyphens' },
           { status: 400 }
         );
       }
 
-      if (slug.startsWith('-') || slug.endsWith('-')) {
+      if (finalSlug.startsWith('-') || finalSlug.endsWith('-')) {
         return NextResponse.json(
           { error: 'Slug cannot start or end with a hyphen' },
           { status: 400 }
@@ -273,7 +305,7 @@ export const POST = withApiAuth(async (request: NextRequest, user: { id: string 
       const { data: slugCheck, error: slugError } = await supabase
         .from('blog_posts')
         .select('id')
-        .eq('slug', slug)
+        .eq('slug', finalSlug)
         .single();
 
       if (slugError && slugError.code !== 'PGRST116') { // PGRST116 means no rows returned
@@ -288,16 +320,13 @@ export const POST = withApiAuth(async (request: NextRequest, user: { id: string 
       }
     }
 
-    // Extract optional fields
-    const { excerpt, featured_image, published = false } = body;
-
     // Create the blog post
     const { data, error } = await supabase
       .from('blog_posts')
       .insert({
         title,
         content,
-        slug,
+        slug: finalSlug,
         excerpt,
         featured_image,
         published,

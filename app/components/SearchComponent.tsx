@@ -227,7 +227,7 @@ export default function SearchComponent({
   };
 
   return (
-    <div className={`search-container ${className}`}>
+    <div className={`search-container relative ${className}`}>
       <TextInput
         size="l"
         hasClear={true}
@@ -235,6 +235,12 @@ export default function SearchComponent({
         value={searchQuery}
         onUpdate={(value) => {
           setSearchQuery(value);
+          // Если поле очищается, сразу сбрасываем состояние поиска
+          if (!value.trim()) {
+            setSearchResults([]);
+            setHasSearched(false);
+            setIsLoading(false);
+          }
           if (onUpdate) {
             onUpdate(value);
           }
@@ -242,114 +248,116 @@ export default function SearchComponent({
         startContent={<Icon data={Magnifier} size={20} className='search-left-icon'/>}
       />
 
-      <div className="search-results-container">
-        {isLoading && (
-          <div className="space-y-4">
-            {[1, 2, 3].map((index) => (
-              <Card key={index} className="w-full">
-                <CardHeader>
-                  <Skeleton className="h-6 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-1/2" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-2/3" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+      {(isLoading || hasSearched) && (
+        <div className="search-results-container w-full absolute left-0 right-0 z-10 mt-2">
+          {isLoading && (
+            <div className="w-full space-y-4">
+              {[1, 2, 3].map((index) => (
+                <Card key={index} className="w-full">
+                  <CardHeader>
+                    <Skeleton className="h-6 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
 
-        {!isLoading && hasSearched && searchResults.length === 0 && (
-          <Card className="w-full text-center p-8">
-            <Text variant="subheader-1" className="mb-2">
-              {noResultsText}
-            </Text>
-            <Text variant="body-1" color="secondary">
-              {noResultsSubText}
-            </Text>
-          </Card>
-        )}
+          {!isLoading && hasSearched && searchResults.length === 0 && (
+            <Card className="w-full text-center p-8">
+              <Text variant="subheader-1" className="mb-2">
+                {noResultsText}
+              </Text>
+              <Text variant="body-1" color="secondary">
+                {noResultsSubText}
+              </Text>
+            </Card>
+          )}
 
-        {!isLoading && searchResults.length > 0 && (
-          <div className="space-y-6">
-            <Text variant="subheader-1" className="mb-4">
-              Найдено результатов: {searchResults.length}
-            </Text>
-            
-            {searchResults.map((post) => (
-              <Card key={post.id} className="w-full overflow-hidden search-result-card">
-                <div className="flex">
-                  {post.featured_image && (
-                    <div className="w-48 h-32 flex-shrink-0 overflow-hidden">
-                      <Link href={`/blog/${post.slug}`}>
-                        <Image
-                          src={post.featured_image}
-                          alt={post.title}
-                          width={192}
-                          height={128}
-                          className="search-result-image"
-                        />
-                      </Link>
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <CardHeader>
-                      <CardTitle className="text-xl">
-                        <Link 
-                          href={post.slug ? `/blog/${post.slug}` : '#'} 
-                          className="hover:text-blue-600 transition-colors"
-                        >
-                          {post.title}
-                        </Link>
-                      </CardTitle>
-                      {post.excerpt && !post.searchContext && (
-                        <CardDescription className="line-clamp-2">
-                          {post.excerpt}
-                        </CardDescription>
-                      )}
-                      {post.searchContext && (
-                        <CardDescription className="line-clamp-2">
-                          <span 
-                            className="search-context"
-                            dangerouslySetInnerHTML={{ 
-                              __html: post.searchContext.highlightedContext 
-                            }}
+          {!isLoading && searchResults.length > 0 && (
+            <div className="w-full space-y-6">
+              <Text variant="subheader-1" className="mb-4">
+                Найдено результатов: {searchResults.length}
+              </Text>
+              
+              {searchResults.map((post) => (
+                <Card key={post.id} className="w-full overflow-hidden search-result-card">
+                  <div className="flex">
+                    {post.featured_image && (
+                      <div className="w-48 h-32 flex-shrink-0 overflow-hidden">
+                        <Link href={`/blog/${post.slug}`}>
+                          <Image
+                            src={post.featured_image}
+                            alt={post.title}
+                            width={192}
+                            height={128}
+                            className="search-result-image"
                           />
-                        </CardDescription>
-                      )}
-                    </CardHeader>
-                    <CardFooter className="flex justify-between items-center">
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Icon data={Calendar} size={16} />
-                          {post.created_at ? formatDate(post.created_at) : 'Без даты'}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Icon data={Person} size={16} />
-                          {post.author?.name || post.author?.username || 'Аноним'}
-                        </div>
+                        </Link>
                       </div>
-                      <Button
-                        view="normal"
-                        size="m"
-                        onClick={() => {
-                          handleResultClick(post);
-                          if (!onResultClick) {
-                            window.location.href = `/blog/${post.slug}`;
-                          }
-                        }}
-                      >
-                        {readButtonText}
-                      </Button>
-                    </CardFooter>
+                    )}
+                    <div className="flex-1">
+                      <CardHeader>
+                        <CardTitle className="text-xl">
+                          <Link
+                            href={post.slug ? `/blog/${post.slug}` : '#'}
+                            className="hover:text-blue-600 transition-colors"
+                          >
+                            {post.title}
+                          </Link>
+                        </CardTitle>
+                        {post.excerpt && !post.searchContext && (
+                          <CardDescription className="line-clamp-2">
+                            {post.excerpt}
+                          </CardDescription>
+                        )}
+                        {post.searchContext && (
+                          <CardDescription className="line-clamp-2">
+                            <span
+                              className="search-context"
+                              dangerouslySetInnerHTML={{
+                                __html: post.searchContext.highlightedContext
+                              }}
+                            />
+                          </CardDescription>
+                        )}
+                      </CardHeader>
+                      <CardFooter className="flex justify-between items-center">
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Icon data={Calendar} size={16} />
+                            {post.created_at ? formatDate(post.created_at) : 'Без даты'}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Icon data={Person} size={16} />
+                            {post.author?.name || post.author?.username || 'Аноним'}
+                          </div>
+                        </div>
+                        <Button
+                          view="normal"
+                          size="m"
+                          onClick={() => {
+                            handleResultClick(post);
+                            if (!onResultClick) {
+                              window.location.href = `/blog/${post.slug}`;
+                            }
+                          }}
+                        >
+                          {readButtonText}
+                        </Button>
+                      </CardFooter>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

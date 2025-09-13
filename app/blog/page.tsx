@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import PostList from "./PostList"
-import { Button, Text, Icon, SegmentedRadioGroup } from "@gravity-ui/uikit"
+import { Button, Text, Icon, SegmentedRadioGroup, Select } from "@gravity-ui/uikit"
 import { LayoutCellsLarge, ListUl } from '@gravity-ui/icons';
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -10,18 +10,39 @@ import SearchComponent from "../components/SearchComponent"
 import type { SearchResult } from "../components/SearchComponent"
 import { useIsMobile } from "@/hooks/use-mobile"
 
+type PostFilter = 'all' | 'published' | 'drafts';
+
 function BlogPageContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [activeTab, setActiveTab] = useState<string>("posts")
   const [searchActive, setSearchActive] = useState(false)
   const [gridView, setGridView] = useState(true);
+  const [postFilter, setPostFilter] = useState<PostFilter>('all');
+  const [hasDrafts, setHasDrafts] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const isMobile = useIsMobile()
   const router = useRouter()
 
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      setIsAuthenticated(!!session?.user)
+      const authenticated = !!session?.user
+      setIsAuthenticated(authenticated)
+      
+      if (authenticated && session?.user?.id) {
+        setUserId(session.user.id)
+        // Check if user has drafts
+        const { data: drafts, error } = await supabase
+          .from('blog_posts')
+          .select('id')
+          .eq('author_id', session.user.id)
+          .eq('published', false)
+          .limit(1)
+        
+        if (!error && drafts && drafts.length > 0) {
+          setHasDrafts(true)
+        }
+      }
     }
     
     checkAuth()
@@ -34,6 +55,29 @@ function BlogPageContent() {
   const handleSearchQueryChange = (query: string) => {
     setSearchActive(!!query.trim())
   }
+
+  const filterOptions = [
+    { value: 'all', content: 'Все статьи' },
+    { value: 'published', content: 'Опубликованные' },
+    { value: 'drafts', content: 'Черновики' }
+  ];
+
+  // Determine props for PostList based on filter
+  const getPostListProps = () => {
+    const baseProps = {
+      gridView,
+      onlyMyPosts: isAuthenticated && userId ? true : false
+    };
+
+    switch (postFilter) {
+      case 'published':
+        return { ...baseProps, publishedOnly: true };
+      case 'drafts':
+        return { ...baseProps, draftsOnly: true };
+      default:
+        return baseProps;
+    }
+  };
 
   return (
     <div className="min-h-screen pb-20">
@@ -50,32 +94,44 @@ function BlogPageContent() {
             </Button>
           )}
         </div>
-          <div className="flex justify-between gap-4 items-top">
+        <div className="relative flex justify-between gap-4 items-top pb-4">
           <SearchComponent
             title=""
             placeholder="Поиск по блогу..."
             readButtonText="Читать"
             onResultClick={handleSearchResultClick}
             onUpdate={handleSearchQueryChange}
-          /> 
-          {!isMobile && (
-            <SegmentedRadioGroup
-              size="l"
-              name="group1"
-              defaultValue="grid"
-              value={gridView ? 'grid' : 'list'}
-              onUpdate={(value) => setGridView(value === 'grid')}>
-              <SegmentedRadioGroup.Option value="list">
-                <Icon data={ListUl} size={18} />
+            className="flex-1"
+          />
+          <div className="flex gap-2 items-center">
+            {isAuthenticated && hasDrafts && (
+              <Select
+                size="l"
+                value={[postFilter]}
+                onUpdate={(value) => setPostFilter(value[0] as PostFilter)}
+                options={filterOptions}
+                width={160}
+              />
+            )}
+            {!isMobile && (
+              <SegmentedRadioGroup
+                size="l"
+                name="group1"
+                defaultValue="grid"
+                value={gridView ? 'grid' : 'list'}
+                onUpdate={(value) => setGridView(value === 'grid')}>
+                <SegmentedRadioGroup.Option value="list">
+                  <Icon data={ListUl} size={18} />
+                  </SegmentedRadioGroup.Option>
+                <SegmentedRadioGroup.Option value="grid">
+                  <Icon data={LayoutCellsLarge} size={18} />
                 </SegmentedRadioGroup.Option>
-              <SegmentedRadioGroup.Option value="grid">
-                <Icon data={LayoutCellsLarge} size={18} />
-                </SegmentedRadioGroup.Option>
-            </SegmentedRadioGroup>
-          )}
+              </SegmentedRadioGroup>
+            )}
+          </div>
         </div>
 
-        {!searchActive && <PostList gridView={gridView} />}
+        {!searchActive && <PostList {...getPostListProps()} />}
       </main>
     </div>
   );

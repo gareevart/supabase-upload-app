@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Card, Icon, Button, Skeleton, Text, Pagination } from '@gravity-ui/uikit';
-import { Calendar, Pencil, Person } from '@gravity-ui/icons';
+import { Calendar, Pencil, Person, TrashBin } from '@gravity-ui/icons';
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import Image from "next/image";
@@ -40,6 +40,7 @@ export const PostList = ({
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPosts, setTotalPosts] = useState(0);
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const { toast: showToast } = useToast();
   const isMobile = useIsMobile();
 
@@ -158,6 +159,47 @@ export const PostList = ({
     fetchPosts();
   }, [onlyMyPosts, publishedOnly, draftsOnly, showToast, currentPage]);
 
+  const handleDeletePost = async (postId: string) => {
+    if (!confirm("Вы уверены, что хотите удалить этот черновик? Это действие нельзя отменить.")) {
+      return;
+    }
+
+    setDeletingPostId(postId);
+    
+    try {
+      const response = await fetch(`/api/blog-posts/${postId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Не удалось удалить пост');
+      }
+
+      // Удаляем пост из локального состояния
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+      setTotalPosts(prev => prev - 1);
+      
+      showToast({
+        title: "Черновик удален",
+        description: "Черновик был успешно удален",
+        variant: "default"
+      });
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      showToast({
+        title: "Ошибка удаления",
+        description: error instanceof Error ? error.message : "Не удалось удалить черновик",
+        variant: "destructive"
+      });
+    } finally {
+      setDeletingPostId(null);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("ru-RU", {
@@ -259,15 +301,27 @@ export const PostList = ({
                 </div>
               </div>
               {draftsOnly ? (
-                <Button
-                  view="outlined"
-                  size="m"
-                  className="flex items-center gap-1"
-                  onClick={() => window.location.href = `/blog/edit/${post.id}`}
-                >
-                  <Icon data={Pencil} size={16} />
-                  <span>Edit</span>
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    view="outlined"
+                    size="m"
+                    className="flex items-center gap-1"
+                    onClick={() => window.location.href = `/blog/edit/${post.id}`}
+                  >
+                    <Icon data={Pencil} size={16} />
+                    <span>Edit</span>
+                  </Button>
+                  <Button
+                    view="outlined-danger"
+                    size="m"
+                    onClick={() => handleDeletePost(post.id)}
+                    loading={deletingPostId === post.id}
+                    disabled={deletingPostId === post.id}
+                    title="Удалить черновик"
+                  >
+                    <Icon data={TrashBin} size={16} />
+                  </Button>
+                </div>
               ) : (
                 <Button
                   view="normal"

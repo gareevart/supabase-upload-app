@@ -244,6 +244,47 @@ export interface Database {
           added_at?: string
         }
       }
+      api_keys: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          key_hash: string
+          key_prefix: string
+          permissions: Json
+          last_used_at: string | null
+          expires_at: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          key_hash: string
+          key_prefix: string
+          permissions?: Json
+          last_used_at?: string | null
+          expires_at?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          key_hash?: string
+          key_prefix?: string
+          permissions?: Json
+          last_used_at?: string | null
+          expires_at?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -254,6 +295,17 @@ export interface Database {
           group_id_param: string
         }
         Returns: string[]
+      }
+      validate_api_key: {
+        Args: {
+          key_hash_param: string
+        }
+        Returns: {
+          user_id: string
+          key_id: string
+          permissions: Json
+          is_valid: boolean
+        }[]
       }
     }
     Enums: {
