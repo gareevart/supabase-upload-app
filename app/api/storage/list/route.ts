@@ -25,13 +25,18 @@ export async function GET(request: NextRequest) {
     
     console.log('List request:', { prefix, userId, bucket });
 
-    // Require auth for private folders but allow public access
+    // Require auth for private folders but allow public access to featured/ and profiles/public/
     if (prefix.startsWith('profiles/') && !prefix.startsWith('profiles/public/') && !userId) {
       console.log('Unauthorized access attempt to private folder');
       return NextResponse.json(
         { error: 'Unauthorized access - login required' },
         { status: 401 }
       );
+    }
+    
+    // Allow public access to featured/ folder for gallery images
+    if (prefix.startsWith('featured/')) {
+      console.log('Public access to featured folder allowed');
     }
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');

@@ -236,7 +236,7 @@ export const PostList = ({
 
   if (posts.length === 0) {
     return (
-      <div className="container max-w-4xl w-full mx-auto p-4">
+      <div className="container max-w-4xl w-full">
         <Card className="w-full min-w-[280px] text-center p-8">
           <p className="mb-4 text-lg">
             {draftsOnly

@@ -1,7 +1,7 @@
 
+import React from 'react';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
-import { supabase } from "@/lib/supabase";
+import { useState, useEffect, useCallback } from 'react';
 import { Card, Skeleton } from '@gravity-ui/uikit';
 import { useToast } from "@/hooks/use-toast";
 
@@ -15,52 +15,60 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchImages = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Fetch list of files from the posts bucket
-        const { data, error } = await supabase
-          .storage
-          .from('posts')
-          .list();
-
-        if (error) throw error;
-        
-        // Filter for only image files and get their URLs
-        const imageFiles = data.filter(file =>
-          file.name.match(/\.(jpeg|jpg|gif|png|webp)$/i) && !file.name.startsWith('.'));
-        
-        const imageUrls = await Promise.all(
-          imageFiles.map(async (file) => {
-            const { data } = supabase
-              .storage
-              .from('posts')
-              .getPublicUrl(file.name);
-              
-            return {
-              name: file.name,
-              url: data.publicUrl
-            };
-          })
-        );
-        
-        setImages(imageUrls);
-      } catch (error) {
-        console.error("Error fetching images:", error);
-        toast({
-          title: "Ошибка загрузки изображений",
-          description: "Не удалось загрузить галерею изображений",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
+  const fetchImages = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      
+      // Fetch list of files from Yandex Cloud Storage via API
+      // Look for images in the 'featured' folder where blog post images are stored
+      const response = await fetch('/api/storage/list?prefix=featured/&bucket=public-gareevde');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
-    
+      
+      const result = await response.json();
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      // Filter for only image files and create URLs
+      const imageFiles = result.data.filter((file: any) =>
+        file.name.match(/\.(jpeg|jpg|gif|png|webp)$/i) && 
+        !file.name.startsWith('.') &&
+        file.name !== ''
+      );
+      
+      const imageUrls = imageFiles.map((file: any) => {
+        // Generate public URL for Yandex Cloud Storage
+        // The API returns file.name as the path after the prefix (e.g., "userId/filename.jpg")
+        // So we need to combine prefix + file.name to get the full path
+        const publicUrl = `https://storage.yandexcloud.net/public-gareevde/featured/${file.name}`;
+        
+        return {
+          name: file.name.split('/').pop() || file.name, // Extract just the filename for display
+          url: publicUrl
+        };
+      });
+      
+      setImages(imageUrls);
+    } catch (error) {
+      console.error("Error fetching images:", error);
+      // Используем toast напрямую без зависимости
+      toast({
+        title: "Ошибка загрузки изображений",
+        description: "Не удалось загрузить галерею изображений",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, []); // Убираем все зависимости, чтобы функция была стабильной
+
+  useEffect(() => {
     fetchImages();
-  }, [toast]);
+  }, [fetchImages]);
 
   if (isLoading) {
     return (

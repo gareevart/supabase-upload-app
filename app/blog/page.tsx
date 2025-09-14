@@ -66,16 +66,16 @@ function BlogPageContent() {
   const getPostListProps = () => {
     const baseProps = {
       gridView,
-      onlyMyPosts: isAuthenticated && userId ? true : false
+      onlyMyPosts: false // На публичной странице блога показываем все посты
     };
 
     switch (postFilter) {
       case 'published':
-        return { ...baseProps, publishedOnly: true };
+        return { ...baseProps, publishedOnly: true, onlyMyPosts: isAuthenticated && userId ? true : false };
       case 'drafts':
-        return { ...baseProps, draftsOnly: true };
+        return { ...baseProps, draftsOnly: true, onlyMyPosts: true }; // Черновики только свои
       default:
-        return baseProps;
+        return { ...baseProps, publishedOnly: true }; // По умолчанию показываем все опубликованные посты
     }
   };
 

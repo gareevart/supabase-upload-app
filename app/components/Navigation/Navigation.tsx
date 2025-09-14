@@ -39,13 +39,11 @@ const Navigation: React.FC = () => {
     { id: 'blog', icon: BookOpen, label: 'Blog', link: '/blog' },
     { id: 'projects', icon: Circles4Square, label: 'Projects', link: '/projects' },
     { id: 'search', icon: Magnifier, label: 'Search', link: '/search' },
-    { id: 'broadcasts', icon: Envelope, label: 'Broadcasts', link: '/broadcasts' },
-    { id: 'subscribers', icon: Person, label: 'Subscribers', link: '/subscribers' },
     { id: 'profile', icon: Person, label: 'Profile', link: '/auth/profile' },
   ];
 
   const mainNavItems = allNavItems.slice(0, 3);
-  const drawerNavItems = allNavItems.slice(0, 3);
+  const drawerNavItems = allNavItems.slice(3, 5);
 
   
 

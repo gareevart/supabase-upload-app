@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
 export function useImageGeneration() {
@@ -28,12 +27,25 @@ export function useImageGeneration() {
   const deleteImage = async (imageUrl: string): Promise<boolean> => {
     setIsUploading(true);
     try {
-      const path = imageUrl.split('/').pop() || '';
-      const { error } = await supabase.storage
-        .from('posts')
-        .remove([path]);
+      // Extract the file path from the URL
+      // URL format: https://storage.yandexcloud.net/public-gareevde/featured/userId/filename.jpg
+      const url = new URL(imageUrl);
+      const pathParts = url.pathname.split('/');
+      // Remove empty first element and bucket name
+      pathParts.shift(); // remove ''
+      pathParts.shift(); // remove 'public-gareevde'
+      const filePath = pathParts.join('/'); // e.g., 'featured/userId/filename.jpg'
+      
+      // Use the delete API endpoint with query parameter
+      const response = await fetch(`/api/storage/delete?path=${encodeURIComponent(filePath)}`, {
+        method: 'DELETE',
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete image');
+      }
+
       return true;
     } catch (error) {
       console.error('Delete image error:', error);

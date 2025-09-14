@@ -46,17 +46,6 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
   // Maintain local state for the featured image URL
   const [localFeaturedImageUrl, setLocalFeaturedImageUrl] = useState<string | null>(propFeaturedImageUrl);
   
-  // Update local state when prop changes
-  useEffect(() => {
-    setLocalFeaturedImageUrl(propFeaturedImageUrl);
-  }, [propFeaturedImageUrl]);
-  
-  // Local handler for deleting the image
-  const handleDeleteImage = async () => {
-    setLocalFeaturedImageUrl(null);
-    await onDeleteImage();
-  };
-  
   // Direct handler for selecting a gallery image
   const handleSelectGalleryImage = (imageUrl: string) => {
     console.log("FeaturedImageSection: handleSelectGalleryImage called with URL:", imageUrl);
@@ -72,6 +61,17 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
     // Close the dialog immediately
     setShowGenerationDialog(false);
     console.log("FeaturedImageSection: dialog closed, image selection completed");
+  };
+  
+  // Update local state when prop changes
+  useEffect(() => {
+    setLocalFeaturedImageUrl(propFeaturedImageUrl);
+  }, [propFeaturedImageUrl]);
+  
+  // Local handler for deleting the image
+  const handleDeleteImage = async () => {
+    setLocalFeaturedImageUrl(null);
+    await onDeleteImage();
   };
 
   return (

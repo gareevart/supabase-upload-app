@@ -14,7 +14,7 @@ const MyProjects = () => {
           <Text color="primary" variant="header-1">Image Syncer</Text>
         </Card>
     </Link>
-    <Link href="/yaart" rel="noopener noreferrer">
+    <Link href="/projects/yaart" rel="noopener noreferrer">
         <Card type="container" size="l" className='project-card'>
           <Text color="primary" variant="header-1">Image Generator</Text>
         </Card>

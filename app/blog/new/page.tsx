@@ -4,7 +4,6 @@ import PostEditor from "@/app/components/blog/PostEditor"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
-import { CardContent, CardHeader, CardTitle } from "@/app/components/ui/card"
 import { Button, Skeleton, Card, Text } from "@gravity-ui/uikit"
 
 export default function NewBlogPost() {
@@ -29,12 +28,7 @@ export default function NewBlogPost() {
     return (
       <div className="container max-w-4xl mx-auto p-4">
         <Card>
-          <CardHeader>
-            <CardTitle>Loading...</CardTitle>
-          </CardHeader>
-          <CardContent>
             <Skeleton  className="h-96 w-full bg-gray-100 animate-pulse"/>
-          </CardContent>
         </Card>
       </div>
     )
