@@ -24,6 +24,7 @@
 .DS_Store
 *.pem
 *.roo
+*.continue
 
 # debug
 npm-debug.log*
