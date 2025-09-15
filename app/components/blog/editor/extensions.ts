@@ -1,5 +1,4 @@
 import { StarterKit } from '@tiptap/starter-kit';
-import Strike from '@tiptap/extension-strike';
 import { Color } from '@tiptap/extension-color';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { TextAlign } from '@tiptap/extension-text-align';
@@ -11,6 +10,7 @@ import { Subscript } from '@tiptap/extension-subscript';
 import { Superscript } from '@tiptap/extension-superscript';
 import { Typography } from '@tiptap/extension-typography';
 import { Placeholder } from '@tiptap/extension-placeholder';
+import { DragHandleExtension } from './DragHandleExtension';
 
 // Enhanced Resizable Image extension with drag-to-resize functionality
 const ResizableImage = Image.extend({
@@ -297,7 +297,7 @@ const ResizableImage = Image.extend({
 export const extensions = [
   StarterKit.configure({
     heading: {
-      levels: [1, 2, 3],
+      levels: [1, 2, 3, 4, 5, 6],
     },
   }),
   Color,
@@ -310,6 +310,14 @@ export const extensions = [
     HTMLAttributes: {
       rel: 'noopener noreferrer',
       class: 'text-blue-600 hover:underline',
+    },
+  }),
+  // Keep regular Image extension for backward compatibility
+  Image.configure({
+    inline: true,
+    allowBase64: true,
+    HTMLAttributes: {
+      class: 'rounded-lg',
     },
   }),
   ResizableImage.configure({
@@ -327,7 +335,9 @@ export const extensions = [
   Placeholder.configure({
     placeholder: 'Начните писать...',
   }),
-  Strike,
+  DragHandleExtension.configure({
+    dragHandleWidth: 20,
+  }),
 ];
 
 export { ResizableImage };

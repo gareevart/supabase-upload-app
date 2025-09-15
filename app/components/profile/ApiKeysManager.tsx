@@ -14,8 +14,7 @@ import {
   TableColumnConfig,
   TableDataItem
 } from '@gravity-ui/uikit';
-import {Eye, EyeOff } from 'lucide-react';
-import { Copy, Plus, TrashBin,Key} from '@gravity-ui/icons';
+import { Copy, Plus, TrashBin,Key, BookOpen, EyeSlash, Eye} from '@gravity-ui/icons';
 import { useToast } from '@/hooks/use-toast';
 
 interface ApiKey {
@@ -182,8 +181,8 @@ export const ApiKeysManager: React.FC = () => {
 
   // Форматирование даты
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Никогда';
-    return new Date(dateString).toLocaleString('ru-RU');
+    if (!dateString) return 'Never';
+    return new Date(dateString).toLocaleString('en-US');
   };
 
   // Форматирование относительного времени
@@ -192,11 +191,11 @@ export const ApiKeysManager: React.FC = () => {
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
     
-    if (diffInHours < 1) return 'Менее часа назад';
-    if (diffInHours < 24) return `${diffInHours} ч. назад`;
+    if (diffInHours < 1) return 'Less than an hour ago';
+    if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
     
     const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 30) return `${diffInDays} дн. назад`;
+    if (diffInDays < 30) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
     
     return formatDate(dateString);
   };
@@ -230,7 +229,7 @@ export const ApiKeysManager: React.FC = () => {
       width: 180,
       template: (item) => (
         <div className="flex items-center gap-2">
-          <Text variant="body-2" className="font-mono">
+          <Text variant="body-1" className="font-mono">
             {item.key_prefix}...
           </Text>
           <Button
@@ -254,7 +253,7 @@ export const ApiKeysManager: React.FC = () => {
       width: 100,
       template: (item) => (
         <Text
-          variant="body-2"
+          variant="body-1"
           color={item.status === 'Active' ? 'positive' : 'secondary'}
         >
           {item.status}
@@ -267,7 +266,7 @@ export const ApiKeysManager: React.FC = () => {
       width: 100,
       template: (item) => (
         <div className="flex items-center gap-1">
-          <Text variant="body-2" color="secondary">
+          <Text variant="body-1" color="secondary">
             {item.created_at}
           </Text>
         </div>
@@ -279,7 +278,7 @@ export const ApiKeysManager: React.FC = () => {
       width: 180,
       template: (item) => (
         <div className="flex items-center gap-1">
-          <Text variant="body-2" color="secondary">
+          <Text variant="body-1" color="secondary">
             {item.last_used_at}
           </Text>
         </div>
@@ -308,7 +307,7 @@ export const ApiKeysManager: React.FC = () => {
     return (
       <Card theme="normal" size="l" className='responsive-card'>
         <div className=" grid mt-1">
-          <Text variant="subheader-3" color="primary">API Key</Text>
+          <Text variant="subheader-3" color="primary">API Keys</Text>
           <Text variant="body-1" color="secondary" className="mt-1">
             Manage API keys for site access</Text>
         </div>
@@ -326,10 +325,20 @@ export const ApiKeysManager: React.FC = () => {
   return (
       <>
       <Card theme="normal" size="l" className='responsive-card'>
-        <div className=" grid mt-1">
-          <Text variant="subheader-3" color="primary">API Key</Text>
-          <Text variant="body-1" color="secondary" className="mt-1">
-            Manage API keys for site access</Text>
+        <div className="flex justify-between items-start mt-1">
+          <div className="grid">
+            <Text variant="subheader-3" color="primary">API Keys</Text>
+            <Text variant="body-1" color="secondary" className="mt-1">
+              Manage API keys for site access</Text>
+          </div>
+          <Button
+            view="outlined"
+            size="m"
+            onClick={() => window.open('https://github.com/gareevart/supabase-upload-app/blob/main/docs/API_KEYS.md', '_blank')}
+          >
+            <Icon data={BookOpen} size={16} />
+            Docs
+          </Button>
         </div>
         <div className='pt-4'>
           {apiKeys.length === 0 ? (
@@ -372,7 +381,7 @@ export const ApiKeysManager: React.FC = () => {
 
       {/* Модальное окно создания API ключа */}
       <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)}>
-        <div className="p-6">
+        <div className='p-4'>
           <Text variant="header-2" className="mb-4">Создать API ключ</Text>
           <div className="space-y-4 mt-4">
             <div>
@@ -446,7 +455,7 @@ export const ApiKeysManager: React.FC = () => {
                     size="s"
                     onClick={() => setShowNewKey(!showNewKey)}
                   >
-                    <Icon data={showNewKey ? EyeOff : Eye} size={16} />
+                    <Icon data={showNewKey ? EyeSlash : Eye} size={16} />
                   </Button>
                   <Button
                     view="action"

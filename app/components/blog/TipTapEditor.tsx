@@ -6,14 +6,14 @@ import StarterKit from '@tiptap/starter-kit';
 import { normalizeTipTapContent } from '@/lib/tiptapConverter';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
-import Placeholder from '@tiptap/extension-placeholder';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import { ImageGenerator } from './extensions/ImageGeneratorExtension';
-import { ResizableImage } from './editor/extensions';
+import { ResizableImage, extensions } from './editor/extensions';
 import { Button, Icon, TextInput, Text, Modal, Card, DropdownMenu } from '@gravity-ui/uikit';
-import {Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Picture, Xmark, ChevronDown, Heading1, Heading2, Heading3, Heading4, MagicWand, ListUl, Strikethrough} from '@gravity-ui/icons';
+import {Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Picture, Xmark, ChevronDown, Heading1, Heading2, Heading3, Heading4, Heading5, Heading6, MagicWand, ListUl, Strikethrough} from '@gravity-ui/icons';
 import "./editor/editor.css";
+import "./editor/drag-handle.css";
 
 // Yandex Cloud Object Storage bucket name
 const BUCKET_NAME = 'public-gareevde';
@@ -59,35 +59,8 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
 
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3, 4],
-        },
-      }),
-      Image.configure({
-        inline: false,
-        allowBase64: true,
-        HTMLAttributes: {
-          class: 'max-w-full h-auto rounded',
-        },
-      }),
-      ResizableImage.configure({
-        inline: true,
-        allowBase64: true,
-        HTMLAttributes: {
-          class: 'max-w-full h-auto rounded',
-        },
-      }),
-      Link.configure({
-        openOnClick: false,
-      }),
-      Placeholder.configure({
-        placeholder,
-      }),
-      TextAlign.configure({
-        types: ['heading', 'paragraph'],
-      }),
-      Underline,
+      ...extensions,
+      // Add ImageGenerator extension
       ImageGenerator,
     ],
     content: normalizeTipTapContent(content),
@@ -399,6 +372,8 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
       case 2: return <Icon data={Heading2} size={16}/>;
       case 3: return <Icon data={Heading3} size={16} />;
       case 4: return <Icon data={Heading4} size={16} />;
+      case 5: return <Icon data={Heading5} size={16} />;
+      case 6: return <Icon data={Heading6} size={16} />;
       default: return <Icon data={Heading1} size={16} />;
     }
   };
@@ -428,6 +403,16 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
       action: () => handleHeadingSelect(4),
       text: 'Heading 4',
       iconStart: <Icon size={16} data={Heading4}/>,
+    },
+    {
+      action: () => handleHeadingSelect(5),
+      text: 'Heading 5',
+      iconStart: <Icon size={16} data={Heading5}/>,
+    },
+    {
+      action: () => handleHeadingSelect(6),
+      text: 'Heading 6',
+      iconStart: <Icon size={16} data={Heading6}/>,
     },
   ];
 
@@ -672,6 +657,21 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           font-weight: 500;
           line-height: 1.4;
           margin: 0.75rem 0 0.5rem 0;
+        }
+        
+        .tiptap-editor-content .ProseMirror h5 {
+          font-size: 1rem;
+          font-weight: 500;
+          line-height: 1.4;
+          margin: 0.5rem 0 0.25rem 0;
+        }
+        
+        .tiptap-editor-content .ProseMirror h6 {
+          font-size: 0.875rem;
+          font-weight: 500;
+          line-height: 1.4;
+          margin: 0.5rem 0 0.25rem 0;
+          color: #6b7280;
         }
 
         /* Resize handles styles */

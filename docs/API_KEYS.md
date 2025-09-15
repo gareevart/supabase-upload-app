@@ -194,7 +194,7 @@ curl -H "Authorization: Bearer sk_your_api_key_here" \
 
 ## Совместимость с MCP сервером
 
-API ключи полностью совместимы с функционалом MCP сервера `/Users/gareevda/Documents/Cline/MCP/supabase-app-server`. Вы можете использовать созданные ключи для:
+API ключи полностью совместимы с функционалом MCP сервера `https://github.com/gareevart/gareev-app-mcp`. Вы можете использовать созданные ключи для:
 
 - Получения списка постов блога
 - Создания новых постов
