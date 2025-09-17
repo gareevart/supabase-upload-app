@@ -68,8 +68,6 @@
   .chat-content {
     padding: 1rem;
     padding-top: 4rem; /* Space for burger button */
-    height: calc(100vh - 2rem);
-    height: calc(100dvh - 2rem);
   }
 }
 

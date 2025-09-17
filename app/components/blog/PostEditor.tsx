@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Button } from '@gravity-ui/uikit';
+import { Button, Text } from '@gravity-ui/uikit';
 import { useTipTapEditor } from "@/hooks/useTipTapEditor";
 import PostMetadata from "./editor/PostMetadata";
 import TipTapEditor from "./TipTapEditor";
@@ -61,8 +61,6 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
         showGenerationDialog={showGenerationDialog}
         setShowGenerationDialog={setShowGenerationDialog}
       />
-
-      <h3 className="text-lg font-medium mb-2">Содержание поста</h3>
       <TipTapEditor 
         content={tipTapContent}
         onChange={handleContentChange}
