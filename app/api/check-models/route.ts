@@ -47,8 +47,9 @@ export async function GET(request: Request) {
     // Test different model URIs
     const modelsToTest = [
       { name: 'yandexgpt', uri: `gpt://${folderId}/yandexgpt/latest` },
-      { name: 'gpt-oss-20b', uri: `gpt://${folderId}/gpt-oss-20b/latest` },
-      { name: 'deepseek', uri: `gpt://${folderId}/deepseek/latest` }
+      { name: 'yandexgpt-lite', uri: `gpt://${folderId}/yandexgpt-lite/latest` },
+      { name: 'gpt-oss-20b', uri: `gpt://${folderId}/gpt-oss-20b/latest`, note: 'Недоступна в данном каталоге' },
+      { name: 'deepseek', uri: `gpt://${folderId}/deepseek/latest`, note: 'Использует fallback на YandexGPT' }
     ];
 
     const results = [];
@@ -77,7 +78,8 @@ export async function GET(request: Request) {
           uri: model.uri,
           available: testResponse.ok,
           status: testResponse.status,
-          error: testResponse.ok ? null : await testResponse.text()
+          error: testResponse.ok ? null : await testResponse.text(),
+          note: model.note || null
         });
       } catch (error) {
         results.push({
@@ -85,7 +87,8 @@ export async function GET(request: Request) {
           uri: model.uri,
           available: false,
           status: 'error',
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
+          note: model.note || null
         });
       }
     }

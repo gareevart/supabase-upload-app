@@ -49,7 +49,7 @@ export const ChatList = () => {
 
   const handleModelChange = (value: string[]) => {
     if (value.length > 0) {
-      const newModel = value[0] as "yandexgpt" | "deepseek" | "gpt-oss-20b";
+      const newModel = value[0] as "yandexgpt" | "yandexgpt-lite" | "deepseek" | "gpt-oss-20b";
       console.log('ChatList: Changing model to:', newModel);
       setSelectedModel(newModel);
     }
@@ -86,8 +86,9 @@ export const ChatList = () => {
             value={[selectedModel]}
             options={[
               { value: 'yandexgpt', content: 'YandexGPT' },
+              { value: 'yandexgpt-lite', content: 'YandexGPT Lite' },
               { value: 'deepseek', content: 'Deepseek R1' },
-              { value: 'gpt-oss-20b', content: 'GPT OSS 20B' }
+              { value: 'gpt-oss-20b', content: 'GPT OSS 20B (недоступна)', disabled: true }
             ]}
             onUpdate={handleModelChange}
             size="m"

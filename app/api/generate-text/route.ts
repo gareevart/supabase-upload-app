@@ -68,7 +68,15 @@ export async function POST(request: Request) {
     let modelUri: string;
     switch (model) {
       case 'gpt-oss-20b':
-        modelUri = `gpt://${folderId}/gpt-oss-20b/latest`;
+        // GPT OSS 20B модель недоступна в данном каталоге
+        // Используем YandexGPT как альтернативу
+        console.log('Warning: gpt-oss-20b requested but not available, falling back to yandexgpt');
+        return NextResponse.json(
+          { error: 'Модель GPT OSS 20B недоступна в вашем каталоге. Попробуйте использовать YandexGPT или YandexGPT Lite.' },
+          { status: 400 }
+        );
+      case 'yandexgpt-lite':
+        modelUri = `gpt://${folderId}/yandexgpt-lite/latest`;
         break;
       case 'deepseek':
         // Assuming deepseek uses a different endpoint or model URI
