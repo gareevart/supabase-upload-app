@@ -8,7 +8,11 @@ import {Plus, Pencil, TrashBin, Xmark, Check } from '@gravity-ui/icons';
 import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
 import "./ChatList.css";
 
-export const ChatList = () => {
+interface ChatListProps {
+  onChatSelect?: () => void;
+}
+
+export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
   const {
     chats,
     isLoading,
@@ -59,7 +63,7 @@ export const ChatList = () => {
     return (
       <div className="space-y-2">
         <div className="flex justify-between items-center mb-4">
-          <Text variant="header-1">Чаты</Text>
+          <Text variant="header-1">Диалоги</Text>
           <Skeleton className="h-9 w-9" />
         </div>
         {Array.from({ length: 5 }).map((_, i) => (
@@ -78,7 +82,7 @@ export const ChatList = () => {
   }
 
   return (
-    <div>
+    <div className="chat-list-mobile">
       <div className="flex justify-between items-center mb-4">
         <Text variant="header-1">Чаты</Text>
         <div className="flex space-x-2">
@@ -155,6 +159,7 @@ export const ChatList = () => {
                 <Link
                   href={`/chat/${chat.id}`}
                   className={`flex items-center justify-between p-3 rounded-md list ${pathname === `/chat/${chat.id}` ? "active" : ""}`}
+                  onClick={() => onChatSelect?.()}
                 >
                   <div className="w-full overflow-hidden">
                     <div className="flex justify-between items-center">

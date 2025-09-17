@@ -1,13 +1,11 @@
 "use client"
 import { useParams } from "next/navigation";
 import { ChatInterface } from "@/app/components/chat/ChatInterface";
-import { ChatList } from "@/app/components/chat/ChatList";
-import { Container } from "@/app/components/ui/container";
-import { Separator } from "@/app/components/ui/separator";
+import { ChatLayout } from "@/app/components/chat/ChatLayout";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { redirect } from "next/navigation";
 import { Toaster } from "@/app/components/ui/toaster";
-import "../../components/components.css"; // Import your custom styles
+import { Spin } from "@gravity-ui/uikit";
 
 const ChatPage = () => {
   const { slug: chatId } = useParams<{ slug: string }>();
@@ -15,9 +13,12 @@ const ChatPage = () => {
 
   if (isAuthLoading) {
     return (
-      <Container>
-        <div className="py-8 text-center">Загрузка...</div>
-      </Container>
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <Spin size="m" />
+          <div className="mt-4">Загрузка...</div>
+        </div>
+      </div>
     );
   }
 
@@ -29,24 +30,18 @@ const ChatPage = () => {
   return (
     <>
       <Toaster />
-      <Container>
-        <div className="py-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="md:col-span-1 space-y-6">
-              <ChatList />
+      <ChatLayout>
+        <div className="chat-interface-container">
+          {chatId ? (
+            <ChatInterface chatId={chatId} />
+          ) : (
+            <div className="chat-empty-state">
+              <h2>Чат не найден</h2>
+              <p>Выберите существующий чат из списка или создайте новый.</p>
             </div>
-            <div className="md:col-span-3 border rounded-lg h-[70vh]">
-              {chatId ? (
-                <ChatInterface chatId={chatId} />
-              ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  Выберите чат или создайте новый
-                </div>
-              )}
-            </div>
-          </div>
+          )}
         </div>
-      </Container>
+      </ChatLayout>
     </>
   );
 };

@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import { useChat, Message } from "@/hooks/useChat";
-import { ScrollArea } from "@/app/components/ui/scroll-area";
 import { DialogFooter } from "@/app/components/ui/dialog";
 import { Badge } from "@/app/components/ui/badge";
 import ReactMarkdown from 'react-markdown';
@@ -146,7 +145,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
 
   return (
     <div className="flex flex-col h-full">
-      <header className="border-b p-4 flex justify-between items-center">
+      <header className="border-b p-4 flex justify-between items-center bg-background">
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold">{chat.title}</h2>
@@ -172,7 +171,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
         </Button>
       </header>
 
-      <ScrollArea className="flex-1 p-4">
+      <div className="flex-1 overflow-y-auto p-4 chat-messages">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-muted-foreground">
@@ -213,7 +212,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
             <div ref={messagesEndRef} />
           </div>
         )}
-      </ScrollArea>
+      </div>
 
       <form
         onSubmit={handleSubmit}

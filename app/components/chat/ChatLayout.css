@@ -1,0 +1,133 @@
+/* Chat Layout Styles */
+.chat-layout {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-layout-container {
+  display: flex;
+  flex: 1;
+  min-height: 0; /* Important for flex children */
+}
+
+/* Desktop sidebar */
+.chat-sidebar {
+  width: 320px;
+  min-width: 320px;
+  background-color: var(--g-color-base-background);
+  border-right: 1px solid var(--g-color-line-generic);
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-sidebar-content {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Main chat area */
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* Allows flex item to shrink below content size */
+  min-height: 0;
+}
+
+.chat-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 1.5rem;
+  min-height: 0;
+}
+
+/* Mobile styles */
+@media (max-width: 767px) {
+  .desktop-only {
+    display: none;
+  }
+
+  .chat-layout {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile */
+  }
+
+  .chat-main {
+    width: 100%;
+    height: 100%;
+  }
+
+  .chat-content {
+    padding: 1rem;
+    padding-top: 4rem; /* Space for burger button */
+    height: calc(100vh - 2rem);
+    height: calc(100dvh - 2rem);
+  }
+}
+
+/* Desktop styles */
+@media (min-width: 768px) {
+  .mobile-only {
+    display: none;
+  }
+}
+
+/* Chat interface container */
+.chat-interface-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--g-color-base-background);
+  border: 1px solid var(--g-color-line-generic);
+  border-radius: 8px;
+  overflow: hidden;
+  min-height: 0; /* Important for flex children */
+}
+
+/* Empty state */
+.chat-empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+}
+
+.chat-empty-state h2 {
+  margin-bottom: 1rem;
+  color: var(--g-color-text-primary);
+}
+
+.chat-empty-state p {
+  margin-bottom: 1.5rem;
+  max-width: 400px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .chat-sidebar {
+    width: 280px;
+    min-width: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .chat-content {
+    padding: 0.75rem;
+    padding-top: 4rem;
+  }
+  
+  .chat-interface-container {
+    border-radius: 6px;
+  }
+}

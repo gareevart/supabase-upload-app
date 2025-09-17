@@ -1,0 +1,86 @@
+/* Mobile Chat Sidebar Styles */
+.mobile-burger-btn {
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(232, 232, 232, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-sidebar-overlay {
+  backdrop-filter: blur(2px);
+}
+
+.mobile-sidebar {
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  background-color: var(--g-color-base-background);
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-sidebar-header {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--g-color-line-generic);
+}
+
+.mobile-sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 1rem;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .mobile-burger-btn {
+    background-color: rgba(0, 0, 0, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .mobile-burger-btn:hover {
+    background-color: rgba(0, 0, 0, 1);
+  }
+}
+
+/* Smooth animations */
+.mobile-sidebar {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-sidebar-overlay {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Ensure proper z-index stacking */
+.mobile-burger-btn {
+  z-index: 60;
+}
+
+.mobile-sidebar {
+  z-index: 50;
+}
+
+.mobile-sidebar-overlay {
+  z-index: 40;
+}
+
+/* Smooth transitions for burger button */
+.mobile-burger-btn {
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Hide on desktop - important to override any other styles */
+@media (min-width: 768px) {
+  .mobile-burger-btn,
+  .mobile-sidebar,
+  .mobile-sidebar-overlay {
+    display: none !important;
+  }
+}
