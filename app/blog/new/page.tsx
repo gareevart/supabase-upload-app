@@ -54,7 +54,10 @@ export default function NewBlogPost() {
 
   return (
     <div className="min-h-screen py-8">
-      <PostEditor />
+      <PostEditor onSave={(published, post) => {
+        // Всегда перенаправляем на страницу блога после создания нового поста
+        router.push("/blog");
+      }} />
     </div>
   )
 }

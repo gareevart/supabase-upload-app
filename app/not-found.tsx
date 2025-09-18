@@ -5,7 +5,7 @@ import MemoryGame from './components/MemoryGame/MemoryGame';
 
 const NotFoundPage = () => {
   return (
-    <div className="page-container">
+    <div className="page-container min-h-screen pb-20 py-6">
       <Text variant="display-1">404 - Page Not Found</Text>
       <Text variant="body-2">It seems you{"'"}ve lost your way. Why not play a memory game while you{"'"}re here?</Text>
       <MemoryGame />

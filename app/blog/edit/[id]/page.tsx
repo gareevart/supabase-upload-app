@@ -98,7 +98,15 @@ export default function EditBlogPost() {
 
   return (
     <div className="min-h-screen py-8">
-      <PostEditor initialPost={post} onSave={() => router.push(`/blog/${post.slug}`)} />
+      <PostEditor initialPost={post} onSave={(published, savedPost) => {
+        if (published) {
+          // Если пост опубликован, перенаправляем на страницу поста
+          router.push(`/blog/${savedPost.slug}`);
+        } else {
+          // Если пост сохранен как черновик, перенаправляем на страницу блога
+          router.push("/blog");
+        }
+      }} />
     </div>
   )
 }
