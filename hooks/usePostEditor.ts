@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { EditorContent } from "@/app/components/blog/editor/types";
 
-export const usePostEditor = (initialPost?: any, onSave?: () => void) => {
+export const usePostEditor = (initialPost?: any, onSave?: (published: boolean, post: any) => void) => {
   const [title, setTitle] = useState(initialPost?.title || "");
   const [slug, setSlug] = useState(initialPost?.slug || "");
   const [excerpt, setExcerpt] = useState(initialPost?.excerpt || "");
@@ -74,7 +74,7 @@ export const usePostEditor = (initialPost?: any, onSave?: () => void) => {
         description: publish ? "Post published successfully" : "Post saved as draft"
       });
 
-      if (onSave) onSave();
+      if (onSave) onSave(publish, savedPost);
     } catch (error) {
       console.error("Error saving post:", error);
       toast({

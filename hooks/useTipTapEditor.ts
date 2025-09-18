@@ -6,7 +6,7 @@ import { convertBlocksToTipTap, convertTipTapToBlocks, normalizeTipTapContent } 
 import { EditorContent } from "@/app/components/blog/editor/types";
 import { transliterate } from "@/lib/transliterate";
 
-export const useTipTapEditor = (initialPost?: any, onSave?: () => void) => {
+export const useTipTapEditor = (initialPost?: any, onSave?: (published: boolean, post: any) => void) => {
   const [title, setTitle] = useState(initialPost?.title || "");
   const [slug, setSlug] = useState(initialPost?.slug || "");
   const [excerpt, setExcerpt] = useState(initialPost?.excerpt || "");
@@ -145,7 +145,7 @@ export const useTipTapEditor = (initialPost?: any, onSave?: () => void) => {
         description: publish ? "Post published successfully" : "Post saved as draft"
       });
 
-      if (onSave) onSave();
+      if (onSave) onSave(publish, result);
     } catch (error) {
       console.error("Error saving post:", error);
       toast({
