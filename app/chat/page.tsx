@@ -32,21 +32,21 @@ const ChatPage = () => {
       <ChatLayout>
         <div className="chat-interface-container">
           <div className="chat-empty-state">
-            <Text variant="header-1">Привет!</Text>
-            <p>Выбери существующий чат из списка или создайте новый, чтобы начать общение с ассистентом.</p>
+            <Text variant="header-1">Hello, Bro!</Text>
+            <Text variant="body-2" className="pt-1 pb-4">Select an existing or create a new chat to start communicating with the AI assistant</Text>
             <Button
               view="action"
               size="l"
               onClick={handleCreateChat}
               disabled={createChat.isPending}
-              title="Создать новый чат"
+              title="Create new"
             >
               {createChat.isPending ? (
                 <Spin size="xs"/>
               ) : (
                 <Icon data={Plus} size={16} />
               )}
-              Создать новый чат
+              Create new chat
             </Button>
           </div>
         </div>

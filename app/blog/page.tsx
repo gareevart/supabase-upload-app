@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import PostList from "./PostList"
-import { Button, Text, Icon, SegmentedRadioGroup, Select } from "@gravity-ui/uikit"
+import { Button, Text, Icon, SegmentedRadioGroup, Select, Spin } from "@gravity-ui/uikit"
 import { LayoutCellsLarge, ListUl } from '@gravity-ui/icons';
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -20,6 +20,7 @@ function BlogPageContent() {
   const [postFilter, setPostFilter] = useState<PostFilter>('all');
   const [hasDrafts, setHasDrafts] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
   const isMobile = useIsMobile()
   const router = useRouter()
 
@@ -61,6 +62,16 @@ function BlogPageContent() {
     { value: 'published', content: 'Опубликованные' },
     { value: 'drafts', content: 'Черновики' }
   ];
+
+  // Handle filter change with loading state
+  const handleFilterChange = async (newFilter: PostFilter) => {
+    setIsFilterLoading(true);
+    setPostFilter(newFilter);
+    // Small delay to show loading state
+    setTimeout(() => {
+      setIsFilterLoading(false);
+    }, 300);
+  };
 
   // Determine props for PostList based on filter
   const getPostListProps = () => {
@@ -108,7 +119,7 @@ function BlogPageContent() {
               <Select
                 size="l"
                 value={[postFilter]}
-                onUpdate={(value) => setPostFilter(value[0] as PostFilter)}
+                onUpdate={(value) => handleFilterChange(value[0] as PostFilter)}
                 options={filterOptions}
                 width={160}
               />
@@ -131,7 +142,16 @@ function BlogPageContent() {
           </div>
         </div>
 
-        {!searchActive && <PostList {...getPostListProps()} />}
+        {!searchActive && (
+          <div className="relative">
+            {isFilterLoading && (
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center">
+                <Spin size="l" />
+              </div>
+            )}
+            <PostList {...getPostListProps()} key={`${postFilter}-${gridView}`} />
+          </div>
+        )}
       </main>
     </div>
   );
