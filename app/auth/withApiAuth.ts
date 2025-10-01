@@ -27,7 +27,7 @@ export const withApiAuth = (handler: (req: NextRequest, user: { id: string }) =>
       // Проверяем Authorization header (приоритет над cookies)
       const authHeader = req.headers.get('authorization');
       let user = null;
-      let error = null;
+      let error: { message?: string; code?: string; status?: number } | null = null;
 
       console.log('withApiAuth: Authorization header:', authHeader ? 'Present' : 'Missing');
 
@@ -52,7 +52,9 @@ export const withApiAuth = (handler: (req: NextRequest, user: { id: string }) =>
           console.log('withApiAuth: getUser(token) completed successfully');
         } catch (getUserError) {
           console.error('withApiAuth: getUser(token) threw an error:', getUserError);
-          error = getUserError;
+          error = getUserError instanceof Error 
+            ? { message: getUserError.message } 
+            : { message: 'Unknown error occurred' };
         }
         
         console.log('withApiAuth: Token validation result:', {
