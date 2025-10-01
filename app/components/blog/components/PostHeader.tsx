@@ -74,6 +74,7 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
       {isAuthor && (
         <div className="flex gap-2 mb-6">
           <Button
+            size="l"
             variant="outline"
             onClick={() => router.push(`/edit-post/${postId}`)}
           >
@@ -82,7 +83,7 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
           
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive">Удалить</Button>
+              <Button size="l" variant="destructive">Удалить</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>

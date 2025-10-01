@@ -56,6 +56,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
 
   // Use ref to prevent unnecessary re-renders
   const lastContentString = React.useRef<string>('');
+  const isInternalUpdate = React.useRef<boolean>(false);
 
   const editor = useEditor({
     extensions: [
@@ -69,6 +70,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
       const newContent = JSON.stringify(editor.getJSON());
       if (newContent !== lastContentString.current) {
         lastContentString.current = newContent;
+        isInternalUpdate.current = true;
         onChange(newContent);
       }
     }, [onChange]),
@@ -91,8 +93,8 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         const normalizedContent = normalizeTipTapContent(content);
 
         // Only update if the normalized content has actually changed
-        // This prevents infinite loops where editor.getJSON() !== normalized content
-        if (normalizedContent !== previousNormalizedContent.current) {
+        // AND the change didn't come from the editor itself
+        if (normalizedContent !== previousNormalizedContent.current && !isInternalUpdate.current) {
           previousNormalizedContent.current = normalizedContent;
 
           // Parse the normalized content to get the actual object
@@ -101,6 +103,9 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           // Set content without triggering onUpdate
           editor.commands.setContent(parsedContent, false);
         }
+        
+        // Reset the flag after checking
+        isInternalUpdate.current = false;
       } catch (e) {
         console.error('Error setting editor content:', e);
       }

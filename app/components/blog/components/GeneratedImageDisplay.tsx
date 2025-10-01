@@ -17,7 +17,7 @@ const GeneratedImageDisplay: React.FC<GeneratedImageDisplayProps> = ({
 }) => {
   const handleTryPrompt = () => {
     const encodedPrompt = encodeURIComponent(prompt);
-    window.open(`/yaart?prompt=${encodedPrompt}`, '_blank');
+    window.open(`/projects/yaart?prompt=${encodedPrompt}`, '_blank');
   };
 
   return (

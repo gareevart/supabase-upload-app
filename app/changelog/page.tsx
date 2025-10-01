@@ -24,19 +24,55 @@ import {
   PencilToSquare,
   Comment,
   ChartLine,
-  LayoutList
+  LayoutList,
+  CircleExclamation,
+  ShieldCheck
 } from '@gravity-ui/icons';
 
 const ChangelogPage = () => {
   const changelogData = {
-    version: "Release 0.0.2",
-    date: "2025-08-01",
+    version: "Release 0.0.3",
+    date: "2025-10-01",
     sections: [
       {
-        title: "Исправления и улучшения",
-        icon: Wrench,
-        color: "warning",
+        title: "Исправления ошибок",
+        icon: CircleExclamation,
+        color: "danger",
         items: [
+          {
+            title: "TipTap Редактор",
+            icon: PencilToSquare,
+            features: [
+              { name: "Исправлена проблема с курсором", description: "При редактировании текста в середине предложения курсор больше не перепрыгивает в конец" },
+              { name: "Оптимизация обновлений контента", description: "Добавлен флаг isInternalUpdate для отслеживания обновлений от самого редактора" },
+              { name: "Улучшенная стабильность", description: "useEffect теперь игнорирует обновления контента, если они пришли от редактора" }
+            ]
+          },
+          {
+            title: "Аутентификация в Safari",
+            icon: ShieldCheck,
+            features: [
+              { name: "Исправлена ошибка AuthError", description: "Устранены проблемы с аутентификацией Supabase в браузере Safari" },
+              { name: "Исправлены API routes", description: "API routes больше не возвращают 401 Unauthorized для авторизованных пользователей" },
+              { name: "Унификация клиентов Supabase", description: "Теперь используется единый клиент с localStorage вместо cookie-логики" },
+              { name: "Улучшенная обработка ошибок", description: "Добавлена улучшенная обработка ошибок в AuthContext с PKCE flow" },
+              { name: "Helper authFetch", description: "Создан helper для работы с API routes через Authorization header" },
+              { name: "Исправлена валидация токена", description: "Критическое исправление в withApiAuth - теперь используется правильный метод supabase.auth.getUser(token)" }
+            ]
+          }
+        ]
+      }
+    ],
+    previousReleases: [
+      {
+        version: "Release 0.0.2",
+        date: "2025-08-01",
+        sections: [
+          {
+            title: "Исправления и улучшения",
+            icon: Wrench,
+            color: "warning",
+            items: [
           {
             title: "Навигация",
             icon: LayoutList,
@@ -223,6 +259,18 @@ const ChangelogPage = () => {
       { feature: "Безопасность", requirement: "Обновлена функция has_role для корректной работы с анонимными пользователями" },
       { feature: "Производительность", requirement: "Рекомендуется очистка кэша после обновления навигации" }
     ]
+      }
+    ],
+    statistics: {
+      filesChanged: "2 файла изменено",
+      linesAdded: "20+ строк кода добавлено",
+      focus: "Исправление критических ошибок в редакторе и аутентификации"
+    },
+    documentation: [
+      { path: "/docs/TIPTAP_CURSOR_FIX.md", description: "Подробное описание проблемы с курсором и решения" },
+      { path: "/docs/SAFARI_AUTH_FIX.md", description: "Документация по исправлению аутентификации в Safari" },
+      { path: "/docs/SAFARI_AUTH_TESTING.md", description: "Инструкции по тестированию аутентификации" }
+    ]
   };
 
   return (
@@ -280,6 +328,123 @@ const ChangelogPage = () => {
             </div>
           </Card>
         ))}
+
+        {/* Statistics */}
+        {changelogData.statistics && (
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <Icon data={ChartColumn} size={24} />
+              <Text variant="header-1">Статистика изменений</Text>
+            </div>
+            <div className="space-y-2">
+              <Text variant="body-1">📁 {changelogData.statistics.filesChanged}</Text>
+              <Text variant="body-1">➕ {changelogData.statistics.linesAdded}</Text>
+              <Text variant="body-1">🎯 Фокус: {changelogData.statistics.focus}</Text>
+            </div>
+          </Card>
+        )}
+
+        {/* Documentation */}
+        {changelogData.documentation && changelogData.documentation.length > 0 && (
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <Icon data={FileText} size={24} />
+              <Text variant="header-1">Документация</Text>
+            </div>
+            <div className="space-y-3">
+              {changelogData.documentation.map((doc, index) => (
+                <div key={index} className="py-2 border-l-2 border-gray-200 pl-4 flex flex-col">
+                  <Text variant="body-2" className="font-semibold mb-1">
+                    {doc.path}
+                  </Text>
+                  <Text variant="body-1" color="complementary">
+                    {doc.description}
+                  </Text>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Previous Releases */}
+        {changelogData.previousReleases && changelogData.previousReleases.length > 0 && (
+          <div className="space-y-8">
+            <Divider />
+            <Text variant="header-1" className="text-center">Предыдущие релизы</Text>
+            
+            {changelogData.previousReleases.map((release, releaseIndex) => (
+              <div key={releaseIndex} className="space-y-4">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <Label theme="info" size="m">
+                      {release.version}
+                    </Label>
+                    <Text variant="body-1">
+                      {release.date}
+                    </Text>
+                  </div>
+                </div>
+
+                {release.sections.map((section, sectionIndex) => (
+                  <Card key={sectionIndex} className="p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                      <Icon data={section.icon} size={24} />
+                      <Text variant="header-1">{section.title}</Text>
+                    </div>
+
+                    <div className="space-y-6">
+                      {section.items.map((item, itemIndex) => (
+                        <div key={itemIndex}>
+                          <div className="flex items-center gap-2 mb-4">
+                            <Icon data={item.icon} size={20} />
+                            <Text variant="subheader-1">{item.title}</Text>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            {item.features.map((feature, featureIndex) => (
+                              <div key={featureIndex} className="py-2 border-l-2 border-gray-200 pl-4 flex flex-col">
+                                <Text variant="body-2" className="font-semibold mb-1">
+                                {feature.name}
+                                </Text>
+                                <Text variant="body-1" color="complementary">
+                                  {feature.description}
+                                </Text>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {itemIndex < section.items.length - 1 && (
+                            <Divider className="my-4" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                ))}
+
+                {release.statistics && (
+                  <Card className="p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                      <Icon data={ChartColumn} size={24} />
+                      <Text variant="header-1">Статистика изменений</Text>
+                    </div>
+                    <div className="space-y-2">
+                      <Text variant="body-1">📁 {release.statistics.filesChanged}</Text>
+                      <Text variant="body-1">➕ {release.statistics.linesAdded}</Text>
+                      {release.statistics.linesOptimized && (
+                        <Text variant="body-1">⚡ {release.statistics.linesOptimized}</Text>
+                      )}
+                      {release.statistics.linesRemoved && (
+                        <Text variant="body-1">➖ {release.statistics.linesRemoved}</Text>
+                      )}
+                      <Text variant="body-1">🎯 Фокус: {release.statistics.focus}</Text>
+                    </div>
+                  </Card>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
     </div>
     </Container>
   );

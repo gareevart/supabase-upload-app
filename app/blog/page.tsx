@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import PostList from "./PostList"
-import { Button, Text, Icon, SegmentedRadioGroup, Select, Spin } from "@gravity-ui/uikit"
+import { Button, Text, Icon, SegmentedRadioGroup, Select, Loader } from "@gravity-ui/uikit"
 import { LayoutCellsLarge, ListUl } from '@gravity-ui/icons';
 import { useRouter, useSearchParams } from "next/navigation"
 import SearchComponent from "../components/SearchComponent"
@@ -24,7 +24,6 @@ function BlogPageContent() {
   
   const [gridView, setGridView] = useState(viewParam !== 'list');
   const [postFilter, setPostFilter] = useState<PostFilter>(filterParam || 'all');
-  const [isFilterLoading, setIsFilterLoading] = useState(false);
   const isMobile = useIsMobile()
   
   // Синхронизируем состояние с URL параметрами
@@ -70,15 +69,10 @@ function BlogPageContent() {
     { value: 'drafts', content: 'Черновики' }
   ];
 
-  // Handle filter change with loading state
-  const handleFilterChange = async (newFilter: PostFilter) => {
-    setIsFilterLoading(true);
+  // Handle filter change
+  const handleFilterChange = (newFilter: PostFilter) => {
     setPostFilter(newFilter);
     updateURLParams(newFilter, gridView);
-    // Small delay to show loading state
-    setTimeout(() => {
-      setIsFilterLoading(false);
-    }, 300);
   };
 
   // Handle view change
@@ -157,14 +151,7 @@ function BlogPageContent() {
         </div>
 
         {!searchActive && (
-          <div className="relative">
-            {isFilterLoading && (
-              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center">
-                <Spin size="l" />
-              </div>
-            )}
-            <PostList {...getPostListProps()} key={`${postFilter}-${gridView}`} />
-          </div>
+          <PostList {...getPostListProps()} key={`${postFilter}-${gridView}`} />
         )}
       </main>
     </div>
