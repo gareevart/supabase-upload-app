@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "./gradient-hover.css";
 
 :root {
   --background: #ffffff;
@@ -130,7 +129,6 @@ a {
   width: 100%;
   max-width: 968px;
   margin: 0 auto;
-  padding: 24px;
 }
 
 .center-container {

@@ -4,7 +4,6 @@ import { ChatInterface } from "@/app/components/chat/ChatInterface";
 import { ChatLayout } from "@/app/components/chat/ChatLayout";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { redirect } from "next/navigation";
-import { Toaster } from "@/app/components/ui/toaster";
 import { Spin } from "@gravity-ui/uikit";
 
 const ChatPage = () => {
@@ -29,7 +28,6 @@ const ChatPage = () => {
 
   return (
     <>
-      <Toaster />
       <ChatLayout>
         <div className="chat-interface-container">
           {chatId ? (

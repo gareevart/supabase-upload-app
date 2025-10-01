@@ -8,7 +8,7 @@ import TipTapEditor from "./TipTapEditor";
 
 type PostEditorProps = {
   initialPost?: any;
-  onSave?: () => void;
+  onSave?: (published: boolean, post: any) => void;
 };
 
 const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {

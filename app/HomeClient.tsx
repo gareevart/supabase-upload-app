@@ -8,9 +8,6 @@ export default function HomeClient() {
   return (
     <div className="page-container">
       <div className="content-container">
-        {/* Content can be added here later */}
-      </div>
-
       <div className="text-container">
         <Text className="home-title" variant="display-1">
           Dmitrii Gareev is a Product Designer at{' '}
@@ -36,6 +33,7 @@ export default function HomeClient() {
             <Text className="LinkHover" variant='subheader-3'><Icon data={Globe} size={16} /> Linkedin </Text>
           </Link>
         </div>
+      </div>
       </div>
     </div>
   );
