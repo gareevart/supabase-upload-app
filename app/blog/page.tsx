@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import PostList from "./PostList"
 import { Button, Text, Icon, SegmentedRadioGroup, Select, Spin } from "@gravity-ui/uikit"
 import { LayoutCellsLarge, ListUl } from '@gravity-ui/icons';
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import SearchComponent from "../components/SearchComponent"
 import type { SearchResult } from "../components/SearchComponent"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -15,11 +15,27 @@ type PostFilter = 'all' | 'published' | 'drafts';
 function BlogPageContent() {
   const [activeTab, setActiveTab] = useState<string>("posts")
   const [searchActive, setSearchActive] = useState(false)
-  const [gridView, setGridView] = useState(true);
-  const [postFilter, setPostFilter] = useState<PostFilter>('all');
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  
+  // Получаем фильтр и вид из URL параметров
+  const filterParam = searchParams.get('filter') as PostFilter | null
+  const viewParam = searchParams.get('view')
+  
+  const [gridView, setGridView] = useState(viewParam !== 'list');
+  const [postFilter, setPostFilter] = useState<PostFilter>(filterParam || 'all');
   const [isFilterLoading, setIsFilterLoading] = useState(false);
   const isMobile = useIsMobile()
-  const router = useRouter()
+  
+  // Синхронизируем состояние с URL параметрами
+  useEffect(() => {
+    if (filterParam && ['all', 'published', 'drafts'].includes(filterParam)) {
+      setPostFilter(filterParam)
+    }
+    if (viewParam) {
+      setGridView(viewParam !== 'list')
+    }
+  }, [filterParam, viewParam])
 
   // Используем хуки с кэшированием
   const { isAuthenticated } = useAuth()
@@ -33,6 +49,21 @@ function BlogPageContent() {
     setSearchActive(!!query.trim())
   }
 
+  // Функция для обновления URL параметров
+  const updateURLParams = (filter: PostFilter, view: boolean) => {
+    const params = new URLSearchParams()
+    if (filter !== 'all') {
+      params.set('filter', filter)
+    }
+    if (!view) {
+      params.set('view', 'list')
+    }
+    
+    const queryString = params.toString()
+    const newUrl = queryString ? `/blog?${queryString}` : '/blog'
+    router.push(newUrl, { scroll: false })
+  }
+
   const filterOptions = [
     { value: 'all', content: 'Все статьи' },
     { value: 'published', content: 'Опубликованные' },
@@ -43,10 +74,17 @@ function BlogPageContent() {
   const handleFilterChange = async (newFilter: PostFilter) => {
     setIsFilterLoading(true);
     setPostFilter(newFilter);
+    updateURLParams(newFilter, gridView);
     // Small delay to show loading state
     setTimeout(() => {
       setIsFilterLoading(false);
     }, 300);
+  };
+
+  // Handle view change
+  const handleViewChange = (newGridView: boolean) => {
+    setGridView(newGridView);
+    updateURLParams(postFilter, newGridView);
   };
 
   // Determine props for PostList based on filter
@@ -106,7 +144,7 @@ function BlogPageContent() {
                 name="group1"
                 defaultValue="grid"
                 value={gridView ? 'grid' : 'list'}
-                onUpdate={(value) => setGridView(value === 'grid')}>
+                onUpdate={(value) => handleViewChange(value === 'grid')}>
                 <SegmentedRadioGroup.Option value="list">
                   <Icon data={ListUl} size={18} />
                   </SegmentedRadioGroup.Option>
