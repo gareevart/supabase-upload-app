@@ -72,6 +72,7 @@
     "react-router-dom": "^7.5.3",
     "recharts": "^2.15.3",
     "resend": "^4.7.0",
+    "swr": "^2.3.6",
     "tailwind-merge": "^3.3.0",
     "vaul": "^1.1.2"
   },

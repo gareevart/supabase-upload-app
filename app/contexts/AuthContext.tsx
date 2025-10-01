@@ -47,10 +47,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
 
-        const { data: { user } } = await supabase.auth.getUser();
-        setUser(user);
+        // Сначала пробуем получить сессию
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Error getting session:', sessionError);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
+        if (session?.user) {
+          setUser(session.user);
+        } else {
+          setUser(null);
+        }
       } catch (error) {
         console.error('Error getting initial user:', error);
+        setUser(null);
       } finally {
         setLoading(false);
       }

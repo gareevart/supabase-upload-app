@@ -16,6 +16,7 @@ import {
 } from '@gravity-ui/uikit';
 import { Copy, Plus, TrashBin,Key, BookOpen, EyeSlash, Eye} from '@gravity-ui/icons';
 import { useToast } from '@/hooks/use-toast';
+import { authFetch } from '@/lib/auth-fetch';
 
 interface ApiKey {
   id: string;
@@ -56,17 +57,35 @@ export const ApiKeysManager: React.FC = () => {
   // Загрузка API ключей
   const fetchApiKeys = async () => {
     try {
-      const response = await fetch('/api/api-keys');
+      const response = await authFetch('/api/api-keys');
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch API keys');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API error:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+        });
+        throw new Error(errorData.error || errorData.details || 'Failed to fetch API keys');
       }
+      
       const data = await response.json();
       setApiKeys(data.apiKeys || []);
     } catch (error) {
       console.error('Error fetching API keys:', error);
+      
+      let description = 'Не удалось загрузить API ключи';
+      if (error instanceof Error) {
+        if (error.message === 'No active session') {
+          description = 'Пожалуйста, войдите в систему';
+        } else {
+          description = error.message;
+        }
+      }
+      
       toast({
         title: 'Ошибка',
-        description: 'Не удалось загрузить API ключи',
+        description,
         variant: 'destructive',
       });
     } finally {
@@ -91,7 +110,7 @@ export const ApiKeysManager: React.FC = () => {
 
     setCreating(true);
     try {
-      const response = await fetch('/api/api-keys', {
+      const response = await authFetch('/api/api-keys', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,8 +121,13 @@ export const ApiKeysManager: React.FC = () => {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create API key');
+        const error = await response.json().catch(() => ({}));
+        console.error('Create API key failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error,
+        });
+        throw new Error(error.error || error.details || 'Failed to create API key');
       }
 
       const data = await response.json();
@@ -138,7 +162,7 @@ export const ApiKeysManager: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`/api/api-keys?id=${keyId}`, {
+      const response = await authFetch(`/api/api-keys?id=${keyId}`, {
         method: 'DELETE',
       });
 

@@ -24,27 +24,77 @@ export const withApiAuth = (handler: (req: NextRequest, user: { id: string }) =>
         }
       });
 
-      // Get user with automatic token refresh
-      const supabase = createServerClient<Database>(
-        supabaseUrl,
-        supabaseAnonKey,
-        {
-          cookies: {
-            get: (name: string) => req.cookies.get(name)?.value,
-            set: (name: string, value: string, options: CookieOptions) => {
-              req.cookies.set({
-                name,
-                value,
-                ...options,
-              });
-            },
-            remove: (name: string, options: CookieOptions) => {
-              req.cookies.delete(name);
-            },
-          },
+      // Проверяем Authorization header (приоритет над cookies)
+      const authHeader = req.headers.get('authorization');
+      let user = null;
+      let error = null;
+
+      console.log('withApiAuth: Authorization header:', authHeader ? 'Present' : 'Missing');
+
+      if (authHeader?.startsWith('Bearer ')) {
+        // Используем токен из Authorization header
+        const token = authHeader.substring(7);
+        console.log('withApiAuth: Using Bearer token, length:', token.length);
+        console.log('withApiAuth: Token prefix:', token.substring(0, 50) + '...');
+        console.log('withApiAuth: Supabase URL:', supabaseUrl);
+        console.log('withApiAuth: Supabase Anon Key prefix:', supabaseAnonKey.substring(0, 20) + '...');
+        
+        // Используем обычный createClient и передаем токен напрямую в getUser()
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+        
+        console.log('withApiAuth: About to call supabase.auth.getUser(token)');
+        try {
+          // Передаем токен напрямую в getUser() - это правильный способ
+          const result = await supabase.auth.getUser(token);
+          user = result.data.user;
+          error = result.error;
+          console.log('withApiAuth: getUser(token) completed successfully');
+        } catch (getUserError) {
+          console.error('withApiAuth: getUser(token) threw an error:', getUserError);
+          error = getUserError;
         }
-      );
-      const { data: { user }, error } = await supabase.auth.getUser();
+        
+        console.log('withApiAuth: Token validation result:', {
+          hasUser: !!user,
+          userId: user?.id,
+          error: error?.message,
+          errorCode: error?.code,
+          errorStatus: error?.status,
+          fullError: error,
+        });
+      } else {
+        console.log('withApiAuth: No Bearer token, trying cookies');
+        // Fallback к cookies
+        const supabase = createServerClient<Database>(
+          supabaseUrl,
+          supabaseAnonKey,
+          {
+            cookies: {
+              get: (name: string) => req.cookies.get(name)?.value,
+              set: (name: string, value: string, options: CookieOptions) => {
+                req.cookies.set({
+                  name,
+                  value,
+                  ...options,
+                });
+              },
+              remove: (name: string, options: CookieOptions) => {
+                req.cookies.delete(name);
+              },
+            },
+          }
+        );
+        const result = await supabase.auth.getUser();
+        user = result.data.user;
+        error = result.error;
+        
+        console.log('withApiAuth: Cookie validation result:', {
+          hasUser: !!user,
+          userId: user?.id,
+          error: error?.message,
+        });
+      }
       
       if (error || !user) {
         const errorDetails = {
@@ -68,39 +118,6 @@ export const withApiAuth = (handler: (req: NextRequest, user: { id: string }) =>
             error: 'Unauthorized',
             details: error?.message || 'No active session',
             code: error?.code,
-            timestamp: errorDetails.timestamp
-          },
-          {
-            status: 401,
-            headers: {
-              'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_APP_URL || '*',
-              'Access-Control-Allow-Credentials': 'true'
-            }
-          }
-        );
-      }
-
-      // Verify session is still valid
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        const errorDetails = {
-          userId: user?.id,
-          timestamp: new Date().toISOString(),
-          headers: {
-            cookie: req.headers.get('cookie'),
-            authorization: req.headers.get('authorization'),
-            origin: req.headers.get('origin'),
-            referer: req.headers.get('referer')
-          },
-          path: req.nextUrl.pathname,
-          method: req.method
-        };
-        console.error('Session expired:', errorDetails);
-        
-        return NextResponse.json(
-          {
-            error: 'Session expired',
-            details: 'Please refresh your session',
             timestamp: errorDetails.timestamp
           },
           {

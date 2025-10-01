@@ -19,21 +19,39 @@ function generateApiKey(): { key: string; hash: string; prefix: string } {
 // GET - получить список API ключей пользователя
 export const GET = withApiAuth(async (req: NextRequest, user: { id: string }) => {
   try {
-    const supabase = createServerClient<Database>(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          get: (name: string) => req.cookies.get(name)?.value,
-          set: (name: string, value: string, options: any) => {
-            req.cookies.set({ name, value, ...options });
+    // Получаем токен из Authorization header
+    const authHeader = req.headers.get('authorization');
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+
+    // Создаем Supabase client с токеном пользователя
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = token 
+      ? createClient<Database>(supabaseUrl, supabaseAnonKey, {
+          global: {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-          remove: (name: string, options: any) => {
-            req.cookies.delete(name);
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false,
           },
-        },
-      }
-    );
+        })
+      : createServerClient<Database>(
+          supabaseUrl,
+          supabaseAnonKey,
+          {
+            cookies: {
+              get: (name: string) => req.cookies.get(name)?.value,
+              set: (name: string, value: string, options: any) => {
+                req.cookies.set({ name, value, ...options });
+              },
+              remove: (name: string, options: any) => {
+                req.cookies.delete(name);
+              },
+            },
+          }
+        );
 
     const { data: apiKeys, error } = await supabase
       .from('api_keys')
@@ -72,22 +90,39 @@ export const POST = withApiAuth(async (req: NextRequest, user: { id: string }) =
       );
     }
 
-    // Проверяем лимит API ключей на пользователя (максимум 10)
-    const supabase = createServerClient<Database>(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          get: (name: string) => req.cookies.get(name)?.value,
-          set: (name: string, value: string, options: any) => {
-            req.cookies.set({ name, value, ...options });
+    // Получаем токен из Authorization header
+    const authHeader = req.headers.get('authorization');
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+
+    // Создаем Supabase client с токеном пользователя
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = token 
+      ? createClient<Database>(supabaseUrl, supabaseAnonKey, {
+          global: {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-          remove: (name: string, options: any) => {
-            req.cookies.delete(name);
+          auth: {
+            autoRefreshToken: false, // Отключаем автообновление, т.к. используем Bearer токен
+            persistSession: false,
           },
-        },
-      }
-    );
+        })
+      : createServerClient<Database>(
+          supabaseUrl,
+          supabaseAnonKey,
+          {
+            cookies: {
+              get: (name: string) => req.cookies.get(name)?.value,
+              set: (name: string, value: string, options: any) => {
+                req.cookies.set({ name, value, ...options });
+              },
+              remove: (name: string, options: any) => {
+                req.cookies.delete(name);
+              },
+            },
+          }
+        );
 
     const { count } = await supabase
       .from('api_keys')
@@ -157,21 +192,39 @@ export const DELETE = withApiAuth(async (req: NextRequest, user: { id: string })
       );
     }
 
-    const supabase = createServerClient<Database>(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          get: (name: string) => req.cookies.get(name)?.value,
-          set: (name: string, value: string, options: any) => {
-            req.cookies.set({ name, value, ...options });
+    // Получаем токен из Authorization header
+    const authHeader = req.headers.get('authorization');
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+
+    // Создаем Supabase client с токеном пользователя
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = token 
+      ? createClient<Database>(supabaseUrl, supabaseAnonKey, {
+          global: {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-          remove: (name: string, options: any) => {
-            req.cookies.delete(name);
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false,
           },
-        },
-      }
-    );
+        })
+      : createServerClient<Database>(
+          supabaseUrl,
+          supabaseAnonKey,
+          {
+            cookies: {
+              get: (name: string) => req.cookies.get(name)?.value,
+              set: (name: string, value: string, options: any) => {
+                req.cookies.set({ name, value, ...options });
+              },
+              remove: (name: string, options: any) => {
+                req.cookies.delete(name);
+              },
+            },
+          }
+        );
 
     const { error } = await supabase
       .from('api_keys')
@@ -210,21 +263,39 @@ export const PATCH = withApiAuth(async (req: NextRequest, user: { id: string }) 
       );
     }
 
-    const supabase = createServerClient<Database>(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          get: (name: string) => req.cookies.get(name)?.value,
-          set: (name: string, value: string, options: any) => {
-            req.cookies.set({ name, value, ...options });
+    // Получаем токен из Authorization header
+    const authHeader = req.headers.get('authorization');
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+
+    // Создаем Supabase client с токеном пользователя
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = token 
+      ? createClient<Database>(supabaseUrl, supabaseAnonKey, {
+          global: {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-          remove: (name: string, options: any) => {
-            req.cookies.delete(name);
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false,
           },
-        },
-      }
-    );
+        })
+      : createServerClient<Database>(
+          supabaseUrl,
+          supabaseAnonKey,
+          {
+            cookies: {
+              get: (name: string) => req.cookies.get(name)?.value,
+              set: (name: string, value: string, options: any) => {
+                req.cookies.set({ name, value, ...options });
+              },
+              remove: (name: string, options: any) => {
+                req.cookies.delete(name);
+              },
+            },
+          }
+        );
 
     const updateData: any = {};
     if (name !== undefined) updateData.name = name.trim();

@@ -1,27 +1,12 @@
-
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useState } from "react";
 import { Card, Icon, Button, Skeleton, Text, Pagination } from '@gravity-ui/uikit';
 import { Calendar, Pencil, Person, TrashBin } from '@gravity-ui/icons';
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import Image from "next/image";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-type Post = {
-  id: string;
-  title: string;
-  excerpt: string | null;
-  slug: string | null;
-  featured_image: string | null;
-  created_at: string | null;
-  author_id: string;
-  author: {
-    name: string | null;
-    username: string | null;
-    avatar_url: string | null;
-  };
-};
+import { useBlogPosts, useAuth } from "@/shared/lib/hooks/useBlogPosts";
+import { deleteBlogPost } from "@/shared/api/blog";
 
 interface PostListProps {
   onlyMyPosts?: boolean;
@@ -36,128 +21,23 @@ export const PostList = ({
   draftsOnly = false,
   gridView = true
 }: PostListProps) => {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPosts, setTotalPosts] = useState(0);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const { toast: showToast } = useToast();
   const isMobile = useIsMobile();
+  const { userId } = useAuth();
 
   const POSTS_PER_PAGE = 10;
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        // First, get the total count
-        let countQuery = supabase
-          .from("blog_posts")
-          .select("*", { count: 'exact', head: true });
-
-        // Apply the same filters for count
-        if (publishedOnly) {
-          countQuery = countQuery.eq("published", true);
-        } else if (draftsOnly) {
-          countQuery = countQuery.eq("published", false);
-        } else if (!draftsOnly && !publishedOnly) {
-          countQuery = countQuery.eq("published", true);
-        }
-
-        if (onlyMyPosts) {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user?.id) {
-            countQuery = countQuery.eq("author_id", session.user.id);
-          }
-        }
-
-        const { count, error: countError } = await countQuery;
-        if (countError) throw countError;
-        
-        setTotalPosts(count || 0);
-
-        // Then get the paginated data
-        let query = supabase
-          .from("blog_posts")
-          .select(`
-            id,
-            title,
-            excerpt,
-            slug,
-            featured_image,
-            created_at,
-            author_id
-          `)
-          .order("created_at", { ascending: false })
-          .range((currentPage - 1) * POSTS_PER_PAGE, currentPage * POSTS_PER_PAGE - 1);
-
-        // Apply filters for published/drafts
-        if (publishedOnly) {
-          query = query.eq("published", true);
-        } else if (draftsOnly) {
-          query = query.eq("published", false);
-        } else if (!draftsOnly && !publishedOnly) {
-          // For public page - only published posts
-          query = query.eq("published", true);
-        }
-
-        if (onlyMyPosts) {
-          // Get only current user's posts
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user?.id) {
-            query = query.eq("author_id", session.user.id);
-          }
-        }
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-
-        // Fetch author information for all posts
-        if (data && data.length > 0) {
-          const authorIds = [...new Set(data.map(post => post.author_id))];
-          const { data: profilesData, error: profilesError } = await supabase
-            .from("profiles")
-            .select("id, name, username, avatar_url")
-            .in("id", authorIds);
-
-          if (profilesError) {
-            console.error("Error fetching profiles:", profilesError);
-          }
-
-          // Map profiles to posts
-          const profilesMap = (profilesData || []).reduce((acc, profile) => {
-            acc[profile.id] = profile;
-            return acc;
-          }, {} as Record<string, any>);
-
-          // Transform posts with author information
-          const transformedPosts = data.map(post => ({
-            ...post,
-            author: profilesMap[post.author_id] || {
-              name: null,
-              username: null,
-              avatar_url: null
-            }
-          }));
-
-          setPosts(transformedPosts);
-        } else {
-          setPosts([]);
-        }
-      } catch (error) {
-        console.error("Error fetching posts:", error);
-        showToast({
-          title: "Ошибка загрузки постов",
-          description: "Не удалось загрузить посты",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPosts();
-  }, [onlyMyPosts, publishedOnly, draftsOnly, showToast, currentPage]);
+  // Используем хук с кэшированием через SWR
+  const { posts, totalCount, isLoading, mutate } = useBlogPosts({
+    publishedOnly,
+    draftsOnly,
+    onlyMyPosts,
+    authorId: onlyMyPosts ? userId || undefined : undefined,
+    page: currentPage,
+    pageSize: POSTS_PER_PAGE,
+  });
 
   const handleDeletePost = async (postId: string) => {
     if (!confirm("Вы уверены, что хотите удалить этот черновик? Это действие нельзя отменить.")) {
@@ -167,21 +47,10 @@ export const PostList = ({
     setDeletingPostId(postId);
     
     try {
-      const response = await fetch(`/api/blog-posts/${postId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Не удалось удалить пост');
-      }
-
-      // Удаляем пост из локального состояния
-      setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
-      setTotalPosts(prev => prev - 1);
+      await deleteBlogPost(postId);
+      
+      // Обновляем кэш после удаления
+      mutate();
       
       showToast({
         title: "Черновик удален",
@@ -258,7 +127,12 @@ export const PostList = ({
   return (
     <div className="container max-w-4xl w-full mx-auto">
       <div className={`${!isMobile && gridView ? 'grid grid-cols-2 gap-4' : 'space-y-6'}`}>
-        {posts.map((post) => (
+        {posts.map((post, index) => {
+          // Приоритетная загрузка для первых изображений (above the fold)
+          // В grid view - первые 4 изображения, в list view - первые 2
+          const isPriority = gridView ? index < 4 : index < 2;
+          
+          return (
           <Card size="l" key={post.id} className="w-full min-w-[280px] overflow-hidden">
             <div className="p-2">
               {post.featured_image ? (
@@ -270,8 +144,8 @@ export const PostList = ({
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-cover transition-all duration-300 hover:scale-105"
-                      priority={false}
-                      loading="lazy"
+                      priority={isPriority}
+                      loading={isPriority ? undefined : "lazy"}
                     />
                   </Link>
                 </div>
@@ -334,16 +208,16 @@ export const PostList = ({
             </div>
             </div>
           </Card>
-        ))}
+        )})}
       </div>
       
       {/* Пагинация - показывать только если постов больше 10 */}
-      {totalPosts > POSTS_PER_PAGE && (
+      {totalCount > POSTS_PER_PAGE && (
         <div className="flex justify-center mt-8">
           <Pagination
             page={currentPage}
             pageSize={POSTS_PER_PAGE}
-            total={totalPosts}
+            total={totalCount}
             onUpdate={(page) => setCurrentPage(page)}
             compact={isMobile}
           />

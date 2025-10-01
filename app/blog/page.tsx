@@ -1,53 +1,29 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import PostList from "./PostList"
 import { Button, Text, Icon, SegmentedRadioGroup, Select, Spin } from "@gravity-ui/uikit"
 import { LayoutCellsLarge, ListUl } from '@gravity-ui/icons';
 import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabase"
 import SearchComponent from "../components/SearchComponent"
 import type { SearchResult } from "../components/SearchComponent"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { useAuth, useUserDrafts } from "@/shared/lib/hooks/useBlogPosts"
 
 type PostFilter = 'all' | 'published' | 'drafts';
 
 function BlogPageContent() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [activeTab, setActiveTab] = useState<string>("posts")
   const [searchActive, setSearchActive] = useState(false)
   const [gridView, setGridView] = useState(true);
   const [postFilter, setPostFilter] = useState<PostFilter>('all');
-  const [hasDrafts, setHasDrafts] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
   const isMobile = useIsMobile()
   const router = useRouter()
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      const authenticated = !!session?.user
-      setIsAuthenticated(authenticated)
-      
-      if (authenticated && session?.user?.id) {
-        setUserId(session.user.id)
-        // Check if user has drafts
-        const { data: drafts, error } = await supabase
-          .from('blog_posts')
-          .select('id')
-          .eq('author_id', session.user.id)
-          .eq('published', false)
-          .limit(1)
-        
-        if (!error && drafts && drafts.length > 0) {
-          setHasDrafts(true)
-        }
-      }
-    }
-    
-    checkAuth()
-  }, [])
+  // Используем хуки с кэшированием
+  const { isAuthenticated } = useAuth()
+  const { hasDrafts, userId } = useUserDrafts()
 
   const handleSearchResultClick = (result: SearchResult) => {
     router.push(`/blog/${result.slug}`)

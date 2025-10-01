@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Analytics } from '@vercel/analytics/next';
+import { SWRConfig } from 'swr';
 import ThemeWrapper from './components/ThemeWrapper';
 import Navigation from './components/Navigation/Navigation';
 import { AuthProvider } from './contexts/AuthContext';
@@ -159,18 +160,31 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <ModelSelectionProvider>
-              <ThemeWrapper theme={theme}>
-                <Navigation />
-                <main className="main-content">
-                  {children}
-                  <Analytics/>
-                  <SpeedInsights/>
-                </main>
-              </ThemeWrapper>
-            </ModelSelectionProvider>
-          </AuthProvider>
+          <SWRConfig 
+            value={{
+              // Глобальные настройки кэширования для SWR
+              dedupingInterval: 5 * 60 * 1000, // 5 минут дедупликации
+              revalidateOnFocus: false, // Отключаем ревалидацию при фокусе
+              revalidateOnReconnect: false, // Отключаем ревалидацию при восстановлении соединения
+              errorRetryCount: 3, // Количество повторных попыток при ошибке
+              errorRetryInterval: 1000, // Интервал между попытками
+              // Провайдер для кэширования в localStorage (опционально)
+              provider: () => new Map(),
+            }}
+          >
+            <AuthProvider>
+              <ModelSelectionProvider>
+                <ThemeWrapper theme={theme}>
+                  <Navigation />
+                  <main className="main-content">
+                    {children}
+                    <Analytics/>
+                    <SpeedInsights/>
+                  </main>
+                </ThemeWrapper>
+              </ModelSelectionProvider>
+            </AuthProvider>
+          </SWRConfig>
         </QueryClientProvider>
       </body>
     </html>
