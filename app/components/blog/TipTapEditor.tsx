@@ -11,16 +11,16 @@ import Underline from '@tiptap/extension-underline';
 import { ImageGenerator } from './extensions/ImageGeneratorExtension';
 import { ResizableImage, extensions } from './editor/extensions';
 import { Button, Icon, TextInput, Text, Modal, Card, DropdownMenu } from '@gravity-ui/uikit';
-import {Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Picture, Xmark, ChevronDown, Heading1, Heading2, Heading3, Heading4, Heading5, Heading6, MagicWand, ListUl, Strikethrough} from '@gravity-ui/icons';
+import {Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Picture, Xmark, ChevronDown, Heading1, Heading2, Heading3, Heading4, Heading5, Heading6, MagicWand, ListUl, Strikethrough, Code} from '@gravity-ui/icons';
 import "./editor/editor.css";
 import "./editor/drag-handle.css";
 
 // Yandex Cloud Object Storage bucket name
 const BUCKET_NAME = 'public-gareevde';
 import {
-  AlignLeft, AlignCenter,
-  AlignRight, List as ListIcon, ListOrdered, Code, Undo, Redo
-} from 'lucide-react';
+  TextAlignLeft, TextAlignCenter,
+  TextAlignRight, ListOl, ArrowUturnCcwLeft, ArrowUturnCwRight
+} from '@gravity-ui/icons';
 import { DialogFooter } from '@/app/components/ui/dialog';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -493,7 +493,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           }}
           className={editor.isActive('orderedList') ? 'is-active' : ''}
         >
-          <ListOrdered className="h-4 w-4" />
+          <Icon data={ListOl} size={16} />
         </Button>
         
         <Button
@@ -502,7 +502,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           onClick={() => editor.chain().focus().setTextAlign('left').run()}
           className={editor.isActive({ textAlign: 'left' }) ? 'is-active' : ''}
         >
-          <AlignLeft className="h-4 w-4" />
+          <Icon data={TextAlignLeft} size={16} />
         </Button>
         
         <Button
@@ -511,7 +511,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           onClick={() => editor.chain().focus().setTextAlign('center').run()}
           className={editor.isActive({ textAlign: 'center' }) ? 'is-active' : ''}
         >
-          <AlignCenter className="h-4 w-4" />
+          <Icon data={TextAlignCenter} size={16} />
         </Button>
         
         <Button
@@ -520,7 +520,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           onClick={() => editor.chain().focus().setTextAlign('right').run()}
           className={editor.isActive({ textAlign: 'right' }) ? 'is-active' : ''}
         >
-          <AlignRight className="h-4 w-4" />
+          <Icon data={TextAlignRight} size={16} />
         </Button>
         
         <Button
@@ -529,7 +529,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           onClick={() => editor.chain().focus().toggleCodeBlock().run()}
           className={editor.isActive('codeBlock') ? 'is-active' : ''}
         >
-          <Code className="h-4 w-4" />
+          <Icon data={Code} size={16} />
         </Button>
         
         <Button
@@ -590,7 +590,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().undo()}
           >
-            <Undo className="h-4 w-4" />
+            <Icon data={ArrowUturnCcwLeft} size={16} />
           </Button>
           
           <Button
@@ -599,7 +599,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             onClick={() => editor.chain().focus().redo().run()}
             disabled={!editor.can().redo()}
           >
-            <Redo className="h-4 w-4" />
+            <Icon data={ArrowUturnCwRight} size={16} />
           </Button>
         </div>
       </div>
@@ -712,7 +712,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               onClick={() => editor.chain().focus().toggleBold().run()}
               className={editor.isActive('bold') ? 'is-active' : ''}
             >
-              <Bold className="h-3 w-3" />
+              <Icon data={Bold} size={14} />
             </Button>
             
             <Button
@@ -721,7 +721,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               onClick={() => editor.chain().focus().toggleStrike().run()}
               className={editor.isActive('strike') ? 'is-active' : ''}
             >
-              <Strikethrough className="h-3 w-3" />
+              <Icon data={Strikethrough} size={14} />
             </Button>
             
             <Button
@@ -730,7 +730,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               onClick={() => editor.chain().focus().toggleItalic().run()}
               className={editor.isActive('italic') ? 'is-active' : ''}
             >
-              <Italic className="h-3 w-3" />
+              <Icon data={Italic} size={14} />
             </Button>
             
             <Button
@@ -739,7 +739,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               onClick={() => editor.chain().focus().toggleUnderline().run()}
               className={editor.isActive('underline') ? 'is-active' : ''}
             >
-              <UnderlineIcon className="h-3 w-3" />
+              <Icon data={UnderlineIcon} size={14} />
             </Button>
             
             <Button
@@ -748,7 +748,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               onClick={openLinkDialog}
               className={editor.isActive('link') ? 'is-active' : ''}
             >
-              <LinkIcon className="h-3 w-3" />
+              <Icon data={LinkIcon} size={14} />
             </Button>
 
             <Button

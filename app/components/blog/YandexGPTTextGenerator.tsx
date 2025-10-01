@@ -5,7 +5,8 @@ import { Textarea } from "@/app/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/app/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Wand2, MessageSquare, Sparkles } from 'lucide-react';
+import { MagicWand, Comment, Circle } from '@gravity-ui/icons';
+import { Icon } from '@gravity-ui/uikit';
 import { useYandexGPT } from "@/hooks/useYandexGPT";
 
 interface YandexGPTTextGeneratorProps {
@@ -76,7 +77,7 @@ const YandexGPTTextGenerator = ({ onTextGenerated, initialText = '' }: YandexGPT
         onClick={() => setOpen(true)}
         className="flex items-center gap-2"
       >
-        <Wand2 className="h-4 w-4" />
+        <Icon data={MagicWand} size={16} />
         YandexGPT
       </Button>
       
@@ -89,11 +90,11 @@ const YandexGPTTextGenerator = ({ onTextGenerated, initialText = '' }: YandexGPT
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="generate">
-                <MessageSquare className="h-4 w-4 mr-2" />
+                <Icon data={Comment} size={16} className="mr-2" />
                 Генерация текста
               </TabsTrigger>
               <TabsTrigger value="improve">
-                <Sparkles className="h-4 w-4 mr-2" />
+                <Icon data={Circle} size={16} className="mr-2" />
                 Улучшение текста
               </TabsTrigger>
             </TabsList>

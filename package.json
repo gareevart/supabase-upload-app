@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "NODE_OPTIONS='--no-deprecation' next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -62,7 +62,6 @@
     "cmdk": "^1.1.1",
     "embla-carousel-react": "^8.6.0",
     "gsap": "^3.13.0",
-    "lucide-react": "^0.454.0",
     "next": "15.3.1",
     "react": "^18.3.1",
     "react-day-picker": "^9.7.0",

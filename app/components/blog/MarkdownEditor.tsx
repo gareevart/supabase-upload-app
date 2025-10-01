@@ -1,7 +1,8 @@
 
 import React, { useState } from "react";
 import { Button } from '@gravity-ui/uikit';
-import { Eye, Edit } from "lucide-react";
+import { Eye, Pencil } from "@gravity-ui/icons";
+import { Icon } from "@gravity-ui/uikit";
 import WYSIWYGEditor from "./WYSIWYGEditor";
 import VisualEditor from "./editor/VisualEditor";
 import { cn } from "@/lib/utils";
@@ -31,7 +32,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             onClick={() => setIsVisualMode(false)}
             className="rounded-r-none"
           >
-            <Edit className="h-4 w-4 mr-1" />
+            <Icon data={Pencil} size={16} className="mr-1" />
             Редактор
           </Button>
           <Button
@@ -40,7 +41,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             onClick={() => setIsVisualMode(true)}
             className="rounded-l-none"
           >
-            <Eye className="h-4 w-4 mr-1" />
+            <Icon data={Eye} size={16} className="mr-1" />
             Предпросмотр
           </Button>
         </div>

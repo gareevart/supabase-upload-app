@@ -2,7 +2,8 @@ import React from "react";
 import { Button } from '@gravity-ui/uikit';
 import { TextArea } from '@gravity-ui/uikit';
 import { EditorContent } from "@/app/components/blog/editor/types";
-import { ChevronDown, ChevronUp, Image } from "lucide-react";
+import { ChevronDown, ChevronUp, Picture } from "@gravity-ui/icons";
+import { Icon } from "@gravity-ui/uikit";
 import YandexGPTTextGenerator from "../YandexGPTTextGenerator";
 import MarkdownEditor from "../MarkdownEditor";
 import NextImage from "next/image";
@@ -99,7 +100,7 @@ const BlockToolbar: React.FC<{
         onClick={() => onMoveBlock(index, "up")}
         disabled={index === 0}
       >
-        <ChevronUp className="h-4 w-4" />
+        <Icon data={ChevronUp} size={16} />
       </Button>
       <Button 
         variant="outline" 
@@ -108,7 +109,7 @@ const BlockToolbar: React.FC<{
         onClick={() => onMoveBlock(index, "down")}
         disabled={index === content.length - 1}
       >
-        <ChevronDown className="h-4 w-4" />
+        <Icon data={ChevronDown} size={16} />
       </Button>
       
       <Button 
@@ -126,8 +127,7 @@ const BlockToolbar: React.FC<{
           input.click();
         }}
       >
-        {/* eslint-disable-next-line jsx-a11y/alt-text */}
-        <Image className="h-4 w-4 mr-1" />
+        <Icon data={Picture} size={16} />
         <span className="hidden sm:inline">Изображение</span>
       </Button>
       

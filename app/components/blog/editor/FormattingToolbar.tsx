@@ -5,16 +5,17 @@ import {
   Italic, 
   Underline, 
   Strikethrough, 
-  AlignLeft, 
-  AlignCenter, 
-  AlignRight, 
+  TextAlignLeft, 
+  TextAlignCenter, 
+  TextAlignRight, 
   Link, 
-  List, 
-  ListOrdered,
-  Quote,
+  ListUl, 
+  ListOl,
+  Circle,
   Code,
-  Image
-} from 'lucide-react';
+  Picture
+} from '@gravity-ui/icons';
+import { Icon } from '@gravity-ui/uikit';
 import { ToggleGroup, ToggleGroupItem } from "@/app/components/ui/toggle-group";
 import {Button} from '@gravity-ui/uikit';
 import { Separator } from "@/app/components/ui/separator";
@@ -37,25 +38,25 @@ const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
   const formatOptions = [
     { 
       name: 'Bold', 
-      icon: <Bold className="h-4 w-4" />, 
+      icon: <Icon data={Bold} size={16} />, 
       prefix: '**', 
       shortcut: 'Ctrl+B' 
     },
     { 
       name: 'Italic', 
-      icon: <Italic className="h-4 w-4" />, 
+      icon: <Icon data={Italic} size={16} />, 
       prefix: '*', 
       shortcut: 'Ctrl+I' 
     },
     { 
       name: 'Underline', 
-      icon: <Underline className="h-4 w-4" />, 
+      icon: <Icon data={Underline} size={16} />, 
       prefix: '__', 
       shortcut: 'Ctrl+U' 
     },
     { 
       name: 'Strikethrough', 
-      icon: <Strikethrough className="h-4 w-4" />, 
+      icon: <Icon data={Strikethrough} size={16} />, 
       prefix: '~~' 
     }
   ];
@@ -84,7 +85,7 @@ const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
           title="Bullet List"
           className="h-8 px-2 min-w-8"
         >
-          <List className="h-4 w-4" />
+          <Icon data={ListUl} size={16} />
         </Button>
         
         <Button
@@ -94,7 +95,7 @@ const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
           title="Numbered List"
           className="h-8 px-2 min-w-8"
         >
-          <ListOrdered className="h-4 w-4" />
+          <Icon data={ListOl} size={16} />
         </Button>
 
         <Separator orientation="vertical" className="mx-1 h-6" />
@@ -107,7 +108,7 @@ const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
             title="Align Left"
             className="h-8 px-2 min-w-8"
           >
-            <AlignLeft className="h-4 w-4" />
+            <Icon data={TextAlignLeft} size={16} />
           </ToggleGroupItem>
           
           <ToggleGroupItem 
@@ -117,7 +118,7 @@ const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
             title="Align Center"
             className="h-8 px-2 min-w-8"
           >
-            <AlignCenter className="h-4 w-4" />
+            <Icon data={TextAlignCenter} size={16} />
           </ToggleGroupItem>
           
           <ToggleGroupItem 
@@ -127,7 +128,7 @@ const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
             title="Align Right"
             className="h-8 px-2 min-w-8"
           >
-            <AlignRight className="h-4 w-4" />
+            <Icon data={TextAlignRight} size={16} />
           </ToggleGroupItem>
         </ToggleGroup>
 
@@ -140,7 +141,7 @@ const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
           title="Quote"
           className="h-8 px-2 min-w-8"
         >
-          <Quote className="h-4 w-4" />
+          <Icon data={Circle} size={16} />
         </Button>
         
         <Button
@@ -150,7 +151,7 @@ const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
           title="Inline Code"
           className="h-8 px-2 min-w-8"
         >
-          <Code className="h-4 w-4" />
+          <Icon data={Code} size={16} />
         </Button>
 
         <Button 
@@ -160,7 +161,7 @@ const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
           title="Insert Link"
           className="h-8 px-2 min-w-8"
         >
-          <Link className="h-4 w-4" />
+          <Icon data={Link} size={16} />
         </Button>
         
         <Button 
@@ -170,8 +171,7 @@ const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
           title="Insert Image"
           className="h-8 px-2 min-w-8"
         >
-          {/* eslint-disable-next-line jsx-a11y/alt-text */}
-          <Image className="h-4 w-4" />
+          <Icon data={Picture} size={16} />
         </Button>
       </div>
     </div>
