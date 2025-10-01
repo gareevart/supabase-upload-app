@@ -32,7 +32,7 @@ const Login = () => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      router.push('/profile');
+      router.push('/auth/profile');
     } catch (error: any) {
       setError(error.message);
     } finally {

@@ -63,7 +63,7 @@ const AuthCallback = () => {
             
             // Небольшая задержка для показа сообщения об успехе
             setTimeout(() => {
-              router.push('/profile');
+              router.push('/auth/profile');
             }, 1500);
           } else {
             setStatus('error');
@@ -88,7 +88,7 @@ const AuthCallback = () => {
             console.log('Existing session found:', session.user.id);
             setStatus('success');
             setMessage('Авторизация успешна! Перенаправление...');
-            setTimeout(() => router.push('/profile'), 1500);
+            setTimeout(() => router.push('/auth/profile'), 1500);
           } else {
             console.log('No session found, redirecting to auth');
             setStatus('error');
