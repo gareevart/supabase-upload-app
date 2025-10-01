@@ -74,7 +74,7 @@ const ImageGeneratorComponent: React.FC<ReactNodeViewProps> = ({
     
     // Открываем страницу yaart с предзаполненным промптом
     const encodedPrompt = encodeURIComponent(prompt);
-    router.push(`/yaart?prompt=${encodedPrompt}`);
+    router.push(`/projects/yaart?prompt=${encodedPrompt}`);
   };
 
   const handleInsertImage = () => {
