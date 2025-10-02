@@ -206,7 +206,6 @@ p {
 
 @media (max-width: 480px) {
     .profile {
-        padding: 0 16px;
         max-width: calc(100vw - 32px);
         margin: 0 auto;
     }

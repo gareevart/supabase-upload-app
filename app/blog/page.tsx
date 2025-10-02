@@ -99,7 +99,7 @@ function BlogPageContent() {
   };
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pt-4 pb-20">
       <main className="container mx-auto max-w-4xl">
         <div className="flex justify-between items-center mb-6">
           <Text variant="display-1">Blog</Text>

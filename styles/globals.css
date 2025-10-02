@@ -99,7 +99,7 @@ a {
     width: 100%;
     max-width: 100vw;
     margin: 0 auto;
-    padding: 16px;
+    padding: var(--g-spacing-4);
     margin-bottom: 65px; /* Mobile navigation height */
     box-sizing: border-box;
     overflow-x: hidden;

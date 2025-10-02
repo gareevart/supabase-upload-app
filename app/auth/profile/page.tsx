@@ -60,7 +60,7 @@ const Profile = () => {
         );
 
     return (
-        <div className="profile pb2">
+        <div className="profile pt-4 pb-2">
             <Text variant="header-2">Profile</Text>
 
             {isEditing ? (

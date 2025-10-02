@@ -147,16 +147,15 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
       <header className="p-4 flex justify-between items-center bg-background">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold">{chat.title}</h2>
             {reasoningMode && selectedModel === 'yandexgpt' && (
-              <Label theme="info" size="s">
+              <Label theme="info" size="m">
                 Режим рассуждений
               </Label>
             )}
           </div>
           {chat.tokens_used && (
             <div className="text-xs text-muted-foreground mt-1 flex items-center">
-              <Label theme="unknown" value={chat.tokens_used.toString()}>Использовано токенов</Label>
+              <Label theme="unknown" size="m" value={chat.tokens_used.toString()}>Использовано токенов</Label>
             </div>
           )}
         </div>
@@ -173,8 +172,10 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
       <div className="flex-1 overflow-y-auto p-4 chat-messages">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
+            <div className="chat-empty-state">
               <Text variant="header-1" className="mb-2">Начните общение с ассистентом</Text>
               <Text variant="body-1" className="mb-1" color="complementary">Задайте вопрос или опишите, что вам нужно</Text>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
