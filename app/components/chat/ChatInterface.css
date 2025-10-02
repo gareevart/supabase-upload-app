@@ -1,5 +1,11 @@
 /* Chat Interface Styles */
 
+.g-modal__content {
+  display: flex;
+  padding: var(--g-spacing-6);
+  flex-direction: column;
+}
+
 /* Mobile optimizations */
 @media (max-width: 767px) {
   .chat-interface header {
@@ -135,5 +141,9 @@
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+}
+
+.chat-bubble {
+  border-radius: var(--g-border-radius-2xl);
+  background-color: var(--g-color-base-generic);
 }

@@ -35,7 +35,7 @@
 
 .final-card {
   display: flex;
-  flex-direction: final-card;
+  flex-direction: column;
   justify-content: start;
   padding: 24px;
 }
@@ -163,7 +163,7 @@
     max-width: calc(100vw - 20px);
     width: calc(100vw - 20px);
     padding: 10px;
-    height: 100vh;
+    height: auto;
     display: flex;
     flex-direction: column;
     justify-content: center;

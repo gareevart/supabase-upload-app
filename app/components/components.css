@@ -266,7 +266,7 @@
 
 .g-modal__content {
   display: flex;
-  padding: 24px 16px 24px;
+  padding: var(--g-spacing-6);
   flex-direction: column;
 }
 

@@ -3,9 +3,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useChats } from "@/hooks/useChats";
 import { useCreateChat } from "@/hooks/useCreateChat";
-import { Button, Skeleton, Select, Text, Icon, Spin, TextArea } from "@gravity-ui/uikit";
+import { Button, Skeleton, Text, Icon, TextArea } from "@gravity-ui/uikit";
 import {Plus, Pencil, TrashBin, Xmark, Check } from '@gravity-ui/icons';
-import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
 import "./ChatList.css";
 
 interface ChatListProps {
@@ -21,7 +20,6 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
     deleteChat,
   } = useChats();
   const { handleCreateChat, createChat } = useCreateChat();
-  const { selectedModel, setSelectedModel } = useModelSelection();
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const pathname = usePathname();
@@ -51,19 +49,11 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
     }
   };
 
-  const handleModelChange = (value: string[]) => {
-    if (value.length > 0) {
-      const newModel = value[0] as "yandexgpt" | "yandexgpt-lite" | "deepseek" | "gpt-oss-20b";
-      console.log('ChatList: Changing model to:', newModel);
-      setSelectedModel(newModel);
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="space-y-2">
         <div className="flex justify-between items-center mb-4">
-          <Text variant="header-1">Диалоги</Text>
+          <Text variant="header-1">Чаты</Text>
           <Skeleton className="h-9 w-9" />
         </div>
         {Array.from({ length: 5 }).map((_, i) => (
@@ -85,44 +75,21 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
     <div className="chat-list-mobile">
       <div className="flex justify-between items-center mb-4">
         <Text variant="header-1">Чаты</Text>
-        <div className="flex space-x-2">
-          <Select
-            value={[selectedModel]}
-            options={[
-              { value: 'yandexgpt', content: 'YandexGPT' },
-              { value: 'yandexgpt-lite', content: 'YandexGPT Lite' },
-              { value: 'deepseek', content: 'Deepseek R1' },
-              { value: 'gpt-oss-20b', content: 'GPT OSS 20B (недоступна)', disabled: true }
-            ]}
-            onUpdate={handleModelChange}
-            size="m"
-            width="max"
-            placeholder="Модель"
-          />
-          <Button
-            size="m"
-            onClick={handleCreateChat}
-            disabled={createChat.isPending}
-            title="Создать новый чат"
-          >
-            {createChat.isPending ? (
-              <Spin size="xs"/>
-            ) : (
-               <Icon data={Plus} size={16} />
-            )}
-          </Button>
-        </div>
+        <Button
+          size="m"
+          onClick={handleCreateChat}
+          loading={createChat.isPending}
+          title="Создать новый чат"
+        >
+          <Icon data={Plus} size={16} />
+        </Button>
       </div>
       
       {chats.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-muted-foreground mb-4">У вас пока нет чатов</p>
-          <Button onClick={handleCreateChat} disabled={createChat.isPending}>
-            {createChat.isPending ? (
-              <Spin size="xs"/>
-            ) : (
-              <Icon data={Plus} size={16} />
-            )}
+          <Button onClick={handleCreateChat} loading={createChat.isPending}>
+            <Icon data={Plus} size={16} />
             Создать чат
           </Button>
         </div>
@@ -143,13 +110,9 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
                     size="m"
                     view="flat"
                     onClick={() => saveTitle(chat.id)}
-                    disabled={updateChatTitle.isPending}
+                    loading={updateChatTitle.isPending}
                   >
-                    {updateChatTitle.isPending ? (
-                       <Spin size="xs"/>
-                    ) : (
-                      <Icon data={Check} size={16} />
-                    )}
+                    <Icon data={Check} size={16} />
                   </Button>
                   <Button size="m" view="flat" onClick={cancelEditing}>
                     <Icon data={Xmark} size={16} />

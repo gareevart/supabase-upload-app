@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useChat, Message } from "@/hooks/useChat";
 import { DialogFooter } from "@/app/components/ui/dialog";
-import { Badge } from "@/app/components/ui/badge";
 import ReactMarkdown from 'react-markdown';
-import {Button, TextArea, Icon, Modal, Text, Spin, Label, useToaster } from '@gravity-ui/uikit';
+import {Button, TextArea, Icon, Modal, Text, Spin, Label, useToaster, Select } from '@gravity-ui/uikit';
 import {Gear, Stop, Copy, ArrowUturnCwLeft, GearBranches } from '@gravity-ui/icons';
 import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
 import { ReasoningBlock } from "./ReasoningBlock";
@@ -27,7 +26,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
   
   // Use the toaster hook
   const toaster = useToaster();
-  const { reasoningMode, setReasoningMode, selectedModel } = useModelSelection();
+  const { reasoningMode, setReasoningMode, selectedModel, setSelectedModel } = useModelSelection();
   const [messageText, setMessageText] = useState("");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState("");
@@ -145,7 +144,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
 
   return (
     <div className="flex flex-col h-full">
-      <header className="border-b p-4 flex justify-between items-center bg-background">
+      <header className="p-4 flex justify-between items-center bg-background">
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold">{chat.title}</h2>
@@ -174,10 +173,8 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
       <div className="flex-1 overflow-y-auto p-4 chat-messages">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <div className="text-center text-muted-foreground">
-              <p className="mb-2">Начните общение с ассистентом</p>
-              <p className="text-sm">Задайте вопрос или опишите, что вам нужно.</p>
-            </div>
+              <Text variant="header-1" className="mb-2">Начните общение с ассистентом</Text>
+              <Text variant="body-1" className="mb-1" color="complementary">Задайте вопрос или опишите, что вам нужно</Text>
           </div>
         ) : (
           <div className="space-y-4">
@@ -216,7 +213,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
 
       <form
         onSubmit={handleSubmit}
-        className="border-t p-4 flex items-end gap-2"
+        className="p-4 flex items-end gap-2"
       >
         <TextArea
           ref={textareaRef}
@@ -255,9 +252,30 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
         <Text variant="header-1">Настройки чата</Text>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <div className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                Системный промпт (роль ассистента)
-              </div>
+              <Text variant="body-1">Модель ИИ</Text>
+              <Text variant="body-1" color="secondary"className="flex gap-1">Будет применена только для этого чата</Text>
+              <Select
+                value={[selectedModel]}
+                options={[
+                  { value: 'yandexgpt', content: 'YandexGPT' },
+                  { value: 'yandexgpt-lite', content: 'YandexGPT Lite' },
+                  { value: 'deepseek', content: 'Deepseek R1' },
+                  { value: 'gpt-oss-20b', content: 'GPT OSS 20B (недоступна)', disabled: true }
+                ]}
+                onUpdate={(value) => {
+                  if (value.length > 0) {
+                    const newModel = value[0] as "yandexgpt" | "yandexgpt-lite" | "deepseek" | "gpt-oss-20b";
+                    setSelectedModel(newModel);
+                  }
+                }}
+                size="m"
+                width="max"
+                placeholder="Выберите модель"
+              />
+            </div>
+            <div className="space-y-2">
+              <Text variant="body-1">Системный промпт (роль ассистента)</Text>
+              <Text variant="body-1" color="secondary"className="flex gap-1">Определяет роль и поведение ассистента в этом чате</Text>             
               <TextArea
                 placeholder="Опишите, как должен вести себя ассистент, например: Ты полезный ассистент. Отвечай на вопросы пользователя чётко и лаконично."
                 value={systemPrompt}
@@ -265,9 +283,6 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
                 rows={5}
                 className="resize-none"
               />
-              <p className="text-xs text-muted-foreground">
-                Системный промпт определяет роль и поведение ассистента в этом чате.
-              </p>
             </div>
           </div>
           <DialogFooter>
@@ -304,9 +319,9 @@ const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
       }`}
     >
       <div
-        className={`rounded-lg py-2 px-4 max-w-[80%] relative group ${
+        className={`rounded-lg p-4 max-w-[80%] relative group ${
           isUser
-            ? "bg-primary text-primary-foreground"
+            ? "chat-bubble bg-primary text-primary-foreground"
             : "bg-muted text-foreground"
         }`}
       >

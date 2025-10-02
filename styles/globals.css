@@ -10,6 +10,7 @@
   --font-mono: var(--font-geist-mono);
   --mouse-x: 50%;
   --mouse-y: 50%;
+  --border-bottom: red;
 
   --g-border-radius-xs: 3px;
   --g-border-radius-s: 5px;

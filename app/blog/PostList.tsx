@@ -156,9 +156,13 @@ export const PostList = ({
             
               <div className="p-4">
                 <div className="mb-2">
-                <Link href={post.slug ? `/blog/${post.slug}` : `/blog/edit/${post.id}`}>
+                {draftsOnly ? (
                   <Text ellipsis={true} whiteSpace="break-spaces" ellipsisLines={2} variant="header-1">{post.title}</Text>
-                </Link>
+                ) : (
+                  <Link href={post.slug ? `/blog/${post.slug}` : `/blog/edit/${post.id}`}>
+                    <Text ellipsis={true} whiteSpace="break-spaces" ellipsisLines={2} variant="header-1">{post.title}</Text>
+                  </Link>
+                )}
                   {post.excerpt}
                 </div>
 
@@ -168,10 +172,6 @@ export const PostList = ({
                 <div className="flex items-center">
                    <Icon data={Calendar} size={16} />
                   {post.created_at ? formatDate(post.created_at) : 'Without date'}
-                </div>
-                <div className="flex items-center">
-                    <Icon data={Person} size={16} />
-                  {post.author?.name || post.author?.username || "Anon"}
                 </div>
               </div>
               {draftsOnly ? (
@@ -191,7 +191,7 @@ export const PostList = ({
                     onClick={() => handleDeletePost(post.id)}
                     loading={deletingPostId === post.id}
                     disabled={deletingPostId === post.id}
-                    title="Удалить черновик"
+                    title="Delete draft"
                   >
                     <Icon data={TrashBin} size={16} />
                   </Button>
@@ -202,7 +202,7 @@ export const PostList = ({
                   size="m"
                   onClick={() => window.location.href = `/blog/${post.slug}`}
                 >
-                  Читать
+                  Read
                 </Button>
               )}
             </div>
