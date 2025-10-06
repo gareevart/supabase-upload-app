@@ -46,48 +46,14 @@ export default function BlogPostClient({ params }: { params: any }) {
   useEffect(() => {
     const fetchPostAndUserRole = async () => {
       try {
-        // Get the post
-        const { data, error } = await supabase
-          .from("blog_posts")
-          .select(`
-            id,
-            title,
-            content,
-            excerpt,
-            slug,
-            featured_image,
-            show_featured_image,
-            created_at,
-            updated_at,
-            published,
-            author_id
-          `)
-          .eq("slug", slug)
-          .eq("published", true)
-          .single();
-
-        if (error || !data) {
+        // Get the post via public API to include author with service role
+        const res = await fetch(`/api/public/blog-posts/${slug}`);
+        if (!res.ok) {
           router.push("/blog");
           return;
         }
-
-        // Get the author information
-        const { data: authorData } = await supabase
-          .from("profiles")
-          .select("id, name, username, avatar_url")
-          .eq("id", data.author_id)
-          .single();
-
-        const postWithAuthor = {
-          ...data,
-          author: authorData || {
-            name: null,
-            username: null,
-            avatar_url: null
-          }
-        };
-
-        setPost(postWithAuthor);
+        const postJson = await res.json();
+        setPost(postJson);
 
         // Check user role
         const { data: { session } } = await supabase.auth.getSession();
@@ -97,7 +63,7 @@ export default function BlogPostClient({ params }: { params: any }) {
             .select("role")
             .eq("id", session.user.id)
             .single();
-          
+
           setUserRole(profile?.role || null);
         }
       } catch (error) {
@@ -112,7 +78,7 @@ export default function BlogPostClient({ params }: { params: any }) {
 
   const handleDelete = async () => {
     if (!post) return;
-    
+
     if (!confirm("Вы уверены, что хотите удалить этот пост?")) {
       return;
     }
@@ -133,7 +99,7 @@ export default function BlogPostClient({ params }: { params: any }) {
         description: "Пост успешно удален",
         variant: "default"
       });
-      
+
       router.push("/blog");
     } catch (error) {
       console.error("Error deleting post:", error);
@@ -160,13 +126,13 @@ export default function BlogPostClient({ params }: { params: any }) {
     return (
       <div className="container max-w-4xl mx-auto mt-6">
         <div>
-          <Skeleton className="h-10 w-3/4 mb-4"/>
-          <Skeleton className="h-4 mb-6"/>
+          <Skeleton className="h-10 w-3/4 mb-4" />
+          <Skeleton className="h-4 mb-6" />
           <Skeleton className="h-[300px] rounded mb-6" />
           <div className="space-y-3">
-            <Skeleton className="h-4"/>
-            <Skeleton className="h-4"/>
-            <Skeleton className="h-4 mb-6"/>
+            <Skeleton className="h-4" />
+            <Skeleton className="h-4" />
+            <Skeleton className="h-4 mb-6" />
           </div>
         </div>
       </div>
@@ -183,18 +149,18 @@ export default function BlogPostClient({ params }: { params: any }) {
     <div className="container max-w-4xl mx-auto mt-6">
       <div className="flex justify-between items-start mb-4">
         <CardTitle className="text-3xl font-bold">{post.title}</CardTitle>
-        
+
         {canEditPost && (
           <div className="flex gap-2">
             <Link href={`/blog/edit/${post.id}`} passHref>
               <Button view="normal" size="m">
-                 <Icon data={Pencil} size={16} />
+                <Icon data={Pencil} size={16} />
                 Edit
               </Button>
             </Link>
-            <Button 
-              view="outlined-danger" 
-              size="m" 
+            <Button
+              view="outlined-danger"
+              size="m"
               onClick={handleDelete}
               loading={isDeleting}
               disabled={isDeleting}
@@ -204,7 +170,7 @@ export default function BlogPostClient({ params }: { params: any }) {
           </div>
         )}
       </div>
-      
+
       <div className="flex flex-wrap items-center gap-4 mb-4 mb-6 text-sm text-muted-foreground">
         <div className="flex items-center gap-1">
           <Calendar className="w-4 h-4" />
