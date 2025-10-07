@@ -1,0 +1,1 @@
+export { SubscriberManagementWidget } from './SubscriberManagementWidget';
