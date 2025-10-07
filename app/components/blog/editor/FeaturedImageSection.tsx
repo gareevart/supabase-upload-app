@@ -6,6 +6,7 @@ import StoredImageGallery from "../StoredImageGallery";
 import { useToast } from "@/hooks/use-toast";
 import { DialogFooter } from "@/app/components/ui/dialog";
 import NextImage from "next/image";
+import "./editor.css";
 
 
 interface FeaturedImageSectionProps {

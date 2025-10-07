@@ -49,11 +49,14 @@ const ImageGeneratorComponent: React.FC<ReactNodeViewProps> = ({
 
       const data = await response.json();
       
-      if (data.imageUrl) {
-        setGeneratedImageUrl(data.imageUrl);
+      // Use imageData (base64) if available, otherwise use imageUrl
+      const imageUrl = data.imageData || data.imageUrl;
+      
+      if (imageUrl) {
+        setGeneratedImageUrl(imageUrl);
         updateAttributes({ 
           prompt,
-          generatedImageUrl: data.imageUrl 
+          generatedImageUrl: imageUrl 
         });
       } else {
         throw new Error('Не получен URL изображения');
