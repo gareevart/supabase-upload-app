@@ -35,7 +35,7 @@ const Yaart = () => {
 
     // Получаем промпт из URL параметров при загрузке компонента
     React.useEffect(() => {
-      const urlPrompt = searchParams.get('prompt');
+      const urlPrompt = searchParams?.get('prompt');
       if (urlPrompt) {
         setPrompt(decodeURIComponent(urlPrompt));
       }

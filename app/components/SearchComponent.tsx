@@ -200,7 +200,7 @@ export default function SearchComponent({
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [onUpdate]);
 
   // Debounced search
   useEffect(() => {

@@ -67,7 +67,9 @@ export const withApiAuth = (handler: (req: NextRequest, user: { id: string }) =>
         });
       } else {
         console.log('withApiAuth: No Bearer token, trying cookies');
-        // Fallback к cookies
+        
+        // Use standard cookie method with createServerClient
+        // This will automatically handle the correct cookie name based on the Supabase URL
         const supabase = createServerClient<Database>(
           supabaseUrl,
           supabaseAnonKey,
@@ -87,20 +89,29 @@ export const withApiAuth = (handler: (req: NextRequest, user: { id: string }) =>
             },
           }
         );
-        const result = await supabase.auth.getUser();
-        user = result.data.user;
-        error = result.error;
         
-        console.log('withApiAuth: Cookie validation result:', {
-          hasUser: !!user,
-          userId: user?.id,
-          error: error?.message,
-        });
+        try {
+          const result = await supabase.auth.getUser();
+          user = result.data.user;
+          error = result.error;
+          
+          console.log('withApiAuth: Cookie validation result:', {
+            hasUser: !!user,
+            userId: user?.id,
+            error: error?.message,
+            errorCode: error?.code,
+          });
+        } catch (cookieError) {
+          console.error('withApiAuth: Cookie validation threw error:', cookieError);
+          error = cookieError instanceof Error 
+            ? { message: cookieError.message, code: 'cookie_error' } 
+            : { message: 'Unknown cookie error', code: 'cookie_error' };
+        }
       }
       
       if (error || !user) {
         const errorDetails = {
-          error: error?.message || 'No active session',
+          error: error?.message || 'Auth session missing!',
           code: error?.code,
           status: error?.status,
           headers: {
@@ -118,7 +129,7 @@ export const withApiAuth = (handler: (req: NextRequest, user: { id: string }) =>
         return NextResponse.json(
           {
             error: 'Unauthorized',
-            details: error?.message || 'No active session',
+            details: error?.message || 'Auth session missing!',
             code: error?.code,
             timestamp: errorDetails.timestamp
           },

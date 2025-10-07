@@ -64,7 +64,7 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
     } finally {
       setIsLoading(false);
     }
-  }, []); // Убираем все зависимости, чтобы функция была стабильной
+  }, [toast]); // Включаем toast в зависимости
 
   useEffect(() => {
     fetchImages();

@@ -29,7 +29,7 @@ const Navigation: React.FC = () => {
 
   // Update active item when pathname changes
   useEffect(() => {
-    const activeFromPath = getActiveItemFromPath(pathname);
+    const activeFromPath = getActiveItemFromPath(pathname || '');
     setActiveItem(activeFromPath);
     localStorage.setItem('activeItem', activeFromPath);
   }, [pathname]);

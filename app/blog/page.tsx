@@ -19,8 +19,8 @@ function BlogPageContent() {
   const router = useRouter()
   
   // Получаем фильтр и вид из URL параметров
-  const filterParam = searchParams.get('filter') as PostFilter | null
-  const viewParam = searchParams.get('view')
+  const filterParam = searchParams?.get('filter') as PostFilter | null
+  const viewParam = searchParams?.get('view')
   
   const [gridView, setGridView] = useState(viewParam !== 'list');
   const [postFilter, setPostFilter] = useState<PostFilter>(filterParam || 'all');

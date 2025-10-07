@@ -12,7 +12,13 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 export const GET = withApiAuth(async (request: NextRequest, user: { id: string }) => {
   try {
     // Extract id from URL path parameter
-    const id = request.nextUrl.pathname.split('/').pop();
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const id = pathSegments[pathSegments.length - 1];
+    
+    console.log('GET /api/broadcasts/[id] - URL:', request.url);
+    console.log('GET /api/broadcasts/[id] - Path segments:', pathSegments);
+    console.log('GET /api/broadcasts/[id] - Extracted ID:', id);
     
     const supabase = createServerClient<Database>(
       supabaseUrl,
@@ -91,7 +97,9 @@ export const GET = withApiAuth(async (request: NextRequest, user: { id: string }
 export const PUT = withApiAuth(async (request: NextRequest, user: { id: string }) => {
   try {
     // Extract id from URL path parameter
-    const id = request.nextUrl.pathname.split('/').pop();
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const id = pathSegments[pathSegments.length - 1];
     const body = await request.json();
     const { subject, content, recipients, status, scheduled_for } = body;
 
@@ -170,7 +178,9 @@ export const PUT = withApiAuth(async (request: NextRequest, user: { id: string }
 export const DELETE = withApiAuth(async (request: NextRequest, user: { id: string }) => {
   try {
     // Extract id from URL path parameter
-    const id = request.nextUrl.pathname.split('/').pop();
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const id = pathSegments[pathSegments.length - 1];
     console.log('DELETE broadcast - ID extracted:', id);
     console.log('DELETE broadcast - User ID:', user.id);
 

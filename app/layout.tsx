@@ -10,7 +10,6 @@ import Navigation from './components/Navigation/Navigation';
 import { AuthProvider } from './contexts/AuthContext';
 import { ModelSelectionProvider } from './contexts/ModelSelectionContext';
 import { SpeedInsights } from "@vercel/speed-insights/next"
-import '@gravity-ui/uikit/styles/styles.css';
 import "@/styles/globals.css";
 import '@/styles/styles.css';
 

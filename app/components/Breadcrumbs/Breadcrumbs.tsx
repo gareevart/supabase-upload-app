@@ -20,7 +20,7 @@ export default function CustomBreadcrumbs({ customItems, segmentLabels }: Custom
       return customItems;
     }
 
-    const pathSegments = pathname.split('/').filter(segment => segment !== '');
+    const pathSegments = pathname?.split('/').filter(segment => segment !== '') || [];
     const breadcrumbs: BreadcrumbItem[] = [
       { label: 'Home', href: '/' }
     ];

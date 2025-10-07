@@ -4,14 +4,6 @@ import { createClient } from '@supabase/supabase-js';
 import { Button, Card, Text, TextInput} from '@gravity-ui/uikit';
 import './MemoryGame.css'; // Add styles for the game
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-  throw new Error('Supabase environment variables are not set');
-}
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
-
 const emojis = ['🍎', '🍌', '🍇', '🍓', '🍒', '🍍', '🥝', '🍉'];
 
 type Card = {
@@ -30,6 +22,19 @@ const MemoryGame = () => {
   const [userName, setUserName] = useState<string>('');
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [resultSaved, setResultSaved] = useState<boolean>(false);
+  const [supabase, setSupabase] = useState<any>(null);
+
+  // Initialize Supabase client on client side only
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      
+      if (supabaseUrl && supabaseAnonKey) {
+        setSupabase(createClient(supabaseUrl, supabaseAnonKey));
+      }
+    }
+  }, []);
 
   const startGame = () => {
     const shuffledCards = [...emojis, ...emojis]
@@ -72,6 +77,7 @@ const MemoryGame = () => {
   const handleSaveResult = async () => {
     if (!userName) return alert('Please enter your name');
     if (resultSaved) return alert('Result already saved!');
+    if (!supabase) return alert('Database not available');
     
     const timeTaken = (endTime && startTime) ? (endTime - startTime) / 1000 : 0;
     const { error } = await supabase.from('memory_game_results').insert([

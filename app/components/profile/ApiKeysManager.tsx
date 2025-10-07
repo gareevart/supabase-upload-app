@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Alert,
   Button,
@@ -55,7 +55,7 @@ export const ApiKeysManager: React.FC = () => {
   const { toast } = useToast();
 
   // Загрузка API ключей
-  const fetchApiKeys = async () => {
+  const fetchApiKeys = useCallback(async () => {
     try {
       const response = await authFetch('/api/api-keys');
       
@@ -91,11 +91,11 @@ export const ApiKeysManager: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchApiKeys();
-  }, []);
+  }, [fetchApiKeys]);
 
   // Создание нового API ключа
   const createApiKey = async () => {

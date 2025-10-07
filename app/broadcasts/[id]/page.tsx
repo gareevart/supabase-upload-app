@@ -1,15 +1,11 @@
-import React from 'react';
-import BroadcastDetailClient from './BroadcastDetailClient';
+import BroadcastDetailPageClient from './BroadcastDetailPageClient';
 
-// Define the page props type for Next.js 15
-interface PageProps {
-  params: Promise<{ id: string }>;
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+export default function BroadcastDetailPage() {
+  return <BroadcastDetailPageClient />;
 }
 
-// Server component with async
-export default async function BroadcastDetailPage({ params }: PageProps) {
-  const { id } = await params;
-  
-  return <BroadcastDetailClient id={id} />;
-}
+// Disable static generation and force client-side rendering
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const runtime = 'edge';
+export const fetchCache = 'force-no-store';

@@ -6,7 +6,11 @@
     "dev": "next dev --turbopack",
     "build": "NODE_OPTIONS='--no-deprecation' next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "diagnose": "tsx scripts/test-broadcasts-access.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.821.0",
@@ -78,13 +82,22 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/react": "^14.1.2",
+    "@types/jest": "^29.5.11",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "css-loader": "^7.1.2",
+    "dotenv": "^16.6.1",
     "eslint": "9.33.0",
     "eslint-config-next": "15.5.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "sharp": "^0.34.3",
+    "style-loader": "^4.0.0",
     "tailwindcss": "^4",
+    "tsx": "^4.7.0",
     "typescript": "^5"
   }
 }

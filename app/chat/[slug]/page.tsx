@@ -7,7 +7,8 @@ import { redirect } from "next/navigation";
 import { Spin } from "@gravity-ui/uikit";
 
 const ChatPage = () => {
-  const { slug: chatId } = useParams<{ slug: string }>();
+  const params = useParams<{ slug: string }>();
+  const chatId = params?.slug;
   const { user, loading: isAuthLoading } = useAuth();
 
   if (isAuthLoading) {

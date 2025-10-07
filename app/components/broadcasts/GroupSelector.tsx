@@ -68,7 +68,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isLoading, toast]);
 
   const fetchSubscribers = useCallback(async () => {
     try {

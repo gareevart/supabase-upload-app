@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Transpile packages that need special handling
+  transpilePackages: ['@gravity-ui/uikit', '@gravity-ui/icons'],
+  
   // Optimize image loading
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -37,6 +40,17 @@ const nextConfig: NextConfig = {
   
   // Compress assets for better performance
   compress: true,
+
+  // Webpack configuration to handle file extensions
+  webpack: (config) => {
+    // Handle other file extensions
+    config.resolve.extensionAlias = {
+      '.js': ['.js', '.ts', '.tsx'],
+      '.jsx': ['.jsx', '.tsx'],
+    };
+
+    return config;
+  },
 
   // CORS configuration
   async headers() {
