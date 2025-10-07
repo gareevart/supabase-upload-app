@@ -9,13 +9,40 @@ export function useImageGeneration() {
   const generateImage = async (prompt: string): Promise<string | null> => {
     setIsGenerating(true);
     try {
-      // TODO: Implement actual image generation logic
-      return null;
+      if (!prompt || !prompt.trim()) {
+        toast({
+          title: 'Введите описание',
+          description: 'Промпт для генерации изображения не может быть пустым',
+          variant: 'destructive',
+        });
+        return null;
+      }
+
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const message = (errorData as any).error || `Не удалось сгенерировать изображение (${response.status})`;
+        throw new Error(message);
+      }
+
+      const data: { imageUrl?: string; imageData?: string } = await response.json();
+
+      const previewUrl = data.imageData || data.imageUrl || null;
+      if (!previewUrl) {
+        throw new Error('Сервис не вернул ссылку на изображение');
+      }
+
+      return previewUrl;
     } catch (error) {
       console.error('Image generation error:', error);
       toast({
         title: 'Generation Error',
-        description: 'Failed to generate image',
+        description: error instanceof Error ? error.message : 'Failed to generate image',
         variant: 'destructive'
       });
       return null;
