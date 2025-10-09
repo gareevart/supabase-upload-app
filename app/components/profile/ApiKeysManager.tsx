@@ -12,9 +12,11 @@ import {
   Skeleton,
   Table,
   TableColumnConfig,
-  TableDataItem
+  TableDataItem,
+  Label,
+  DropdownMenu
 } from '@gravity-ui/uikit';
-import { Copy, Plus, TrashBin,Key, BookOpen, EyeSlash, Eye} from '@gravity-ui/icons';
+import { Copy, Plus, TrashBin, Key, BookOpen, EyeSlash, Eye, CircleStop, CirclePlay, Ellipsis } from '@gravity-ui/icons';
 import { useToast } from '@/hooks/use-toast';
 import { authFetch } from '@/lib/auth-fetch';
 
@@ -95,7 +97,8 @@ export const ApiKeysManager: React.FC = () => {
 
   useEffect(() => {
     fetchApiKeys();
-  }, [fetchApiKeys]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Создание нового API ключа
   const createApiKey = async () => {
@@ -152,6 +155,44 @@ export const ApiKeysManager: React.FC = () => {
       });
     } finally {
       setCreating(false);
+    }
+  };
+
+  // Переключение статуса API ключа (активировать/деактивировать)
+  const toggleApiKeyStatus = async (keyId: string, keyName: string, currentStatus: boolean) => {
+    const action = currentStatus ? 'деактивировать' : 'активировать';
+    if (!confirm(`Вы уверены, что хотите ${action} API ключ "${keyName}"?`)) {
+      return;
+    }
+
+    try {
+      const response = await authFetch('/api/api-keys', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: keyId,
+          is_active: !currentStatus,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to toggle API key status');
+      }
+
+      await fetchApiKeys();
+      toast({
+        title: 'Успешно',
+        description: `API ключ ${currentStatus ? 'деактивирован' : 'активирован'}`,
+      });
+    } catch (error) {
+      console.error('Error toggling API key status:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось изменить статус API ключа',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -256,18 +297,6 @@ export const ApiKeysManager: React.FC = () => {
           <Text variant="body-1" className="font-mono">
             {item.key_prefix}...
           </Text>
-          <Button
-            view="flat"
-            size="s"
-            onClick={() => {
-              const apiKey = apiKeys.find(key => key.id === item.id);
-              if (apiKey) {
-                copyToClipboard(`${apiKey.key_prefix}...`);
-              }
-            }}
-          >
-            <Icon data={Copy} size={12} />
-          </Button>
         </div>
       ),
     },
@@ -276,12 +305,12 @@ export const ApiKeysManager: React.FC = () => {
       name: 'Status',
       width: 100,
       template: (item) => (
-        <Text
-          variant="body-1"
-          color={item.status === 'Active' ? 'positive' : 'secondary'}
+        <Label
+          theme={item.status === 'Active' ? 'success' : 'normal'}
+          size="s"
         >
           {item.status}
-        </Text>
+        </Label>
       ),
     },
     {
@@ -311,17 +340,35 @@ export const ApiKeysManager: React.FC = () => {
     {
       id: 'actions',
       name: '',
-      width: 40,
+      width: 50,
       template: (item) => {
         const apiKey = apiKeys.find(key => key.id === item.actions);
+        if (!apiKey) return null;
+
+        const menuItems = [
+          {
+            action: () => toggleApiKeyStatus(apiKey.id, apiKey.name, apiKey.is_active),
+            text: apiKey.is_active ? 'Deactivate' : 'Activate',
+            iconStart: <Icon data={apiKey.is_active ? CircleStop : CirclePlay} size={16} />,
+            theme: 'normal' as const,
+          },
+          {
+            action: () => deleteApiKey(apiKey.id, apiKey.name),
+            text: 'Delete',
+            iconStart: <Icon data={TrashBin} size={16} />,
+            theme: 'danger' as const,
+          },
+        ];
+
         return (
-          <Button
-            view="flat-danger"
-            size="s"
-            onClick={() => apiKey && deleteApiKey(apiKey.id, apiKey.name)}
-          >
-            <Icon data={TrashBin} size={14} />
-          </Button>
+          <DropdownMenu
+            items={menuItems}
+            switcher={
+              <Button view="flat" size="s">
+                <Icon data={Ellipsis} size={16} />
+              </Button>
+            }
+          />
         );
       },
     },

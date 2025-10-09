@@ -55,7 +55,8 @@ export const useSubscription = (userId: string | undefined, userEmail: string | 
         };
         
         fetchSubscription();
-    }, [mounted, userId, userEmail, add]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mounted, userId, userEmail]);
 
     const handleSubscriptionToggle = async () => {
         if (!userId || !userEmail || !subscription) return;

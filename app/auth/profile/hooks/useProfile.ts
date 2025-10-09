@@ -47,7 +47,8 @@ export const useUserProfile = (userId: string | undefined, mounted: boolean) => 
         };
         
         fetchUserProfile();
-    }, [mounted, userId, add]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mounted, userId]);
 
     const saveProfile = async (userId: string, profileData: Profile, onSuccess: () => void) => {
         try {
