@@ -8,6 +8,7 @@ import type {
   AddSubscribersToGroupData,
   RemoveSubscribersFromGroupData,
 } from '@/entities/broadcast-group/model';
+import type { Subscriber } from '@/entities/subscriber/model';
 
 const API_BASE = '/api/broadcast-groups';
 
@@ -104,7 +105,7 @@ export class BroadcastGroupApi {
   /**
    * Get subscribers in a group
    */
-  static async getGroupSubscribers(groupId: string): Promise<{ data: any[] }> {
+  static async getGroupSubscribers(groupId: string): Promise<{ data: Subscriber[] }> {
     const response = await fetch(`${API_BASE}/${groupId}/subscribers`, {
       credentials: 'include',
     });

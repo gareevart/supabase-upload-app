@@ -34,7 +34,7 @@ export const GroupSubscriberManager: React.FC<GroupSubscriberManagerProps> = ({
     try {
       setIsLoading(true);
       const response = await BroadcastGroupApi.getGroupSubscribers(groupId);
-      setSubscribers(response);
+      setSubscribers(response.data);
     } catch (error) {
       console.error('Error fetching group subscribers:', error);
     } finally {
