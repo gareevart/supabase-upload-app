@@ -178,7 +178,95 @@ export const useChat = (chatId: string) => {
                 return `[Изображение: ${file.name} - изображение прикреплено, но анализ недоступен]`;
               }
               
-              // For other files (PDFs, docs, etc.), just mention them
+              // Check if it's a PDF
+              if (file.type === 'application/pdf') {
+                try {
+                  // Call PDF analysis API
+                  const { data: { session } } = await supabase.auth.getSession();
+                  const response = await fetch('/api/analyze-pdf', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${session?.access_token}`,
+                    },
+                    body: JSON.stringify({
+                      pdfUrl: file.url,
+                      fileName: file.name,
+                    }),
+                  });
+                  
+                  if (response.ok) {
+                    const analysis = await response.json();
+                    console.log('PDF analysis response:', {
+                      success: analysis.success,
+                      hasDescription: !!analysis.description,
+                      descriptionLength: analysis.description?.length,
+                      pageCount: analysis.pageCount
+                    });
+                    
+                    if (analysis.success && analysis.description && analysis.description.trim()) {
+                      return analysis.description;
+                    } else {
+                      console.warn('No valid description in PDF analysis result');
+                    }
+                  } else {
+                    console.error('PDF analysis failed:', await response.text());
+                  }
+                } catch (error) {
+                  console.error('Error analyzing PDF:', error);
+                }
+                // Fallback for PDFs if analysis fails
+                return `[Файл: ${file.name} - PDF документ прикреплен, но анализ текста недоступен]`;
+              }
+              
+              // Check if it's a Word document (.docx)
+              if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
+                  file.name.endsWith('.docx')) {
+                try {
+                  // Call document analysis API
+                  const { data: { session } } = await supabase.auth.getSession();
+                  const response = await fetch('/api/analyze-document', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${session?.access_token}`,
+                    },
+                    body: JSON.stringify({
+                      documentUrl: file.url,
+                      fileName: file.name,
+                      fileType: file.type,
+                    }),
+                  });
+                  
+                  if (response.ok) {
+                    const analysis = await response.json();
+                    console.log('Document analysis response:', {
+                      success: analysis.success,
+                      hasDescription: !!analysis.description,
+                      descriptionLength: analysis.description?.length
+                    });
+                    
+                    if (analysis.success && analysis.description && analysis.description.trim()) {
+                      return analysis.description;
+                    } else {
+                      console.warn('No valid description in document analysis result');
+                    }
+                  } else {
+                    console.error('Document analysis failed:', await response.text());
+                  }
+                } catch (error) {
+                  console.error('Error analyzing document:', error);
+                }
+                // Fallback for Word documents if analysis fails
+                return `[Файл: ${file.name} - Word документ прикреплен, но анализ текста недоступен]`;
+              }
+              
+              // Check if it's an old .doc file
+              if (file.type === 'application/msword' || file.name.endsWith('.doc')) {
+                return `[Файл: ${file.name} - старый формат .doc не поддерживается. Пожалуйста, конвертируйте в .docx]`;
+              }
+              
+              // For other files, just mention them
               return `[Файл: ${file.name} (${file.type})]`;
             })
           );
