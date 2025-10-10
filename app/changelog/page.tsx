@@ -91,6 +91,22 @@ const ChangelogPage = () => {
         ]
       }
     ],
+    statistics: {
+      filesChanged: "15+ файлов изменено",
+      linesAdded: "400+ строк кода добавлено",
+      linesOptimized: "200+ строк кода оптимизировано",
+      focus: "Интеграция анализа изображений с Yandex Vision API и критические исправления безопасности"
+    },
+    documentation: [
+      { path: "docs/YANDEX_VISION_INTEGRATION.md", description: "Полное руководство по интеграции Yandex Vision API для анализа изображений" },
+      { path: "docs/YANDEX_VISION_CHANGELOG.md", description: "История изменений и этапы разработки функции анализа изображений" },
+      { path: "docs/CHAT_FILE_ATTACHMENTS.md", description: "Документация по реализации загрузки файлов в чат" },
+      { path: "docs/MIGRATION_AUTH_FETCH.md", description: "Руководство по миграции на новый helper authFetch" },
+      { path: "docs/SAFARI_AUTH_FIX.md", description: "Решение проблем с аутентификацией в Safari" },
+      { path: "docs/TIPTAP_CURSOR_FIX.md", description: "Исправление проблемы с курсором в TipTap редакторе" },
+      { path: "docs/BUGFIX_EMPTY_MESSAGE.md", description: "Исправление ошибки с пустыми сообщениями в чате" },
+      { path: "migrations/add_attachments_to_chat_messages.sql", description: "SQL миграция для добавления поддержки вложений в сообщениях" }
+    ],
     previousReleases: [
       {
         version: "Release 0.0.2",
@@ -272,24 +288,26 @@ const ChangelogPage = () => {
         ]
       }
     ],
-    statistics: {
-      filesChanged: "10+ файлов изменено",
-      linesAdded: "200+ строк кода добавлено",
-      linesOptimized: "150+ строк кода оптимизировано",
-      linesRemoved: "500+ строк устаревшего кода удалено",
-      focus: "Исправления безопасности, оптимизация навигации и улучшение блог-системы"
-    },
-    newPages: [
-      { path: "Миграция БД", description: "fix_has_role_function_for_anonymous_users.sql - исправление функции проверки ролей" }
-    ],
-    requirements: [
-      { feature: "Миграция БД", requirement: "Необходимо выполнить миграцию fix_has_role_function_for_anonymous_users.sql" },
-      { feature: "Безопасность", requirement: "Обновлена функция has_role для корректной работы с анонимными пользователями" },
-      { feature: "Производительность", requirement: "Рекомендуется очистка кэша после обновления навигации" }
-    ]
+        statistics: {
+          filesChanged: "10+ файлов изменено",
+          linesAdded: "200+ строк кода добавлено",
+          linesOptimized: "150+ строк кода оптимизировано",
+          linesRemoved: "500+ строк устаревшего кода удалено",
+          focus: "Исправления безопасности, оптимизация навигации и улучшение блог-системы"
+        },
+        newPages: [
+          { path: "Миграция БД", description: "fix_has_role_function_for_anonymous_users.sql - исправление функции проверки ролей" }
+        ],
+        requirements: [
+          { feature: "Миграция БД", requirement: "Необходимо выполнить миграцию fix_has_role_function_for_anonymous_users.sql" },
+          { feature: "Безопасность", requirement: "Обновлена функция has_role для корректной работы с анонимными пользователями" },
+          { feature: "Производительность", requirement: "Рекомендуется очистка кэша после обновления навигации" }
+        ]
       }
     ]
   };
+
+  const previousReleases = changelogData.previousReleases;
 
   return (
     <Container maxWidth="xl" className="py-8">
