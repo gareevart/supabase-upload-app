@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { useChat, Message } from "@/hooks/useChat";
+import Image from "next/image";
+import { useChat, Message, FileAttachment } from "@/hooks/useChat";
 import { DialogFooter } from "@/app/components/ui/dialog";
 import ReactMarkdown from 'react-markdown';
 import { Button, TextArea, Icon, Modal, Text, Spin, Label, useToaster, Select } from '@gravity-ui/uikit';
@@ -58,7 +59,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
     scrollToBottom();
   }, [messages]);
 
-  const handleMessageSubmit = async (message: string) => {
+  const handleMessageSubmit = async (message: string, files?: FileAttachment[]) => {
     // Reset reasoning state
     setCurrentReasoning("");
     setIsReasoningActive(false);
@@ -69,7 +70,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
         setIsReasoningActive(true);
       }
       
-      await sendMessage.mutateAsync(message);
+      await sendMessage.mutateAsync({ content: message, attachments: files });
       
       // Stop reasoning when done
       setIsReasoningActive(false);
@@ -265,6 +266,22 @@ interface ChatMessageProps {
 const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
   const isUser = message.role === "user";
   
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/')) return '🖼️';
+    if (type.includes('pdf')) return '📄';
+    if (type.includes('word') || type.includes('document')) return '📝';
+    if (type.includes('excel') || type.includes('sheet')) return '📊';
+    return '📎';
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  };
+  
   return (
     <div
       className={`flex ${
@@ -278,9 +295,53 @@ const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
             : "bg-muted text-foreground"
         }`}
       >
-        <div className="whitespace-pre-wrap break-words prose prose-sm dark:prose-invert max-w-none">
-          <ReactMarkdown>{message.content}</ReactMarkdown>
-        </div>
+        {/* Show attachments if present */}
+        {message.attachments && message.attachments.length > 0 && (
+          <div className="chat-message-attachments mb-3">
+            {message.attachments.map((file, index) => (
+              <a
+                key={index}
+                href={file.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="chat-message-attachment"
+              >
+                <span className="chat-message-attachment__icon">
+                  {file.type.startsWith('image/') ? (
+                    <Image 
+                      src={file.url} 
+                      alt={file.name}
+                      width={200}
+                      height={200}
+                      className="chat-message-attachment__image"
+                      unoptimized={file.url.includes('yandexcloud.net')}
+                    />
+                  ) : (
+                    <span className="chat-message-attachment__file-icon">
+                      {getFileIcon(file.type)}
+                    </span>
+                  )}
+                </span>
+                <div className="chat-message-attachment__info">
+                  <Text variant="body-2" className="chat-message-attachment__name">
+                    {file.name}
+                  </Text>
+                  <Text variant="caption-2" color="secondary">
+                    {formatFileSize(file.size)}
+                  </Text>
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
+
+        {/* Message content */}
+        {message.content && (
+          <div className="whitespace-pre-wrap break-words prose prose-sm dark:prose-invert max-w-none">
+            <ReactMarkdown>{message.content}</ReactMarkdown>
+          </div>
+        )}
+
         <Button
           view="flat" 
           size="s" 

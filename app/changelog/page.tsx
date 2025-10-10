@@ -31,14 +31,42 @@ import {
 
 const ChangelogPage = () => {
   const changelogData = {
-    version: "Release 0.0.3",
-    date: "2025-10-01",
+    version: "Release 0.0.4",
+    date: "2025-10-10",
     sections: [
+      {
+        title: "Новые возможности",
+        icon: Star,
+        color: "success",
+        items: [
+          {
+            title: "Анализ изображений в чате",
+            icon: Comment,
+            features: [
+              { name: "Интеграция с Yandex Vision API", description: "YandexGPT теперь может читать и понимать содержимое изображений" },
+              { name: "OCR (распознавание текста)", description: "Автоматическое извлечение текста с изображений на русском и английском языках" },
+              { name: "Загрузка файлов", description: "Поддержка загрузки до 3 файлов на сообщение с drag & drop интерфейсом" },
+              { name: "Умные ответы", description: "AI отвечает на вопросы о содержимом изображений с учетом извлеченного текста" },
+              { name: "Чистый UI", description: "Техническая информация об анализе скрыта от пользователя, сохраняется только для AI" },
+              { name: "Оптимизация изображений", description: "Использование Next.js Image для быстрой загрузки и оптимизации изображений" }
+            ]
+          }
+        ]
+      },
       {
         title: "Исправления ошибок",
         icon: CircleExclamation,
         color: "danger",
         items: [
+          {
+            title: "Чат",
+            icon: Comment,
+            features: [
+              { name: "Исправлена ошибка 'empty message text'", description: "Добавлена фильтрация пустых сообщений из истории чата" },
+              { name: "Исправлен баг Vision API", description: "Исправлен доступ к результатам OCR: results[0].textDetection" },
+              { name: "Улучшена обработка вложений", description: "Корректная обработка сообщений с файлами в контексте диалога" }
+            ]
+          },
           {
             title: "TipTap Редактор",
             icon: PencilToSquare,
@@ -260,16 +288,6 @@ const ChangelogPage = () => {
       { feature: "Производительность", requirement: "Рекомендуется очистка кэша после обновления навигации" }
     ]
       }
-    ],
-    statistics: {
-      filesChanged: "2 файла изменено",
-      linesAdded: "20+ строк кода добавлено",
-      focus: "Исправление критических ошибок в редакторе и аутентификации"
-    },
-    documentation: [
-      { path: "/docs/TIPTAP_CURSOR_FIX.md", description: "Подробное описание проблемы с курсором и решения" },
-      { path: "/docs/SAFARI_AUTH_FIX.md", description: "Документация по исправлению аутентификации в Safari" },
-      { path: "/docs/SAFARI_AUTH_TESTING.md", description: "Инструкции по тестированию аутентификации" }
     ]
   };
 
@@ -339,6 +357,9 @@ const ChangelogPage = () => {
             <div className="space-y-2">
               <Text variant="body-1">📁 {changelogData.statistics.filesChanged}</Text>
               <Text variant="body-1">➕ {changelogData.statistics.linesAdded}</Text>
+              {changelogData.statistics.linesOptimized && (
+                <Text variant="body-1">⚡ {changelogData.statistics.linesOptimized}</Text>
+              )}
               <Text variant="body-1">🎯 Фокус: {changelogData.statistics.focus}</Text>
             </div>
           </Card>
@@ -367,12 +388,12 @@ const ChangelogPage = () => {
         )}
 
         {/* Previous Releases */}
-        {changelogData.previousReleases && changelogData.previousReleases.length > 0 && (
+        {previousReleases && previousReleases.length > 0 && (
           <div className="space-y-8">
             <Divider />
             <Text variant="header-1" className="text-center">Предыдущие релизы</Text>
             
-            {changelogData.previousReleases.map((release, releaseIndex) => (
+            {previousReleases.map((release, releaseIndex) => (
               <div key={releaseIndex} className="space-y-4">
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-2 mb-4">

@@ -147,3 +147,91 @@
   border-radius: var(--g-border-radius-2xl);
   background-color: var(--g-color-base-generic);
 }
+
+/* Chat message attachments styles */
+.chat-message-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.chat-message-attachment {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+}
+
+.chat-message-attachment:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chat-message-attachment__icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-message-attachment__image {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.chat-message-attachment__file-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.chat-message-attachment__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chat-message-attachment__name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Adjust styles for assistant messages (non-user) */
+.bg-muted .chat-message-attachment {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.bg-muted .chat-message-attachment:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .chat-message-attachment__image {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .chat-message-attachment__file-icon {
+    font-size: 28px;
+  }
+  
+  .chat-message-attachment {
+    padding: 8px;
+  }
+}

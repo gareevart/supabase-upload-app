@@ -1,5 +1,54 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Features
+
+### 🤖 AI-Powered Chat with Image Understanding
+- Chat interface with YandexGPT integration
+- **NEW**: Image analysis using Yandex Vision API
+  - Automatic text extraction (OCR) from images
+  - Image content classification
+  - Context-aware responses based on image content
+- File attachments support (images, PDFs, documents)
+- Reasoning mode for step-by-step analysis
+- Multiple AI model selection
+
+### 📝 Blog Management
+- Create and edit blog posts with rich text editor
+- Image upload and management
+- Tag system
+- Public and private posts
+
+### 📢 Broadcasting System
+- Send emails to subscribers
+- Broadcast groups management
+- Scheduling support
+
+### 🔐 Authentication
+- Supabase authentication
+- Role-based access control
+- Protected routes
+
+## Image Understanding Setup
+
+To enable image analysis in chat:
+
+1. **Configure Yandex Cloud**:
+   - Create a Yandex Cloud account
+   - Set up a service account with `ai.vision.user` role
+   - Generate API key
+
+2. **Add environment variables** to `.env.local`:
+   ```env
+   YANDEX_API_KEY=your_api_key
+   YANDEX_FOLDER_ID=your_folder_id
+   ```
+
+3. **Restart the server**
+
+For detailed setup instructions, see [IMAGE_UNDERSTANDING_SETUP.md](./docs/IMAGE_UNDERSTANDING_SETUP.md)
+
+For complete technical documentation, see [FINAL_SUMMARY_IMAGE_UNDERSTANDING.md](./docs/FINAL_SUMMARY_IMAGE_UNDERSTANDING.md)
+
 ## Getting Started
 
 First, run the development server:

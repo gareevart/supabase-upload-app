@@ -48,18 +48,39 @@ export async function POST(request: Request) {
     const messages = [];
     
     // Add system prompt if provided
-    if (systemPrompt) {
-      messages.push({ role: 'system', text: systemPrompt });
+    if (systemPrompt && systemPrompt.trim()) {
+      messages.push({ role: 'system', text: systemPrompt.trim() });
     }
     
     // Add message context (conversation history) if provided
     if (messageContext && messageContext.length > 0) {
-      messages.push(...messageContext);
+      console.log('Message context before filtering:', messageContext.length);
+      // Filter out empty messages
+      const validMessages = messageContext.filter((msg: any) => 
+        msg && msg.text && msg.text.trim().length > 0
+      );
+      console.log('Valid messages after filtering:', validMessages.length);
+      if (validMessages.length < messageContext.length) {
+        console.log('Filtered out', messageContext.length - validMessages.length, 'empty messages');
+      }
+      messages.push(...validMessages);
     } 
     // If no context is provided, just add the user prompt
-    else if (prompt) {
-      messages.push({ role: 'user', text: prompt });
+    else if (prompt && prompt.trim()) {
+      messages.push({ role: 'user', text: prompt.trim() });
     }
+    
+    // Ensure we have at least one non-system message
+    const nonSystemMessages = messages.filter(msg => msg.role !== 'system');
+    if (nonSystemMessages.length === 0) {
+      console.error('No valid messages after filtering');
+      return NextResponse.json(
+        { error: 'No valid messages to send to YandexGPT' },
+        { status: 400 }
+      );
+    }
+    
+    console.log('Final messages count:', messages.length, '(non-system:', nonSystemMessages.length, ')');
 
     // Call YandexGPT API using the new endpoint
     const folderId = process.env.YANDEX_FOLDER_ID || 'b1gb5lrqp1jr1tmamu2t';
@@ -126,6 +147,15 @@ export async function POST(request: Request) {
       reasoningMode: reasoningMode,
       completionOptions
     });
+    
+    // Log message details for debugging
+    console.log('Messages details:', messages.map((msg, idx) => ({
+      index: idx,
+      role: msg.role,
+      textLength: msg.text?.length || 0,
+      textPreview: msg.text?.substring(0, 100) || '[empty]',
+      isEmpty: !msg.text || msg.text.trim().length === 0
+    })));
 
     const yandexGPTResponse = await fetch('https://llm.api.cloud.yandex.net/foundationModels/v1/completion', {
       method: 'POST',

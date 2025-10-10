@@ -1,0 +1,113 @@
+/* FileUploader styles */
+
+.file-uploader {
+  width: 100%;
+}
+
+.file-uploader__input {
+  display: none;
+}
+
+.file-uploader__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.file-uploader__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--g-color-base-background);
+  border: 1px solid var(--g-color-line-generic);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.file-uploader__item:hover {
+  background: var(--g-color-base-float-hover);
+}
+
+.file-uploader__item-icon {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.file-uploader__item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.file-uploader__item-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-uploader__item-remove {
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.file-uploader__item-remove:hover {
+  opacity: 1;
+}
+
+.file-uploader__progress {
+  margin-bottom: 8px;
+}
+
+.file-uploader__progress-item {
+  margin-bottom: 4px;
+}
+
+.file-uploader__error {
+  margin-bottom: 8px;
+  padding: 8px;
+  background: var(--g-color-base-danger-light);
+  border-radius: 6px;
+}
+
+.file-uploader__drop-zone {
+  display: inline-block;
+}
+
+.file-uploader__compact-button {
+  /* Styles for compact button in toolbar */
+  flex-shrink: 0;
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.file-uploader__item {
+  animation: slideIn 0.2s ease-out;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .file-uploader__item {
+    padding: 6px 10px;
+  }
+  
+  .file-uploader__item-icon {
+    font-size: 18px;
+  }
+}
+

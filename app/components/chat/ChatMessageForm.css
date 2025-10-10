@@ -1,7 +1,20 @@
 /* ChatMessageForm styles */
 
 .chat-message-form {
-  /* Можно добавить специфичные стили для формы */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chat-message-form__files-list {
+  /* Styles for file list section when files are attached */
+  margin-bottom: 8px;
+}
+
+.chat-message-form__input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
 }
 
 .chat-message-form__textarea {

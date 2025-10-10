@@ -5,11 +5,19 @@ import { useYandexGPT } from "@/hooks/useYandexGPT";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
+export interface FileAttachment {
+  name: string;
+  url: string;
+  type: string;
+  size: number;
+}
+
 export interface Message {
   id?: string;
   chat_id: string;
   role: "user" | "assistant";
   content: string;
+  attachments?: FileAttachment[];
   created_at?: string;
 }
 
@@ -119,14 +127,97 @@ export const useChat = (chatId: string) => {
   });
 
   const sendMessage = useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async ({ content, attachments }: { content: string; attachments?: FileAttachment[] }) => {
       setIsMessageSending(true);
       try {
-        // Add user message to the database
+        // Analyze images/files before sending
+        let enrichedContent = content;
+        
+        if (attachments && attachments.length > 0) {
+          // Process each attachment
+          const fileDescriptions = await Promise.all(
+            attachments.map(async (file) => {
+              // Check if it's an image
+              if (file.type.startsWith('image/')) {
+                try {
+                  // Call image analysis API
+                  const { data: { session } } = await supabase.auth.getSession();
+                  const response = await fetch('/api/analyze-image', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${session?.access_token}`,
+                    },
+                    body: JSON.stringify({
+                      imageUrl: file.url,
+                      imageType: file.type,
+                    }),
+                  });
+                  
+                  if (response.ok) {
+                    const analysis = await response.json();
+                    console.log('Image analysis response:', {
+                      success: analysis.success,
+                      hasDescription: !!analysis.description,
+                      descriptionLength: analysis.description?.length,
+                      description: analysis.description?.substring(0, 100)
+                    });
+                    
+                    if (analysis.success && analysis.description && analysis.description.trim()) {
+                      return `[Изображение: ${file.name}]\n${analysis.description}`;
+                    } else {
+                      console.warn('No valid description in analysis result');
+                    }
+                  } else {
+                    console.error('Image analysis failed:', await response.text());
+                  }
+                } catch (error) {
+                  console.error('Error analyzing image:', error);
+                }
+                // Fallback for images if analysis fails
+                return `[Изображение: ${file.name} - изображение прикреплено, но анализ недоступен]`;
+              }
+              
+              // For other files (PDFs, docs, etc.), just mention them
+              return `[Файл: ${file.name} (${file.type})]`;
+            })
+          );
+          
+          // Filter out any undefined/null values
+          const validDescriptions = fileDescriptions.filter(desc => desc && desc.trim());
+          
+          console.log('File processing result:', {
+            attachmentsCount: attachments.length,
+            descriptionsCount: fileDescriptions.length,
+            validDescriptionsCount: validDescriptions.length,
+            validDescriptions: validDescriptions
+          });
+          
+          // Add file analysis to message content for AI (compact format)
+          if (validDescriptions.length > 0) {
+            enrichedContent = content.trim()
+              ? `${content}\n\n${validDescriptions.join('\n')}`
+              : validDescriptions.join('\n');
+          } else if (!content.trim()) {
+            // If no content and no valid descriptions, add a default message
+            enrichedContent = '[Прикреплены файлы, но их содержимое не может быть проанализировано]';
+          }
+        }
+        
+        console.log('Enriched content for YandexGPT:', {
+          originalContent: content,
+          enrichedContent: enrichedContent.substring(0, 200),
+          enrichedContentLength: enrichedContent.length,
+          isEmpty: !enrichedContent.trim()
+        });
+        
+        // Add user message to the database with ORIGINAL content
+        // (user doesn't need to see technical image analysis)
         const userMessage: Message = {
           chat_id: chatId,
           role: "user",
-          content,
+          content: content || '[Изображение]', // Save original message, not enriched
+          attachments: attachments || [],
         };
 
         const { data: savedMessage, error: userMessageError } = await supabase
@@ -138,27 +229,48 @@ export const useChat = (chatId: string) => {
         if (userMessageError) throw userMessageError;
 
         // Get the message history for context - limit to last 10 messages for token efficiency
+        // For previous messages with attachments, we need to reconstruct enriched content
         const messageHistory = messages
           .slice(-10)
-          .map(msg => ({
-            role: msg.role,
-            text: msg.content
-          }));
+          .map(msg => {
+            // If message has attachments, add their info to context for AI
+            if (msg.attachments && msg.attachments.length > 0) {
+              const fileInfo = msg.attachments
+                .map(f => f.type.startsWith('image/') 
+                  ? `[Прикреплено изображение: ${f.name}]`
+                  : `[Прикреплен файл: ${f.name}]`
+                )
+                .join(' ');
+              return {
+                role: msg.role,
+                text: msg.content ? `${msg.content} ${fileInfo}` : fileInfo
+              };
+            }
+            return {
+              role: msg.role,
+              text: msg.content
+            };
+          });
           
-        // Add current user message to context
+        // YandexGPT requires non-empty text
+        if (!enrichedContent.trim()) {
+          throw new Error("Сообщение не может быть пустым");
+        }
+        
+        // Add current message with ENRICHED content for AI understanding
         messageHistory.push({
           role: "user",
-          text: content
+          text: enrichedContent
         });
 
-        // Get system prompt from chat settings or use default
-        const systemPrompt = chat?.system_prompt || "Ты полезный ассистент. Отвечай на вопросы пользователя чётко и лаконично.";
+        // Get system prompt from chat settings or use default with image understanding support
+        const systemPrompt = chat?.system_prompt || "Ты полезный ассистент с возможностью анализа изображений и файлов. Когда пользователь прикрепляет изображение, ты получаешь его описание и извлеченный текст. Используй эту информацию для детального и точного ответа. Отвечай на вопросы пользователя чётко и лаконично.";
         
         // Create a temporary reasoning message to show thinking process
         let reasoningMessageId: string | null = null;
         
         const { text, error, usage } = await generateText(
-          content, 
+          enrichedContent, // Use enrichedContent with image analysis
           systemPrompt,
           messageHistory, // Pass message history for context
           (reasoningChunk: string) => {

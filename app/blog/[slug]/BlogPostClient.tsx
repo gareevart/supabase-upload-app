@@ -146,21 +146,20 @@ export default function BlogPostClient({ params }: { params: any }) {
   const canEditPost = userRole === 'admin' || userRole === 'editor';
 
   return (
-    <div className="container max-w-4xl mx-auto mt-6">
+    <div className="container max-w-4xl mx-auto my-6">
       <div className="flex justify-between items-start mb-4">
         <CardTitle className="text-3xl font-bold">{post.title}</CardTitle>
 
         {canEditPost && (
           <div className="flex gap-2">
             <Link href={`/blog/edit/${post.id}`} passHref>
-              <Button view="normal" size="m">
+              <Button view="normal">
                 <Icon data={Pencil} size={16} />
                 Edit
               </Button>
             </Link>
             <Button
               view="outlined-danger"
-              size="m"
               onClick={handleDelete}
               loading={isDeleting}
               disabled={isDeleting}
@@ -171,7 +170,7 @@ export default function BlogPostClient({ params }: { params: any }) {
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 mb-4 mb-6 text-sm text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-4 mb-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-1">
           <Calendar className="w-4 h-4" />
           <span>{post.created_at ? formatDate(post.created_at) : 'Дата не указана'}</span>
