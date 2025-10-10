@@ -1,15 +1,46 @@
 "use client"
 import { useAuth } from "@/app/contexts/AuthContext";
-import { redirect } from "next/navigation";
-import { useCreateChat } from "@/hooks/useCreateChat";
+import { redirect, useRouter } from "next/navigation";
+import { useChats } from "@/hooks/useChats";
 import { ChatLayout } from "@/app/components/chat/ChatLayout";
-import {Toaster, Button, Text, ToasterProvider, Spin, Icon} from '@gravity-ui/uikit';
-import {Plus} from '@gravity-ui/icons';
+import { Spin } from '@gravity-ui/uikit';
+import { useEffect, useRef } from "react";
 
 const ChatPage = () => {
-  const toaster = new Toaster();
   const { user, loading: isAuthLoading } = useAuth();
-  const { handleCreateChat, createChat } = useCreateChat();
+  const { chats, isLoading: isChatsLoading, createChat } = useChats();
+  const router = useRouter();
+  const isRedirecting = useRef(false);
+
+  useEffect(() => {
+    // Пропускаем если уже перенаправляем или загружаемся
+    if (isRedirecting.current || isAuthLoading || !user || isChatsLoading) {
+      return;
+    }
+
+    const redirectToChat = async () => {
+      // Проверяем наличие чатов
+      if (chats && chats.length > 0) {
+        // Перенаправляем на последний чат (первый в списке, так как они отсортированы по updated_at)
+        isRedirecting.current = true;
+        router.push(`/chat/${chats[0].id}`);
+      } else {
+        // Создаём новый чат, если чатов нет
+        try {
+          isRedirecting.current = true;
+          const newChat = await createChat.mutateAsync();
+          if (newChat && newChat.id) {
+            router.push(`/chat/${newChat.id}`);
+          }
+        } catch (error) {
+          console.error("Failed to create chat:", error);
+          isRedirecting.current = false;
+        }
+      }
+    };
+
+    redirectToChat();
+  }, [user, isAuthLoading, chats, isChatsLoading, router, createChat]);
 
   if (isAuthLoading) {
     return (
@@ -27,31 +58,18 @@ const ChatPage = () => {
     return null;
   }
 
+  // Показываем загрузку во время проверки чатов или создания нового
   return (
-    <ToasterProvider toaster={toaster}>  
-      <ChatLayout>
-        <div className="chat-interface-container">
-          <div className="chat-empty-state">
-            <Text variant="header-1">Hello, Bro!</Text>
-            <Text variant="body-2" className="pt-1 pb-4">Select an existing or create a new chat to start communicating with the AI assistant</Text>
-            <Button
-              view="action"
-              size="l"
-              onClick={handleCreateChat}
-              disabled={createChat.isPending}
-              title="Create new"
-            >
-              {createChat.isPending ? (
-                <Spin size="xs"/>
-              ) : (
-                <Icon data={Plus} size={16} />
-              )}
-              Create new chat
-            </Button>
+    <ChatLayout>
+      <div className="chat-interface-container">
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <Spin size="m" />
+            <div className="mt-4">Загрузка чата...</div>
           </div>
         </div>
-      </ChatLayout>
-    </ToasterProvider>  
+      </div>
+    </ChatLayout>
   );
 };
 

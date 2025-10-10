@@ -2,10 +2,11 @@ import { useState, useRef, useEffect } from "react";
 import { useChat, Message } from "@/hooks/useChat";
 import { DialogFooter } from "@/app/components/ui/dialog";
 import ReactMarkdown from 'react-markdown';
-import {Button, TextArea, Icon, Modal, Text, Spin, Label, useToaster, Select } from '@gravity-ui/uikit';
-import {Gear, Stop, Copy, ArrowUturnCwLeft, GearBranches } from '@gravity-ui/icons';
+import { Button, TextArea, Icon, Modal, Text, Spin, Label, useToaster, Select } from '@gravity-ui/uikit';
+import { Gear, Copy } from '@gravity-ui/icons';
 import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
 import { ReasoningBlock } from "./ReasoningBlock";
+import { ChatMessageForm } from "./ChatMessageForm";
 import "./ChatInterface.css";
 
 interface ChatInterfaceProps {
@@ -26,14 +27,11 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
   
   // Use the toaster hook
   const toaster = useToaster();
-  const { reasoningMode, setReasoningMode, selectedModel, setSelectedModel } = useModelSelection();
-  const [messageText, setMessageText] = useState("");
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const { reasoningMode, selectedModel, setSelectedModel } = useModelSelection();
   const [systemPrompt, setSystemPrompt] = useState("");
   const [currentReasoning, setCurrentReasoning] = useState("");
   const [isReasoningActive, setIsReasoningActive] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -60,14 +58,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!messageText.trim() || isMessageSending) return;
-    
-    const message = messageText;
-    setMessageText("");
-    
+  const handleMessageSubmit = async (message: string) => {
     // Reset reasoning state
     setCurrentReasoning("");
     setIsReasoningActive(false);
@@ -84,15 +75,8 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
       setIsReasoningActive(false);
     } catch (error) {
       console.error("Error sending message:", error);
-      setMessageText(message); // Restore message if failed
       setIsReasoningActive(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
+      throw error; // Re-throw to let the form handle it
     }
   };
 
@@ -212,42 +196,10 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
         )}
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="p-4 flex items-end gap-2"
-      >
-        <TextArea
-          ref={textareaRef}
-          value={messageText}
-          onChange={(e) => setMessageText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Писать сюда..."
-          maxRows={8}
-        />
-        {/* Show reasoning button only for YandexGPT */}
-        {selectedModel === 'yandexgpt' && (
-          <Button
-            size="m"
-            view={reasoningMode ? "action" : "outlined"}
-            onClick={() => setReasoningMode(!reasoningMode)}
-            title={reasoningMode ? "Отключить режим рассуждений" : "Включить режим рассуждений"}
-          >
-            <Icon data={GearBranches} size={16} />
-          </Button>
-        )}
-        <Button
-          type="submit"
-          size="m"
-          disabled={!messageText.trim() || isMessageSending}
-        >
-          {isMessageSending ? (
-            <Icon data={Stop} size={16} />
-          ) : (
-            <Icon data={ArrowUturnCwLeft} size={16} />
-            
-          )}
-        </Button>
-      </form>
+      <ChatMessageForm
+        onSubmit={handleMessageSubmit}
+        isMessageSending={isMessageSending}
+      />
 
       <Modal className="modal" open={open} onClose={() => setOpen(false)}>
         <Text variant="header-1">Настройки чата</Text>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Button, Text, TextArea, Modal, Icon } from '@gravity-ui/uikit';
+import { Button, Text, TextArea, Modal, Icon, SegmentedRadioGroup } from '@gravity-ui/uikit';
 import { Xmark } from '@gravity-ui/icons';
-import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/app/components/ui/tabs";
 import StoredImageGallery from "../StoredImageGallery";
 import { useToast } from "@/hooks/use-toast";
 import { DialogFooter } from "@/app/components/ui/dialog";
@@ -190,6 +189,11 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
   onSelectGalleryImage
 }) => {
   const { toast } = useToast();
+  
+  const handleTabChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setActiveTab(event.target.value);
+  };
+
   return (
     <Modal open={showDialog} onClose={() => setShowDialog(false)}>
       <div className='modal-content'>
@@ -200,13 +204,21 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
           </Button>
         </div>
 
-        <Tabs defaultValue="prompt" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="prompt">Генерация</TabsTrigger>
-            <TabsTrigger value="gallery">Галерея</TabsTrigger>
-          </TabsList>
+        <div className="mb-6">
+          <SegmentedRadioGroup
+            size="l"
+            value={activeTab}
+            onChange={handleTabChange}
+            options={[
+              { value: 'prompt', content: 'Генерация' },
+              { value: 'gallery', content: 'Галерея' },
+            ]}
+            style={{ width: '100%' }}
+          />
+        </div>
 
-          <TabsContent value="prompt" className="space-y-4 mt-4">
+        {activeTab === 'prompt' && (
+          <div className="space-y-4 mt-4">
             <div>
               <Text variant="body-1" className="block mb-2">
                 Опишите желаемое изображение
@@ -269,9 +281,11 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
                 </Button>
               )}
             </DialogFooter>
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="gallery" className="mt-4">
+        {activeTab === 'gallery' && (
+          <div className="mt-4">
             <Text variant="body-1" className="block mb-4">Выберите изображение из галереи:</Text>
             <div className="gallery-container" style={{ minHeight: "300px" }}>
               <StoredImageGallery
@@ -287,8 +301,8 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
                 Закрыть
               </Button>
             </DialogFooter>
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
       </div>
     </Modal>
   );

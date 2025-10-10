@@ -1,0 +1,55 @@
+/* ChatMessageForm styles */
+
+.chat-message-form {
+  /* Можно добавить специфичные стили для формы */
+}
+
+.chat-message-form__textarea {
+  /* Стили для текстового поля */
+  transition: all 0.2s ease;
+}
+
+.chat-message-form__textarea:focus {
+  /* Стили при фокусе */
+}
+
+.chat-message-form__toolbar {
+  /* Стили для панели инструментов с кнопками */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-message-form__button {
+  /* Базовые стили для кнопок */
+}
+
+.chat-message-form__button--reasoning {
+  /* Специфичные стили для кнопки режима рассуждений */
+}
+
+.chat-message-form__button--submit {
+  /* Специфичные стили для кнопки отправки */
+}
+
+/* Анимации */
+@keyframes pulse-reasoning {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.chat-message-form__button--reasoning.active {
+  animation: pulse-reasoning 2s ease-in-out infinite;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .chat-message-form {
+    /* Мобильные стили */
+  }
+}
+

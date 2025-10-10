@@ -64,7 +64,8 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
     } finally {
       setIsLoading(false);
     }
-  }, [toast]); // Включаем toast в зависимости
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Убираем toast из зависимостей, чтобы избежать бесконечного цикла
 
   useEffect(() => {
     fetchImages();

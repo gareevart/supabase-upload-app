@@ -32,7 +32,7 @@ export const MobileChatSidebar = ({ isOpen, onToggle, onClose }: MobileChatSideb
       {/* Mobile sidebar overlay */}
       {isOpen && (
         <div 
-          className="mobile-sidebar-overlay fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          className="mobile-sidebar-overlay fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={onClose}
         />
       )}
@@ -47,7 +47,7 @@ export const MobileChatSidebar = ({ isOpen, onToggle, onClose }: MobileChatSideb
             size="m"
             view="flat"
             onClick={onClose}
-            title="Закрыть меню"
+            title="Close menu"
           >
             <Icon data={Xmark} size={18} />
           </Button>
@@ -86,7 +86,7 @@ export const BurgerMenuButton = ({ onClick, isMenuOpen }: BurgerMenuButtonProps)
       size="l"
       view="outlined"
       onClick={handleClick}
-      title="Открыть меню чатов"
+      title="Open menu"
     >
       <Icon data={Bars} size={20} />
     </Button>
