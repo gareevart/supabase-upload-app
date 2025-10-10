@@ -27,6 +27,7 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [wasAuthenticated, setWasAuthenticated] = useState(false);
 
   useEffect(() => {
     // Получаем текущего пользователя при загрузке
@@ -59,6 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (session?.user) {
           setUser(session.user);
+          setWasAuthenticated(true);
         } else {
           setUser(null);
         }
@@ -78,16 +80,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (event === 'SIGNED_IN') {
           setUser(session?.user ?? null);
+          setWasAuthenticated(true);
           if (session?.user) {
             localStorage.setItem('user_id', session.user.id);
           }
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
-          localStorage.clear();
-          // Принудительно перезагружаем страницу для очистки всех состояний
-          if (typeof window !== 'undefined' && !window.location.pathname.includes('/auth')) {
+          // Очищаем только auth-related данные из localStorage
+          localStorage.removeItem('user_id');
+          // Перенаправляем на /auth только если пользователь был авторизован
+          if (wasAuthenticated && typeof window !== 'undefined' && !window.location.pathname.includes('/auth')) {
             window.location.href = '/auth';
           }
+          setWasAuthenticated(false);
         } else if (event === 'USER_UPDATED') {
           
           setUser(session?.user ?? null);
@@ -102,7 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [wasAuthenticated]);
 
   const signOut = async () => {
     try {
