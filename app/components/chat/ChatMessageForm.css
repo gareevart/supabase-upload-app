@@ -3,7 +3,11 @@
 .chat-message-form {
   display: flex;
   flex-direction: column;
+  background-color: var(--g-color-base-generic);
   gap: 8px;
+  margin: var(--g-spacing-2);
+  border-radius: var(--g-border-radius-l);
+  padding: var(--g-spacing-3);
 }
 
 .chat-message-form__files-list {
@@ -22,27 +26,11 @@
   transition: all 0.2s ease;
 }
 
-.chat-message-form__textarea:focus {
-  /* Стили при фокусе */
-}
-
 .chat-message-form__toolbar {
   /* Стили для панели инструментов с кнопками */
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.chat-message-form__button {
-  /* Базовые стили для кнопок */
-}
-
-.chat-message-form__button--reasoning {
-  /* Специфичные стили для кнопки режима рассуждений */
-}
-
-.chat-message-form__button--submit {
-  /* Специфичные стили для кнопки отправки */
 }
 
 /* Анимации */

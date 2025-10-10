@@ -4,7 +4,7 @@ import { ChatInterface } from "@/app/components/chat/ChatInterface";
 import { ChatLayout } from "@/app/components/chat/ChatLayout";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { redirect } from "next/navigation";
-import { Spin } from "@gravity-ui/uikit";
+import { Spin, Text } from "@gravity-ui/uikit";
 
 const ChatPage = () => {
   const params = useParams<{ slug: string }>();

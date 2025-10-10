@@ -113,9 +113,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
 
   if (error) {
     return (
-      <div className="text-red-500 text-center p-4">
-        Произошла ошибка при загрузке чата. Пожалуйста, попробуйте позже.
-      </div>
+      <Text variant="subheader-2" color="danger">Error loading chat</Text>
     );
   }
 
@@ -129,29 +127,26 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
 
   return (
     <div className="flex flex-col h-full">
-      <header className="p-4 flex justify-between items-center bg-background">
-        <div>
-          <div className="flex items-center gap-2">
+      <header className="p-4 gap-2 justify-between flex items-center">
+        <div className="flex gap-2">
             {reasoningMode && selectedModel === 'yandexgpt' && (
               <Label theme="info" size="m">
                 Режим рассуждений
               </Label>
             )}
-          </div>
           {chat.tokens_used && (
-            <div className="text-xs text-muted-foreground mt-1 flex items-center">
               <Label theme="unknown" size="m" value={chat.tokens_used.toString()}>Использовано токенов</Label>
-            </div>
           )}
         </div>
-        <Button 
+
+          <Button 
           variant="outline" 
           size="m" 
           onClick={() => setOpen(true)}
           title="Настройки"
-        >
+          >
            <Icon data={Gear} size={18} />
-        </Button>
+          </Button>  
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 chat-messages">
@@ -288,64 +283,67 @@ const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
         isUser ? "justify-end" : "justify-start"
       }`}
     >
-      <div
-        className={`rounded-lg p-4 max-w-[80%] relative group ${
-          isUser
-            ? "chat-bubble bg-primary text-primary-foreground"
-            : "bg-muted text-foreground"
-        }`}
-      >
-        {/* Show attachments if present */}
-        {message.attachments && message.attachments.length > 0 && (
-          <div className="chat-message-attachments mb-3">
-            {message.attachments.map((file, index) => (
-              <a
-                key={index}
-                href={file.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="chat-message-attachment"
-              >
-                <span className="chat-message-attachment__icon">
-                  {file.type.startsWith('image/') ? (
-                    <Image 
-                      src={file.url} 
-                      alt={file.name}
-                      width={200}
-                      height={200}
-                      className="chat-message-attachment__image"
-                      unoptimized={file.url.includes('yandexcloud.net')}
-                    />
-                  ) : (
-                    <span className="chat-message-attachment__file-icon">
-                      {getFileIcon(file.type)}
-                    </span>
-                  )}
-                </span>
-                <div className="chat-message-attachment__info">
-                  <Text variant="body-2" className="chat-message-attachment__name">
-                    {file.name}
-                  </Text>
-                  <Text variant="caption-2" color="secondary">
-                    {formatFileSize(file.size)}
-                  </Text>
-                </div>
-              </a>
-            ))}
-          </div>
-        )}
+      <div className="chat-message-wrapper group">
+        <div
+          className={`rounded-lg p-2 max-w-[80%] ${
+            isUser
+              ? "chat-bubble bg-primary text-primary-foreground"
+              : "bg-muted text-foreground bg-primary"
+          }`}
+        >
+          {/* Show attachments if present */}
+          {message.attachments && message.attachments.length > 0 && (
+            <div className="chat-message-attachments mb-3">
+              {message.attachments.map((file, index) => (
+                <a
+                  key={index}
+                  href={file.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="chat-message-attachment"
+                >
+                  <span className="chat-message-attachment__icon">
+                    {file.type.startsWith('image/') ? (
+                      <Image 
+                        src={file.url} 
+                        alt={file.name}
+                        width={200}
+                        height={200}
+                        className="chat-message-attachment__image"
+                        unoptimized={file.url.includes('yandexcloud.net')}
+                      />
+                    ) : (
+                      <span className="chat-message-attachment__file-icon">
+                        {getFileIcon(file.type)}
+                      </span>
+                    )}
+                  </span>
+                  <div className="chat-message-attachment__info">
+                    <Text variant="body-2" className="chat-message-attachment__name">
+                      {file.name}
+                    </Text>
+                    <Text variant="caption-2" color="secondary">
+                      {formatFileSize(file.size)}
+                    </Text>
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
 
-        {/* Message content */}
-        {message.content && (
-          <div className="whitespace-pre-wrap break-words prose prose-sm dark:prose-invert max-w-none">
-            <ReactMarkdown>{message.content}</ReactMarkdown>
-          </div>
-        )}
-
+          {/* Message content */}
+          {message.content && (
+            <div className="whitespace-pre-wrap break-words prose prose-sm dark:prose-invert max-w-none">
+              <ReactMarkdown>{message.content}</ReactMarkdown>
+            </div>
+          )}
+        </div>
+        
+        {/* Copy button below message */}
         <Button
           view="flat" 
           size="s" 
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="chat-copy-button opacity-0 group-hover:opacity-100 transition-opacity"
           onClick={() => onCopy(message.content)}
         >
           <Icon data={Copy} size={18} />

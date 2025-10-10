@@ -47,7 +47,7 @@ const ChatPage = () => {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <Spin size="m" />
-          <div className="mt-4">Загрузка...</div>
+          <div className="mt-4">Loading...</div>
         </div>
       </div>
     );
@@ -65,7 +65,7 @@ const ChatPage = () => {
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <Spin size="m" />
-            <div className="mt-4">Загрузка чата...</div>
+            <div className="mt-4">Chat loading</div>
           </div>
         </div>
       </div>

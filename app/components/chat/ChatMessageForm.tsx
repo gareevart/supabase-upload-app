@@ -52,7 +52,7 @@ export const ChatMessageForm = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="chat-message-form p-4"
+      className="chat-message-form"
     >
       {/* Show attached files list if any */}
       {attachedFiles.length > 0 && (

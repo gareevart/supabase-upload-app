@@ -45,7 +45,6 @@
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
-  padding: 1.5rem;
   min-height: 0;
 }
 
@@ -84,8 +83,6 @@
   display: flex;
   flex-direction: column;
   background-color: var(--g-color-base-background);
-  border: 1px solid var(--g-color-line-generic);
-  border-radius: 8px;
   overflow: hidden;
   min-height: 0; /* Important for flex children */
 }

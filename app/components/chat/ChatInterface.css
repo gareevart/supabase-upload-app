@@ -152,7 +152,7 @@
 .chat-message-attachments {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--g-spacing-2);
   margin-bottom: 12px;
 }
 
@@ -162,17 +162,17 @@
   gap: 10px;
   padding: 10px;
   background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  border: 1px solid var(--g-color-line-generic-hover);
+  border-radius: var(--g-spacing-2);
   text-decoration: none;
   color: inherit;
   transition: all 0.2s ease;
 }
 
 .chat-message-attachment:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--g-color-base-generic);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--g-color-line-generic-hover);
 }
 
 .chat-message-attachment__icon {
@@ -234,4 +234,16 @@
   .chat-message-attachment {
     padding: 8px;
   }
+}
+
+/* Chat message wrapper styles */
+.chat-message-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--g-spacing-1);
+}
+
+.chat-copy-button {
+  margin-left: var(--g-spacing-2);
 }
