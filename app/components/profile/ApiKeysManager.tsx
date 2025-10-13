@@ -14,7 +14,8 @@ import {
   TableColumnConfig,
   TableDataItem,
   Label,
-  DropdownMenu
+  DropdownMenu,
+  HelpMark
 } from '@gravity-ui/uikit';
 import { Copy, Plus, TrashBin, Key, BookOpen, EyeSlash, Eye, CircleStop, CirclePlay, Ellipsis } from '@gravity-ui/icons';
 import { useToast } from '@/hooks/use-toast';
@@ -405,7 +406,14 @@ export const ApiKeysManager: React.FC = () => {
       <Card theme="normal" size="l" className='responsive-card'>
         <div className="flex justify-between items-start mt-1">
           <div className="grid">
-            <Text variant="subheader-3" color="primary">API Keys</Text>
+            <div className='flex items-center gap-1'>
+              <Text variant="subheader-3" color="primary">API Keys</Text>
+              <HelpMark>
+                <Text variant="body-1" color="secondary">
+                  Also use these keys for working with MCP
+                </Text>
+              </HelpMark>
+            </div>
             <Text variant="body-1" color="secondary" className="mt-1">
               Manage API keys for site access</Text>
           </div>
