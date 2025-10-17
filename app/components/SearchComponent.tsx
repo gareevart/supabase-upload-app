@@ -1,12 +1,11 @@
 "use client"
 import { useState, useEffect, useCallback } from 'react';
-import { Text, TextInput, Card, Button, Skeleton, Icon } from '@gravity-ui/uikit';
-import { Magnifier, Calendar, Person } from '@gravity-ui/icons';
+import { Text, TextInput, Card, Skeleton, Icon } from '@gravity-ui/uikit';
+import { Magnifier } from '@gravity-ui/icons';
 import { supabase } from '@/lib/supabase';
 import { extractPlainText, extractSearchContext } from '@/lib/tiptapConverter';
-import Link from 'next/link';
-import Image from 'next/image';
-import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/app/components/ui/card';
+import { BlogPostCard } from '@/shared/ui/BlogPostCard';
+import { useIsMobile } from '@/hooks/use-mobile';
 import './components.css';
 
 export type SearchResult = {
@@ -28,7 +27,7 @@ export type SearchResult = {
   } | null;
 };
 
-interface SearchComponentProps {
+export interface SearchComponentProps {
   title?: string;
   placeholder?: string;
   noResultsText?: string;
@@ -39,6 +38,8 @@ interface SearchComponentProps {
   className?: string;
   onResultClick?: (result: SearchResult) => void;
   onUpdate?: (query: string) => void;
+  onFocusChange?: (focused: boolean) => void;
+  expandOnFocus?: boolean;
 }
 
 export default function SearchComponent({
@@ -51,12 +52,16 @@ export default function SearchComponent({
   readButtonText = "Читать",
   className = "",
   onResultClick,
-  onUpdate
+  onUpdate,
+  onFocusChange,
+  expandOnFocus = false
 }: SearchComponentProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const isMobile = useIsMobile();
 
   const performSearch = useCallback(async (query: string) => {
     if (!query.trim()) {
@@ -211,23 +216,33 @@ export default function SearchComponent({
     return () => clearTimeout(timeoutId);
   }, [searchQuery, performSearch]);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
   const handleResultClick = (post: SearchResult) => {
     if (onResultClick) {
       onResultClick(post);
     }
   };
 
+  const handleFocus = () => {
+    setIsFocused(true);
+    if (onFocusChange) {
+      onFocusChange(true);
+    }
+  };
+
+  const handleBlur = () => {
+    // Небольшая задержка перед сбросом фокуса, чтобы пользователь мог кликнуть на результаты
+    setTimeout(() => {
+      setIsFocused(false);
+      if (onFocusChange) {
+        onFocusChange(false);
+      }
+    }, 200);
+  };
+
   return (
-    <div className={`search-container relative ${className}`}>
+    <div 
+      className={`search-container relative ${className} ${expandOnFocus && isFocused ? 'expanded' : ''}`}
+    >
       <TextInput
         size="l"
         hasClear={true}
@@ -245,6 +260,8 @@ export default function SearchComponent({
             onUpdate(value);
           }
         }}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         startContent={<Icon data={Magnifier} size={20} className='search-left-icon'/>}
       />
 
@@ -253,15 +270,20 @@ export default function SearchComponent({
           {isLoading && (
             <div className="w-full space-y-4">
               {[1, 2, 3].map((index) => (
-                <Card key={index} className="w-full">
-                  <CardHeader>
+                <Card key={index} className="w-full min-w-[280px] overflow-hidden" size="l">
+                  <div className="p-2">
+                    <div className="h-48 w-full rounded-lg">
+                      <Skeleton className="h-full w-full" />
+                    </div>
+                  </div>
+                  <div className="p-4">
                     <Skeleton className="h-6 w-3/4 mb-2" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-4 w-full mb-2" />
-                    <Skeleton className="h-4 w-2/3" />
-                  </CardContent>
+                    <Skeleton className="h-4 w-1/2 mb-4" />
+                    <div className="flex justify-between items-center">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-8 w-16" />
+                    </div>
+                  </div>
                 </Card>
               ))}
             </div>
@@ -279,81 +301,24 @@ export default function SearchComponent({
           )}
 
           {!isLoading && searchResults.length > 0 && (
-            <div className="w-full space-y-6">
+            <div className="w-full">
               <Text variant="subheader-1" className="mb-4">
                 Найдено результатов: {searchResults.length}
               </Text>
               
-              {searchResults.map((post) => (
-                <Card key={post.id} className="w-full overflow-hidden search-result-card">
-                  <div className="flex">
-                    {post.featured_image && (
-                      <div className="w-48 h-32 flex-shrink-0 overflow-hidden">
-                        <Link href={`/blog/${post.slug}`}>
-                          <Image
-                            src={post.featured_image}
-                            alt={post.title}
-                            width={192}
-                            height={128}
-                            className="search-result-image"
-                          />
-                        </Link>
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <CardHeader>
-                        <CardTitle className="text-xl">
-                          <Link
-                            href={post.slug ? `/blog/${post.slug}` : '#'}
-                            className="hover:text-blue-600 transition-colors"
-                          >
-                            {post.title}
-                          </Link>
-                        </CardTitle>
-                        {post.excerpt && !post.searchContext && (
-                          <CardDescription className="line-clamp-2">
-                            {post.excerpt}
-                          </CardDescription>
-                        )}
-                        {post.searchContext && (
-                          <CardDescription className="line-clamp-2">
-                            <span
-                              className="search-context"
-                              dangerouslySetInnerHTML={{
-                                __html: post.searchContext.highlightedContext
-                              }}
-                            />
-                          </CardDescription>
-                        )}
-                      </CardHeader>
-                      <CardFooter className="flex justify-between items-center">
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Icon data={Calendar} size={16} />
-                            {post.created_at ? formatDate(post.created_at) : 'Без даты'}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Icon data={Person} size={16} />
-                            {post.author?.name || post.author?.username || 'Аноним'}
-                          </div>
-                        </div>
-                        <Button
-                          view="normal"
-                          size="m"
-                          onClick={() => {
-                            handleResultClick(post);
-                            if (!onResultClick) {
-                              window.location.href = `/blog/${post.slug}`;
-                            }
-                          }}
-                        >
-                          {readButtonText}
-                        </Button>
-                      </CardFooter>
-                    </div>
-                  </div>
-                </Card>
-              ))}
+              <div className={`${!isMobile ? 'space-y-6' : 'space-y-4'}`}>
+                {searchResults.map((post, index) => (
+                  <BlogPostCard
+                    key={post.id}
+                    post={post}
+                    gridView={false}
+                    isPriority={index < 2}
+                    showReadButton={true}
+                    readButtonText={readButtonText}
+                    onReadClick={() => handleResultClick(post)}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </div>

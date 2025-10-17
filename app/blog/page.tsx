@@ -15,6 +15,8 @@ type PostFilter = 'all' | 'published' | 'drafts';
 function BlogPageContent() {
   const [activeTab, setActiveTab] = useState<string>("posts")
   const [searchActive, setSearchActive] = useState(false)
+  const [searchFocused, setSearchFocused] = useState(false)
+  const [controlsHidden, setControlsHidden] = useState(false)
   const searchParams = useSearchParams()
   const router = useRouter()
   
@@ -45,7 +47,36 @@ function BlogPageContent() {
   }
 
   const handleSearchQueryChange = (query: string) => {
-    setSearchActive(!!query.trim())
+    const hasContent = !!query.trim()
+    setSearchActive(hasContent)
+    
+    // Если есть содержимое, оставляем контролы скрытыми
+    // Если содержимого нет и нет фокуса, показываем контролы
+    if (!hasContent && !searchFocused) {
+      setControlsHidden(false)
+    } else if (hasContent) {
+      setControlsHidden(true)
+    }
+  }
+
+  const handleSearchFocus = (focused: boolean) => {
+    if (focused) {
+      // Сначала скрываем контролы
+      setControlsHidden(true)
+      // Затем через 300ms (после анимации скрытия) расширяем поле
+      setTimeout(() => {
+        setSearchFocused(true)
+      }, 300)
+    } else {
+      // При потере фокуса сначала сужаем поле
+      setSearchFocused(false)
+      // Затем показываем контролы только если нет текста в поиске
+      setTimeout(() => {
+        if (!searchActive) {
+          setControlsHidden(false)
+        }
+      }, 300)
+    }
   }
 
   // Функция для обновления URL параметров
@@ -120,9 +151,20 @@ function BlogPageContent() {
             readButtonText="Read"
             onResultClick={handleSearchResultClick}
             onUpdate={handleSearchQueryChange}
+            onFocusChange={handleSearchFocus}
             className="flex-1"
+            expandOnFocus={true}
           />
-          <div className="flex gap-2 items-center">
+          <div 
+            className="flex gap-2 items-center transition-all duration-300"
+            style={{
+              opacity: controlsHidden ? 0 : 1,
+              pointerEvents: controlsHidden ? 'none' : 'auto',
+              transform: controlsHidden ? 'translateX(20px)' : 'translateX(0)',
+              width: controlsHidden ? 0 : 'auto',
+              overflow: 'hidden',
+            }}
+          >
             {isAuthenticated && hasDrafts && (
               <Select
                 size="l"
@@ -135,7 +177,7 @@ function BlogPageContent() {
             {!isMobile && (
               <SegmentedRadioGroup
                 size="l"
-                name="group1"
+                name="view"
                 defaultValue="grid"
                 value={gridView ? 'grid' : 'list'}
                 onUpdate={(value) => handleViewChange(value === 'grid')}>

@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { Card, Icon, Button, Skeleton, Text, Pagination } from '@gravity-ui/uikit';
-import { Calendar, Pencil, Person, TrashBin } from '@gravity-ui/icons';
+import { Card, Skeleton, Pagination, Button } from '@gravity-ui/uikit';
 import { useToast } from "@/hooks/use-toast";
-import Link from "next/link";
-import Image from "next/image";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useBlogPosts, useAuth } from "@/shared/lib/hooks/useBlogPosts";
 import { deleteBlogPost } from "@/shared/api/blog";
+import { BlogPostCard } from "@/shared/ui/BlogPostCard";
+import type { BlogPost } from "@/shared/ui/BlogPostCard";
 
 interface PostListProps {
   onlyMyPosts?: boolean;
@@ -69,13 +68,8 @@ export const PostList = ({
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("ru-RU", {
-      year: "numeric",
-      month: "long",
-      day: "numeric"
-    });
+  const handleEditPost = (postId: string) => {
+    window.location.href = `/blog/edit/${postId}`;
   };
 
   if (isLoading) {
@@ -133,82 +127,18 @@ export const PostList = ({
           const isPriority = gridView ? index < 4 : index < 2;
           
           return (
-          <Card size="l" key={post.id} className="w-full min-w-[280px] overflow-hidden">
-            <div className="p-2">
-              {post.featured_image ? (
-                <div className="h-48 w-full overflow-hidden rounded-lg">
-                  <Link href={`/blog/${post.slug}`} style={{ position: 'relative', display: 'block', height: '100%', width: '100%' }}>
-                    <Image
-                      src={post.featured_image}
-                      alt={post.title}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="object-cover transition-all duration-300 hover:scale-105"
-                      priority={isPriority}
-                      loading={isPriority ? undefined : "lazy"}
-                    />
-                  </Link>
-                </div>
-              ) : (
-                <div className="h-48 w-full bg-gray-100 rounded-lg"></div>
-              )}
-            </div>
-            
-              <div className="p-4">
-                <div className="mb-2">
-                {draftsOnly ? (
-                  <Text ellipsis={true} whiteSpace="break-spaces" ellipsisLines={2} variant="header-1">{post.title}</Text>
-                ) : (
-                  <Link href={post.slug ? `/blog/${post.slug}` : `/blog/edit/${post.id}`}>
-                    <Text ellipsis={true} whiteSpace="break-spaces" ellipsisLines={2} variant="header-1">{post.title}</Text>
-                  </Link>
-                )}
-                  {post.excerpt}
-                </div>
-
-              
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center">
-                   <Icon data={Calendar} size={16} />
-                  {post.created_at ? formatDate(post.created_at) : 'Without date'}
-                </div>
-              </div>
-              {draftsOnly ? (
-                <div className="flex items-center gap-2">
-                  <Button
-                    view="outlined"
-                    size="m"
-                    className="flex items-center gap-1"
-                    onClick={() => window.location.href = `/blog/edit/${post.id}`}
-                  >
-                    <Icon data={Pencil} size={16} />
-                    <span>Edit</span>
-                  </Button>
-                  <Button
-                    view="outlined-danger"
-                    size="m"
-                    onClick={() => handleDeletePost(post.id)}
-                    loading={deletingPostId === post.id}
-                    disabled={deletingPostId === post.id}
-                    title="Delete draft"
-                  >
-                    <Icon data={TrashBin} size={16} />
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  view="normal"
-                  size="m"
-                  onClick={() => window.location.href = `/blog/${post.slug}`}
-                >
-                  Read
-                </Button>
-              )}
-            </div>
-            </div>
-          </Card>
-        )})}
+            <BlogPostCard
+              key={post.id}
+              post={post as BlogPost}
+              gridView={gridView}
+              isPriority={isPriority}
+              isDraft={draftsOnly}
+              onEdit={handleEditPost}
+              onDelete={handleDeletePost}
+              isDeleting={deletingPostId === post.id}
+            />
+          );
+        })}
       </div>
       
       {/* Пагинация - показывать только если постов больше 10 */}
