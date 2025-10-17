@@ -14,7 +14,8 @@ import {
   TableColumnConfig,
   TableDataItem,
   Label,
-  DropdownMenu
+  DropdownMenu,
+  HelpMark
 } from '@gravity-ui/uikit';
 import { Copy, Plus, TrashBin, Key, BookOpen, EyeSlash, Eye, CircleStop, CirclePlay, Ellipsis } from '@gravity-ui/icons';
 import { useToast } from '@/hooks/use-toast';
@@ -60,7 +61,7 @@ export const ApiKeysManager: React.FC = () => {
   const fetchApiKeys = useCallback(async () => {
     try {
       const response = await authFetch('/api/api-keys');
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('API error:', {
@@ -70,12 +71,12 @@ export const ApiKeysManager: React.FC = () => {
         });
         throw new Error(errorData.error || errorData.details || 'Failed to fetch API keys');
       }
-      
+
       const data = await response.json();
       setApiKeys(data.apiKeys || []);
     } catch (error) {
       console.error('Error fetching API keys:', error);
-      
+
       let description = 'Не удалось загрузить API ключи';
       if (error instanceof Error) {
         if (error.message === 'No active session') {
@@ -84,7 +85,7 @@ export const ApiKeysManager: React.FC = () => {
           description = error.message;
         }
       }
-      
+
       toast({
         title: 'Ошибка',
         description,
@@ -138,10 +139,10 @@ export const ApiKeysManager: React.FC = () => {
       setShowNewKey(true);
       setShowCreateModal(false);
       setNewKeyName('');
-      
+
       // Обновляем список ключей
       await fetchApiKeys();
-      
+
       toast({
         title: 'Успешно',
         description: 'API ключ создан',
@@ -184,7 +185,7 @@ export const ApiKeysManager: React.FC = () => {
       await fetchApiKeys();
       toast({
         title: 'Успешно',
-        description: `API ключ ${currentStatus ? 'деактивирован' : 'активирован'}`,
+        description: `API ключ ${currentStatus ? 'Деактивирован' : 'Активирован'}`,
       });
     } catch (error) {
       console.error('Error toggling API key status:', error);
@@ -247,7 +248,13 @@ export const ApiKeysManager: React.FC = () => {
   // Форматирование даты
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Never';
-    return new Date(dateString).toLocaleString('en-US');
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${day}.${month}.${year} ${hours}:${minutes}`;
   };
 
   // Форматирование относительного времени
@@ -255,13 +262,13 @@ export const ApiKeysManager: React.FC = () => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) return 'Less than an hour ago';
     if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
-    
+
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 30) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
-    
+
     return formatDate(dateString);
   };
 
@@ -341,6 +348,7 @@ export const ApiKeysManager: React.FC = () => {
       id: 'actions',
       name: '',
       width: 50,
+      sticky: 'end',
       template: (item) => {
         const apiKey = apiKeys.find(key => key.id === item.actions);
         if (!apiKey) return null;
@@ -394,11 +402,18 @@ export const ApiKeysManager: React.FC = () => {
   }
 
   return (
-      <>
+    <>
       <Card theme="normal" size="l" className='responsive-card'>
         <div className="flex justify-between items-start mt-1">
           <div className="grid">
-            <Text variant="subheader-3" color="primary">API Keys</Text>
+            <div className='flex items-center gap-1'>
+              <Text variant="subheader-3" color="primary">API Keys</Text>
+              <HelpMark>
+                <Text variant="body-1" color="secondary">
+                  Also use these keys for working with MCP
+                </Text>
+              </HelpMark>
+            </div>
             <Text variant="body-1" color="secondary" className="mt-1">
               Manage API keys for site access</Text>
           </div>
@@ -416,9 +431,9 @@ export const ApiKeysManager: React.FC = () => {
             <div className="p-8 text-center">
               <div className='grid text-center'>
                 <Text variant="subheader-1" color="secondary" className="mb-4">
-                <Icon data={Key} size={44} className="mx-auto mb-4"/>
-                You don&apos;t have any API keys yet
-              </Text>
+                  <Icon data={Key} size={44} className="mx-auto mb-4" />
+                  You don&apos;t have any API keys yet
+                </Text>
               </div>
               <Button
                 view="action"
@@ -457,7 +472,7 @@ export const ApiKeysManager: React.FC = () => {
           <div className="space-y-4 mt-4">
             <div>
               <Text variant="subheader-1" className="mb-2">Название ключа</Text>
-               <Text variant="body-1" color="secondary" className="grid mt-1">
+              <Text variant="body-1" color="secondary" className="grid mt-1">
                 Выберите понятное название для идентификации ключа
               </Text>
               <TextInput
@@ -472,7 +487,7 @@ export const ApiKeysManager: React.FC = () => {
             </div>
 
             <div className="mt-4">
-            <Alert theme="info" title="API ключ будет показан только один раз после создания" message="Обязательно сохраните его в безопасном месте" />
+              <Alert theme="info" title="API ключ будет показан только один раз после создания" message="Обязательно сохраните его в безопасном месте" />
             </div>
           </div>
 
@@ -555,7 +570,7 @@ export const ApiKeysManager: React.FC = () => {
           </div>
         </div>
       </Modal>
- </>
+    </>
 
   );
 };
