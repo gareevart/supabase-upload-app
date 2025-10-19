@@ -19,15 +19,15 @@ function BlogPageContent() {
   const [controlsHidden, setControlsHidden] = useState(false)
   const searchParams = useSearchParams()
   const router = useRouter()
-  
+
   // Получаем фильтр и вид из URL параметров
   const filterParam = searchParams?.get('filter') as PostFilter | null
   const viewParam = searchParams?.get('view')
-  
+
   const [gridView, setGridView] = useState(viewParam !== 'list');
   const [postFilter, setPostFilter] = useState<PostFilter>(filterParam || 'all');
   const isMobile = useIsMobile()
-  
+
   // Синхронизируем состояние с URL параметрами
   useEffect(() => {
     if (filterParam && ['all', 'published', 'drafts'].includes(filterParam)) {
@@ -49,7 +49,7 @@ function BlogPageContent() {
   const handleSearchQueryChange = (query: string) => {
     const hasContent = !!query.trim()
     setSearchActive(hasContent)
-    
+
     // Если есть содержимое, оставляем контролы скрытыми
     // Если содержимого нет и нет фокуса, показываем контролы
     if (!hasContent && !searchFocused) {
@@ -88,7 +88,7 @@ function BlogPageContent() {
     if (!view) {
       params.set('view', 'list')
     }
-    
+
     const queryString = params.toString()
     const newUrl = queryString ? `/blog?${queryString}` : '/blog'
     router.push(newUrl, { scroll: false })
@@ -144,7 +144,7 @@ function BlogPageContent() {
             </Button>
           )}
         </div>
-        <div className="relative flex justify-between gap-4 items-top pb-4">
+        <div className={`relative flex justify-between items-top pb-4 ${controlsHidden || (!isAuthenticated || !hasDrafts) && isMobile ? 'gap-0' : 'gap-4'}`}>
           <SearchComponent
             title=""
             placeholder="Поиск по блогу..."
@@ -155,7 +155,7 @@ function BlogPageContent() {
             className="flex-1"
             expandOnFocus={true}
           />
-          <div 
+          <div
             className="flex gap-2 items-center transition-all duration-300"
             style={{
               opacity: controlsHidden ? 0 : 1,
@@ -183,7 +183,7 @@ function BlogPageContent() {
                 onUpdate={(value) => handleViewChange(value === 'grid')}>
                 <SegmentedRadioGroup.Option value="list">
                   <Icon data={ListUl} size={18} />
-                  </SegmentedRadioGroup.Option>
+                </SegmentedRadioGroup.Option>
                 <SegmentedRadioGroup.Option value="grid">
                   <Icon data={LayoutCellsLarge} size={18} />
                 </SegmentedRadioGroup.Option>
@@ -193,7 +193,9 @@ function BlogPageContent() {
         </div>
 
         {!searchActive && (
-          <PostList {...getPostListProps()} key={`${postFilter}-${gridView}`} />
+          <div className="mt-2">
+            <PostList {...getPostListProps()} key={`${postFilter}-${gridView}`} />
+          </div>
         )}
       </main>
     </div>

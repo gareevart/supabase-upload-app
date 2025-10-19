@@ -78,7 +78,7 @@ export default function SearchComponent({
 
     try {
       const searchTerm = query.toLowerCase();
-      
+
       // Сначала поиск по заголовку и описанию в базе данных
       const { data: titleExcerptResults, error: titleError } = await supabase
         .from('blog_posts')
@@ -138,7 +138,7 @@ export default function SearchComponent({
           if (plainText.toLowerCase().includes(searchTerm)) {
             // Извлекаем контекст вокруг найденного термина
             const searchContext = extractSearchContext(plainText, query, 3, 5);
-            
+
             contentResults.push({
               id: post.id,
               title: post.title,
@@ -240,8 +240,8 @@ export default function SearchComponent({
   };
 
   return (
-    <div 
-      className={`search-container relative ${className} ${expandOnFocus && isFocused ? 'expanded' : ''}`}
+    <div
+      className={`search-container relative z-[200] ${className} ${expandOnFocus && isFocused ? 'expanded' : ''}`}
     >
       <TextInput
         size="l"
@@ -262,11 +262,11 @@ export default function SearchComponent({
         }}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        startContent={<Icon data={Magnifier} size={20} className='search-left-icon'/>}
+        startContent={<Icon data={Magnifier} size={20} className='search-left-icon' />}
       />
 
       {(isLoading || hasSearched) && (
-        <div className="search-results-container w-full absolute left-0 right-0 z-10 mt-2">
+        <div className={`search-results-container w-full relative z-[200] ${isMobile ? 'mt-8' : 'mt-6'}`}>
           {isLoading && (
             <div className="w-full space-y-4">
               {[1, 2, 3].map((index) => (
@@ -305,7 +305,7 @@ export default function SearchComponent({
               <Text variant="subheader-1" className="mb-4">
                 Найдено результатов: {searchResults.length}
               </Text>
-              
+
               <div className={`${!isMobile ? 'space-y-6' : 'space-y-4'}`}>
                 {searchResults.map((post, index) => (
                   <BlogPostCard
