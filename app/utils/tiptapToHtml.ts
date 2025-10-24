@@ -1,5 +1,5 @@
 import { generateHTML } from '@tiptap/html';
-import { extensions } from '@/app/components/blog/editor/extensions';
+import { extensions } from '@/app/components/blog/editor/serverExtensions';
 
 export function tiptapToHtml(jsonContent: any): string {
   try {
@@ -9,7 +9,7 @@ export function tiptapToHtml(jsonContent: any): string {
       if (jsonContent.trim().startsWith('<') && jsonContent.trim().endsWith('>')) {
         return jsonContent;
       }
-      
+
       // Check if it's a stringified JSON
       if (jsonContent.trim().startsWith('{') && jsonContent.trim().endsWith('}')) {
         try {
@@ -23,21 +23,21 @@ export function tiptapToHtml(jsonContent: any): string {
           return jsonContent;
         }
       }
-      
+
       // Otherwise, it's plain text
       return jsonContent;
     }
-    
+
     // Handle null or undefined
     if (!jsonContent) return '';
-    
+
     // Handle JSON content
     if (typeof jsonContent === 'object') {
       // If it's a proper TipTap JSON structure with content
       if (jsonContent.type === 'doc' || jsonContent.content) {
         return generateHTML(jsonContent, extensions);
       }
-      
+
       // Try to stringify and parse if it's some other object
       try {
         const contentStr = JSON.stringify(jsonContent);
@@ -51,14 +51,14 @@ export function tiptapToHtml(jsonContent: any): string {
         } catch (parseError) {
           console.error('Error parsing JSON content:', parseError);
         }
-        
+
         // If we can't convert it to HTML, return a placeholder
         return '<p>Unable to render content</p>';
       } catch (stringifyError) {
         console.error('Error stringifying content:', stringifyError);
       }
     }
-    
+
     // Fallback
     console.warn('Unable to properly convert content to HTML, using fallback method');
     return '<p>Unable to render content</p>';
