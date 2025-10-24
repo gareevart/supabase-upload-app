@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Transpile packages that need special handling
   transpilePackages: ['@gravity-ui/uikit', '@gravity-ui/icons'],
-  
+
   // Optimize image loading
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -29,15 +29,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  
+
   // Enable React strict mode for better development experience
   reactStrictMode: true,
-  
+
   // Improve page loading performance
   experimental: {
     scrollRestoration: true,
   },
-  
+
   // Compress assets for better performance
   compress: true,
 
@@ -48,6 +48,13 @@ const nextConfig: NextConfig = {
       '.js': ['.js', '.ts', '.tsx'],
       '.jsx': ['.jsx', '.tsx'],
     };
+
+    // Exclude problematic modules from client-side bundle
+    config.externals = config.externals || [];
+    config.externals.push({
+      'mammoth': 'commonjs mammoth',
+      'pdf2json': 'commonjs pdf2json',
+    });
 
     return config;
   },

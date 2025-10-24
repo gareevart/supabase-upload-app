@@ -3,8 +3,12 @@ import type { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/types';
 import { getResend } from '@/lib/resend';
-import { tiptapToHtml } from '@/app/utils/tiptapToHtml';
+import { loadTiptapToHtml } from '@/lib/tiptap-loader';
 import { processBase64Images } from '@/app/utils/imageProcessor';
+
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // Create a Supabase client with service role for background job
 // This allows the cron job to run without user authentication
@@ -32,14 +36,14 @@ export async function GET(request: NextRequest) {
 
     // Get current time
     const now = new Date();
-    
+
     // Find all scheduled broadcasts that are due to be sent
     const { data: scheduledBroadcasts, error: fetchError } = await supabaseAdmin
       .from('sent_mails')
       .select('*')
       .eq('status', 'scheduled')
       .lte('scheduled_for', now.toISOString());
-    
+
     if (fetchError) {
       console.error('Error fetching scheduled broadcasts:', fetchError);
       return NextResponse.json(
@@ -47,7 +51,7 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
-    
+
     if (!scheduledBroadcasts || scheduledBroadcasts.length === 0) {
       return NextResponse.json({
         success: true,
@@ -55,7 +59,7 @@ export async function GET(request: NextRequest) {
         sent: 0
       });
     }
-    
+
     // Process each scheduled broadcast
     const results = await Promise.allSettled(
       scheduledBroadcasts.map(async (broadcast) => {
@@ -65,7 +69,7 @@ export async function GET(request: NextRequest) {
             .from('sent_mails')
             .update({ status: 'sending' })
             .eq('id', broadcast.id);
-          
+
           // Prepare email HTML content
           let emailHtml: string;
           if (broadcast.content_html) {
@@ -73,7 +77,7 @@ export async function GET(request: NextRequest) {
           } else {
             emailHtml = typeof broadcast.content === 'string'
               ? broadcast.content
-              : tiptapToHtml(broadcast.content);
+              : (await loadTiptapToHtml())(broadcast.content);
           }
 
           // Process base64 images in HTML content before sending
@@ -93,11 +97,11 @@ export async function GET(request: NextRequest) {
             subject: broadcast.subject,
             html: processedHtml,
           });
-          
+
           if (resendError) {
             throw new Error(`Resend API error: ${resendError.message}`);
           }
-          
+
           // Update broadcast with success status
           await supabaseAdmin
             .from('sent_mails')
@@ -107,16 +111,16 @@ export async function GET(request: NextRequest) {
               sent_at: new Date().toISOString()
             })
             .eq('id', broadcast.id);
-          
+
           return {
             id: broadcast.id,
             status: 'sent',
             broadcast_id: resendData.id
           };
-          
+
         } catch (error) {
           console.error(`Error sending scheduled broadcast ${broadcast.id}:`, error);
-          
+
           // Update broadcast with error status
           await supabaseAdmin
             .from('sent_mails')
@@ -124,7 +128,7 @@ export async function GET(request: NextRequest) {
               status: 'failed'
             })
             .eq('id', broadcast.id);
-          
+
           return {
             id: broadcast.id,
             status: 'failed',
@@ -133,11 +137,11 @@ export async function GET(request: NextRequest) {
         }
       })
     );
-    
+
     // Count successful and failed broadcasts
     const sent = results.filter(r => r.status === 'fulfilled' && (r.value as any).status === 'sent').length;
     const failed = results.filter(r => r.status === 'rejected' || (r.value as any).status === 'failed').length;
-    
+
     return NextResponse.json({
       success: true,
       message: `Processed ${results.length} scheduled broadcasts`,
@@ -145,7 +149,7 @@ export async function GET(request: NextRequest) {
       failed,
       results
     });
-    
+
   } catch (error) {
     console.error('Error in GET /api/broadcasts/cron:', error);
     return NextResponse.json(

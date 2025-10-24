@@ -45,7 +45,7 @@ export const FileUploader = ({
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
-  const validateFile = (file: File): string | null => {
+  const validateFile = useCallback((file: File): string | null => {
     // Check file size
     if (file.size > maxFileSize) {
       return `Файл "${file.name}" слишком большой. Максимальный размер: ${formatFileSize(maxFileSize)}`;
@@ -57,9 +57,9 @@ export const FileUploader = ({
     }
 
     return null;
-  };
+  }, [maxFileSize, maxFiles, files.length]);
 
-  const handleFileSelect = async (selectedFiles: FileList | null) => {
+  const handleFileSelect = useCallback(async (selectedFiles: FileList | null) => {
     if (!selectedFiles || selectedFiles.length === 0) return;
 
     setError(null);
@@ -69,7 +69,7 @@ export const FileUploader = ({
 
     for (let i = 0; i < selectedFiles.length; i++) {
       const file = selectedFiles[i];
-      
+
       // Validate file
       const validationError = validateFile(file);
       if (validationError) {
@@ -99,7 +99,7 @@ export const FileUploader = ({
         };
 
         newFiles.push(attachment);
-        
+
         // Update progress to 100%
         setUploadProgress(prev => ({ ...prev, [file.name]: 100 }));
       } catch (err) {
@@ -126,7 +126,7 @@ export const FileUploader = ({
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
+  }, [files, onFilesChange, user?.id, validateFile]);
 
   const handleRemoveFile = (index: number) => {
     const updatedFiles = files.filter((_, i) => i !== index);
@@ -145,7 +145,7 @@ export const FileUploader = ({
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (disabled || uploading) return;
 
     const droppedFiles = e.dataTransfer.files;

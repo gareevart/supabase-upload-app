@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { loadMammoth } from '@/lib/mammoth-loader';
+
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +19,7 @@ export async function POST(request: Request) {
     // Create Supabase client with the user's token
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    
+
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: {
         headers: {
@@ -54,20 +58,20 @@ export async function POST(request: Request) {
     console.log('Document downloaded, size:', docBuffer.byteLength, 'bytes');
 
     let extractedText = '';
-    
+
     // Handle .docx files (Office Open XML)
-    if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
-        fileName.endsWith('.docx')) {
-      // @ts-ignore - Using require for CommonJS module
-      const mammoth = require('mammoth');
+    if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      fileName.endsWith('.docx')) {
+      // Load mammoth dynamically
+      const mammoth = await loadMammoth();
       const result = await mammoth.extractRawText({ buffer: Buffer.from(docBuffer) });
       extractedText = result.value;
       console.log('DOCX parsed, text length:', extractedText.length);
-    } 
+    }
     // Handle .doc files (older Word format) - mammoth doesn't support this well
     else if (fileType === 'application/msword' || fileName.endsWith('.doc')) {
       return NextResponse.json(
-        { 
+        {
           error: 'Старый формат .doc не поддерживается. Пожалуйста, конвертируйте файл в .docx',
           text: '',
           description: '',
@@ -78,7 +82,7 @@ export async function POST(request: Request) {
     }
     else {
       return NextResponse.json(
-        { 
+        {
           error: 'Unsupported document format',
           text: '',
           description: '',
@@ -90,13 +94,13 @@ export async function POST(request: Request) {
 
     // Create a comprehensive description
     let fullDescription = '';
-    
+
     if (extractedText && extractedText.trim()) {
       // Limit text to first 3000 characters to avoid token overflow
-      const truncatedText = extractedText.length > 3000 
-        ? extractedText.substring(0, 3000) + '...' 
+      const truncatedText = extractedText.length > 3000
+        ? extractedText.substring(0, 3000) + '...'
         : extractedText;
-      
+
       fullDescription = `Word документ "${fileName || 'документ'}":\n\n${truncatedText}`;
     } else {
       fullDescription = `Word документ "${fileName || 'документ'}" - текст не обнаружен или документ пустой`;
@@ -117,7 +121,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error in analyze-document API:', error);
     return NextResponse.json(
-      { 
+      {
         error: error instanceof Error ? error.message : 'Unknown error',
         text: '',
         description: '',

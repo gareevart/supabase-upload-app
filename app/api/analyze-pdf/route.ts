@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { loadPDFParser } from '@/lib/pdf-loader';
+
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +19,7 @@ export async function POST(request: Request) {
     // Create Supabase client with the user's token
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    
+
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: {
         headers: {
@@ -54,16 +58,15 @@ export async function POST(request: Request) {
     console.log('PDF downloaded, size:', pdfBuffer.byteLength, 'bytes');
 
     // Extract text from PDF using pdf2json
-    const PDFParser = require('pdf2json');
-    
+    const PDFParser = await loadPDFParser();
     const extractedText = await new Promise<string>((resolve, reject) => {
       const pdfParser = new PDFParser();
-      
+
       pdfParser.on('pdfParser_dataError', (errData: any) => {
         console.error('PDF parsing error:', errData.parserError);
         reject(new Error(errData.parserError));
       });
-      
+
       pdfParser.on('pdfParser_dataReady', (pdfData: any) => {
         try {
           // Extract text from all pages
@@ -90,13 +93,13 @@ export async function POST(request: Request) {
           reject(error);
         }
       });
-      
+
       // Parse the buffer
       pdfParser.parseBuffer(Buffer.from(pdfBuffer));
     });
-    
+
     const pageCount = extractedText.split('\n').filter(line => line.trim()).length;
-    
+
     console.log('PDF parsed:', {
       pageCount,
       textLength: extractedText.length,
@@ -106,13 +109,13 @@ export async function POST(request: Request) {
     // Create a comprehensive description
     let fullDescription = '';
     const data = { text: extractedText, numpages: pageCount };
-    
+
     if (extractedText && extractedText.trim()) {
       // Limit text to first 3000 characters to avoid token overflow
-      const truncatedText = extractedText.length > 3000 
-        ? extractedText.substring(0, 3000) + '...' 
+      const truncatedText = extractedText.length > 3000
+        ? extractedText.substring(0, 3000) + '...'
         : extractedText;
-      
+
       fullDescription = `PDF документ "${fileName || 'документ'}" (${pageCount} стр.):\n\n${truncatedText}`;
     } else {
       fullDescription = `PDF документ "${fileName || 'документ'}" - текст не обнаружен или документ содержит только изображения`;
@@ -134,7 +137,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error in analyze-pdf API:', error);
     return NextResponse.json(
-      { 
+      {
         error: error instanceof Error ? error.message : 'Unknown error',
         text: '',
         description: '',

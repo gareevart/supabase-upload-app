@@ -3,7 +3,11 @@ import type { NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import type { Database } from '@/lib/types';
 import { withApiAuth } from '@/app/auth/withApiAuth';
-import { tiptapToHtml } from '@/app/utils/tiptapToHtml';
+import { loadTiptapToHtml } from '@/lib/tiptap-loader';
+
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
@@ -15,11 +19,11 @@ export const GET = withApiAuth(async (request: NextRequest, user: { id: string }
     const url = new URL(request.url);
     const pathSegments = url.pathname.split('/');
     const id = pathSegments[pathSegments.length - 1];
-    
+
     console.log('GET /api/broadcasts/[id] - URL:', request.url);
     console.log('GET /api/broadcasts/[id] - Path segments:', pathSegments);
     console.log('GET /api/broadcasts/[id] - Extracted ID:', id);
-    
+
     const supabase = createServerClient<Database>(
       supabaseUrl,
       supabaseAnonKey,
@@ -83,7 +87,7 @@ export const GET = withApiAuth(async (request: NextRequest, user: { id: string }
     }
 
     return NextResponse.json({ data });
-    
+
   } catch (error) {
     console.error('Error in GET /api/broadcasts/[id]:', error);
     return NextResponse.json(
@@ -144,7 +148,7 @@ export const PUT = withApiAuth(async (request: NextRequest, user: { id: string }
       .update({
         subject,
         content,
-        content_html: tiptapToHtml(content),
+        content_html: (await loadTiptapToHtml())(content),
         recipients,
         status,
         scheduled_for,
