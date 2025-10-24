@@ -25,7 +25,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
   const subscribersLoaded = useRef(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showGroupDetails, setShowGroupDetails] = useState<string | null>(null);
-  
+
   // Create group form state
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDescription, setNewGroupDescription] = useState('');
@@ -195,7 +195,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
       }
 
       const data = await response.json();
-      
+
       toast({
         title: 'Успех',
         description: 'Группа создана успешно',
@@ -280,7 +280,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
                   </Text>
                 </div>
               </div>
-              
+
               <Button
                 view="flat"
                 size="s"
@@ -288,9 +288,9 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
                   showGroupDetails === group.id ? null : group.id
                 )}
               >
-                <Icon 
-                  data={showGroupDetails === group.id ? ChevronUp : ChevronDown} 
-                  size={16} 
+                <Icon
+                  data={showGroupDetails === group.id ? ChevronUp : ChevronDown}
+                  size={16}
                 />
               </Button>
             </div>
@@ -313,9 +313,10 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
 
       {/* Create Group Modal */}
       <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)}>
-        <div className="w-full max-w-2xl p-6">
-          <Text variant="subheader-1" className="mb-4">Создать новую группу</Text>
-          
+        <div className="w-full max-w-2xl p-2">
+          <div className='mb-4'>
+            <Text variant="subheader-2">Создать новую группу</Text>
+          </div>
           <div className="space-y-4">
             <div>
               <Text variant="body-2" className="mb-1">Название группы</Text>

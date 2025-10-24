@@ -12,18 +12,20 @@ export const useBroadcastList = (initialFilters: BroadcastFilters = {}) => {
 
   const fetchBroadcasts = useCallback(async () => {
     try {
+      console.log('🔄 Starting to fetch broadcasts...');
       setIsLoading(true);
       setError(null);
-      
+
       console.log('Fetching broadcasts with filters:', filters);
       const response = await BroadcastApi.getBroadcasts(filters);
-      console.log('Broadcasts response:', response);
+      console.log('✅ Broadcasts response:', response);
+      console.log('📊 Setting broadcasts data:', response.data);
       setBroadcasts(response.data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch broadcasts';
       setError(errorMessage);
-      console.error('Error fetching broadcasts:', err);
-      
+      console.error('❌ Error fetching broadcasts:', err);
+
       // Only show toast for non-auth errors to avoid spam
       if (!errorMessage.includes('авторизован') && !errorMessage.includes('Unauthorized')) {
         toast({
@@ -33,6 +35,7 @@ export const useBroadcastList = (initialFilters: BroadcastFilters = {}) => {
         });
       }
     } finally {
+      console.log('🏁 Finished fetching broadcasts, setting loading to false');
       setIsLoading(false);
     }
   }, [filters, toast]);
@@ -54,7 +57,7 @@ export const useBroadcastList = (initialFilters: BroadcastFilters = {}) => {
     try {
       await BroadcastApi.deleteBroadcast(id);
       setBroadcasts(prev => prev.filter(broadcast => broadcast.id !== id));
-      
+
       toast({
         title: 'Success',
         description: 'Broadcast deleted successfully',
@@ -62,7 +65,7 @@ export const useBroadcastList = (initialFilters: BroadcastFilters = {}) => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete broadcast';
       console.error('Error deleting broadcast:', err);
-      
+
       toast({
         title: 'Error',
         description: errorMessage,
@@ -74,12 +77,12 @@ export const useBroadcastList = (initialFilters: BroadcastFilters = {}) => {
   const sendBroadcast = useCallback(async (id: string) => {
     try {
       await BroadcastApi.sendBroadcast(id);
-      setBroadcasts(prev => 
-        prev.map(broadcast => 
+      setBroadcasts(prev =>
+        prev.map(broadcast =>
           broadcast.id === id ? { ...broadcast, status: 'sent' } : broadcast
         )
       );
-      
+
       toast({
         title: 'Success',
         description: 'Broadcast sent successfully',
@@ -87,7 +90,7 @@ export const useBroadcastList = (initialFilters: BroadcastFilters = {}) => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to send broadcast';
       console.error('Error sending broadcast:', err);
-      
+
       toast({
         title: 'Error',
         description: errorMessage,
@@ -99,12 +102,12 @@ export const useBroadcastList = (initialFilters: BroadcastFilters = {}) => {
   const cancelSchedule = useCallback(async (id: string) => {
     try {
       await BroadcastApi.cancelSchedule(id);
-      setBroadcasts(prev => 
-        prev.map(broadcast => 
+      setBroadcasts(prev =>
+        prev.map(broadcast =>
           broadcast.id === id ? { ...broadcast, status: 'draft', scheduled_for: null } : broadcast
         )
       );
-      
+
       toast({
         title: 'Success',
         description: 'Broadcast schedule cancelled',
@@ -112,7 +115,7 @@ export const useBroadcastList = (initialFilters: BroadcastFilters = {}) => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to cancel schedule';
       console.error('Error cancelling schedule:', err);
-      
+
       toast({
         title: 'Error',
         description: errorMessage,
@@ -122,26 +125,31 @@ export const useBroadcastList = (initialFilters: BroadcastFilters = {}) => {
   }, [toast]);
 
   useEffect(() => {
+    console.log('🚀 useBroadcastList useEffect triggered');
     // Only run on client-side to avoid SSR issues
     if (typeof window === 'undefined') {
+      console.log('❌ Running on server side, skipping fetch');
       return;
     }
-    
+
+    console.log('✅ Running on client side, fetching broadcasts');
     // Fetch broadcasts when filters change
     let isMounted = true;
-    
+
     const loadBroadcasts = async () => {
       if (isMounted) {
+        console.log('📡 Calling fetchBroadcasts...');
         await fetchBroadcasts();
       }
     };
-    
+
     loadBroadcasts();
-    
+
     return () => {
+      console.log('🧹 Cleaning up useEffect');
       isMounted = false;
     };
-  }, [fetchBroadcasts]); // Re-fetch when fetchBroadcasts changes (which happens when filters change)
+  }, [filters]); // Re-fetch when filters change
 
   return {
     broadcasts,

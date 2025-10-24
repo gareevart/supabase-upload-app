@@ -67,7 +67,7 @@ export const GroupSubscriberManager: React.FC<GroupSubscriberManagerProps> = ({
 
     try {
       setIsSubmitting(true);
-      
+
       // Parse emails (split by comma, newline, or space)
       const emails = newEmails
         .split(/[,\n\s]+/)
@@ -99,7 +99,7 @@ export const GroupSubscriberManager: React.FC<GroupSubscriberManagerProps> = ({
 
     try {
       setIsSubmitting(true);
-      
+
       const data: AddSubscribersToGroupData = { subscriber_ids: selectedSubscribers };
       await BroadcastGroupApi.addSubscribersToGroup(groupId, data);
 
@@ -192,7 +192,7 @@ export const GroupSubscriberManager: React.FC<GroupSubscriberManagerProps> = ({
           <Text variant="header-2" className="mb-3">
             Подписчики в группе ({subscribers.length})
           </Text>
-          
+
           {subscribers.length === 0 ? (
             <div className="text-center py-8">
               <Text variant="body-1" color="secondary">
@@ -210,9 +210,9 @@ export const GroupSubscriberManager: React.FC<GroupSubscriberManagerProps> = ({
 
         {/* Add subscribers modal */}
         <Modal open={showAddModal} onClose={() => setShowAddModal(false)}>
-          <div className="w-full max-w-2xl p-6">
+          <div className="w-full max-w-2xl">
             <Text variant="subheader-1" className="mb-4">Добавить подписчиков</Text>
-            
+
             <div className="space-y-6">
               {/* Add by email */}
               <div>
@@ -221,7 +221,7 @@ export const GroupSubscriberManager: React.FC<GroupSubscriberManagerProps> = ({
                   value={newEmails}
                   onChange={(e) => setNewEmails(e.target.value)}
                   placeholder="Введите email адреса (разделенные запятой, пробелом или новой строкой)"
-                  disabled={isSubmitting}            
+                  disabled={isSubmitting}
                 />
                 <div className="mt-2">
                   <Button

@@ -11,6 +11,7 @@ import { Superscript } from '@tiptap/extension-superscript';
 import { Typography } from '@tiptap/extension-typography';
 import { Placeholder } from '@tiptap/extension-placeholder';
 import { DragHandleExtension } from './DragHandleExtension';
+import { ImageGenerator } from '../extensions/ImageGeneratorExtension';
 
 // Enhanced Resizable Image extension with drag-to-resize functionality
 const ResizableImage = Image.extend({
@@ -338,6 +339,7 @@ export const extensions = [
   DragHandleExtension.configure({
     dragHandleWidth: 20,
   }),
+  ImageGenerator,
 ];
 
 export { ResizableImage };

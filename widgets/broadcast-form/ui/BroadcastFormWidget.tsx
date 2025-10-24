@@ -51,7 +51,7 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
   const [htmlContent, setHtmlContent] = useState<string>('');
   const [isLoading, setIsLoading] = useState(isEdit && !initialData);
   const [loadedData, setLoadedData] = useState<Partial<Broadcast> | null>(initialData || null);
-  
+
   // Memoized HTML content generation
   const memoizedHtml = useMemo(() => {
     if (!content) return '';
@@ -290,59 +290,58 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
           </Card>
 
           {/* Actions */}
-          <Card className="p-6">
-            <div className="flex flex-wrap gap-3">
-              <Button
-                view="outlined"
-                size="l"
-                onClick={handleSave}
-                disabled={!isFormValid || isSubmitting}
-              >
-                <Icon data={Pencil} size={16} />
-                {isEdit ? 'Update Draft' : 'Save as Draft'}
-              </Button>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              view="outlined"
+              size="l"
+              onClick={handleSave}
+              disabled={!isFormValid || isSubmitting}
+            >
+              <Icon data={Pencil} size={16} />
+              {isEdit ? 'Update Draft' : 'Save as Draft'}
+            </Button>
 
-              <Button
-                view="outlined"
-                size="l"
-                onClick={toggleScheduler}
-                disabled={!isFormValid || isSubmitting}
-              >
-                <Icon data={ChevronDown} size={16} />
-                {showScheduler ? 'Cancel Schedule' : 'Schedule'}
-              </Button>
+            <Button
+              view="outlined"
+              size="l"
+              onClick={toggleScheduler}
+              disabled={!isFormValid || isSubmitting}
+            >
+              <Icon data={ChevronDown} size={16} />
+              {showScheduler ? 'Cancel Schedule' : 'Schedule'}
+            </Button>
 
-              {showScheduler && (
-                <div className="w-full mt-4">
-                  <Text variant="body-2" className="mb-2">Schedule for:</Text>
-                  <DateTimePicker
-                    value={scheduledDate}
-                    onChange={handleScheduledDateChange}
-                    minDate={new Date()}
-                  />
-                  <Button
-                    view="normal"
-                    size="l"
-                    onClick={handleSchedule}
-                    disabled={!isFormValid || !scheduledDate || isSubmitting}
-                    className="mt-2"
-                  >
-                    Schedule Broadcast
-                  </Button>
-                </div>
-              )}
+            {showScheduler && (
+              <div className="w-full mt-4">
+                <Text variant="body-2" className="mb-2">Schedule for:</Text>
+                <DateTimePicker
+                  value={scheduledDate}
+                  onChange={handleScheduledDateChange}
+                  minDate={new Date()}
+                />
+                <Button
+                  view="normal"
+                  size="l"
+                  onClick={handleSchedule}
+                  disabled={!isFormValid || !scheduledDate || isSubmitting}
+                  className="mt-2"
+                >
+                  Schedule Broadcast
+                </Button>
+              </div>
+            )}
 
-              <Button
-                view="action"
-                size="l"
-                onClick={handleSend}
-                disabled={!isFormValid || isSubmitting}
-              >
-                <Icon data={ArrowUturnCwLeft} size={16} />
-                Send Now
-              </Button>
-            </div>
-          </Card>
+            <Button
+              view="action"
+              size="l"
+              onClick={handleSend}
+              disabled={!isFormValid || isSubmitting}
+            >
+              <Icon data={ArrowUturnCwLeft} size={16} />
+              Send Now
+            </Button>
+          </div>
+
         </div>
 
         {/* Preview Modal */}

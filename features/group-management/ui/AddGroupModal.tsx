@@ -37,7 +37,7 @@ export const AddGroupModal: React.FC<AddGroupModalProps> = ({
         subscriber_ids: selectedSubscribers.length > 0 ? selectedSubscribers : undefined,
         emails: emails.trim() ? emails.split(/[,\n\s]+/).map(email => email.trim()).filter(email => email && email.includes('@')) : undefined,
       });
-      
+
       // Reset form
       setName('');
       setDescription('');
@@ -69,9 +69,9 @@ export const AddGroupModal: React.FC<AddGroupModalProps> = ({
 
   return (
     <Modal open={isOpen} onClose={handleClose}>
-      <div className="w-full max-w-2xl p-6">
+      <div className="w-full max-w-2xl">
         <Text variant="subheader-1" className="mb-4">Создать группу</Text>
-        
+
         <div className="space-y-4">
           <div>
             <Text variant="body-2" className="mb-1">Название группы *</Text>

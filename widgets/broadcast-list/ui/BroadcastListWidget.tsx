@@ -48,8 +48,8 @@ const BroadcastListWidget: React.FC = () => {
 
   const handleStatusFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value as StatusFilter;
-    updateFilters({ 
-      status: value === 'all' ? undefined : value as BroadcastStatus 
+    updateFilters({
+      status: value === 'all' ? undefined : value as BroadcastStatus
     });
   };
 
@@ -263,7 +263,7 @@ const BroadcastListWidget: React.FC = () => {
           const clickRate = item.total_recipients > 0
             ? Math.round(((item.clicked_count ?? 0) / item.total_recipients) * 100)
             : 0;
-          
+
           return (
             <div className="text-xs">
               <div>Открыто: {item.opened_count ?? 0} ({openRate}%)</div>
@@ -281,7 +281,7 @@ const BroadcastListWidget: React.FC = () => {
       template: (item) => {
         let dateToShow = '';
         let label = '';
-        
+
         if (item.status === 'scheduled' && item.scheduled_for) {
           dateToShow = formatDate(item.scheduled_for);
           label = 'Запланировано на:';
@@ -292,7 +292,7 @@ const BroadcastListWidget: React.FC = () => {
           dateToShow = formatDate(item.created_at);
           label = 'Создано:';
         }
-        
+
         return (
           <div className="text-xs">
             <div className="text-gray-500">{label}</div>
@@ -319,7 +319,7 @@ const BroadcastListWidget: React.FC = () => {
             Создавайте, планируйте и управляйте email рассылками
           </Text>
         </div>
-        
+
         <Button
           view="action"
           size="l"
@@ -329,7 +329,7 @@ const BroadcastListWidget: React.FC = () => {
           Новая рассылка
         </Button>
       </div>
-      
+
       <div className="mb-6">
         <SegmentedRadioGroup
           size="m"
@@ -344,7 +344,7 @@ const BroadcastListWidget: React.FC = () => {
           ]}
         />
       </div>
-      
+
       {isLoading ? (
         <div className="flex justify-center py-8">
           <Spin size="m" />

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Card, Text, Button, Icon } from '@gravity-ui/uikit';
-import { ArrowUturnCwLeft, Pencil, TrashBin, ChevronDown } from '@gravity-ui/icons';
+import { ArrowUturnCwLeft, Pencil, TrashBin, ChevronLeft } from '@gravity-ui/icons';
 import { Broadcast, BroadcastStats } from '@/entities/broadcast/model';
 import { useBroadcastDetail } from '@/features/broadcast-detail/model/useBroadcastDetail';
 import { useRouter } from 'next/navigation';
@@ -79,7 +79,7 @@ const BroadcastDetailWidget: React.FC<BroadcastDetailWidgetProps> = ({ id }) => 
   // Render actions based on broadcast status
   const renderActions = () => {
     if (!broadcast) return null;
-    
+
     const { id, status } = broadcast;
 
     switch (status) {
@@ -120,7 +120,7 @@ const BroadcastDetailWidget: React.FC<BroadcastDetailWidgetProps> = ({ id }) => 
               size="m"
               onClick={handleCancelSchedule}
             >
-              <Icon data={ChevronDown} size={16} />
+              <Icon data={ChevronLeft} size={16} />
               Cancel Schedule
             </Button>
             <Button
@@ -164,20 +164,20 @@ const BroadcastDetailWidget: React.FC<BroadcastDetailWidgetProps> = ({ id }) => 
   // Parse content for display
   const getContentHtml = () => {
     if (!broadcast) return 'No content available';
-    
+
     try {
       // First try to use content_html if available
       if (broadcast.content_html) {
         return broadcast.content_html;
       }
-      
+
       // If no content_html, use our tiptapToHtml utility
       if (typeof window !== 'undefined') {
         // Import dynamically on client side
         const { tiptapToHtml } = require('@/app/utils/tiptapToHtml');
         return tiptapToHtml(broadcast.content);
       }
-      
+
       // Fallback for server-side rendering
       if (typeof broadcast.content === 'string') {
         // Check if it's already HTML
@@ -196,7 +196,7 @@ const BroadcastDetailWidget: React.FC<BroadcastDetailWidgetProps> = ({ id }) => 
         // It's already a JSON object
         return `<pre>${JSON.stringify(broadcast.content, null, 2)}</pre>`;
       }
-      
+
       return 'No content available';
     } catch (e) {
       console.error('Error displaying content:', e);
@@ -238,13 +238,13 @@ const BroadcastDetailWidget: React.FC<BroadcastDetailWidgetProps> = ({ id }) => 
       <div className="space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
+          <div className="flex items-start flex-col gap-2">
             <Button
-              view="flat"
+              view="outlined"
               size="m"
               onClick={handleBack}
             >
-              <Icon data={ChevronDown} size={16} />
+              <Icon data={ChevronLeft} size={16} />
               Back
             </Button>
             <Text variant="display-1">Broadcast Details</Text>
@@ -256,81 +256,73 @@ const BroadcastDetailWidget: React.FC<BroadcastDetailWidgetProps> = ({ id }) => 
 
         {/* Summary Card */}
         <Card className="p-6">
-          <div className="flex flex-col md:flex-row justify-between gap-6">
-            <div className="flex-1">
-              <Text variant="subheader-1" className="mb-2">
-                {broadcast.subject}
-                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${getStatusColor(broadcast.status)}`}>
-                  {broadcast.status}
-                </span>
-              </Text>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div>
-                  <Text variant="body-2" className="text-gray-500">Recipients</Text>
-                  <Text variant="body-1">{broadcast.total_recipients || broadcast.recipients?.length || 0}</Text>
-                </div>
-                
-                {broadcast.status === 'scheduled' && (
-                  <div>
-                    <Text variant="body-2" className="text-gray-500">Scheduled For</Text>
-                    <Text variant="body-1">{formatDate(broadcast.scheduled_for)}</Text>
-                  </div>
-                )}
-                
-                {broadcast.status === 'sent' && (
-                  <div>
-                    <Text variant="body-2" className="text-gray-500">Sent At</Text>
-                    <Text variant="body-1">{formatDate(broadcast.sent_at || null)}</Text>
-                  </div>
-                )}
-                
-                <div>
-                  <Text variant="body-2" className="text-gray-500">Created At</Text>
-                  <Text variant="body-1">{formatDate(broadcast.created_at)}</Text>
-                </div>
-                
-                <div>
-                  <Text variant="body-2" className="text-gray-500">Last Updated</Text>
-                  <Text variant="body-1">{formatDate(broadcast.updated_at)}</Text>
-                </div>
-              </div>
+          {/* Top row - Subject and Status */}
+          <div className="flex justify-between items-center mb-6">
+            <Text variant="subheader-1">
+              {broadcast.subject}
+            </Text>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(broadcast.status)}`}>
+              {broadcast.status}
+            </span>
+          </div>
+
+          {/* Bottom row - Details in horizontal layout */}
+          <div className="flex flex-wrap gap-6">
+            <div className="flex-1 min-w-[200px]">
+              <Text variant="body-2" className="text-gray-500">Recipients</Text>
+              <Text variant="body-1">{broadcast.total_recipients || broadcast.recipients?.length || 0}</Text>
             </div>
-            
+
+            {broadcast.status === 'scheduled' && (
+              <div className="flex-1 min-w-[200px]">
+                <Text variant="body-2" className="text-gray-500">Scheduled For</Text>
+                <Text variant="body-1">{formatDate(broadcast.scheduled_for)}</Text>
+              </div>
+            )}
+
+            {broadcast.status === 'sent' && (
+              <div className="flex-1 min-w-[200px]">
+                <Text variant="body-2" className="text-gray-500">Sent At</Text>
+                <Text variant="body-1">{formatDate(broadcast.sent_at || null)}</Text>
+              </div>
+            )}
+
+            <div className="flex-1 min-w-[200px]">
+              <Text variant="body-2" className="text-gray-500">Created At</Text>
+              <Text variant="body-1">{formatDate(broadcast.created_at)}</Text>
+            </div>
+
+            <div className="flex-1 min-w-[200px]">
+              <Text variant="body-2" className="text-gray-500">Last Updated</Text>
+              <Text variant="body-1">{formatDate(broadcast.updated_at)}</Text>
+            </div>
+
             {/* Stats for sent broadcasts */}
             {broadcast.status === 'sent' && stats && (
-              <div className="bg-gray-50 p-4 rounded-lg min-w-[200px]">
+              <div className="flex-1 min-w-[200px] bg-gray-50 p-4 rounded-lg">
                 <Text variant="subheader-2" className="mb-2">Statistics</Text>
-                
-                <div className="space-y-2">
+
+                <div className="flex gap-4">
                   <div>
                     <Text variant="body-2" className="text-gray-500">Open Rate</Text>
-                    <Text variant="display-2">
-                      {stats.openRate}%
-                    </Text>
+                    <Text variant="display-2">{stats.openRate}%</Text>
                   </div>
-                  
+
                   <div>
                     <Text variant="body-2" className="text-gray-500">Click Rate</Text>
-                    <Text variant="display-2">
-                      {stats.clickRate}%
-                    </Text>
+                    <Text variant="display-2">{stats.clickRate}%</Text>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 mt-4">
-                    <div>
-                      <Text variant="caption-1" className="text-gray-500">Opened</Text>
-                      <Text variant="body-1">
-                        {stats.opened}/{stats.total}
-                      </Text>
-                    </div>
-                    
-                    <div>
-                      <Text variant="caption-1" className="text-gray-500">Clicked</Text>
-                      <Text variant="body-1">
-                        {stats.clicked}/{stats.total}
-                      </Text>
-                    </div>
+                </div>
+
+                <div className="flex gap-4 mt-2">
+                  <div>
+                    <Text variant="caption-1" className="text-gray-500">Opened</Text>
+                    <Text variant="body-1">{stats.opened}/{stats.total}</Text>
+                  </div>
+
+                  <div>
+                    <Text variant="caption-1" className="text-gray-500">Clicked</Text>
+                    <Text variant="body-1">{stats.clicked}/{stats.total}</Text>
                   </div>
                 </div>
               </div>
@@ -352,10 +344,10 @@ const BroadcastDetailWidget: React.FC<BroadcastDetailWidgetProps> = ({ id }) => 
 
         {/* Recipients List */}
         <Card className="p-6">
-          <Text variant="subheader-2" className="mb-4">Recipients</Text>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+          <Text variant="subheader-2" className="mb-4">Recipients ({broadcast.recipients.length})</Text>
+          <div className="flex flex-wrap gap-2">
             {broadcast.recipients.map((email, index) => (
-              <div key={index} className="p-2 bg-gray-50 rounded">
+              <div key={index} className="px-3 py-1 bg-gray-100 rounded-full text-sm">
                 {email}
               </div>
             ))}
