@@ -245,7 +245,8 @@ export const useTipTapEditor = (initialPost?: any, onSave?: (published: boolean,
       }
       
       const data = await response.json();
-      setGeneratedImagePreview(data.imageUrl);
+      // Use imageData (base64) for preview if available, otherwise use imageUrl
+      setGeneratedImagePreview(data.imageData || data.imageUrl);
       
     } catch (error) {
       console.error('Error generating image:', error);
