@@ -73,9 +73,14 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
+        gap: '16px',
+        padding: '8px'
+      }}>
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <Skeleton key={i} className="aspect-square w-full" />
+          <Skeleton key={i} style={{ aspectRatio: '1', width: '100%' }} />
         ))}
       </div>
     );
@@ -83,7 +88,7 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
 
   if (images.length === 0) {
     return (
-      <div className="text-center p-4">
+      <div style={{ textAlign: 'center', padding: '16px' }}>
         <p>Нет доступных изображений в хранилище</p>
       </div>
     );
@@ -110,32 +115,66 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
   };
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto p-2">
+    <div style={{ 
+      display: 'grid', 
+      gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
+      gap: '16px',
+      maxHeight: '400px',
+      overflowY: 'auto',
+      padding: '8px'
+    }}>
       {images.map((image) => (
         <div
           key={image.name}
-          className="relative cursor-pointer"
+          style={{ position: 'relative', cursor: 'pointer' }}
           onClick={() => handleImageSelect(image.url)}
         >
           <Card
-            className={`overflow-hidden transition-all ${
-              selectedImageUrl === image.url
-                ? 'ring-4 ring-blue-500'
-                : 'hover:ring-2 hover:ring-primary'
-            }`}
+            style={{
+              overflow: 'hidden',
+              transition: 'all 0.2s ease-in-out',
+              border: selectedImageUrl === image.url 
+                ? '3px solid var(--g-color-base-brand)' 
+                : '1px solid var(--g-color-line-generic)',
+              borderRadius: 'var(--g-border-radius-m)',
+              boxShadow: selectedImageUrl === image.url 
+                ? '0 0 0 1px var(--g-color-base-brand)' 
+                : 'none'
+            }}
+            onMouseEnter={(e) => {
+              if (selectedImageUrl !== image.url) {
+                e.currentTarget.style.border = '2px solid var(--g-color-base-brand-hover)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (selectedImageUrl !== image.url) {
+                e.currentTarget.style.border = '1px solid var(--g-color-line-generic)';
+              }
+            }}
           >
-            <div className="aspect-square w-full relative">
+            <div style={{ aspectRatio: '1', width: '100%', position: 'relative' }}>
               <Image
                 src={image.url}
                 alt={image.name}
                 fill
-                className="object-cover"
+                style={{ objectFit: 'cover' }}
                 sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 16vw"
               />
             </div>
           </Card>
           {selectedImageUrl === image.url && (
-            <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full p-1">
+            <div style={{
+              position: 'absolute',
+              top: '8px',
+              right: '8px',
+              backgroundColor: 'var(--g-color-base-brand)',
+              color: 'white',
+              borderRadius: '50%',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
