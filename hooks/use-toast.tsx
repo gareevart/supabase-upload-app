@@ -11,19 +11,25 @@ interface ToastOptions {
   variant?: ToastVariant;
   action?: React.ReactNode;
   timeout?: number;
+  /**
+   * Управление автоскрытием тоста.
+   * `true` — скрывать сразу, `false` — не скрывать,
+   * число — задержка в миллисекундах.
+   */
+  autoHiding?: boolean | number;
 }
 
 export function useToast() {
   const toaster = useToaster();
-  
+
   const toast = (options: ToastOptions) => {
     const { title, description, variant = 'default', timeout = 5000 } = options;
-    
+
     // Объединяем заголовок и описание в одно сообщение
-    const content = title && description 
-      ? `${title}: ${description}` 
+    const content = title && description
+      ? `${title}: ${description}`
       : title || description || '';
-    
+
     // Определяем тему для тоста
     let theme: any = 'normal';
     switch (variant) {
@@ -42,7 +48,7 @@ export function useToast() {
       default:
         theme = 'normal';
     }
-    
+
     toaster.add({
       name: 'app-toast',
       title: content,
@@ -50,13 +56,13 @@ export function useToast() {
       autoHiding: timeout > 0 ? timeout : false,
     });
   };
-  
+
   // Для совместимости с существующим кодом
   const dismiss = () => {
     // Gravity UI Toaster не требует явного закрытия тостов
     // Они автоматически закрываются по таймауту
   };
-  
+
   return {
     toast,
     dismiss,
@@ -68,15 +74,15 @@ export function useToast() {
 export const toast = (options: ToastOptions) => {
   // Создаем новый экземпляр тостера
   const toaster = (window as any).toaster;
-  
+
   if (toaster) {
     const { title, description, variant = 'default', timeout = 5000 } = options;
-    
+
     // Объединяем заголовок и описание в одно сообщение
-    const content = title && description 
-      ? `${title}: ${description}` 
+    const content = title && description
+      ? `${title}: ${description}`
       : title || description || '';
-    
+
     // Определяем тему для тоста
     let theme: any = 'normal';
     switch (variant) {
@@ -95,7 +101,7 @@ export const toast = (options: ToastOptions) => {
       default:
         theme = 'normal';
     }
-    
+
     toaster.add({
       name: 'app-toast',
       title: content,

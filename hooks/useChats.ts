@@ -43,9 +43,9 @@ export const useChats = () => {
             .order("created_at", { ascending: false })
             .limit(1);
 
-          const lastMessage = messages && messages.length > 0 
-            ? messages[0].role === 'user' 
-              ? `Вы: ${messages[0].content}` 
+          const lastMessage = messages && messages.length > 0
+            ? messages[0].role === 'user'
+              ? `Вы: ${messages[0].content}`
               : `Ассистент: ${messages[0].content}`
             : "Нет сообщений";
 
@@ -67,7 +67,7 @@ export const useChats = () => {
 
       const { data, error } = await supabase
         .from("chat_sessions")
-        .insert([{ 
+        .insert([{
           user_id: user.id,
           title: "Новый чат" // Default title that will be replaced later
         }])
@@ -133,8 +133,8 @@ export const useChats = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chats"] });
       toast({
-        title: "Чат удален",
         description: "Чат успешно удален",
+        autoHiding: 5000,
       });
     },
     onError: (error) => {
