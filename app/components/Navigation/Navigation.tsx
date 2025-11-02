@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-export function switchLogo(eventName: string) {
-  window.dispatchEvent(new CustomEvent('logoChange', { detail: eventName }));
-}
+
 import { useRouter, usePathname } from 'next/navigation';
 import { Icon, Button, Popover } from '@gravity-ui/uikit';
-import { House, Circles4Square, Person, Magnifier, BookOpen, Envelope, Bars } from '@gravity-ui/icons';
+import { House, Circles4Square, Person, Magnifier, BookOpen, Bars } from '@gravity-ui/icons';
 import Image from 'next/image';
 import UserAvatar from '../UserAvatar';
 import NavigationItem from './NavigationItem';
@@ -17,9 +15,6 @@ const Navigation: React.FC = () => {
   const pathname = usePathname();
   const [activeItem, setActiveItem] = useState('home');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  // State for logo source, default to regular logo
-  const [logoSrc, setLogoSrc] = useState('/g-logo-halloween.svg');
-  const [isHover, setIsHover] = useState(false);
 
   // Function to determine active item based on current path
   const getActiveItemFromPath = (pathname: string): string => {
@@ -39,23 +34,6 @@ const Navigation: React.FC = () => {
     setActiveItem(activeFromPath);
     localStorage.setItem('activeItem', activeFromPath);
   }, [pathname]);
-
-  // Listen for custom logo change events
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const custom = e as CustomEvent<string>;
-      const eventName = custom.detail;
-      if (eventName === 'halloween') {
-        setLogoSrc('/g-logo-halloween.svg');
-      } else {
-        setLogoSrc('/g-logo.svg');
-      }
-    };
-    window.addEventListener('logoChange', handler);
-    return () => {
-      window.removeEventListener('logoChange', handler);
-    };
-  }, []);
 
   const allNavItems = [
     { id: 'home', icon: House, label: 'Home', link: '/' },
@@ -82,15 +60,11 @@ const Navigation: React.FC = () => {
             <div className="logo-wrapper">
               <Link href="/">
                 <Image
-                  src={logoSrc === '/g-logo-halloween.svg' && isHover ? '/pumpkin_halloween-logo.svg' : logoSrc}
+                  src={'/g-logo.svg'}
                   alt="Logo"
                   width={32}
                   height={32}
                   priority
-                  onDoubleClick={() => setLogoSrc(prev => prev === '/g-logo-halloween.svg' ? '/g-logo.svg' : '/g-logo-halloween.svg')}
-                  onMouseEnter={() => setIsHover(true)}
-                  onMouseLeave={() => setIsHover(false)}
-                  style={{ transition: 'opacity 0.3s ease' }}
                 />
               </Link>
             </div>
