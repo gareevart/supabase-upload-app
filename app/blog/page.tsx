@@ -147,7 +147,7 @@ function BlogPageContent() {
         <div className={`relative flex justify-between items-top pb-4 ${controlsHidden || (!isAuthenticated || !hasDrafts) && isMobile ? 'gap-0' : 'gap-4'}`}>
           <SearchComponent
             title=""
-            placeholder="Поиск по блогу..."
+            placeholder="Search anything"
             readButtonText="Read"
             onResultClick={handleSearchResultClick}
             onUpdate={handleSearchQueryChange}

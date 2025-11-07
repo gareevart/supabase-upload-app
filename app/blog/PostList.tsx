@@ -77,8 +77,8 @@ export const PostList = ({
       <div className="container max-w-4xl w-full mx-auto">
         <div className={`${!isMobile ? 'grid grid-cols-2 gap-4' : 'space-y-4'}`}>
           {[1, 2, 3, 4, 5, 6].map((index) => (
-            <Card key={index} className="w-full min-w-[280px] overflow-hidden">
-              <div className="p-4">
+            <Card size="l" key={index} className="w-full min-w-[280px] overflow-hidden">
+              <div className="p-2">
                 <div className="h-48 w-full rounded-lg pb-2">
                   <Skeleton className="h-full w-full" />
                 </div>
