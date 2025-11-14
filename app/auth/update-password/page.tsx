@@ -1,14 +1,16 @@
 "use client"
 
 import React, { useEffect, useState } from 'react';
-import { Button, Card, Icon, Text, TextInput } from '@gravity-ui/uikit';
+import { Button, Card, Icon, Text, TextInput, useThemeValue } from '@gravity-ui/uikit';
 import { Eye, EyeSlash } from '@gravity-ui/icons';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-// CSS import removed as it's now in the root layout
+import Image from 'next/image';
+import '../Auth.css';
 
 const ResetPassword = () => {
     const router = useRouter();
+    const theme = useThemeValue();
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -18,6 +20,12 @@ const ResetPassword = () => {
     const [success, setSuccess] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [initializing, setInitializing] = useState(true);
+    const [logo, setLogo] = useState(theme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg');
+
+    // Update logo when theme changes
+    useEffect(() => {
+        setLogo(theme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg');
+    }, [theme]);
 
     // Only show UI after first client-side render to avoid hydration mismatch
     useEffect(() => {
@@ -51,13 +59,13 @@ const ResetPassword = () => {
                             if (error) throw error;
                         } catch (error: any) {
                             console.error('Recovery error:', error.message);
-                            router.push('/auth/login');
+                            router.push('/auth');
                         }
                     } else {
                         // Check if the user is authenticated for password reset
                         const { data } = await supabase.auth.getSession();
                         if (!data.session) {
-                            router.push('/auth/login');
+                            router.push('/auth');
                         }
                     }
                 } finally {
@@ -106,11 +114,11 @@ const ResetPassword = () => {
             if (error) throw error;
             setSuccess(true);
 
-            // Wait 3 seconds before redirecting to login
-            setTimeout(() => {
+            // Wait 3 seconds before redirecting to auth page
+            setTimeout(async () => {
                 // Sign out the user after successful password reset
-                supabase.auth.signOut();
-                router.push('/auth/login');
+                await supabase.auth.signOut();
+                router.push('/auth');
             }, 3000);
         } catch (error: any) {
             setError(error.message);
@@ -126,10 +134,15 @@ const ResetPassword = () => {
 
     return (
         <div className="login-container">
-            <Card className='login' maxWidth="400px" theme="normal" size="l">
+            {/* Add logo above the card */}
+            <div className="app-logo">
+                <Image src={logo} alt="Application Logo" width={180} height={60} />
+            </div>
+
+            <Card className='login' maxWidth="360px" theme="normal" size="l">
                 <div className="title">
                     <Text variant="header-1" color="primary">
-                        Reset Your Password
+                        Update your password
                     </Text>
                     <Text variant="body-1" color="secondary">
                         Create a new password for your account
@@ -140,7 +153,7 @@ const ResetPassword = () => {
                     <div className="success-message">
                         <Text variant="body-1" color="positive">
                             Your password has been reset successfully. You will be redirected to the
-                            login page shortly.
+                            auth page shortly.
                         </Text>
                     </div>
                 ) : (

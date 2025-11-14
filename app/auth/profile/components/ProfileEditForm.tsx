@@ -8,6 +8,7 @@ import {
     Theme,
     useToaster,
 } from '@gravity-ui/uikit';
+import { useRouter } from 'next/navigation';
 import YandexFileUploader from '../../components/YandexFileUploader';
 import { Profile } from '../types';
 
@@ -28,6 +29,7 @@ export const ProfileEditForm = ({
 }: ProfileEditFormProps) => {
     const { add } = useToaster();
     const { user } = useAuth();
+    const router = useRouter();
 
     return (
         <>
@@ -36,7 +38,7 @@ export const ProfileEditForm = ({
                 <TextInput
                     size='l'
                     value={profile.name || ''}
-                    onChange={(e) => setProfile({...profile, name: e.target.value})}
+                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                 />
             </div>
 
@@ -45,7 +47,7 @@ export const ProfileEditForm = ({
                 <TextInput
                     size='l'
                     value={profile.username || ''}
-                    onChange={(e) => setProfile({...profile, username: e.target.value})}
+                    onChange={(e) => setProfile({ ...profile, username: e.target.value })}
                 />
             </div>
 
@@ -54,7 +56,7 @@ export const ProfileEditForm = ({
                 <YandexFileUploader
                     folderPath="profiles"
                     onUploadComplete={(url: string) => {
-                        setProfile({...profile, avatar_url: url});
+                        setProfile({ ...profile, avatar_url: url });
                     }}
                     existingFileUrl={profile.avatar_url || ''}
                     acceptedFileTypes="image/*"
@@ -64,14 +66,14 @@ export const ProfileEditForm = ({
                         try {
                             // Update profile in database to remove avatar_url
                             if (!user) return;
-                            
+
                             const { error: updateError } = await supabase
                                 .from('profiles')
                                 .update({
                                     avatar_url: null
                                 })
                                 .eq('id', user.id);
-                            
+
                             if (updateError) {
                                 console.error('Error updating profile:', updateError);
                                 add({
@@ -83,9 +85,9 @@ export const ProfileEditForm = ({
                                 });
                                 return;
                             }
-                            
+
                             // Update local state
-                            setProfile({...profile, avatar_url: null});
+                            setProfile({ ...profile, avatar_url: null });
                         } catch (err) {
                             console.error('Unexpected error during avatar deletion:', err);
                             add({
@@ -108,7 +110,7 @@ export const ProfileEditForm = ({
                 <TextArea
                     size='l'
                     value={profile.bio || ''}
-                    onChange={(e) => setProfile({...profile, bio: e.target.value})}
+                    onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                 />
             </div>
 
@@ -118,10 +120,11 @@ export const ProfileEditForm = ({
                     size='l'
                     placeholder='https://mamkin-hacker.io'
                     value={profile.website || ''}
-                    onChange={(e) => setProfile({...profile, website: e.target.value})}
+                    onChange={(e) => setProfile({ ...profile, website: e.target.value })}
                 />
             </div>
 
+            <Button size="l" view="normal" onClick={() => router.push('/auth/update-password')}>Update password</Button>
 
             <div className="profile-actions">
                 <Button
