@@ -128,8 +128,8 @@ export default function BlogPostClient({ params }: { params: any }) {
   if (isLoading) {
     return (
       <div className="container mx-auto my-6" style={{ maxWidth: '1400px' }}>
-        <div style={{ 
-          display: 'flex', 
+        <div style={{
+          display: 'flex',
           gap: '24px',
           flexDirection: isMobile ? 'column' : 'row',
           alignItems: 'flex-start'
@@ -149,7 +149,7 @@ export default function BlogPostClient({ params }: { params: any }) {
 
           {/* ToC скелетон - только на десктопе справа */}
           {!isMobile && (
-            <aside style={{ 
+            <aside style={{
               width: '280px',
               position: 'sticky',
               top: '24px',
@@ -189,8 +189,8 @@ export default function BlogPostClient({ params }: { params: any }) {
 
   return (
     <div className="container mx-auto my-6" style={{ maxWidth: '1400px' }}>
-      <div style={{ 
-        display: 'flex', 
+      <div style={{
+        display: 'flex',
         gap: '24px',
         flexDirection: isMobile ? 'column' : 'row',
         alignItems: 'flex-start'
@@ -258,7 +258,7 @@ export default function BlogPostClient({ params }: { params: any }) {
 
         {/* Table of Contents - только на десктопе справа */}
         {!isMobile && (
-          <aside style={{ 
+          <aside style={{
             width: '280px',
             position: 'sticky',
             top: '24px',
