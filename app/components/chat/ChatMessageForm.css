@@ -6,7 +6,7 @@
   background-color: var(--g-color-base-generic);
   gap: 8px;
   margin: var(--g-spacing-2);
-  border-radius: var(--g-border-radius-l);
+  border-radius: var(--g-border-radius-l) var(--g-border-radius-l) 0px 0px;
   padding: var(--g-spacing-3);
 }
 
@@ -50,7 +50,25 @@
 /* Адаптивность */
 @media (max-width: 768px) {
   .chat-message-form {
-    /* Мобильные стили */
+    position: fixed;
+    /* Размещаем форму выше навигации (65px высота навигации) + безопасная зона */
+    bottom: calc(65px + env(safe-area-inset-bottom));
+    left: 0;
+    right: 0;
+    margin: 0;
+    border-radius: 0;
+    border-top-left-radius: var(--g-border-radius-l);
+    border-top-right-radius: var(--g-border-radius-l);
+    z-index:1;
+    padding: var(--g-spacing-3);
+    /* Убеждаемся, что форма всегда видна */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+    /* Убеждаемся, что фон непрозрачный */
+    background-color: var(--g-color-base-float-announcement);
+    /* Предотвращаем скрытие формы */
+    isolation: isolate;
   }
 }
 

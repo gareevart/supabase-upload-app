@@ -113,6 +113,14 @@
   scrollbar-color: var(--g-color-line-generic) transparent;
 }
 
+/* Mobile: Add padding-bottom to prevent content from being hidden behind fixed form and navigation */
+@media (max-width: 768px) {
+  .chat-messages {
+    /* Форма ввода (~150px) + навигация (65px) + безопасная зона */
+    padding-bottom: calc(215px + env(safe-area-inset-bottom));
+  }
+}
+
 .chat-messages::-webkit-scrollbar {
   width: 6px;
 }

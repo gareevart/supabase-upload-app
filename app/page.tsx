@@ -9,10 +9,12 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
+    <main className="container mx-auto px-4 max-w-4xl">
     <div className='py-6'>
       <HomeClient />
       <ShowApp />
       <Subscribe />
     </div>
+    </main>
   );
 }

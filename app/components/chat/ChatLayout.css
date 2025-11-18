@@ -65,8 +65,7 @@
   }
 
   .chat-content {
-    padding: 1rem;
-    padding-top: 4rem; /* Space for burger button */
+    padding: 0px;
   }
 }
 
@@ -118,8 +117,8 @@
 
 @media (max-width: 768px) {
   .chat-content {
-    padding: 0.75rem;
-    padding-top: 4rem;
+    padding: 0px;
+    padding-top: var(--g-spacing-4);
   }
   
   .chat-interface-container {
