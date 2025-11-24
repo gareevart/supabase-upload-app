@@ -467,7 +467,7 @@ export const ApiKeysManager: React.FC = () => {
 
       {/* Модальное окно создания API ключа */}
       <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)}>
-        <div className='p-4'>
+        <div className="p-6 w-[500px]">
           <Text variant="header-2" className="mb-4">Создать API ключ</Text>
           <div className="space-y-4 mt-4">
             <div>
@@ -514,7 +514,7 @@ export const ApiKeysManager: React.FC = () => {
 
       {/* Модальное окно с новым API ключом */}
       <Modal open={showNewKey} onClose={() => setShowNewKey(false)}>
-        <div className="p-6">
+        <div className="p-6 w-[500px]">
           <Text variant="header-2" className="mb-4">API ключ создан</Text>
           <Alert theme="success" title="API ключ успешно создан" message="Скопируйте его сейчас - вы не сможете увидеть его снова!
 " />

@@ -13,13 +13,15 @@ export default function Uploader() {
   };
 
   return (
-      <div className="page-container">
-        <div className="content-container">
-        <CustomBreadcrumbs segmentLabels={segmentLabels} />
-        <Text variant="header-1">Image Syncer</Text>
-        <FileUpload />
-        <FileView />
-      </div>
-      </div>
+    <div className="min-h-screen">
+      <main className="container mx-auto px-4 md:px-6 max-w-4xl">
+        <div className="flex flex-col gap-6">
+          <CustomBreadcrumbs segmentLabels={segmentLabels} />
+          <Text variant="header-1">Image Syncer</Text>
+          <FileUpload />
+          <FileView />
+        </div>
+      </main>
+    </div>
   );
 }

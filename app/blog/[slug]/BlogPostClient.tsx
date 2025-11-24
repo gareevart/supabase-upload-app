@@ -127,7 +127,7 @@ export default function BlogPostClient({ params }: { params: any }) {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto my-6" style={{ maxWidth: '1400px' }}>
+      <div className="container mx-auto px-4 md:px-6" style={{ maxWidth: '1400px' }}>
         <div style={{
           display: 'flex',
           gap: '24px',
@@ -188,7 +188,7 @@ export default function BlogPostClient({ params }: { params: any }) {
   const canEditPost = userRole === 'admin' || userRole === 'editor';
 
   return (
-    <div className="container mx-auto my-6" style={{ maxWidth: '1400px' }}>
+    <div className="container mx-auto px-4 md:px-6" style={{ maxWidth: '1400px' }}>
       <div style={{
         display: 'flex',
         gap: '24px',

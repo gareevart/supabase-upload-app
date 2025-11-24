@@ -1,3 +1,16 @@
+/**
+ * ChatPage component handles the initial chat routing logic.
+ *
+ * This component performs the following functions:
+ * 1. Checks user authentication status
+ * 2. Redirects authenticated users to their most recent chat
+ * 3. Creates a new chat for authenticated users with no existing chats
+ * 4. Displays appropriate loading states during authentication and chat operations
+ *
+ * The component uses React hooks for authentication, chat management, and routing.
+ * It ensures users are properly directed to an existing or new chat upon visiting the chat page.
+ */
+
 "use client"
 import { useAuth } from "@/app/contexts/AuthContext";
 import { redirect, useRouter } from "next/navigation";

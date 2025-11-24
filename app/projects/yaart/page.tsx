@@ -296,128 +296,130 @@ const Yaart = () => {
   };
 
   return (
-    <div className="page-container">
-      <div className="content-container">
-        <CustomBreadcrumbs segmentLabels={segmentLabels} />
-        <Flex direction="column" gap={2}>
-          <Text variant="display-1">Image Generator</Text>
+    <div className="min-h-screen">
+      <main className="container mx-auto px-4 md:px-6 max-w-4xl">
+        <div className="flex flex-col gap-6">
+          <CustomBreadcrumbs segmentLabels={segmentLabels} />
+          <Flex direction="column" gap={2}>
+            <Text variant="display-1">Image Generator</Text>
 
-          {showLimitWarning && (
-            <Alert
-              theme="warning"
-              message={
-                isAuthenticated
-                  ? `You've reached your daily limit of 10 image generations. Try again tomorrow.`
-                  : "Users without authorization can generate only one image per day. Please log in for more"
-              }
-              onClose={() => setShowLimitWarning(false)}
-            />
-          )}
+            {showLimitWarning && (
+              <Alert
+                theme="warning"
+                message={
+                  isAuthenticated
+                    ? `You've reached your daily limit of 10 image generations. Try again tomorrow.`
+                    : "Users without authorization can generate only one image per day. Please log in for more"
+                }
+                onClose={() => setShowLimitWarning(false)}
+              />
+            )}
 
-          {isAuthenticated === null ? (
-            <Skeleton style={{ width: '100%', height: '28px' }} />
-          ) : isAuthenticated ? (
-            <Label size="m" theme="normal">Daily limit: {remainingGenerations}/10</Label>
-          ) : null}
+            {isAuthenticated === null ? (
+              <Skeleton style={{ width: '100%', height: '28px' }} />
+            ) : isAuthenticated ? (
+              <Label size="m" theme="normal">Daily limit: {remainingGenerations}/10</Label>
+            ) : null}
 
-          <Flex direction="column" gap={4}>
-            <TextArea
-              placeholder="Enter a detailed description of the image you want to generate..."
-              value={prompt}
-              onChange={handlePromptChange}
-              rows={4}
-              maxRows={8}
-              style={{ width: '100%' }}
-            />
-          </Flex>
-
-          <Flex justifyContent="flex-start">
-            <Button
-              view="action"
-              size="l"
-              onClick={handleGenerateImage}
-              disabled={loading || !prompt.trim() || (!isAuthenticated && !canGenerate)}
-              loading={loading}
-            >
-              Generate Image
-            </Button>
-          </Flex>
-
-          {error && (
-            <Alert
-              theme="danger"
-              message={error}
-              onClose={() => setError('')}
-            />
-          )}
-
-          {loading && (
-            <Flex justifyContent="center" alignItems="center" style={{ padding: '40px' }}>
-              <Flex direction="column" alignItems="center" gap={10}>
-                <Spin size="xl" />
-                <Text>Generating image...</Text>
-              </Flex>
+            <Flex direction="column" gap={4}>
+              <TextArea
+                placeholder="Enter a detailed description of the image you want to generate..."
+                value={prompt}
+                onChange={handlePromptChange}
+                rows={4}
+                maxRows={8}
+                style={{ width: '100%' }}
+              />
             </Flex>
-          )}
 
-          {generatedImage && !loading && (
-            <Flex direction="column" gap={10}>
-              <Text variant="body-1" color="secondary">Generated Image:</Text>
-              <div style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '16px', position: 'relative', width: '100%', minHeight: '400px' }}>
-                <Image
-                  src={generatedImage}
-                  alt="Generated from prompt"
-                  fill
-                  style={{ objectFit: 'contain' }}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
-                />
-              </div>
-              <Flex justifyContent="flex-end" gap={2}>
-                <Button
-                  view="outlined"
-                  onClick={() => {
-                    const link = document.createElement('a');
-                    link.href = generatedImage;
-                    link.download = 'generated-image.jpg';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                  }}
-                >
-                  Download Image
-                </Button>
+            <Flex justifyContent="flex-start">
+              <Button
+                view="action"
+                size="l"
+                onClick={handleGenerateImage}
+                disabled={loading || !prompt.trim() || (!isAuthenticated && !canGenerate)}
+                loading={loading}
+              >
+                Generate Image
+              </Button>
+            </Flex>
 
-                {isAuthenticated && (
+            {error && (
+              <Alert
+                theme="danger"
+                message={error}
+                onClose={() => setError('')}
+              />
+            )}
+
+            {loading && (
+              <Flex justifyContent="center" alignItems="center" style={{ padding: '40px' }}>
+                <Flex direction="column" alignItems="center" gap={10}>
+                  <Spin size="xl" />
+                  <Text>Generating image...</Text>
+                </Flex>
+              </Flex>
+            )}
+
+            {generatedImage && !loading && (
+              <Flex direction="column" gap={10}>
+                <Text variant="body-1" color="secondary">Generated Image:</Text>
+                <div style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '16px', position: 'relative', width: '100%', minHeight: '400px' }}>
+                  <Image
+                    src={generatedImage}
+                    alt="Generated from prompt"
+                    fill
+                    style={{ objectFit: 'contain' }}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
+                  />
+                </div>
+                <Flex justifyContent="flex-end" gap={2}>
                   <Button
-                    view="action"
-                    onClick={handleSaveToGallery}
-                    loading={isSaving}
-                    disabled={isSaving || saveSuccess}
+                    view="outlined"
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = generatedImage;
+                      link.download = 'generated-image.jpg';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
                   >
-                    {saveSuccess ? 'Saved to gallery' : 'Save to my gallery'}
+                    Download Image
                   </Button>
+
+                  {isAuthenticated && (
+                    <Button
+                      view="action"
+                      onClick={handleSaveToGallery}
+                      loading={isSaving}
+                      disabled={isSaving || saveSuccess}
+                    >
+                      {saveSuccess ? 'Saved to gallery' : 'Save to my gallery'}
+                    </Button>
+                  )}
+                </Flex>
+
+                {saveError && (
+                  <Alert
+                    theme="danger"
+                    message={saveError}
+                    onClose={() => setSaveError('')}
+                  />
+                )}
+
+                {saveSuccess && (
+                  <Alert
+                    theme="success"
+                    message="Изображение успешно сохранено в вашу галерею"
+                    onClose={() => setSaveSuccess(false)}
+                  />
                 )}
               </Flex>
-
-              {saveError && (
-                <Alert
-                  theme="danger"
-                  message={saveError}
-                  onClose={() => setSaveError('')}
-                />
-              )}
-
-              {saveSuccess && (
-                <Alert
-                  theme="success"
-                  message="Изображение успешно сохранено в вашу галерею"
-                  onClose={() => setSaveSuccess(false)}
-                />
-              )}
-            </Flex>
-          )}
-        </Flex>
-      </div>
+            )}
+          </Flex>
+        </div>
+      </main>
     </div>
   );
 };

@@ -45,14 +45,14 @@ export default function RootLayout({
       const initializeTheme = () => {
         // First check if there's a saved theme preference in localStorage
         const savedTheme = localStorage.getItem('app-theme');
-        
+
         // Clean up any existing system theme listener
         if (systemThemeListener && mediaQuery) {
           mediaQuery.removeEventListener('change', systemThemeListener);
           systemThemeListener = null;
           mediaQuery = null;
         }
-        
+
         if (savedTheme === 'light' || savedTheme === 'dark') {
           // Use saved theme preference
           setTheme(savedTheme);
@@ -60,19 +60,19 @@ export default function RootLayout({
           // Use system preference if theme is set to 'system' or no theme is saved
           mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
           setTheme(mediaQuery.matches ? 'dark' : 'light');
-          
+
           // Add listener for system theme changes
           systemThemeListener = (e: MediaQueryListEvent) => {
             setTheme(e.matches ? 'dark' : 'light');
           };
-          
+
           mediaQuery.addEventListener('change', systemThemeListener);
         }
       };
 
       // Initialize theme on mount
       initializeTheme();
-      
+
       // Listen for storage events (theme changes from other components)
       const handleStorageChange = (e: StorageEvent) => {
         if (e.key === 'app-theme') {
@@ -89,24 +89,24 @@ export default function RootLayout({
             // If theme is set to system, use system preference
             mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
             setTheme(mediaQuery.matches ? 'dark' : 'light');
-            
+
             // Add listener for system theme changes
             systemThemeListener = (event: MediaQueryListEvent) => {
               setTheme(event.matches ? 'dark' : 'light');
             };
-            
+
             mediaQuery.addEventListener('change', systemThemeListener);
           }
         }
       };
-      
+
       // Add event listener for storage changes
       window.addEventListener('storage', handleStorageChange);
-      
+
       // Also listen for custom theme-change events
       const handleCustomThemeChange = (e: CustomEvent) => {
         const { theme } = e.detail;
-        
+
         // Clean up existing system theme listener
         if (systemThemeListener && mediaQuery) {
           mediaQuery.removeEventListener('change', systemThemeListener);
@@ -120,18 +120,18 @@ export default function RootLayout({
           // If theme is set to system, use system preference
           mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
           setTheme(mediaQuery.matches ? 'dark' : 'light');
-          
+
           // Add listener for system theme changes
           systemThemeListener = (event: MediaQueryListEvent) => {
             setTheme(event.matches ? 'dark' : 'light');
           };
-          
+
           mediaQuery.addEventListener('change', systemThemeListener);
         }
       };
-      
+
       window.addEventListener('theme-change', handleCustomThemeChange as EventListener);
-      
+
       // Clean up event listeners on component unmount
       return () => {
         window.removeEventListener('storage', handleStorageChange);
@@ -142,7 +142,7 @@ export default function RootLayout({
       };
     }
   }, []);
-  
+
   return (
     <html lang="en">
       <head>
@@ -159,7 +159,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <QueryClientProvider client={queryClient}>
-          <SWRConfig 
+          <SWRConfig
             value={{
               // Глобальные настройки кэширования для SWR
               dedupingInterval: 5 * 60 * 1000, // 5 минут дедупликации
@@ -175,10 +175,10 @@ export default function RootLayout({
               <ModelSelectionProvider>
                 <ThemeWrapper theme={theme}>
                   <Navigation />
-                  <main className="main-content">
+                  <main className="main-content py-6">
                     {children}
-                    <Analytics/>
-                    <SpeedInsights/>
+                    <Analytics />
+                    <SpeedInsights />
                   </main>
                 </ThemeWrapper>
               </ModelSelectionProvider>
