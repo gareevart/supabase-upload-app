@@ -468,13 +468,10 @@ export const ApiKeysManager: React.FC = () => {
       {/* Модальное окно создания API ключа */}
       <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)}>
         <div className="p-6 w-[500px]">
-          <Text variant="header-2" className="mb-4">Создать API ключ</Text>
+          <Text variant="header-2" className="mb-4">Create API key</Text>
           <div className="space-y-4 mt-4">
             <div>
-              <Text variant="subheader-1" className="mb-2">Название ключа</Text>
-              <Text variant="body-1" color="secondary" className="grid mt-1">
-                Выберите понятное название для идентификации ключа
-              </Text>
+              <Text variant="subheader-1" className="mb-2">Key name</Text>
               <TextInput
                 size="l"
                 placeholder="My magic key"
@@ -487,7 +484,7 @@ export const ApiKeysManager: React.FC = () => {
             </div>
 
             <div className="mt-4">
-              <Alert theme="info" title="API ключ будет показан только один раз после создания" message="Обязательно сохраните его в безопасном месте" />
+              <Alert theme="info" title="The API key will be shown only once after creation" message="Be sure to save it in a safe place" />
             </div>
           </div>
 
@@ -498,7 +495,7 @@ export const ApiKeysManager: React.FC = () => {
               onClick={() => setShowCreateModal(false)}
               disabled={creating}
             >
-              Отмена
+              Cancel
             </Button>
             <Button
               view="action"
@@ -506,7 +503,7 @@ export const ApiKeysManager: React.FC = () => {
               onClick={createApiKey}
               loading={creating}
             >
-              Создать ключ
+              Create key
             </Button>
           </div>
         </div>
