@@ -1,5 +1,97 @@
 import { generateHTML } from '@tiptap/html';
-import { extensions } from '@/app/components/blog/editor/serverExtensions';
+import { StarterKit } from '@tiptap/starter-kit';
+import { Color } from '@tiptap/extension-color';
+import { TextStyle } from '@tiptap/extension-text-style';
+import { TextAlign } from '@tiptap/extension-text-align';
+import { Link } from '@tiptap/extension-link';
+import { Image } from '@tiptap/extension-image';
+import { Highlight } from '@tiptap/extension-highlight';
+import { Underline } from '@tiptap/extension-underline';
+import { Subscript } from '@tiptap/extension-subscript';
+import { Superscript } from '@tiptap/extension-superscript';
+import { Typography } from '@tiptap/extension-typography';
+import { ResizableImage } from '@/app/components/blog/editor/resizableImageOnly';
+
+// Server-safe extensions (without DOM-dependent extensions like DragHandleExtension)
+const serverSafeExtensions = [
+  StarterKit.configure({
+    heading: {
+      levels: [1, 2, 3, 4, 5, 6],
+    },
+  }),
+  Color,
+  TextStyle,
+  TextAlign.configure({
+    types: ['heading', 'paragraph'],
+  }),
+  Link.configure({
+    openOnClick: false,
+    HTMLAttributes: {
+      rel: 'noopener noreferrer',
+      class: 'text-blue-600 hover:underline',
+    },
+  }),
+  Image.configure({
+    inline: true,
+    allowBase64: true,
+    HTMLAttributes: {
+      class: 'rounded-lg',
+    },
+  }),
+  ResizableImage.configure({
+    inline: true,
+    allowBase64: true,
+    HTMLAttributes: {
+      class: 'rounded-lg',
+    },
+  }),
+  Highlight,
+  Underline,
+  Subscript,
+  Superscript,
+  Typography,
+];
+
+// Helper function to safely generate HTML from TipTap JSON
+function safeGenerateHTML(content: any): string {
+  try {
+    // Validate content structure
+    if (!content || typeof content !== 'object') {
+      return '<p>Invalid content</p>';
+    }
+
+    // Check if it's a valid TipTap document structure
+    if (content.type === 'doc' || content.content) {
+      try {
+        // Ensure extensions is an array and generateHTML receives correct types
+        const html = generateHTML(content, serverSafeExtensions as any);
+        return html || '<p>Empty content</p>';
+      } catch (generateError: any) {
+        console.error('Error generating HTML from TipTap content:', generateError);
+        // Log more details about the error
+        if (generateError?.message) {
+          console.error('Error message:', generateError.message);
+        }
+        if (generateError?.stack) {
+          console.error('Error stack:', generateError.stack);
+        }
+        // Fallback: try with a minimal document structure
+        if (content.content && Array.isArray(content.content)) {
+          return '<p>Content rendered with errors</p>';
+        }
+        throw generateError;
+      }
+    }
+
+    return '<p>Invalid TipTap document structure</p>';
+  } catch (error: any) {
+    console.error('Error in safeGenerateHTML:', error);
+    if (error?.message) {
+      console.error('Error message:', error.message);
+    }
+    return '<p>Error rendering content</p>';
+  }
+}
 
 export function tiptapToHtml(jsonContent: any): string {
   try {
@@ -15,7 +107,7 @@ export function tiptapToHtml(jsonContent: any): string {
         try {
           const parsedContent = JSON.parse(jsonContent);
           if (parsedContent && (parsedContent.type === 'doc' || parsedContent.content)) {
-            return generateHTML(parsedContent, extensions);
+            return safeGenerateHTML(parsedContent);
           }
         } catch (parseError) {
           console.error('Error parsing JSON string:', parseError);
@@ -35,7 +127,7 @@ export function tiptapToHtml(jsonContent: any): string {
     if (typeof jsonContent === 'object') {
       // If it's a proper TipTap JSON structure with content
       if (jsonContent.type === 'doc' || jsonContent.content) {
-        return generateHTML(jsonContent, extensions);
+        return safeGenerateHTML(jsonContent);
       }
 
       // Try to stringify and parse if it's some other object
@@ -46,7 +138,7 @@ export function tiptapToHtml(jsonContent: any): string {
         try {
           const parsedContent = JSON.parse(contentStr);
           if (parsedContent && (parsedContent.type === 'doc' || parsedContent.content)) {
-            return generateHTML(parsedContent, extensions);
+            return safeGenerateHTML(parsedContent);
           }
         } catch (parseError) {
           console.error('Error parsing JSON content:', parseError);

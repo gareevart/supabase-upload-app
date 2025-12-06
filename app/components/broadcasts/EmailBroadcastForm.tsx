@@ -31,7 +31,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
   const [showDebug, setShowDebug] = useState(false);
   const previewRef = useRef<HTMLIFrameElement>(null);
   const [htmlContent, setHtmlContent] = useState<string>('');
-  
+
   // Memoized HTML content generation
   const memoizedHtml = useMemo(() => {
     if (!content) return '';
@@ -53,14 +53,14 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
       setHtmlContent(memoizedHtml);
     }
   }, [memoizedHtml]);
-  
+
   // Form validation
   const [errors, setErrors] = useState<{
     subject?: string;
     content?: string;
     recipients?: string;
   }>({});
-  
+
   // Handle group selection changes
   const handleGroupsChange = (groupIds: string[], emails: string[]) => {
     setSelectedGroups(groupIds);
@@ -72,7 +72,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
     const allEmails = new Set([...recipients, ...groupEmails]);
     return Array.from(allEmails);
   };
-  
+
   // Validate form
   const validateForm = (): boolean => {
     const newErrors: {
@@ -80,28 +80,28 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
       content?: string;
       recipients?: string;
     } = {};
-    
+
     if (!subject.trim()) {
       newErrors.subject = 'Subject is required';
     }
-    
+
     if (!content) {
       newErrors.content = 'Content is required';
     }
-    
+
     const allRecipients = getAllRecipients();
     if (allRecipients.length === 0) {
       newErrors.recipients = 'At least one recipient is required';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
+
   // Handle save as draft
   const handleSaveDraft = async () => {
     if (!validateForm()) return;
-    
+
     const allRecipients = getAllRecipients();
     const broadcastData: NewBroadcast = {
       subject,
@@ -109,12 +109,12 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
       recipients: allRecipients,
       group_ids: selectedGroups,
     };
-    
+
     if (onSave) {
       await onSave(broadcastData);
     }
   };
-  
+
   // Handle schedule
   const handleSchedule = async () => {
     if (!validateForm()) return;
@@ -122,7 +122,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
       setErrors({ ...errors, content: 'Please select a date and time for scheduling' });
       return;
     }
-    
+
     const allRecipients = getAllRecipients();
     const broadcastData: NewBroadcast = {
       subject,
@@ -131,16 +131,16 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
       group_ids: selectedGroups,
       scheduled_for: scheduledDate.toISOString(),
     };
-    
+
     if (onSchedule) {
       await onSchedule(broadcastData, scheduledDate);
     }
   };
-  
+
   // Handle send now
   const handleSendNow = async () => {
     if (!validateForm()) return;
-    
+
     const allRecipients = getAllRecipients();
     const broadcastData: NewBroadcast = {
       subject,
@@ -148,18 +148,18 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
       recipients: allRecipients,
       group_ids: selectedGroups,
     };
-    
+
     if (onSend) {
       await onSend(broadcastData);
     }
   };
-  
+
   return (
     <Card className="p-4">
       <div className="space-y-6">
         <div>
           <Text variant="subheader-1" className="mb-4">Создать Email рассылку</Text>
-          
+
           <div className="space-y-4">
             {/* Subject */}
             <div>
@@ -178,7 +178,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
                 </Text>
               )}
             </div>
-            
+
             {/* Group Selector */}
             <div>
               <GroupSelector
@@ -187,7 +187,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
                 disabled={isSubmitting}
               />
             </div>
-            
+
             {/* Manual Recipients */}
             <div>
               <Text variant="body-2" className="mb-1">
@@ -202,7 +202,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
                 placeholder="Добавьте email адреса..."
                 disabled={isSubmitting}
               />
-              
+
               {/* Show total recipients count */}
               <div className="mt-2">
                 <Text variant="caption-1" color="secondary">
@@ -212,14 +212,14 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
                   )}
                 </Text>
               </div>
-              
+
               {errors.recipients && (
                 <Text variant="caption-1" className="text-red-500 mt-1">
                   {errors.recipients}
                 </Text>
               )}
             </div>
-            
+
             {/* Content */}
             <div>
               <Text variant="body-2" className="mb-1">Содержание письма</Text>
@@ -236,7 +236,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
                 </Text>
               )}
             </div>
-            
+
             {/* Scheduler */}
             {showScheduler && (
               <div className="border rounded-md p-4 bg-gray-50">
@@ -248,7 +248,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
                 />
               </div>
             )}
-            
+
             {/* Actions */}
             <div className="flex flex-wrap gap-3 justify-end">
               <Button
@@ -275,27 +275,46 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
                 <Icon data={Pencil} size={16} />
                 Сохранить черновик
               </Button>
-              
+
               {!showScheduler ? (
                 <Button
                   view="outlined"
-                  onClick={() => setShowScheduler(true)}
+                  onClick={() => {
+                    if (!scheduledDate) {
+                      const defaultDate = new Date();
+                      defaultDate.setHours(defaultDate.getHours() + 1, 0, 0, 0); // 1 hour from now
+                      setScheduledDate(defaultDate);
+                    }
+                    setShowScheduler(true);
+                  }}
                   disabled={isSubmitting}
                 >
                   <Icon data={Plus} size={16} />
                   Запланировать
                 </Button>
               ) : (
-                <Button
-                  view="outlined"
-                  onClick={handleSchedule}
-                  disabled={isSubmitting || !scheduledDate}
-                >
-                  <Icon data={ChevronDown} size={16} />
-                  Подтвердить планирование
-                </Button>
+                <>
+                  <Button
+                    view="outlined"
+                    onClick={() => {
+                      setShowScheduler(false);
+                      setScheduledDate(null);
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    Отмена
+                  </Button>
+                  <Button
+                    view="outlined"
+                    onClick={handleSchedule}
+                    disabled={isSubmitting || !scheduledDate}
+                  >
+                    <Icon data={ChevronDown} size={16} />
+                    Подтвердить планирование
+                  </Button>
+                </>
               )}
-              
+
               <Button
                 view="action"
                 onClick={handleSendNow}
@@ -321,17 +340,17 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
           />
         </div>
       </Modal>
-      
+
       {/* Debug Modal */}
       <Modal open={showDebug} onClose={() => setShowDebug(false)}>
         <div className="w-full max-w-4xl h-[80vh] overflow-auto p-4">
           <Text variant="subheader-1" className="mb-4">Debug Information</Text>
-          
+
           <div className="mb-4">
             <Text variant="body-2" className="font-bold">Content Type:</Text>
             <Text variant="body-2">{typeof content}</Text>
           </div>
-          
+
           {typeof content === 'object' && (
             <div className="mb-4">
               <Text variant="body-2" className="font-bold">Content Structure:</Text>
@@ -340,14 +359,14 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
               </pre>
             </div>
           )}
-          
+
           <div className="mb-4">
             <Text variant="body-2" className="font-bold">Generated HTML:</Text>
             <pre className="bg-gray-100 p-2 rounded text-xs overflow-auto max-h-40">
               {htmlContent}
             </pre>
           </div>
-          
+
           <div className="mb-4">
             <Text variant="body-2" className="font-bold">Preview:</Text>
             <div className="border p-2 rounded bg-white">

@@ -194,9 +194,18 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
   };
 
   const toggleScheduler = () => {
-    setShowScheduler(!showScheduler);
     if (showScheduler) {
+      // Closing scheduler - clear the date
       setScheduledDate(null);
+      setShowScheduler(false);
+    } else {
+      // Opening scheduler - initialize with default date if none is set
+      if (!scheduledDate) {
+        const defaultDate = new Date();
+        defaultDate.setHours(defaultDate.getHours() + 1, 0, 0, 0); // 1 hour from now
+        setScheduledDate(defaultDate);
+      }
+      setShowScheduler(true);
     }
   };
 
