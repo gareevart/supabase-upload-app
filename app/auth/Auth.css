@@ -21,6 +21,7 @@
 .login {
     display: flex;
     min-width: 320px;
+    width: 320px;
     padding: var(--g-spacing-6, 24px) var(--g-spacing-5, 20px);
     flex-direction: column;
     align-items: stretch;
@@ -31,6 +32,7 @@
     margin: 0 auto;
     opacity: 1;
     transition: opacity 0.3s ease-in-out;
+    box-sizing: border-box;
 }
 
 .login>.title {
@@ -209,24 +211,24 @@ p {
         max-width: calc(100vw - 32px);
         margin: 0 auto;
     }
-    
+
     .profile-view {
         flex-direction: column;
         width: 100%;
         max-width: 100%;
     }
-    
+
     .profile-avatar {
         width: 60px !important;
         height: 60px !important;
     }
-    
+
     .responsive-card {
         padding: 12px;
         margin: 0;
         max-width: 100%;
     }
-    
+
     /* Adjust DefinitionList for mobile */
     .g-definition-list__item {
         flex-direction: column !important;
@@ -234,20 +236,20 @@ p {
         width: 100% !important;
         max-width: 100% !important;
     }
-    
+
     .g-definition-list__item-name {
         margin-bottom: 4px !important;
         padding-right: 0 !important;
         width: 100% !important;
     }
-    
+
     .g-definition-list__item-content {
         width: 100% !important;
         max-width: 100% !important;
         word-break: break-all;
         overflow-wrap: break-word;
     }
-    
+
     /* Force text inputs and buttons to fit */
     .profile-field input,
     .profile-field textarea {
@@ -255,17 +257,17 @@ p {
         max-width: 100% !important;
         box-sizing: border-box !important;
     }
-    
+
     .profile-actions {
         flex-direction: column;
         width: 100%;
     }
-    
+
     .profile-actions button {
         width: 100%;
         max-width: 100%;
     }
-    
+
     .subscribe-view {
         width: 100%;
         max-width: 100%;
