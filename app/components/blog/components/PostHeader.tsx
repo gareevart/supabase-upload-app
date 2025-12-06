@@ -1,19 +1,8 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@gravity-ui/uikit";
+import { Button, Modal, Text, Flex } from "@gravity-ui/uikit";
 import Image from "next/image";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/app/components/ui/alert-dialog";
 
 interface PostHeaderProps {
   title: string;
@@ -40,6 +29,7 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
   featuredImage,
 }) => {
   const router = useRouter();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   
   return (
     <div className="mb-8">
@@ -75,31 +65,37 @@ export const PostHeader: React.FC<PostHeaderProps> = ({
         <div className="flex gap-2 mb-6">
           <Button
             size="l"
-            variant="outline"
+            view="outlined"
             onClick={() => router.push(`/edit-post/${postId}`)}
           >
             Редактировать
           </Button>
           
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button size="l" variant="destructive">Удалить</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Это действие нельзя отменить. Статья будет безвозвратно удалена.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Отмена</AlertDialogCancel>
-                <AlertDialogAction onClick={onDelete}>
+          <Button size="l" view="outlined-danger" onClick={() => setIsDeleteModalOpen(true)}>
+            Удалить
+          </Button>
+          
+          <Modal open={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
+            <div style={{ padding: '24px', minWidth: '400px' }}>
+              <Text variant="header-2" style={{ marginBottom: '16px' }}>
+                Вы уверены?
+              </Text>
+              <Text color="secondary" style={{ marginBottom: '24px' }}>
+                Это действие нельзя отменить. Статья будет безвозвратно удалена.
+              </Text>
+              <Flex direction="row" justifyContent="flex-end" gap={2}>
+                <Button view="outlined" onClick={() => setIsDeleteModalOpen(false)}>
+                  Отмена
+                </Button>
+                <Button view="action" onClick={async () => {
+                  await onDelete();
+                  setIsDeleteModalOpen(false);
+                }}>
                   Удалить
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                </Button>
+              </Flex>
+            </div>
+          </Modal>
         </div>
       )}
 

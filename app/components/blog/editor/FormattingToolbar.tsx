@@ -15,10 +15,7 @@ import {
   Code,
   Picture
 } from '@gravity-ui/icons';
-import { Icon } from '@gravity-ui/uikit';
-import { ToggleGroup, ToggleGroupItem } from "@/app/components/ui/toggle-group";
-import {Button} from '@gravity-ui/uikit';
-import { Separator } from "@/app/components/ui/separator";
+import { Icon, Button, Divider } from '@gravity-ui/uikit';
 
 interface FormattingToolbarProps {
   hasFormat: (prefix: string, suffix?: string) => boolean;
@@ -67,109 +64,110 @@ const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
         {formatOptions.map((option) => (
           <Button
             key={option.name}
-            variant={hasFormat(option.prefix) ? "secondary" : "ghost"}
+            view={hasFormat(option.prefix) ? "normal" : "flat"}
             size="m"
             onClick={() => applyFormatting(option.prefix)}
             title={`${option.name}${option.shortcut ? ` (${option.shortcut})` : ''}`}
-            className="h-8 px-2 min-w-8"
+            style={{ height: '32px', padding: '0 8px', minWidth: '32px' }}
           >
             {option.icon}
           </Button>
         ))}
 
-        <Separator orientation="vertical" className="mx-1 h-6" />
+        <Divider orientation="vertical" style={{ margin: '0 4px', height: '24px' }} />
         
         <Button
           size="m"
+          view="flat"
           onClick={() => applyList('- ')}
           title="Bullet List"
-          className="h-8 px-2 min-w-8"
+          style={{ height: '32px', padding: '0 8px', minWidth: '32px' }}
         >
           <Icon data={ListUl} size={16} />
         </Button>
         
         <Button
-          view="normal"
+          view="flat"
           size="m"
           onClick={() => applyList('1. ')}
           title="Numbered List"
-          className="h-8 px-2 min-w-8"
+          style={{ height: '32px', padding: '0 8px', minWidth: '32px' }}
         >
           <Icon data={ListOl} size={16} />
         </Button>
 
-        <Separator orientation="vertical" className="mx-1 h-6" />
+        <Divider orientation="vertical" style={{ margin: '0 4px', height: '24px' }} />
         
-        <ToggleGroup type="single" className="flex">
-          <ToggleGroupItem 
-            value="left"
-            aria-label="Align Left"
+        <div style={{ display: 'flex' }}>
+          <Button 
+            view="flat"
+            size="m"
             onClick={() => applyAlignment('left')}
             title="Align Left"
-            className="h-8 px-2 min-w-8"
+            style={{ height: '32px', padding: '0 8px', minWidth: '32px' }}
           >
             <Icon data={TextAlignLeft} size={16} />
-          </ToggleGroupItem>
+          </Button>
           
-          <ToggleGroupItem 
-            value="center"
-            aria-label="Align Center"
+          <Button 
+            view="flat"
+            size="m"
             onClick={() => applyAlignment('center')}
             title="Align Center"
-            className="h-8 px-2 min-w-8"
+            style={{ height: '32px', padding: '0 8px', minWidth: '32px' }}
           >
             <Icon data={TextAlignCenter} size={16} />
-          </ToggleGroupItem>
+          </Button>
           
-          <ToggleGroupItem 
-            value="right"
-            aria-label="Align Right"
+          <Button 
+            view="flat"
+            size="m"
             onClick={() => applyAlignment('right')}
             title="Align Right"
-            className="h-8 px-2 min-w-8"
+            style={{ height: '32px', padding: '0 8px', minWidth: '32px' }}
           >
             <Icon data={TextAlignRight} size={16} />
-          </ToggleGroupItem>
-        </ToggleGroup>
+          </Button>
+        </div>
 
-        <Separator orientation="vertical" className="mx-1 h-6" />
+        <Divider orientation="vertical" style={{ margin: '0 4px', height: '24px' }} />
 
         <Button
-          variant="ghost"
+          view="flat"
           size="m"
           onClick={() => applyFormatting('> ')}
           title="Quote"
-          className="h-8 px-2 min-w-8"
+          style={{ height: '32px', padding: '0 8px', minWidth: '32px' }}
         >
           <Icon data={Circle} size={16} />
         </Button>
         
         <Button
-          variant="ghost"
+          view="flat"
           size="m"
           onClick={() => applyFormatting('`')}
           title="Inline Code"
-          className="h-8 px-2 min-w-8"
+          style={{ height: '32px', padding: '0 8px', minWidth: '32px' }}
         >
           <Icon data={Code} size={16} />
         </Button>
 
         <Button 
-          variant="ghost"
+          view="flat"
           size="m"
           onClick={() => onOpenDialog('link')}
           title="Insert Link"
-          className="h-8 px-2 min-w-8"
+          style={{ height: '32px', padding: '0 8px', minWidth: '32px' }}
         >
           <Icon data={Link} size={16} />
         </Button>
         
         <Button 
-          variant="ghost"
+          view="flat"
           size="m"
           onClick={() => onOpenDialog('image')}
           title="Insert Image"
-          className="h-8 px-2 min-w-8"
+          style={{ height: '32px', padding: '0 8px', minWidth: '32px' }}
         >
           <Icon data={Picture} size={16} />
         </Button>

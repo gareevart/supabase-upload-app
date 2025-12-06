@@ -7,15 +7,10 @@ import { Icon } from "@gravity-ui/uikit"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 import { TextInput } from "@gravity-ui/uikit";
-import { Separator } from "@/app/components/ui/separator"
+import { Divider } from "@gravity-ui/uikit"
 import { Sheet, SheetContent } from "@/app/components/ui/sheet"
 import { Skeleton } from "@/app/components/ui/skeleton"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/app/components/ui/tooltip"
+import { Tooltip } from "@gravity-ui/uikit"
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -129,7 +124,7 @@ const SidebarProvider = React.forwardRef<
 
     return (
       <SidebarContext.Provider value={contextValue}>
-        <TooltipProvider delayDuration={0}>
+        <div>
           <div
             style={
               {
@@ -147,7 +142,7 @@ const SidebarProvider = React.forwardRef<
           >
             {children}
           </div>
-        </TooltipProvider>
+        </div>
       </SidebarContext.Provider>
     )
   }
@@ -390,12 +385,12 @@ const SidebarFooter = React.forwardRef<
 })
 SidebarFooter.displayName = "SidebarFooter"
 
-const SidebarSeparator = React.forwardRef<
-  React.ElementRef<typeof Separator>,
-  React.ComponentProps<typeof Separator>
+const SidebarDivider = React.forwardRef<
+  React.ElementRef<typeof Divider>,
+  React.ComponentProps<typeof Divider>
 >(({ className, ...props }, ref) => {
   return (
-    <Separator
+    <Divider
       ref={ref}
       data-sidebar="separator"
       className={cn("mx-2 w-auto bg-sidebar-border", className)}
@@ -403,7 +398,7 @@ const SidebarSeparator = React.forwardRef<
     />
   )
 })
-SidebarSeparator.displayName = "SidebarSeparator"
+SidebarDivider.displayName = "SidebarDivider"
 
 const SidebarContent = React.forwardRef<
   HTMLDivElement,
@@ -548,7 +543,7 @@ const SidebarMenuButton = React.forwardRef<
   React.ComponentProps<"button"> & {
     asChild?: boolean
     isActive?: boolean
-    tooltip?: string | React.ComponentProps<typeof TooltipContent>
+    tooltip?: string
   } & VariantProps<typeof sidebarMenuButtonVariants>
 >(
   (
@@ -581,23 +576,15 @@ const SidebarMenuButton = React.forwardRef<
       return button
     }
 
-    if (typeof tooltip === "string") {
-      tooltip = {
-        children: tooltip,
-      }
+    const tooltipText = typeof tooltip === "string" ? tooltip : (tooltip as any)?.children || ""
+    if ((state === "collapsed" || isMobile) && tooltipText) {
+      return (
+        <Tooltip content={tooltipText}>
+          {button}
+        </Tooltip>
+      )
     }
-
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>{button}</TooltipTrigger>
-        <TooltipContent
-          side="right"
-          align="center"
-          hidden={state !== "collapsed" || isMobile}
-          {...tooltip}
-        />
-      </Tooltip>
-    )
+    return button
   }
 )
 SidebarMenuButton.displayName = "SidebarMenuButton"
@@ -789,7 +776,7 @@ export {
   SidebarMenuSubItem,
   SidebarProvider,
   SidebarRail,
-  SidebarSeparator,
+  SidebarDivider,
   SidebarTrigger,
   useSidebar,
 }

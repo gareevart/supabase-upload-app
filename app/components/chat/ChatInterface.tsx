@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useChat, Message, FileAttachment } from "@/hooks/useChat";
-import { DialogFooter } from "@/app/components/ui/dialog";
 import ReactMarkdown from 'react-markdown';
-import { Button, TextArea, Icon, Modal, Text, Spin, Label, useToaster, Select } from '@gravity-ui/uikit';
+import { Button, TextArea, Icon, Modal, Text, Spin, Label, useToaster, Select, Flex } from '@gravity-ui/uikit';
 import { Gear, Copy } from '@gravity-ui/icons';
 import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
 import { ReasoningBlock } from "./ReasoningBlock";
@@ -234,7 +233,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
               />
             </div>
           </div>
-          <DialogFooter>
+          <Flex direction="row" justifyContent="flex-end" gap={2} style={{ marginTop: '24px' }}>
             <Button
             size="l"
               view="outlined"
@@ -247,7 +246,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
               size="l" onClick={handleSaveSettings}>
               Сохранить
             </Button>
-          </DialogFooter>
+          </Flex>
       </Modal>    
     </div>
   );

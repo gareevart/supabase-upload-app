@@ -1,8 +1,6 @@
 
 import React, { useState } from 'react';
-import {Button} from '@gravity-ui/uikit';
-import { Input } from "@/app/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/app/components/ui/dialog";
+import { Button, TextInput, Modal, Text, Flex } from '@gravity-ui/uikit';
 
 interface LinkDialogProps {
   isOpen: boolean;
@@ -34,44 +32,37 @@ const LinkDialog: React.FC<LinkDialogProps> = ({
     onClose();
   };
   return (
-    <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Добавить ссылку</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <label className="text-right text-sm" htmlFor="linkText">
-              Текст
-            </label>
-            <Input
-              id="linkText"
+    <Modal open={isOpen} onClose={handleClose}>
+      <div style={{ padding: '24px', minWidth: '400px' }}>
+        <Text variant="header-2" style={{ marginBottom: '24px' }}>
+          Добавить ссылку
+        </Text>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+          <div>
+            <Text variant="body-1" style={{ marginBottom: '8px' }}>Текст</Text>
+            <TextInput
               value={linkText}
               onChange={(e) => setLinkText(e.target.value)}
-              className="col-span-3"
+              placeholder="Текст ссылки"
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <label className="text-right text-sm" htmlFor="linkUrl">
-              URL
-            </label>
-            <Input
-              id="linkUrl"
+          <div>
+            <Text variant="body-1" style={{ marginBottom: '8px' }}>URL</Text>
+            <TextInput
               value={linkUrl}
               onChange={(e) => setLinkUrl(e.target.value)}
-              className="col-span-3"
               placeholder="https://"
             />
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>
+        <Flex direction="row" justifyContent="flex-end" gap={2}>
+          <Button view="outlined" onClick={handleClose}>
             Отмена
           </Button>
-          <Button onClick={handleAddLink}>Добавить</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <Button view="action" onClick={handleAddLink}>Добавить</Button>
+        </Flex>
+      </div>
+    </Modal>
   );
 };
 

@@ -3,7 +3,7 @@ import { Button, Text, TextArea, Modal, Icon, SegmentedRadioGroup } from '@gravi
 import { Xmark } from '@gravity-ui/icons';
 import StoredImageGallery from "../StoredImageGallery";
 import { useToast } from "@/hooks/use-toast";
-import { DialogFooter } from "@/app/components/ui/dialog";
+import { Flex } from '@gravity-ui/uikit';
 import NextImage from "next/image";
 
 
@@ -256,7 +256,7 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
               </div>
             )}
 
-            <DialogFooter>
+            <Flex direction="row" justifyContent="flex-end" gap={2} style={{ marginTop: '24px' }}>
               <Button view="outlined" size="l" onClick={() => setShowDialog(false)}>
                 Cancel
               </Button>
@@ -280,7 +280,7 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
                   ) : "Сгенерировать"}
                 </Button>
               )}
-            </DialogFooter>
+            </Flex>
           </div>
         )}
 
@@ -292,7 +292,7 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
                 onImageSelect={onSelectGalleryImage}
               />
             </div>
-            <DialogFooter>
+            <Flex direction="row" justifyContent="flex-end" style={{ marginTop: '24px' }}>
               <Button
                 view="action"
                 size="l"
@@ -300,7 +300,7 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
               >
                 Закрыть
               </Button>
-            </DialogFooter>
+            </Flex>
           </div>
         )}
       </div>

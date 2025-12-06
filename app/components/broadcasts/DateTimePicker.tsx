@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Text } from '@gravity-ui/uikit';
+import { Text, TextInput } from '@gravity-ui/uikit';
 import { Calendar } from '@/app/components/ui/calendar';
-import { Input } from '@/app/components/ui/input';
 import { DateTimePickerProps } from './types';
 
 const DateTimePicker: React.FC<DateTimePickerProps> = ({
@@ -69,12 +68,12 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
         </div>
         <div className="w-full sm:w-32">
           <Text variant="body-2" className="mb-1">Time</Text>
-          <Input
+          <input
             type="time"
             value={time}
             onChange={handleTimeChange}
             disabled={disabled || !date}
-            className="w-full"
+            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
           />
         </div>
       </div>

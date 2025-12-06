@@ -1,9 +1,6 @@
 
 import React, { useState } from 'react';
-import { Button } from '@gravity-ui/uikit';
-import { Textarea } from "@/app/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/app/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
+import { Button, TextArea, Modal, Text, Flex } from '@gravity-ui/uikit';
 import { useToast } from "@/hooks/use-toast";
 import { MagicWand, Comment, Circle } from '@gravity-ui/icons';
 import { Icon } from '@gravity-ui/uikit';
@@ -72,75 +69,84 @@ const YandexGPTTextGenerator = ({ onTextGenerated, initialText = '' }: YandexGPT
   return (
     <>
       <Button 
-        variant="outline" 
+        view="outlined" 
         size="m" 
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2"
+        style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
       >
         <Icon data={MagicWand} size={16} />
         YandexGPT
       </Button>
       
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl h-[80vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Генерация текста с помощью YandexGPT</DialogTitle>
-          </DialogHeader>
+      <Modal open={open} onClose={() => setOpen(false)}>
+        <div style={{ padding: '24px', minWidth: '600px', maxWidth: '800px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+          <Text variant="header-2" style={{ marginBottom: '24px' }}>
+            Генерация текста с помощью YandexGPT
+          </Text>
           
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="generate">
-                <Icon data={Comment} size={16} className="mr-2" />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ marginBottom: '16px', display: 'flex', gap: '8px' }}>
+              <Button
+                view={activeTab === 'generate' ? 'normal' : 'flat'}
+                size="m"
+                onClick={() => setActiveTab('generate')}
+              >
+                <Icon data={Comment} size={16} />
                 Генерация текста
-              </TabsTrigger>
-              <TabsTrigger value="improve">
-                <Icon data={Circle} size={16} className="mr-2" />
+              </Button>
+              <Button
+                view={activeTab === 'improve' ? 'normal' : 'flat'}
+                size="m"
+                onClick={() => setActiveTab('improve')}
+              >
+                <Icon data={Circle} size={16} />
                 Улучшение текста
-              </TabsTrigger>
-            </TabsList>
+              </Button>
+            </div>
             
-            <div className="flex-1 flex flex-col overflow-hidden mt-4">
-              <TabsContent value="generate" className="flex-1 flex flex-col space-y-4 overflow-hidden">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Запрос для генерации:</label>
-                  <Textarea 
-                    placeholder="Опишите, какой текст вы хотите получить. Например: Напиши введение для статьи о преимуществах низкоуглеводной диеты."
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    rows={3}
-                    className="resize-none"
-                  />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              {activeTab === 'generate' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, overflow: 'hidden' }}>
+                  <div>
+                    <Text variant="body-1" style={{ marginBottom: '8px' }}>Запрос для генерации:</Text>
+                    <TextArea
+                      placeholder="Опишите, какой текст вы хотите получить. Например: Напиши введение для статьи о преимуществах низкоуглеводной диеты."
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                  
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                    <Text variant="body-1" style={{ marginBottom: '8px' }}>Сгенерированный текст:</Text>
+                    <TextArea
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                      style={{ flex: 1, minHeight: '200px' }}
+                      placeholder="Здесь появится сгенерированный текст..."
+                    />
+                  </div>
                 </div>
-                
-                <div className="flex-1 space-y-2 overflow-hidden flex flex-col">
-                  <label className="text-sm font-medium">Сгенерированный текст:</label>
-                  <Textarea 
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    className="flex-1 min-h-0"
-                    placeholder="Здесь появится сгенерированный текст..."
-                  />
-                </div>
-              </TabsContent>
+              )}
               
-              <TabsContent value="improve" className="flex-1 flex flex-col space-y-4 overflow-hidden">
-                <div className="flex-1 space-y-2 overflow-hidden flex flex-col">
-                  <label className="text-sm font-medium">Текст для улучшения:</label>
-                  <Textarea 
+              {activeTab === 'improve' && (
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <Text variant="body-1" style={{ marginBottom: '8px' }}>Текст для улучшения:</Text>
+                  <TextArea
                     value={text}
                     onChange={(e) => setText(e.target.value)}
-                    className="flex-1 min-h-0"
+                    style={{ flex: 1, minHeight: '200px' }}
                     placeholder="Вставьте текст, который хотите улучшить..."
                   />
                 </div>
-              </TabsContent>
+              )}
             </div>
-          </Tabs>
+          </div>
           
-          <DialogFooter className="flex justify-between">
-            <div className="flex gap-4">
+          <Flex direction="row" justifyContent="space-between" style={{ marginTop: '24px' }}>
+            <Flex direction="row" gap={2}>
               <Button 
-                variant="outline" 
+                view="outlined" 
                 onClick={() => setOpen(false)}
               >
                 Отмена
@@ -148,7 +154,7 @@ const YandexGPTTextGenerator = ({ onTextGenerated, initialText = '' }: YandexGPT
               <Button
                 onClick={handleGenerateText}
                 disabled={isGenerating}
-                variant="secondary"
+                view="outlined-info"
               >
                 {isGenerating ? (
                   <>
@@ -157,16 +163,17 @@ const YandexGPTTextGenerator = ({ onTextGenerated, initialText = '' }: YandexGPT
                   </>
                 ) : activeTab === 'generate' ? 'Генерировать' : 'Улучшить'}
               </Button>
-            </div>
+            </Flex>
             <Button
               onClick={handleApply}
               disabled={!text.trim()}
+              view="action"
             >
               Применить
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </Flex>
+        </div>
+      </Modal>
     </>
   );
 };

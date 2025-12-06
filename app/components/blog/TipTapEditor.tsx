@@ -21,7 +21,7 @@ import {
   TextAlignLeft, TextAlignCenter,
   TextAlignRight, ListOl, ArrowUturnCcwLeft, ArrowUturnCwRight
 } from '@gravity-ui/icons';
-import { DialogFooter } from '@/app/components/ui/dialog';
+import { Flex } from '@gravity-ui/uikit';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -801,7 +801,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               />
             </div>
           </div>
-          <DialogFooter>
+          <Flex direction="row" justifyContent="flex-end" gap={2} style={{ marginTop: '24px' }}>
             <Button
               view="outlined"
               size="l"
@@ -816,7 +816,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             >
               Add Link
             </Button>
-          </DialogFooter>
+          </Flex>
           </div>
       </Modal>
       
@@ -850,7 +850,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               />
             </div>
           </div>
-          <DialogFooter>
+          <Flex direction="row" justifyContent="flex-end" gap={2} style={{ marginTop: '24px' }}>
             <Button
               view="outlined"
               size="l"
@@ -865,7 +865,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             >
               Add Image
             </Button>
-          </DialogFooter>
+          </Flex>
           </div>
       </Modal>
 
@@ -905,7 +905,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               />
             </div>
           </div>
-          <DialogFooter>
+          <Flex direction="row" justifyContent="flex-end" gap={2} style={{ marginTop: '24px' }}>
             <Button
               view="outlined"
               size="l"
@@ -920,7 +920,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             >
               Применить
             </Button>
-          </DialogFooter>
+          </Flex>
           </div>
       </Modal>
     </div>

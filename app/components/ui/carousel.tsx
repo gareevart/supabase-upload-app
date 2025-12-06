@@ -6,7 +6,7 @@ import { ArrowLeft, ArrowRight } from "@gravity-ui/icons"
 import { Icon } from "@gravity-ui/uikit"
 
 import { cn } from "@/lib/utils"
-import { Button } from "@/app/components/ui/button"
+import { Button } from "@gravity-ui/uikit"
 
 type CarouselApi = UseEmblaCarouselType[1]
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>
@@ -196,13 +196,12 @@ CarouselItem.displayName = "CarouselItem"
 const CarouselPrevious = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<typeof Button>
->(({ className, variant = "outline", size = "icon", ...props }, ref) => {
+>(({ className, view = "outlined", size = "m", ...props }, ref) => {
   const { orientation, scrollPrev, canScrollPrev } = useCarousel()
 
   return (
     <Button
-      ref={ref}
-      variant={variant}
+      view={view}
       size={size}
       className={cn(
         "absolute  h-8 w-8 rounded-full",
@@ -225,13 +224,12 @@ CarouselPrevious.displayName = "CarouselPrevious"
 const CarouselNext = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<typeof Button>
->(({ className, variant = "outline", size = "icon", ...props }, ref) => {
+>(({ className, view = "outlined", size = "m", ...props }, ref) => {
   const { orientation, scrollNext, canScrollNext } = useCarousel()
 
   return (
     <Button
-      ref={ref}
-      variant={variant}
+      view={view}
       size={size}
       className={cn(
         "absolute h-8 w-8 rounded-full",

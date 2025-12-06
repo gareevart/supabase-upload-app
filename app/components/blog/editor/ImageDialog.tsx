@@ -1,8 +1,6 @@
 
 import React, { useState } from 'react';
-import {Button} from '@gravity-ui/uikit';
-import { Input } from "@/app/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/app/components/ui/dialog";
+import { Button, TextInput, Modal, Text, Flex } from '@gravity-ui/uikit';
 
 interface ImageDialogProps {
   isOpen: boolean;
@@ -32,44 +30,37 @@ const ImageDialog: React.FC<ImageDialogProps> = ({
     onClose();
   };
   return (
-    <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Добавить изображение</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <label className="text-right text-sm" htmlFor="imageUrl">
-              URL
-            </label>
-            <Input
-              id="imageUrl"
+    <Modal open={isOpen} onClose={handleClose}>
+      <div style={{ padding: '24px', minWidth: '400px' }}>
+        <Text variant="header-2" style={{ marginBottom: '24px' }}>
+          Добавить изображение
+        </Text>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+          <div>
+            <Text variant="body-1" style={{ marginBottom: '8px' }}>URL</Text>
+            <TextInput
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
-              className="col-span-3"
               placeholder="https://"
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <label className="text-right text-sm" htmlFor="imageAlt">
-              Описание
-            </label>
-            <Input
-              id="imageAlt"
+          <div>
+            <Text variant="body-1" style={{ marginBottom: '8px' }}>Описание</Text>
+            <TextInput
               value={imageAlt}
               onChange={(e) => setImageAlt(e.target.value)}
-              className="col-span-3"
+              placeholder="Описание изображения"
             />
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>
+        <Flex direction="row" justifyContent="flex-end" gap={2}>
+          <Button view="outlined" onClick={handleClose}>
             Отмена
           </Button>
-          <Button onClick={handleAddImage}>Добавить</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <Button view="action" onClick={handleAddImage}>Добавить</Button>
+        </Flex>
+      </div>
+    </Modal>
   );
 };
 
