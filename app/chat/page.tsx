@@ -67,6 +67,10 @@ const ChatPage = () => {
   }
 
   if (!user) {
+    // Сохраняем текущий путь для возврата после авторизации
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('returnUrl', '/chat');
+    }
     redirect("/auth");
     return null;
   }

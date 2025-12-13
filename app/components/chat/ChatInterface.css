@@ -3,6 +3,7 @@
 .g-modal__content {
   display: flex;
   flex-direction: column;
+  padding: 32px 20px;
 }
 
 /* Mobile optimizations */
@@ -17,8 +18,8 @@
     position: relative;
     -webkit-overflow-scrolling: touch;
     /* Add padding-bottom to prevent content from being hidden behind fixed form */
-    /* Форма ввода (52px базовая + до 350px с файлами и расширенным textarea) + навигация (65px) + большой отступ (80px) */
-    padding-bottom: calc(547px + env(safe-area-inset-bottom));
+    /* Форма ввода + небольшой отступ для комфортного скролла */
+    padding-bottom: calc(120px + env(safe-area-inset-bottom));
   }
 
   .chat-interface header,
@@ -74,12 +75,12 @@
     overflow: visible;
     position: relative;
     /* Add padding-bottom to prevent content from being hidden behind fixed form */
-    padding-bottom: calc(547px + env(safe-area-inset-bottom));
+    padding-bottom: calc(120px + env(safe-area-inset-bottom));
   }
   
   /* Also add padding-bottom to the messages content container for extra safety */
   .chat-messages > div.space-y-4 {
-    padding-bottom: calc(547px + env(safe-area-inset-bottom));
+    padding-bottom: calc(120px + env(safe-area-inset-bottom));
     min-height: 100%;
   }
   
@@ -214,18 +215,18 @@
 /* Mobile: Add padding-bottom to prevent content from being hidden behind fixed form and navigation */
 @media (max-width: 768px) {
   .chat-messages {
-    /* Форма ввода (52px базовая + до 350px с файлами и расширенным textarea) + навигация (65px) + большой отступ (80px) */
-    padding-bottom: calc(547px + env(safe-area-inset-bottom));
+    /* Форма ввода + небольшой отступ для комфортного скролла */
+    padding-bottom: calc(120px + env(safe-area-inset-bottom));
   }
   
   /* Also add padding to parent scroll container to ensure content is visible */
   .chat-interface-container > div.flex.flex-col {
-    padding-bottom: calc(547px + env(safe-area-inset-bottom));
+    padding-bottom: calc(120px + env(safe-area-inset-bottom));
   }
   
   /* Add padding to messages content container */
   .chat-messages > div.space-y-4 {
-    padding-bottom: calc(547px + env(safe-area-inset-bottom));
+    padding-bottom: calc(120px + env(safe-area-inset-bottom));
   }
 }
 

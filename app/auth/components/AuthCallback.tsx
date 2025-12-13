@@ -61,9 +61,16 @@ const AuthCallback = () => {
             setStatus('success');
             setMessage('Авторизация успешна! Перенаправление...');
             
+            // Проверяем сохраненный return URL или используем профиль по умолчанию
+            const returnUrl = typeof window !== 'undefined' ? sessionStorage.getItem('returnUrl') : null;
+            const redirectPath = returnUrl || '/auth/profile';
+            if (returnUrl) {
+              sessionStorage.removeItem('returnUrl');
+            }
+            
             // Небольшая задержка для показа сообщения об успехе
             setTimeout(() => {
-              router.push('/auth/profile');
+              router.push(redirectPath);
             }, 1500);
           } else {
             setStatus('error');
@@ -88,7 +95,15 @@ const AuthCallback = () => {
             console.log('Existing session found:', session.user.id);
             setStatus('success');
             setMessage('Авторизация успешна! Перенаправление...');
-            setTimeout(() => router.push('/auth/profile'), 1500);
+            
+            // Проверяем сохраненный return URL или используем профиль по умолчанию
+            const returnUrl = typeof window !== 'undefined' ? sessionStorage.getItem('returnUrl') : null;
+            const redirectPath = returnUrl || '/auth/profile';
+            if (returnUrl) {
+              sessionStorage.removeItem('returnUrl');
+            }
+            
+            setTimeout(() => router.push(redirectPath), 1500);
           } else {
             console.log('No session found, redirecting to auth');
             setStatus('error');

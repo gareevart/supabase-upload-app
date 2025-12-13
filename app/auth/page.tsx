@@ -32,7 +32,15 @@ const Login = () => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      router.push('/auth/profile');
+      
+      // Проверяем сохраненный return URL или используем профиль по умолчанию
+      const returnUrl = typeof window !== 'undefined' ? sessionStorage.getItem('returnUrl') : null;
+      if (returnUrl) {
+        sessionStorage.removeItem('returnUrl');
+        router.push(returnUrl);
+      } else {
+        router.push('/auth/profile');
+      }
     } catch (error: any) {
       setError(error.message);
     } finally {
