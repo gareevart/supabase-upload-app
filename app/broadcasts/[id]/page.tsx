@@ -1,6 +1,12 @@
 import BroadcastDetailPageClient from './BroadcastDetailPageClient';
 
-export default function BroadcastDetailPage() {
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function BroadcastDetailPage({ params }: PageProps) {
+  // Разворачиваем params, чтобы избежать ошибки перечисления
+  await params;
   return <BroadcastDetailPageClient />;
 }
 
