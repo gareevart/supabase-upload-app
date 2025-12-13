@@ -108,6 +108,12 @@ a {
     overflow-x: hidden;
     align-items: center;
   }
+  
+  /* Prevent scrolling when chat is open */
+  .main-content:has(.chat-layout) {
+    margin-bottom: 0;
+    overflow: hidden !important;
+  }
 }
 
 .page-container {

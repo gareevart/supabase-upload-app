@@ -3,10 +3,12 @@ import Image from "next/image";
 import { useChat, Message, FileAttachment } from "@/hooks/useChat";
 import ReactMarkdown from 'react-markdown';
 import { Button, TextArea, Icon, Modal, Text, Spin, Label, useToaster, Select, Flex } from '@gravity-ui/uikit';
-import { Gear, Copy } from '@gravity-ui/icons';
+import { Gear, Copy, Bars } from '@gravity-ui/icons';
 import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
 import { ReasoningBlock } from "./ReasoningBlock";
 import { ChatMessageForm } from "./ChatMessageForm";
+import { useChatSidebar } from "./ChatSidebarContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import "./ChatInterface.css";
 
 interface ChatInterfaceProps {
@@ -28,6 +30,8 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
   // Use the toaster hook
   const toaster = useToaster();
   const { reasoningMode, selectedModel, setSelectedModel } = useModelSelection();
+  const { toggleSidebar, isMobileSidebarOpen } = useChatSidebar();
+  const isMobile = useIsMobile();
   const [systemPrompt, setSystemPrompt] = useState("");
   const [currentReasoning, setCurrentReasoning] = useState("");
   const [isReasoningActive, setIsReasoningActive] = useState(false);
@@ -127,28 +131,43 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
   return (
     <div className="flex flex-col h-full">
       <header className="p-4 gap-2 justify-between flex items-center">
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {/* Mobile burger button */}
+          {isMobile && (
+            <Button
+              view="outlined"
+              size="m"
+              onClick={toggleSidebar}
+              title="Открыть меню чатов"
+              className={isMobileSidebarOpen ? 'opacity-0 pointer-events-none' : ''}
+            >
+              <Icon data={Bars} size={18} />
+            </Button>
+          )}
+          
+          <div className="flex gap-2">
             {reasoningMode && selectedModel === 'yandexgpt' && (
               <Label theme="info" size="m">
                 Режим рассуждений
               </Label>
             )}
-          {chat.tokens_used && (
+            {chat.tokens_used && (
               <Label theme="unknown" size="m" value={chat.tokens_used.toString()}>Использовано токенов</Label>
-          )}
+            )}
+          </div>
         </div>
 
-          <Button 
-          variant="outline" 
+        <Button 
+          view="outlined" 
           size="m" 
           onClick={() => setOpen(true)}
           title="Настройки"
-          >
-           <Icon data={Gear} size={18} />
-          </Button>  
+        >
+          <Icon data={Gear} size={18} />
+        </Button>  
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 chat-messages">
+      <div className="flex-1 p-4 chat-messages">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="chat-empty-state">

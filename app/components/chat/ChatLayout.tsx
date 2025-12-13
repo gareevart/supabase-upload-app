@@ -1,40 +1,25 @@
 "use client";
 
-import { useState, ReactNode } from "react";
+import { ReactNode } from "react";
 import { ChatList } from "./ChatList";
-import { MobileChatSidebar, BurgerMenuButton } from "./MobileChatSidebar";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileChatSidebar } from "./MobileChatSidebar";
+import { ChatSidebarProvider, useChatSidebar } from "./ChatSidebarContext";
 import "./ChatLayout.css";
 
 interface ChatLayoutProps {
   children: ReactNode;
 }
 
-export const ChatLayout = ({ children }: ChatLayoutProps) => {
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const isMobile = useIsMobile();
-
-  const handleToggleSidebar = () => {
-    setIsMobileSidebarOpen(!isMobileSidebarOpen);
-  };
-
-  const handleCloseSidebar = () => {
-    setIsMobileSidebarOpen(false);
-  };
+const ChatLayoutContent = ({ children }: ChatLayoutProps) => {
+  const { isMobileSidebarOpen, toggleSidebar, closeSidebar } = useChatSidebar();
 
   return (
     <div className="chat-layout">
-      {/* Mobile burger button */}
-      <BurgerMenuButton 
-        onClick={handleToggleSidebar} 
-        isMenuOpen={isMobileSidebarOpen}
-      />
-
       {/* Mobile sidebar */}
       <MobileChatSidebar
         isOpen={isMobileSidebarOpen}
-        onToggle={handleToggleSidebar}
-        onClose={handleCloseSidebar}
+        onToggle={toggleSidebar}
+        onClose={closeSidebar}
       />
 
       <div className="chat-layout-container">
@@ -53,5 +38,13 @@ export const ChatLayout = ({ children }: ChatLayoutProps) => {
         </main>
       </div>
     </div>
+  );
+};
+
+export const ChatLayout = ({ children }: ChatLayoutProps) => {
+  return (
+    <ChatSidebarProvider>
+      <ChatLayoutContent>{children}</ChatLayoutContent>
+    </ChatSidebarProvider>
   );
 };

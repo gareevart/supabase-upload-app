@@ -1,9 +1,44 @@
 /* Chat Layout Styles */
 .chat-layout {
   height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
+  max-height: 100vh;
+  max-height: 100dvh; /* Dynamic viewport height for mobile */
+}
+
+/* Remove padding and prevent scrolling from main-content when chat-layout is inside */
+.main-content:has(.chat-layout) {
+  padding: 0 !important;
+  overflow: hidden !important;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
+  max-height: 100vh;
+  max-height: 100dvh;
+}
+
+/* Alternative for browsers that don't support :has() */
+.main-content .chat-layout {
+  margin: 0;
+}
+
+/* Prevent body and html scroll when chat is open */
+html:has(.chat-layout),
+body:has(.chat-layout) {
+  overflow: hidden !important;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
+  max-height: 100vh;
+  max-height: 100dvh;
+}
+
+/* Alternative for browsers that don't support :has() */
+html .chat-layout,
+body .chat-layout {
+  position: relative;
 }
 
 .chat-layout-container {
@@ -54,11 +89,6 @@
     display: none;
   }
 
-  .chat-layout {
-    height: 100vh;
-    height: 100dvh; /* Dynamic viewport height for mobile */
-  }
-
   .chat-main {
     width: 100%;
     height: 100%;
@@ -84,6 +114,16 @@
   background-color: var(--g-color-base-background);
   overflow: hidden;
   min-height: 0; /* Important for flex children */
+  position: relative; /* Ensure sticky positioning works */
+}
+
+/* Mobile: Ensure container doesn't scroll */
+@media (max-width: 767px) {
+  .chat-interface-container {
+    overflow: hidden;
+    height: 100%;
+    max-height: 100%;
+  }
 }
 
 /* Empty state */
@@ -118,7 +158,6 @@
 @media (max-width: 768px) {
   .chat-content {
     padding: 0px;
-    padding-top: var(--g-spacing-4);
   }
   
   .chat-interface-container {

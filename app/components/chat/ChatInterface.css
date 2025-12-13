@@ -7,15 +7,89 @@
 
 /* Mobile optimizations */
 @media (max-width: 767px) {
-  .chat-interface header {
+  /* Ensure parent container allows sticky to work */
+  .chat-interface-container > div.flex.flex-col {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    -webkit-overflow-scrolling: touch;
+    /* Add padding-bottom to prevent content from being hidden behind fixed form */
+    /* Форма ввода (52px базовая + до 350px с файлами и расширенным textarea) + навигация (65px) + большой отступ (80px) */
+    padding-bottom: calc(547px + env(safe-area-inset-bottom));
+  }
+
+  .chat-interface header,
+  header.p-4 {
     padding: 0.75rem 1rem;
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 20;
+    background-color: var(--g-color-base-background);
+    border-bottom: 1px solid var(--g-color-line-generic);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    flex-shrink: 0;
+    width: 100%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin: 0;
+    /* Ensure header stays visible */
+    will-change: transform;
+    /* Header layout */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    /* Header height */
+    min-height: 53px;
+    box-sizing: border-box;
   }
 
   .chat-interface header h2 {
     font-size: 1.125rem;
+  }
+  
+  /* Mobile header: burger button and labels */
+  header.p-4 > div:first-child {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+  }
+  
+  /* Hide labels on very small screens if needed */
+  @media (max-width: 360px) {
+    header.p-4 .g-label {
+      font-size: 0.75rem;
+    }
+  }
+  
+  /* Ensure messages container doesn't scroll separately - parent scrolls */
+  .chat-messages {
+    flex: 1;
+    min-height: 0;
+    overflow: visible;
+    position: relative;
+    /* Add padding-bottom to prevent content from being hidden behind fixed form */
+    padding-bottom: calc(547px + env(safe-area-inset-bottom));
+  }
+  
+  /* Also add padding-bottom to the messages content container for extra safety */
+  .chat-messages > div.space-y-4 {
+    padding-bottom: calc(547px + env(safe-area-inset-bottom));
+    min-height: 100%;
+  }
+  
+  /* Ensure main content containers don't scroll */
+  .chat-main,
+  .chat-content,
+  .chat-interface-container {
+    overflow: hidden;
+    height: 100%;
+    max-height: 100%;
   }
 
   .chat-interface .scroll-area {
@@ -49,6 +123,31 @@
 @media (min-width: 768px) {
   .chat-message {
     max-width: 80%;
+  }
+  
+  /* Ensure messages container scrolls on desktop */
+  .chat-messages {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    -webkit-overflow-scrolling: touch;
+    /* Remove mobile padding-bottom on desktop */
+    padding-bottom: 0;
+  }
+  
+  /* Remove padding from messages content container on desktop */
+  .chat-messages > div.space-y-4 {
+    padding-bottom: 0;
+    min-height: auto;
+  }
+  
+  /* Ensure parent container doesn't scroll on desktop */
+  .chat-interface-container > div.flex.flex-col {
+    overflow: visible;
+    height: 100%;
+    padding-bottom: 0;
   }
 }
 
@@ -115,8 +214,18 @@
 /* Mobile: Add padding-bottom to prevent content from being hidden behind fixed form and navigation */
 @media (max-width: 768px) {
   .chat-messages {
-    /* Форма ввода (~150px) + навигация (65px) + безопасная зона */
-    padding-bottom: calc(215px + env(safe-area-inset-bottom));
+    /* Форма ввода (52px базовая + до 350px с файлами и расширенным textarea) + навигация (65px) + большой отступ (80px) */
+    padding-bottom: calc(547px + env(safe-area-inset-bottom));
+  }
+  
+  /* Also add padding to parent scroll container to ensure content is visible */
+  .chat-interface-container > div.flex.flex-col {
+    padding-bottom: calc(547px + env(safe-area-inset-bottom));
+  }
+  
+  /* Add padding to messages content container */
+  .chat-messages > div.space-y-4 {
+    padding-bottom: calc(547px + env(safe-area-inset-bottom));
   }
 }
 
