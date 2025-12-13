@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
@@ -53,6 +53,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (sessionError) {
           console.error('Error getting session:', sessionError);
+          
+          // Если ошибка связана с refresh token, очищаем сессию
+          if (sessionError.message?.includes('Refresh Token') || 
+              sessionError.message?.includes('refresh_token') ||
+              sessionError.message?.includes('Invalid Refresh Token')) {
+            console.warn('Refresh token error detected, signing out...');
+            try {
+              await supabase.auth.signOut();
+            } catch (signOutError) {
+              console.error('Error signing out after refresh token error:', signOutError);
+            }
+          }
+          
           setUser(null);
           setLoading(false);
           return;
@@ -104,8 +117,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
+    // Глобальный обработчик ошибок для перехвата ошибок refresh token
+    const handleUnhandledErrorRef = useRef((event: ErrorEvent) => {
+      const error = event.error;
+      if (error?.message?.includes('Refresh Token') || 
+          error?.message?.includes('refresh_token') ||
+          error?.message?.includes('Invalid Refresh Token')) {
+        console.warn('Unhandled refresh token error detected, clearing session...', error);
+        // Предотвращаем дальнейшую обработку ошибки
+        event.preventDefault();
+        // Очищаем сессию
+        supabase.auth.signOut().catch((err) => {
+          console.error('Error signing out after refresh token error:', err);
+        });
+      }
+    });
+
+    // Обработчик необработанных отклонений промисов (для асинхронных ошибок)
+    const handleUnhandledRejectionRef = useRef((event: PromiseRejectionEvent) => {
+      const error = event.reason;
+      if (error?.message?.includes('Refresh Token') || 
+          error?.message?.includes('refresh_token') ||
+          error?.message?.includes('Invalid Refresh Token')) {
+        console.warn('Unhandled refresh token promise rejection detected, clearing session...', error);
+        // Предотвращаем дальнейшую обработку ошибки
+        event.preventDefault();
+        // Очищаем сессию
+        supabase.auth.signOut().catch((err) => {
+          console.error('Error signing out after refresh token error:', err);
+        });
+      }
+    });
+
+    // Добавляем глобальные обработчики ошибок
+    if (typeof window !== 'undefined') {
+      window.addEventListener('error', handleUnhandledErrorRef.current);
+      window.addEventListener('unhandledrejection', handleUnhandledRejectionRef.current);
+    }
+
     return () => {
       subscription.unsubscribe();
+      // Удаляем обработчики ошибок при размонтировании
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('error', handleUnhandledErrorRef.current);
+        window.removeEventListener('unhandledrejection', handleUnhandledRejectionRef.current);
+      }
     };
   }, [wasAuthenticated]);
 

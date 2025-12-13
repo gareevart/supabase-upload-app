@@ -13,16 +13,11 @@ interface PageProps {
 }
 
 function EditBroadcastPage({ params }: PageProps) {
-  const [id, setId] = useState<string>('');
+  const unwrappedParams = React.use(params);
+  const id = unwrappedParams.id;
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const router = useRouter();
-  
-  useEffect(() => {
-    params.then(({ id: paramId }) => {
-      setId(paramId);
-    });
-  }, [params]);
 
   useEffect(() => {
     const checkAuth = async () => {

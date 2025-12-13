@@ -34,7 +34,7 @@ interface BlogPost {
   }
 }
 
-export default function BlogPostClient({ params }: { params: any }) {
+export default function BlogPostClient({ params }: { params: { slug: string } }) {
   const [post, setPost] = useState<BlogPost | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [userRole, setUserRole] = useState<string | null>(null)
@@ -42,9 +42,7 @@ export default function BlogPostClient({ params }: { params: any }) {
   const router = useRouter()
   const { toast } = useToast()
   const isMobile = useIsMobile()
-  // Use React.use to unwrap the params Promise
-  const unwrappedParams = React.use(params as any) as { slug: string }
-  const slug = unwrappedParams.slug
+  const slug = params.slug
 
   useEffect(() => {
     const fetchPostAndUserRole = async () => {
