@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useChat, Message, FileAttachment } from "@/hooks/useChat";
 import ReactMarkdown from 'react-markdown';
-import { Button, TextArea, Icon, Modal, Text, Spin, Label, useToaster, Select, Flex } from '@gravity-ui/uikit';
-import { Gear, Copy, Bars } from '@gravity-ui/icons';
+import { Button, TextArea, Icon, Modal, Text, Spin, Label, useToaster, Select, Flex, HelpMark, ClipboardButton } from '@gravity-ui/uikit';
+import { Gear, Bars } from '@gravity-ui/icons';
 import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
 import { ReasoningBlock } from "./ReasoningBlock";
 import { ChatMessageForm } from "./ChatMessageForm";
@@ -122,8 +122,8 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
 
   if (!chat) {
     return (
-      <div className="text-center p-4">
-        Чат не найден или был удален.
+      <div>
+        <Text variant="body-2" color="secondary">Chat not found or deleted</Text>
       </div>
     );
   }
@@ -151,20 +151,25 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
                 Режим рассуждений
               </Label>
             )}
-            {chat.tokens_used && (
-              <Label theme="unknown" size="m" value={chat.tokens_used.toString()}>Использовано токенов</Label>
-            )}
           </div>
         </div>
 
-        <Button 
-          view="outlined" 
-          size="m" 
-          onClick={() => setOpen(true)}
-          title="Настройки"
-        >
-          <Icon data={Gear} size={18} />
-        </Button>  
+        <div className="flex gap-2 items-center">
+        {chat.tokens_used && (
+            <HelpMark iconSize="m">
+              <b>Использовано токенов:</b> {chat.tokens_used.toString()}
+            </HelpMark>
+          )}  
+          <Button 
+            view="outlined" 
+            size="m" 
+            onClick={() => setOpen(true)}
+            title="Настройки"
+          >
+            <Icon data={Gear} size={18} />
+          </Button>
+
+        </div>  
       </header>
 
       <div className="flex-1 p-4 chat-messages">
@@ -227,7 +232,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
                   { value: 'yandexgpt', content: 'YandexGPT' },
                   { value: 'yandexgpt-lite', content: 'YandexGPT Lite' },
                   { value: 'deepseek', content: 'Deepseek R1' },
-                  { value: 'gpt-oss-20b', content: 'GPT OSS 20B (недоступна)', disabled: true }
+
                 ]}
                 onUpdate={(value) => {
                   if (value.length > 0) {
@@ -303,7 +308,7 @@ const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
     >
       <div className="chat-message-wrapper group">
         <div
-          className={`rounded-lg p-2 max-w-[80%] ${
+          className={`rounded-lg p-2 chat-message-bubble ${
             isUser
               ? "chat-bubble bg-primary text-primary-foreground"
               : "bg-muted text-foreground bg-primary"
@@ -358,14 +363,19 @@ const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
         </div>
         
         {/* Copy button below message */}
-        <Button
-          view="flat" 
-          size="s" 
-          className="chat-copy-button opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={() => onCopy(message.content)}
-        >
-          <Icon data={Copy} size={18} />
-        </Button>
+        <ClipboardButton
+          text={message.content}
+          view="flat-secondary"
+          size="s"
+          className="chat-copy-button"
+          onCopy={(text, result) => {
+            if (result) {
+              onCopy(text);
+            }
+          }}
+          tooltipInitialText="Copy"
+          tooltipSuccessText="Copied"
+        />
       </div>
     </div>
   );
