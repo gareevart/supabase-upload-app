@@ -62,7 +62,7 @@ export async function POST(request: Request) {
       throw new Error(`Failed to download image: ${imageResponse.status}`);
     }
 
-    let imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+    let imageBuffer: Buffer = Buffer.from(await imageResponse.arrayBuffer());
     const originalSize = imageBuffer.length;
     const MAX_SIZE = 4 * 1024 * 1024; // 4 MB in bytes
 
@@ -105,9 +105,10 @@ export async function POST(request: Request) {
         
         // Convert to JPEG with quality 85% for better compression
         // This should significantly reduce file size
-        imageBuffer = await sharpInstance
+        const compressedBuffer = await sharpInstance
           .jpeg({ quality: 85, mozjpeg: true })
           .toBuffer();
+        imageBuffer = Buffer.from(compressedBuffer);
         
         console.log('Image compressed:', {
           originalSize,
@@ -119,13 +120,14 @@ export async function POST(request: Request) {
         // If still too large, try more aggressive compression
         if (imageBuffer.length > MAX_SIZE) {
           console.log('Still too large, applying more aggressive compression...');
-          imageBuffer = await sharp(imageBuffer)
+          const aggressiveBuffer = await sharp(imageBuffer)
             .resize(Math.floor(targetWidth * 0.8), Math.floor(targetHeight * 0.8), {
               fit: 'inside',
               withoutEnlargement: true
             })
             .jpeg({ quality: 75, mozjpeg: true })
             .toBuffer();
+          imageBuffer = Buffer.from(aggressiveBuffer);
           
           console.log('Aggressively compressed size:', imageBuffer.length, 'bytes');
         }
