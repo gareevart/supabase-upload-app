@@ -6,7 +6,6 @@ import { House, Circles4Square, Person, Magnifier, BookOpen, Bars } from '@gravi
 import Image from 'next/image';
 import UserAvatar from '../UserAvatar';
 import NavigationItem from './NavigationItem';
-import { ThemeToggle } from './ThemeToggle';
 import Link from 'next/link'
 import './Navigation.css';
 
@@ -152,10 +151,6 @@ const Navigation: React.FC = () => {
               showLabel
             />
           ))}
-
-          <div className="drawer-theme-toggle">
-            <ThemeToggle />
-          </div>
         </div>
         <div className="drawer-overlay" onClick={toggleDrawer} />
       </div>

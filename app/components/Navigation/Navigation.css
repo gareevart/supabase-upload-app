@@ -1,5 +1,6 @@
 .navigation {
-  z-index: 60; /* Ensure navigation stays above the drawer */
+  z-index: 60;
+  /* Ensure navigation stays above the drawer */
 }
 
 /* Desktop Navigation */
@@ -69,18 +70,19 @@
 }
 
 .g-menu_size_m {
-    padding: 4px;
-    line-height: 28px;
+  padding: 4px;
+  line-height: 28px;
 }
 
-.g-menu_size_m .g-menu__item, .g-menu_size_m .g-menu__group-label {
-    padding: 0 var(--g-spacing-3);
-    border-radius: 6px;
+.g-menu_size_m .g-menu__item,
+.g-menu_size_m .g-menu__group-label {
+  padding: 0 var(--g-spacing-3);
+  border-radius: 6px;
 }
 
 .g-popup_open {
-    visibility: visible;
-    border-radius: 8px;
+  visibility: visible;
+  border-radius: 8px;
 }
 
 /* Mobile Navigation */
