@@ -1,18 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Card, Icon, Text, TextInput } from '@gravity-ui/uikit';
 import { Eye, EyeSlash } from '@gravity-ui/icons';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
 import './Auth.css';
 
 const ResetPassword = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
+    const router = useRouter();
 
     useEffect(() => {
         // Process the hash parameters from the recovery link
         const handlePasswordRecovery = async () => {
-            const hash = location.hash;
+            const hash = typeof window !== 'undefined' ? window.location.hash : '';
             if (hash && hash.includes('type=recovery')) {
                 try {
                     // Extract tokens from URL
@@ -33,19 +32,19 @@ const ResetPassword = () => {
                     if (error) throw error;
                 } catch (error: any) {
                     console.error('Recovery error:', error.message);
-                    navigate('/login');
+                    router.push('/auth');
                 }
             } else {
                 // Check if the user is authenticated for password reset
                 const { data } = await supabase.auth.getSession();
                 if (!data.session) {
-                    navigate('/login');
+                    router.push('/auth');
                 }
             }
         };
 
         handlePasswordRecovery();
-    }, [navigate, location]);
+    }, [router]);
 
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -94,7 +93,7 @@ const ResetPassword = () => {
             setTimeout(() => {
                 // Sign out the user after successful password reset
                 supabase.auth.signOut();
-                navigate('/login');
+                router.push('/auth');
             }, 3000);
         } catch (error: any) {
             setError(error.message);

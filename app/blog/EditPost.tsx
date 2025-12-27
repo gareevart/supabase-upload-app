@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Navigate } from "react-router-dom";
+import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "../contexts/AuthContext";
@@ -16,12 +16,13 @@ type BlogPost = {
 };
 
 const EditPost = () => {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ id: string }>();
+  const id = params?.id as string;
   const { user } = useAuth();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const router = useRouter();
   
   useEffect(() => {
     if (!id || !user) return;
@@ -43,7 +44,7 @@ const EditPost = () => {
             description: "Вы не можете редактировать этот пост",
             variant: "destructive",
           });
-          navigate("/");
+          router.push("/");
           return;
         }
         
@@ -60,14 +61,14 @@ const EditPost = () => {
           description: "Не удалось загрузить пост",
           variant: "destructive",
         });
-        navigate("/");
+        router.push("/");
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchPost();
-  }, [id, user, toast, navigate]);
+  }, [id, user, toast, router]);
   
   if (isLoading) {
     return (
@@ -78,14 +79,15 @@ const EditPost = () => {
   }
   
   if (!user) {
-    return <Navigate to="/login" replace />;
+    router.push("/auth");
+    return null;
   }
   
   if (!post) {
     return (
       <div className="container mx-auto px-4 text-center py-12">
         <h2 className="text-2xl mb-4">Пост не найден</h2>
-        <Button onClick={() => navigate("/")}>Вернуться на главную</Button>
+        <Button onClick={() => router.push("/")}>Вернуться на главную</Button>
       </div>
     );
   }
@@ -93,7 +95,7 @@ const EditPost = () => {
   return (
     <Container>
       <h1 className="text-3xl font-bold text-center mb-8">Редактирование поста</h1>
-      <PostEditor initialPost={post} onSave={() => navigate(`/posts/${post.slug}`)} />
+      <PostEditor initialPost={post} onSave={() => router.push(`/blog/${post.slug}`)} />
     </Container>
   );
 };

@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { supabase } from '../../lib/supabase';
 import { Card, Text, Button, TextInput, PasswordInput, useToaster } from '@gravity-ui/uikit'
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import './Auth.css'
 
 const SignUp = () => {
@@ -51,7 +51,7 @@ const SignUp = () => {
           <Text variant="subheader-1" color="primary">
             Have an account?
           </Text>
-          <Link className="link g-color-text_color_secondary" to="/login">Login</Link>
+          <Link className="link g-color-text_color_secondary" href="/auth">Login</Link>
         </div>
       </Card>
     </div>
