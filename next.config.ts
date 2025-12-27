@@ -41,6 +41,9 @@ const nextConfig: NextConfig = {
   // Compress assets for better performance
   compress: true,
 
+  // Turbopack configuration (empty to silence warning while using webpack)
+  turbopack: {},
+
   // Webpack configuration to handle file extensions
   webpack: (config) => {
     // Handle other file extensions
