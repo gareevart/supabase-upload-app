@@ -232,11 +232,11 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
                   { value: 'yandexgpt', content: 'YandexGPT' },
                   { value: 'yandexgpt-lite', content: 'YandexGPT Lite' },
                   { value: 'deepseek', content: 'Deepseek R1' },
-
+                  { value: 'aliceai-llm', content: 'Alice AI LLM' },
                 ]}
                 onUpdate={(value) => {
                   if (value.length > 0) {
-                    const newModel = value[0] as "yandexgpt" | "yandexgpt-lite" | "deepseek" | "gpt-oss-20b";
+                    const newModel = value[0] as "yandexgpt" | "yandexgpt-lite" | "deepseek" | "gpt-oss-20b" | "aliceai-llm";
                     setSelectedModel(newModel);
                   }
                 }}

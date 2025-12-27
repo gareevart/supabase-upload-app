@@ -1,7 +1,7 @@
 "use client"
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-export type ModelType = "yandexgpt" | "yandexgpt-lite" | "deepseek" | "gpt-oss-20b";
+export type ModelType = "yandexgpt" | "yandexgpt-lite" | "deepseek" | "gpt-oss-20b" | "aliceai-llm";
 
 interface ModelSelectionContextType {
   selectedModel: ModelType;

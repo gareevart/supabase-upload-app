@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import sharp from 'sharp';
 
 export async function POST(request: Request) {
   try {
@@ -61,10 +62,81 @@ export async function POST(request: Request) {
       throw new Error(`Failed to download image: ${imageResponse.status}`);
     }
 
-    const imageBuffer = await imageResponse.arrayBuffer();
-    const base64Image = Buffer.from(imageBuffer).toString('base64');
+    let imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+    const originalSize = imageBuffer.length;
+    const MAX_SIZE = 4 * 1024 * 1024; // 4 MB in bytes
 
-    console.log('Image downloaded, size:', imageBuffer.byteLength, 'bytes');
+    console.log('Image downloaded, size:', originalSize, 'bytes');
+
+    // Compress image if it exceeds 4 MB limit
+    if (originalSize > MAX_SIZE) {
+      console.log('Image exceeds 4 MB limit, compressing...');
+      
+      try {
+        // Get image metadata
+        const metadata = await sharp(imageBuffer).metadata();
+        const { width, height } = metadata;
+        
+        // Calculate target dimensions to reduce size
+        // Keep aspect ratio, but reduce dimensions
+        let targetWidth = width || 2000;
+        let targetHeight = height || 2000;
+        
+        // If image is very large, scale it down proportionally
+        if (width && height) {
+          const maxDimension = 2000; // Max width or height
+          if (width > maxDimension || height > maxDimension) {
+            const scale = Math.min(maxDimension / width, maxDimension / height);
+            targetWidth = Math.floor(width * scale);
+            targetHeight = Math.floor(height * scale);
+          }
+        }
+        
+        // Compress image: resize if needed, and reduce quality
+        let sharpInstance = sharp(imageBuffer);
+        
+        // Resize if dimensions are too large
+        if (targetWidth !== width || targetHeight !== height) {
+          sharpInstance = sharpInstance.resize(targetWidth, targetHeight, {
+            fit: 'inside',
+            withoutEnlargement: true
+          });
+        }
+        
+        // Convert to JPEG with quality 85% for better compression
+        // This should significantly reduce file size
+        imageBuffer = await sharpInstance
+          .jpeg({ quality: 85, mozjpeg: true })
+          .toBuffer();
+        
+        console.log('Image compressed:', {
+          originalSize,
+          compressedSize: imageBuffer.length,
+          reduction: `${((1 - imageBuffer.length / originalSize) * 100).toFixed(1)}%`,
+          dimensions: `${targetWidth}x${targetHeight}`
+        });
+        
+        // If still too large, try more aggressive compression
+        if (imageBuffer.length > MAX_SIZE) {
+          console.log('Still too large, applying more aggressive compression...');
+          imageBuffer = await sharp(imageBuffer)
+            .resize(Math.floor(targetWidth * 0.8), Math.floor(targetHeight * 0.8), {
+              fit: 'inside',
+              withoutEnlargement: true
+            })
+            .jpeg({ quality: 75, mozjpeg: true })
+            .toBuffer();
+          
+          console.log('Aggressively compressed size:', imageBuffer.length, 'bytes');
+        }
+      } catch (compressError) {
+        console.error('Error compressing image:', compressError);
+        // If compression fails, we'll try with original image
+        // but it might fail with Vision API
+      }
+    }
+
+    const base64Image = imageBuffer.toString('base64');
 
     // Call Yandex Vision API for OCR and classification
     const visionResponse = await fetch('https://vision.api.cloud.yandex.net/vision/v1/batchAnalyze', {

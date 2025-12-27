@@ -83,7 +83,128 @@ export async function POST(request: Request) {
     console.log('Final messages count:', messages.length, '(non-system:', nonSystemMessages.length, ')');
 
     // Call YandexGPT API using the new endpoint
-    const folderId = process.env.YANDEX_FOLDER_ID || 'b1gb5lrqp1jr1tmamu2t';
+    const folderId = process.env.YANDEX_FOLDER_ID || process.env.YANDEX_CLOUD_FOLDER || 'b1gb5lrqp1jr1tmamu2t';
+    
+    // Handle Alice AI LLM separately as it uses a different API
+    if (model === 'aliceai-llm') {
+      const aliceApiKey = process.env.YANDEX_CLOUD_API_KEY || process.env.YANDEX_API_KEY;
+      if (!aliceApiKey) {
+        return NextResponse.json(
+          { error: 'Yandex Cloud API key not configured for Alice AI' },
+          { status: 500 }
+        );
+      }
+
+      // Prepare input text from messages
+      // Build instructions from system prompt
+      const systemMessage = messages.find((msg: any) => msg.role === 'system');
+      const instructions = systemMessage?.text || systemPrompt || '';
+
+      // Build input from conversation history
+      // For Alice AI, we'll format the conversation history as a text
+      // Include all non-system messages in chronological order
+      const nonSystemMessages = messages.filter((msg: any) => msg.role !== 'system');
+      
+      let inputText = '';
+      
+      if (nonSystemMessages.length > 0) {
+        // Format conversation history: User: ... Assistant: ...
+        const conversationParts = nonSystemMessages.map((msg: any) => {
+          const roleLabel = msg.role === 'user' ? 'Пользователь' : 'Ассистент';
+          return `${roleLabel}: ${msg.text}`;
+        });
+        inputText = conversationParts.join('\n\n');
+      } else if (prompt) {
+        inputText = prompt;
+      } else {
+        return NextResponse.json(
+          { error: 'No input text provided for Alice AI' },
+          { status: 400 }
+        );
+      }
+
+      const aliceModelUri = `gpt://${folderId}/aliceai-llm/latest`;
+
+      const aliceRequestBody = {
+        model: aliceModelUri,
+        instructions: instructions || '',
+        input: inputText,
+        temperature: reasoningMode ? 0.1 : 0.3,
+        max_output_tokens: reasoningMode ? 500 : 2000,
+      };
+
+      console.log('Alice AI API request:', {
+        model: aliceModelUri,
+        instructionsLength: instructions.length,
+        inputLength: inputText.length,
+        temperature: aliceRequestBody.temperature,
+        max_output_tokens: aliceRequestBody.max_output_tokens,
+      });
+
+      const aliceResponse = await fetch('https://rest-assistant.api.cloud.yandex.net/v1/responses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Api-Key ${aliceApiKey}`,
+          'OpenAI-Project': folderId,
+        },
+        body: JSON.stringify(aliceRequestBody),
+      });
+
+      if (!aliceResponse.ok) {
+        const errorText = await aliceResponse.text();
+        console.error('Alice AI API error:', aliceResponse.status, errorText);
+        throw new Error(`Alice AI API error: ${aliceResponse.status} ${errorText}`);
+      }
+
+      const aliceResult = await aliceResponse.json();
+      console.log('Alice AI API response:', aliceResult);
+
+      // Extract the text from the response
+      // Alice AI returns text in output[0].content array
+      // Structure: output[0].content[{ type: 'output_text', text: '...' }]
+      let generatedText = '';
+      
+      if (aliceResult.output && aliceResult.output.length > 0) {
+        const firstOutput = aliceResult.output[0];
+        if (firstOutput.content && Array.isArray(firstOutput.content)) {
+          // Extract text from content array
+          // Type can be 'output_text' or 'text'
+          generatedText = firstOutput.content
+            .filter((item: any) => 
+              (item.type === 'output_text' || item.type === 'text') && 
+              item.text
+            )
+            .map((item: any) => item.text)
+            .join('\n');
+        } else if (typeof firstOutput.content === 'string') {
+          generatedText = firstOutput.content;
+        }
+      }
+      
+      // Fallback to output_text if available
+      if (!generatedText && aliceResult.output_text) {
+        generatedText = aliceResult.output_text;
+      }
+
+      if (!generatedText) {
+        console.error('Alice AI response structure:', JSON.stringify(aliceResult, null, 2));
+        throw new Error('No text found in Alice AI response');
+      }
+
+      // Alice AI may not provide token usage in the same format
+      // We'll return undefined for usage if not available
+      const usage = aliceResult.usage ? {
+        inputTextTokens: (aliceResult.usage.input_tokens || 0).toString(),
+        completionTokens: (aliceResult.usage.output_tokens || 0).toString(),
+        totalTokens: ((aliceResult.usage.input_tokens || 0) + (aliceResult.usage.output_tokens || 0)).toString(),
+      } : undefined;
+
+      return NextResponse.json({
+        text: generatedText,
+        usage,
+      });
+    }
     
     // Determine the model URI based on the selected model
     let modelUri: string;
