@@ -70,7 +70,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
     (
       <div
         style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(135deg,rgb(48, 176, 125) 0%,rgb(8, 86, 70) 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',
