@@ -78,15 +78,15 @@ a {
   select {
     font-size: 16px !important;
   }
-  
+
   /* Gravity UI text inputs and textareas */
   .g-text-input__control,
   .g-textarea__control,
   .g-text-input input,
   .g-textarea textarea {
-    font-size: 16px !important;
+    font-size: 14px !important;
   }
-  
+
   /* Custom UI components */
   .g-text-input input[type="text"],
   .g-text-input input[type="email"],
@@ -96,7 +96,7 @@ a {
   .g-text-input input[type="tel"],
   .g-text-input input[type="url"],
   .g-select__control {
-    font-size: 16px !important;
+    font-size: 14px !important;
   }
 }
 
@@ -134,7 +134,7 @@ a {
     overflow-x: hidden;
     align-items: center;
   }
-  
+
   /* Prevent scrolling when chat is open */
   .main-content:has(.chat-layout) {
     margin-bottom: 0;
