@@ -72,6 +72,32 @@ a {
     text-size-adjust: none;
   }
 
+  /* Prevent zoom on input focus on iOS - font-size must be at least 16px */
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+  
+  /* Gravity UI text inputs and textareas */
+  .g-text-input__control,
+  .g-textarea__control,
+  .g-text-input input,
+  .g-textarea textarea {
+    font-size: 16px !important;
+  }
+  
+  /* Custom UI components */
+  .g-text-input input[type="text"],
+  .g-text-input input[type="email"],
+  .g-text-input input[type="password"],
+  .g-text-input input[type="number"],
+  .g-text-input input[type="search"],
+  .g-text-input input[type="tel"],
+  .g-text-input input[type="url"],
+  .g-select__control {
+    font-size: 16px !important;
+  }
 }
 
 /* Desktop layout with grid */
