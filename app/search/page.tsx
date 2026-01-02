@@ -26,18 +26,18 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="min-h-screen pb-20">
-    <main className="container mx-auto max-w-4xl">
-      <div className="flex flex-col justify-between items-start">
-      <Text className="mb-6" variant="display-1">Search</Text>
-      </div>
-      <div className="search-tabs-container">
-        <TabProvider value={activeTab} onUpdate={(value: string) => setActiveTab(value as SearchTab)}>
+    <div className="min-h-screen">
+      <main className="container mx-auto px-4 md:px-6 max-w-4xl">
+        <div className="flex flex-col justify-between items-start">
+          <Text className="mb-6" variant="display-1">Search</Text>
+        </div>
+        <div className="search-tabs-container">
+          <TabProvider value={activeTab} onUpdate={(value: string) => setActiveTab(value as SearchTab)}>
             <TabList size="l" className="search-tab-list">
               <Tab value="blog">Search arcticles</Tab>
               <Tab value="images">Search images</Tab>
             </TabList>
-            
+
             <TabPanel value="blog" className="search-tab-content">
               <SearchComponent
                 placeholder="Enter your search query"
@@ -49,16 +49,15 @@ export default function SearchPage() {
                 onResultClick={handleSearchResultClick}
               />
             </TabPanel>
-            
+
             <TabPanel value="images" className="search-tab-content">
               <ImageSearchComponent
                 userId={userId}
               />
             </TabPanel>
           </TabProvider>
-        </div>   
-    </main>
-  </div>
-  
+        </div>
+      </main>
+    </div>
   );
 }

@@ -302,7 +302,7 @@ export default function SearchComponent({
 
           {!isLoading && searchResults.length > 0 && (
             <div className="w-full">
-              <Text variant="subheader-1" className="mb-4">
+              <Text variant="subheader-1" className="pb-2">
                 Найдено результатов: {searchResults.length}
               </Text>
 

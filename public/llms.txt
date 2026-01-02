@@ -1,0 +1,12 @@
+# Gareev Dmitrii - Product Designer from Yandex Infrastructure
+
+- About Dmitrii Gareev
+
+## Semantic Descriptions
+
+- [Gareev Dmitrii Page Descriptions](https://ant.design/llms-semantic.md)
+
+## Categories
+
+- [Blog](https://gareev.de/blog)
+- [Projects](https://gareev.de/projects)
