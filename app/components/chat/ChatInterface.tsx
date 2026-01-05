@@ -155,9 +155,9 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
         </div>
 
         <div className="flex gap-2 items-center">
-          {chat.tokens_used && (
+          {(chat.tokens_used || 0) > 0 && (
             <HelpMark iconSize="m">
-              <b>Использовано токенов:</b> {chat.tokens_used.toString()}
+              <b>Использовано токенов:</b> {chat.tokens_used?.toString()}
             </HelpMark>
           )}
           <Button
