@@ -129,7 +129,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
   }
 
   return (
-    <div className="flex flex-col h-full chat-interface">
+    <div className="flex flex-col w-full flex-1 overflow-hidden chat-interface">
       <header className="p-4 gap-2 justify-between flex items-center">
         <div className="flex gap-2 items-center">
           {/* Mobile burger button */}
@@ -148,7 +148,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
           <div className="flex gap-2">
             {reasoningMode && selectedModel === 'yandexgpt' && (
               <Label theme="info" size="m">
-                Режим рассуждений
+                Thinking mode
               </Label>
             )}
           </div>

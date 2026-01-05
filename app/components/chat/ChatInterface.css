@@ -27,7 +27,8 @@
 .chat-interface {
   height: 100%;
   overflow: hidden;
-  /* Desktop default, overridden for mobile */
+  display: flex;
+  flex-direction: column;
 }
 
 /* ==========================================================================
@@ -57,7 +58,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
-  padding: 0 1rem;
+  padding: 1rem;
   scroll-behavior: smooth;
   scrollbar-width: thin;
   scrollbar-color: var(--g-color-line-generic) transparent;
@@ -249,46 +250,17 @@
    ========================================================================== */
 
 /* ---------------- Mobile (max-width: 767px) ---------------- */
+/* ---------------- Mobile (max-width: 767px) ---------------- */
+/* ---------------- Mobile (max-width: 767px) ---------------- */
 @media (max-width: 767px) {
-
-  /* Layout Adjustments */
   .chat-interface {
-    overflow-y: auto;
-    overflow-x: hidden;
-    position: relative;
-    height: 100%;
-    -webkit-overflow-scrolling: touch;
-    /* Bottom padding for fixed form */
-    padding-bottom: calc(120px + env(safe-area-inset-bottom));
-  }
-
-  /* Sticky Header */
-  .chat-interface header {
-    position: sticky;
-    top: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    margin: 0;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transform: translateZ(0);
-    /* Hardware acceleration */
+    /* Account for fixed bottom navigation (65px) + safe area */
+    padding-bottom: calc(65px + env(safe-area-inset-bottom));
   }
 
   /* Header Typography */
   .chat-interface header h2 {
     font-size: 1.125rem;
-  }
-
-  /* Messages Area */
-  .chat-messages {
-    overflow: visible;
-    /* Let parent scroll */
-    flex: 1;
-    padding-bottom: 0;
-    /* Parent handles padding */
   }
 
   /* Message Widths */

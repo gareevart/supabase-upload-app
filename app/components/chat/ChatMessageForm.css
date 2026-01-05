@@ -8,6 +8,8 @@
   margin: var(--g-spacing-2);
   border-radius: var(--g-border-radius-l);
   padding: var(--g-spacing-3);
+  flex-shrink: 0;
+  /* Prevent shrinking */
 }
 
 .chat-message-form__files-list {
@@ -51,24 +53,10 @@
 }
 
 /* Адаптивность */
+/* Адаптивность */
 @media (max-width: 768px) {
   .chat-message-form {
-    position: fixed;
-    /* Размещаем форму выше навигации (65px высота навигации) + безопасная зона */
-    bottom: calc(65px + env(safe-area-inset-bottom));
-    left: 0;
-    right: 0;
     margin: 4px;
-    border-radius: var(--g-border-radius-l);
-    z-index: 1;
-    padding: var(--g-spacing-3);
-    /* Убеждаемся, что форма всегда видна */
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    will-change: transform;
-    /* Убеждаемся, что фон непрозрачный */
-    background-color: var(--g-color-base-float-announcement);
-    /* Предотвращаем скрытие формы */
-    isolation: isolate;
+    padding: var(--g-spacing-2);
   }
 }
