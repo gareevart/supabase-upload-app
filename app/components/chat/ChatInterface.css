@@ -3,7 +3,6 @@
 .g-modal__content {
   display: flex;
   flex-direction: column;
-  padding: 32px 20px;
 }
 
 /* Prevent horizontal overflow globally */
@@ -17,8 +16,9 @@
 
 /* Mobile optimizations */
 @media (max-width: 767px) {
+
   /* Ensure parent container allows sticky to work */
-  .chat-interface-container > div.flex.flex-col {
+  .chat-interface-container>div.flex.flex-col {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -36,7 +36,8 @@
   .chat-interface header,
   header.p-4 {
     padding: 0.75rem 1rem;
-    position: -webkit-sticky; /* Better iOS support */
+    position: -webkit-sticky;
+    /* Better iOS support */
     position: sticky;
     top: 0;
     left: 0;
@@ -73,23 +74,23 @@
   .chat-interface header h2 {
     font-size: 1.125rem;
   }
-  
+
   /* Mobile header: burger button and labels */
-  header.p-4 > div:first-child {
+  header.p-4>div:first-child {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     flex: 1;
     min-width: 0;
   }
-  
+
   /* Hide labels on very small screens if needed */
   @media (max-width: 360px) {
     header.p-4 .g-label {
       font-size: 0.75rem;
     }
   }
-  
+
   /* Ensure messages container doesn't scroll separately - parent scrolls */
   .chat-messages {
     flex: 1;
@@ -99,13 +100,13 @@
     /* Add padding-bottom to prevent content from being hidden behind fixed form */
     padding-bottom: calc(120px + env(safe-area-inset-bottom));
   }
-  
+
   /* Also add padding-bottom to the messages content container for extra safety */
-  .chat-messages > div.space-y-4 {
+  .chat-messages>div.space-y-4 {
     padding-bottom: calc(120px + env(safe-area-inset-bottom));
     min-height: 100%;
   }
-  
+
   /* Ensure main content containers don't scroll */
   .chat-main,
   .chat-content,
@@ -125,7 +126,8 @@
   }
 
   .chat-interface textarea {
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px;
+    /* Prevents zoom on iOS */
   }
 
   /* Message bubbles on mobile */
@@ -140,7 +142,7 @@
   .chat-message.assistant {
     margin-right: 10%;
   }
-  
+
   /* Fix message wrapper and bubble width on mobile */
   .chat-message-wrapper {
     max-width: 100%;
@@ -148,7 +150,7 @@
     min-width: 0;
     box-sizing: border-box;
   }
-  
+
   .chat-message-bubble {
     max-width: 100% !important;
     width: fit-content;
@@ -158,19 +160,19 @@
     overflow-wrap: break-word;
     overflow-x: hidden;
   }
-  
+
   /* For user messages (justify-end), limit width more strictly */
   .flex.justify-end .chat-message-wrapper {
     max-width: 100%;
   }
-  
+
   /* For assistant messages (justify-start), limit width more strictly */
   .flex.justify-start .chat-message-wrapper {
     max-width: 100%;
   }
-  
+
   /* Ensure parent container doesn't allow overflow */
-  .chat-messages > div.space-y-4 {
+  .chat-messages>div.space-y-4 {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -178,9 +180,9 @@
     padding-left: 0;
     padding-right: 0;
   }
-  
+
   /* Fix flex container to prevent overflow */
-  .chat-messages > div.space-y-4 > div.flex {
+  .chat-messages>div.space-y-4>div.flex {
     max-width: 100%;
     width: 100%;
     box-sizing: border-box;
@@ -190,7 +192,7 @@
     padding-right: 0;
     min-width: 0;
   }
-  
+
   /* Ensure chat-messages container has proper constraints */
   .chat-messages {
     padding-left: 1rem;
@@ -200,7 +202,7 @@
     width: 100%;
     max-width: 100%;
   }
-  
+
   /* Ensure parent containers don't allow overflow */
   .chat-content,
   .chat-main,
@@ -218,7 +220,7 @@
   .chat-message {
     max-width: 80%;
   }
-  
+
   .chat-message-bubble {
     max-width: 100% !important;
     width: fit-content;
@@ -226,23 +228,23 @@
     box-sizing: border-box;
     overflow-x: hidden;
   }
-  
+
   .chat-message-wrapper {
     max-width: 100%;
     width: fit-content;
     min-width: 0;
     box-sizing: border-box;
   }
-  
+
   /* Ensure flex containers don't overflow on desktop */
-  .chat-messages > div.space-y-4 > div.flex {
+  .chat-messages>div.space-y-4>div.flex {
     max-width: 100%;
     width: 100%;
     box-sizing: border-box;
     overflow-x: hidden;
     min-width: 0;
   }
-  
+
   /* Ensure messages container scrolls on desktop */
   .chat-messages {
     flex: 1;
@@ -254,15 +256,15 @@
     /* Remove mobile padding-bottom on desktop */
     padding-bottom: 0;
   }
-  
+
   /* Remove padding from messages content container on desktop */
-  .chat-messages > div.space-y-4 {
+  .chat-messages>div.space-y-4 {
     padding-bottom: 0;
     min-height: auto;
   }
-  
+
   /* Ensure parent container doesn't scroll on desktop */
-  .chat-interface-container > div.flex.flex-col {
+  .chat-interface-container>div.flex.flex-col {
     overflow: visible;
     height: 100%;
     padding-bottom: 0;
@@ -335,14 +337,14 @@
     /* Форма ввода + небольшой отступ для комфортного скролла */
     padding-bottom: calc(120px + env(safe-area-inset-bottom));
   }
-  
+
   /* Also add padding to parent scroll container to ensure content is visible */
-  .chat-interface-container > div.flex.flex-col {
+  .chat-interface-container>div.flex.flex-col {
     padding-bottom: calc(120px + env(safe-area-inset-bottom));
   }
-  
+
   /* Add padding to messages content container */
-  .chat-messages > div.space-y-4 {
+  .chat-messages>div.space-y-4 {
     padding-bottom: calc(120px + env(safe-area-inset-bottom));
   }
 }
@@ -371,7 +373,7 @@
 }
 
 /* Fix message container spacing */
-.chat-messages > div {
+.chat-messages>div {
   min-height: 100%;
   display: flex;
   flex-direction: column;
@@ -483,7 +485,7 @@
     flex: 1;
     overflow: hidden;
   }
-  
+
   .chat-message-attachment__name,
   .chat-message-attachment__name * {
     max-width: 100% !important;
@@ -511,11 +513,11 @@
     height: 50px;
     flex-shrink: 0;
   }
-  
+
   .chat-message-attachment__file-icon {
     font-size: 28px;
   }
-  
+
   .chat-message-attachment {
     padding: 8px;
     max-width: 100%;
@@ -523,14 +525,14 @@
     box-sizing: border-box;
     min-width: 0;
   }
-  
+
   .chat-message-attachments {
     max-width: 100%;
     width: 100%;
     box-sizing: border-box;
     min-width: 0;
   }
-  
+
   /* Ensure attachment name doesn't overflow */
   .chat-message-attachment__name {
     max-width: 100%;
@@ -539,7 +541,7 @@
     white-space: nowrap;
     min-width: 0;
   }
-  
+
   /* Fix attachment info container */
   .chat-message-attachment__info {
     max-width: calc(100% - 60px);
@@ -547,14 +549,14 @@
     flex: 1;
     overflow: hidden;
   }
-  
+
   /* Ensure chat message bubble content doesn't overflow */
-  .chat-message-bubble > * {
+  .chat-message-bubble>* {
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box;
   }
-  
+
   /* Ensure attachment name truncates properly on mobile */
   .chat-message-attachment__name,
   .chat-message-attachment__name * {

@@ -1,17 +1,19 @@
-.list {
+.list-item {
     background-color: var(--g-color-branding-base-background);
-    border: 1px solid var(--g-color-line-generic);
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }
 
-.list:hover {
+.list-item:hover {
     background-color: var(--g-color-base-simple-hover);
-    border: 1px solid var(--g-color-line-generic);
     cursor: pointer;
 }
 
-.list.active {
-    background-color: var(--g-color-base-selection);
-    border: 1px solid var(--g-color-line-brand);
+.list-item.active {
+    background-color: var(--g-color-base-selection) !important;
 }
 
 /* Mobile chat list improvements */
@@ -19,10 +21,30 @@
     .chat-list-mobile {
         height: 100%;
         overflow-y: auto;
-        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        -webkit-overflow-scrolling: touch;
+        /* Smooth scrolling on iOS */
     }
-    
-    .list {
+
+    .list-item {
         margin-bottom: 0.5rem;
     }
+}
+
+/* Force Gravity UI List items to take full width and handle flex children correctly */
+.chat-list-gravity .g-list__item,
+.chat-list-gravity .yc-list__item,
+.chat-list-gravity [role="option"],
+.chat-list-gravity li {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+}
+
+.chat-list-gravity .g-list__item-content,
+.chat-list-gravity .yc-list__item-content {
+    width: 100% !important;
+    display: block !important;
+    padding: 0 !important;
 }

@@ -1,10 +1,10 @@
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useChats } from "@/hooks/useChats";
+import { usePathname, useRouter } from "next/navigation";
+import { useChats, Chat } from "@/hooks/useChats";
 import { useCreateChat } from "@/hooks/useCreateChat";
-import { Button, Skeleton, Text, Icon, TextArea } from "@gravity-ui/uikit";
-import {Plus, Pencil, TrashBin, Xmark, Check } from '@gravity-ui/icons';
+import { Button, Skeleton, Text, Icon, TextArea, List, DropdownMenu, Dialog } from "@gravity-ui/uikit";
+import { Plus, Pencil, TrashBin, Xmark, Check } from '@gravity-ui/icons';
 import "./ChatList.css";
 
 interface ChatListProps {
@@ -12,6 +12,7 @@ interface ChatListProps {
 }
 
 export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
+  const router = useRouter();
   const {
     chats,
     isLoading,
@@ -19,10 +20,14 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
     updateChatTitle,
     deleteChat,
   } = useChats();
+  const pathname = usePathname();
+  // Debug active state removed
   const { handleCreateChat, createChat } = useCreateChat();
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
-  const pathname = usePathname();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [chatToDelete, setChatToDelete] = useState<string | null>(null);
+  /* pathname already declared above */
 
   const startEditing = (chatId: string, currentTitle: string) => {
     setEditingChatId(chatId);
@@ -40,13 +45,14 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
     setEditingChatId(null);
   };
 
-  const handleDeleteChat = async (chatId: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (window.confirm("Вы уверены, что хотите удалить этот чат?")) {
-      await deleteChat.mutateAsync(chatId);
-      // Навигация будет обработана автоматически через useChats
+  const handleDeleteChat = async (chatId: string, e?: React.MouseEvent | KeyboardEvent) => {
+    if (e && 'preventDefault' in e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
+
+    setChatToDelete(chatId);
+    setDeleteDialogOpen(true);
   };
 
   if (isLoading) {
@@ -84,7 +90,7 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
           <Icon data={Plus} size={16} />
         </Button>
       </div>
-      
+
       {chats.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-muted-foreground mb-4">У вас пока нет чатов</p>
@@ -94,11 +100,18 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
           </Button>
         </div>
       ) : (
-        <ul className="space-y-2">
-          {chats.map((chat) => (
-            <li key={chat.id}>
-              {editingChatId === chat.id ? (
-                <div className={`flex items-center gap-2 p-2 border rounded-md list ${pathname === `/chat/${chat.id}` ? "active" : ""}`}>
+        <List
+          className="chat-list-gravity"
+          items={chats}
+          filterable={false}
+          virtualized={false}
+          renderItem={(chat: Chat) => {
+            const isEditing = editingChatId === chat.id;
+            const isActive = pathname?.includes(chat.id);
+
+            if (isEditing) {
+              return (
+                <div className={`flex items-center gap-2 p-2 border rounded-md list-item-editing ${isActive ? "active" : ""}`}>
                   <TextArea
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
@@ -118,48 +131,80 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
                     <Icon data={Xmark} size={16} />
                   </Button>
                 </div>
-              ) : (
-                <Link
-                  href={`/chat/${chat.id}`}
-                  className={`flex items-center justify-between p-3 rounded-md list ${pathname === `/chat/${chat.id}` ? "active" : ""}`}
-                  onClick={() => onChatSelect?.()}
-                >
-                  <div className="w-full overflow-hidden">
-                    <div className="flex justify-between items-center">
-                      <div className="font-medium truncate">{chat.title}</div>
-                      <div className="flex items-center space-x-1 ml-2 shrink-0">
-                        <Button
-                          size="m"
-                          view="flat-secondary"
-                          className="h-8 w-8"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            startEditing(chat.id, chat.title);
-                          }}
-                        >
-                          <Icon data={Pencil} size={16} />
-                        </Button>
-                        <Button
-                          size="m"
-                          view="flat-danger"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={(e) => handleDeleteChat(chat.id, e)}
-                        >
-                          <Icon data={TrashBin} size={16} />
-                        </Button>
-                      </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {chat.lastMessage}
-                    </p>
-                  </div>
-                </Link>
-              )}
-            </li>
-          ))}
-        </ul>
+              );
+            }
+
+            return (
+              <div
+                className={`flex items-center justify-between p-3 rounded-md list-item relative ${isActive ? "active" : ""}`}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  overflow: 'hidden',
+                  width: '100%',
+                  ...(isActive ? { backgroundColor: 'var(--g-color-base-selection)' } : {})
+                }}
+              >
+                {/* Navigation Overlay - Z-index 10 */}
+                <div
+                  className="absolute inset-0 z-10 cursor-pointer"
+                  onClick={() => {
+                    router.push(`/chat/${chat.id}`);
+                    onChatSelect?.();
+                  }}
+                />
+
+                <div className="flex-1 min-w-0 mr-2 z-0" style={{ flex: '1 1 0%', minWidth: 0 }}>
+                  <div className="font-medium truncate text-left w-full">{chat.title}</div>
+                </div>
+
+                {/* Dropdown Wrapper - Z-index 20 (Higher than Overlay) */}
+                <div className="shrink-0 relative z-20" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu
+                    size="s"
+                    items={[
+                      {
+                        action: () => startEditing(chat.id, chat.title),
+                        text: 'Переименовать',
+                        iconStart: <Icon data={Pencil} size={16} />,
+                      },
+                      {
+                        action: (e) => handleDeleteChat(chat.id, e),
+                        text: 'Удалить',
+                        iconStart: <Icon data={TrashBin} size={16} />,
+                        theme: 'danger',
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+            );
+          }}
+        />
       )}
+
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        aria-labelledby="delete-dialog-title"
+      >
+        <Dialog.Header caption="Удаление чата" id="delete-dialog-title" />
+        <Dialog.Body>Вы уверены, что хотите удалить этот чат? Это действие нельзя отменить.</Dialog.Body>
+        <Dialog.Footer
+          onClickButtonCancel={() => setDeleteDialogOpen(false)}
+          onClickButtonApply={async () => {
+            if (chatToDelete) {
+              await deleteChat.mutateAsync(chatToDelete);
+            }
+            setDeleteDialogOpen(false);
+          }}
+          textButtonApply="Удалить"
+          textButtonCancel="Отмена"
+          propsButtonApply={{ view: 'outlined-danger' }}
+        />
+      </Dialog>
     </div>
   );
 };
