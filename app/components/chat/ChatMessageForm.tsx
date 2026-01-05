@@ -11,10 +11,10 @@ interface ChatMessageFormProps {
   disabled?: boolean;
 }
 
-export const ChatMessageForm = ({ 
-  onSubmit, 
+export const ChatMessageForm = ({
+  onSubmit,
   isMessageSending,
-  disabled = false 
+  disabled = false
 }: ChatMessageFormProps) => {
   const { reasoningMode, setReasoningMode, selectedModel } = useModelSelection();
   const [messageText, setMessageText] = useState("");
@@ -23,15 +23,15 @@ export const ChatMessageForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Allow sending if there's text or files attached
     if ((!messageText.trim() && attachedFiles.length === 0) || isMessageSending || disabled) return;
-    
+
     const message = messageText;
     const files = attachedFiles;
     setMessageText("");
     setAttachedFiles([]);
-    
+
     try {
       await onSubmit(message, files.length > 0 ? files : undefined);
     } catch (error) {
@@ -75,7 +75,7 @@ export const ChatMessageForm = ({
           value={messageText}
           onChange={(e) => setMessageText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Писать сюда..."
+          placeholder="Type anything..."
           maxRows={8}
           disabled={disabled}
           className="chat-message-form__textarea"
@@ -90,7 +90,7 @@ export const ChatMessageForm = ({
             maxFileSize={10 * 1024 * 1024} // 10MB
             compact={true}
           />
-          
+
           {/* Show reasoning button only for YandexGPT */}
           {selectedModel === 'yandexgpt' && (
             <Button
@@ -104,12 +104,12 @@ export const ChatMessageForm = ({
               <Icon data={Bulb} size={16} />
             </Button>
           )}
-          
+
           <Button
             type="submit"
             size="m"
+            view="action"
             disabled={(!messageText.trim() && attachedFiles.length === 0) || isMessageSending || disabled}
-            className="chat-message-form__button chat-message-form__button--submit"
           >
             {isMessageSending ? (
               <Icon data={Stop} size={16} />

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useChat, Message, FileAttachment } from "@/hooks/useChat";
 import ReactMarkdown from 'react-markdown';
-import { Button, TextArea, Icon, Modal, Text, Spin, Label, useToaster, Select, Flex, HelpMark, ClipboardButton } from '@gravity-ui/uikit';
+import { Button, TextArea, Icon, Dialog, Text, Spin, Label, useToaster, Select, HelpMark, ClipboardButton } from '@gravity-ui/uikit';
 import { Gear, Bars } from '@gravity-ui/icons';
 import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
 import { ReasoningBlock } from "./ReasoningBlock";
@@ -26,7 +26,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
     isMessageSending,
     isAssistantTyping,
   } = useChat(chatId);
-  
+
   // Use the toaster hook
   const toaster = useToaster();
   const { reasoningMode, selectedModel, setSelectedModel } = useModelSelection();
@@ -66,15 +66,15 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
     // Reset reasoning state
     setCurrentReasoning("");
     setIsReasoningActive(false);
-    
+
     try {
       // Start reasoning if in reasoning mode and using YandexGPT
       if (reasoningMode && selectedModel === 'yandexgpt') {
         setIsReasoningActive(true);
       }
-      
+
       await sendMessage.mutateAsync({ content: message, attachments: files });
-      
+
       // Stop reasoning when done
       setIsReasoningActive(false);
     } catch (error) {
@@ -109,7 +109,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Spin size="xs"/>
+        <Spin size="xs" />
       </div>
     );
   }
@@ -129,7 +129,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full chat-interface">
       <header className="p-4 gap-2 justify-between flex items-center">
         <div className="flex gap-2 items-center">
           {/* Mobile burger button */}
@@ -144,7 +144,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
               <Icon data={Bars} size={18} />
             </Button>
           )}
-          
+
           <div className="flex gap-2">
             {reasoningMode && selectedModel === 'yandexgpt' && (
               <Label theme="info" size="m">
@@ -155,21 +155,21 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
         </div>
 
         <div className="flex gap-2 items-center">
-        {chat.tokens_used && (
+          {chat.tokens_used && (
             <HelpMark iconSize="m">
               <b>Использовано токенов:</b> {chat.tokens_used.toString()}
             </HelpMark>
-          )}  
-          <Button 
-            view="outlined" 
-            size="m" 
+          )}
+          <Button
+            view="outlined"
+            size="m"
             onClick={() => setOpen(true)}
             title="Настройки"
           >
             <Icon data={Gear} size={18} />
           </Button>
 
-        </div>  
+        </div>
       </header>
 
       <div className="flex-1 p-4 chat-messages">
@@ -181,11 +181,11 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 chat-messages-container">
             {messages.map((message) => (
-              <ChatMessage 
-                key={message.id} 
-                message={message} 
+              <ChatMessage
+                key={message.id}
+                message={message}
                 onCopy={(content) => {
                   navigator.clipboard.writeText(content);
                   toaster.add({
@@ -199,15 +199,15 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
               />
             ))}
             {isReasoningActive && selectedModel === 'yandexgpt' && (
-              <ReasoningBlock 
-                content={currentReasoning} 
+              <ReasoningBlock
+                content={currentReasoning}
                 isStreaming={isReasoningActive}
               />
             )}
             {isAssistantTyping && (
               <div className="flex items-center gap-2 py-2 px-4 bg-muted rounded-lg w-fit">
                 <div className="text-sm">Ассистент печатает</div>
-                <Spin size="xs"/>
+                <Spin size="xs" />
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -220,12 +220,18 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
         isMessageSending={isMessageSending}
       />
 
-      <Modal className="modal" open={open} onClose={() => setOpen(false)}>
-        <Text variant="header-1">Настройки чата</Text>
-          <div className="space-y-4 py-4">
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        onEnterKeyDown={handleSaveSettings}
+        aria-labelledby="chat-settings-dialog-title"
+      >
+        <Dialog.Header caption="Настройки чата" id="chat-settings-dialog-title" />
+        <Dialog.Body>
+          <div className="space-y-4">
             <div className="space-y-2">
               <Text variant="body-1">Модель ИИ</Text>
-              <Text variant="body-1" color="secondary"className="flex gap-1">Будет применена только для этого чата</Text>
+              <Text variant="body-1" color="secondary" className="flex gap-1">Будет применена только для этого чата</Text>
               <Select
                 value={[selectedModel]}
                 options={[
@@ -247,7 +253,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
             </div>
             <div className="space-y-2">
               <Text variant="body-1">Системный промпт (роль ассистента)</Text>
-              <Text variant="body-1" color="secondary"className="flex gap-1">Определяет роль и поведение ассистента в этом чате</Text>             
+              <Text variant="body-1" color="secondary" className="flex gap-1">Определяет роль и поведение ассистента в этом чате</Text>
               <TextArea
                 placeholder="Опишите, как должен вести себя ассистент, например: Ты полезный ассистент. Отвечай на вопросы пользователя чётко и лаконично."
                 value={systemPrompt}
@@ -257,21 +263,14 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
               />
             </div>
           </div>
-          <Flex direction="row" justifyContent="flex-end" gap={2} style={{ marginTop: '24px' }}>
-            <Button
-            size="l"
-              view="outlined"
-              onClick={() => setOpen(false)}
-            >
-              Отмена
-            </Button>
-            <Button 
-              view="action"
-              size="l" onClick={handleSaveSettings}>
-              Сохранить
-            </Button>
-          </Flex>
-      </Modal>    
+        </Dialog.Body>
+        <Dialog.Footer
+          onClickButtonCancel={() => setOpen(false)}
+          onClickButtonApply={handleSaveSettings}
+          textButtonApply="Сохранить"
+          textButtonCancel="Отмена"
+        />
+      </Dialog>
     </div>
   );
 };
@@ -283,7 +282,7 @@ interface ChatMessageProps {
 
 const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
   const isUser = message.role === "user";
-  
+
   const getFileIcon = (type: string) => {
     if (type.startsWith('image/')) return '🖼️';
     if (type.includes('pdf')) return '📄';
@@ -299,20 +298,18 @@ const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
-  
+
   return (
     <div
-      className={`flex ${
-        isUser ? "justify-end" : "justify-start"
-      }`}
+      className={`flex ${isUser ? "justify-end" : "justify-start"
+        }`}
     >
       <div className="chat-message-wrapper group">
         <div
-          className={`rounded-lg p-2 chat-message-bubble ${
-            isUser
-              ? "chat-bubble bg-primary text-primary-foreground"
-              : "bg-muted text-foreground bg-primary"
-          }`}
+          className={`rounded-lg p-2 chat-message-bubble ${isUser
+            ? "chat-bubble bg-primary text-primary-foreground"
+            : "bg-muted text-foreground bg-primary"
+            }`}
         >
           {/* Show attachments if present */}
           {message.attachments && message.attachments.length > 0 && (
@@ -327,8 +324,8 @@ const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
                 >
                   <span className="chat-message-attachment__icon">
                     {file.type.startsWith('image/') ? (
-                      <Image 
-                        src={file.url} 
+                      <Image
+                        src={file.url}
                         alt={file.name}
                         width={200}
                         height={200}
@@ -361,7 +358,7 @@ const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
             </div>
           )}
         </div>
-        
+
         {/* Copy button below message */}
         <ClipboardButton
           text={message.content}
