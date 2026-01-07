@@ -48,7 +48,7 @@ export const GET = withAuth(async (request: NextRequest, user: { id: string }) =
     const publishedOnly = url.searchParams.get('publishedOnly') === 'true';
     const draftsOnly = url.searchParams.get('draftsOnly') === 'true';
     const inspectSchema = url.searchParams.get('inspectSchema') === 'true';
-    
+
     // Use service role client to bypass RLS for authenticated API requests
     const supabase = createClient<Database>(
       supabaseUrl,
@@ -120,7 +120,7 @@ export const GET = withAuth(async (request: NextRequest, user: { id: string }) =
         triggers
       });
     }
-    
+
     let query = supabase
       .from('blog_posts')
       .select(`
@@ -163,7 +163,7 @@ export const GET = withAuth(async (request: NextRequest, user: { id: string }) =
     // Get author information for each post
     if (data && data.length > 0) {
       const authorIds = [...new Set(data.map(post => post.author_id))];
-      
+
       const { data: authors, error: authorsError } = await supabase
         .from('profiles')
         .select('id, name, username, avatar_url')
@@ -204,7 +204,7 @@ export const POST = withAuth(async (request: NextRequest, user: { id: string }) 
     // Try to parse JSON body first, fallback to URL parameters
     const contentType = request.headers.get('content-type');
     const url = new URL(request.url);
-    
+
     if (contentType && contentType.includes('application/json')) {
       // Parse JSON body
       const text = await request.text();
@@ -217,7 +217,7 @@ export const POST = withAuth(async (request: NextRequest, user: { id: string }) 
       // Use URL parameters as fallback
       body = {};
     }
-    
+
     // Get data from body or URL parameters
     const title = body.title || url.searchParams.get('title');
     const content = body.content || url.searchParams.get('content');
@@ -225,7 +225,7 @@ export const POST = withAuth(async (request: NextRequest, user: { id: string }) 
     const slug = body.slug || url.searchParams.get('slug');
     const featured_image = body.featured_image || url.searchParams.get('featured_image');
     const published = body.published !== undefined ? body.published :
-                     (url.searchParams.get('published') === 'true');
+      (url.searchParams.get('published') === 'true');
     // Validate required fields
     if (!title?.trim()) {
       return NextResponse.json(
@@ -339,6 +339,17 @@ export const POST = withAuth(async (request: NextRequest, user: { id: string }) 
 
     if (error) {
       throw error;
+    }
+
+    // Trigger embedding sync if published
+    if (data.published) {
+      // We don't await this to keep the API responsive, 
+      // it will run in the background (Edge Runtime/Next.js keeps it alive for a bit)
+      // Or if we want to be sure, we can await or use a background job.
+      // For now, let's just trigger it.
+      import('@/lib/blog-sync').then(({ syncBlogPostEmbeddings }) => {
+        syncBlogPostEmbeddings(data.id);
+      }).catch(err => console.error('Failed to trigger sync:', err));
     }
 
     return NextResponse.json(data, { status: 201 });

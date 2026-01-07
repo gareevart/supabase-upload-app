@@ -161,7 +161,7 @@ export const PUT = withAuth(async (request: NextRequest, user: { id: string }) =
 
     // Parse the request body
     const { title, content, excerpt, slug, featured_image, published } = await request.json();
-    
+
     // Validate required fields
     if (!title?.trim()) {
       return NextResponse.json(
@@ -243,13 +243,18 @@ export const PUT = withAuth(async (request: NextRequest, user: { id: string }) =
       throw error;
     }
 
+    // Trigger embedding sync (handles both publishing and unpublishing)
+    import('@/lib/blog-sync').then(({ syncBlogPostEmbeddings }) => {
+      syncBlogPostEmbeddings(data.id);
+    }).catch(err => console.error('Failed to trigger sync:', err));
+
     return NextResponse.json(data);
   } catch (err) {
     const error = err as { code?: string, message?: string };
-    const errorMessage = error.code === '23505' 
+    const errorMessage = error.code === '23505'
       ? 'A blog post with this slug already exists'
       : error.message || 'Failed to update blog post';
-    
+
     console.error('Error updating blog post:', error);
     return NextResponse.json(
       { error: errorMessage },

@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     // Create Supabase client with the user's token
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    
+
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: {
         headers: {
@@ -44,25 +44,77 @@ export async function POST(request: Request) {
       );
     }
 
+    const folderId = process.env.YANDEX_FOLDER_ID || 'b1gb5lrqp1jr1tmamu2t';
+
+    // RAG Implementation: Retrieve context from blog posts
+    let contextText = '';
+    let documents: any[] = [];
+    try {
+      // Determine the search query
+      let searchQuery = prompt;
+      if (!searchQuery && messageContext && messageContext.length > 0) {
+        // Use the last user message as query if prompt is empty
+        const lastUserMessage = [...messageContext].reverse().find((m: any) => m.role === 'user');
+        if (lastUserMessage) {
+          searchQuery = lastUserMessage.text || lastUserMessage.content;
+        }
+      }
+
+      if (searchQuery) {
+        console.log('Generating embedding for query:', searchQuery);
+
+        // Dynamic import to avoid issues if lib/yandex is not perfectly robust yet
+        const { getEmbeddings } = await import('@/lib/yandex');
+        const queryEmbedding = await getEmbeddings(searchQuery, 'QUERY');
+
+        // Search for similar blog posts
+        const { data: searchResults, error: searchError } = await supabase.rpc('match_blog_posts', {
+          query_embedding: queryEmbedding,
+          match_threshold: 0.1, // Threshold for relevance
+          match_count: 3 // Top 3 results
+        });
+        documents = searchResults || [];
+
+        if (searchError) {
+          console.error('Error searching documents:', searchError);
+        } else if (documents && documents.length > 0) {
+          console.log(`Found ${documents.length} relevant documents`);
+          console.log('Similarity scores:', documents.map((doc: any) => doc.similarity).join(', '));
+
+          contextText = documents.map((doc: any) => doc.content).join('\n---\n');
+          console.log('Context preview:', contextText.substring(0, 100) + '...');
+        } else {
+          console.log('No relevant documents found');
+        }
+      }
+    } catch (ragError) {
+      console.error('RAG Error:', ragError);
+      // Continue without context if RAG fails
+    }
+
     // Prepare messages for the API
     const messages = [];
-    
+
     // Add system prompt if provided
-    if (systemPrompt) {
-      messages.push({ role: 'system', text: systemPrompt });
+    let finalSystemPrompt = systemPrompt || 'You are a helpful assistant.';
+
+    if (contextText) {
+      finalSystemPrompt += `\n\nUse the following context from the user's blog to answer the question if relevant:\n\n${contextText}\n\nIf the context doesn't contain the answer, answer from your general knowledge but prioritize the context.`;
     }
-    
+
+    if (finalSystemPrompt) {
+      messages.push({ role: 'system', text: finalSystemPrompt });
+    }
+
     // Add message context (conversation history) if provided
     if (messageContext && messageContext.length > 0) {
       messages.push(...messageContext);
-    } 
+    }
     // If no context is provided, just add the user prompt
     else if (prompt) {
       messages.push({ role: 'user', text: prompt });
     }
 
-    const folderId = process.env.YANDEX_FOLDER_ID || 'b1gb5lrqp1jr1tmamu2t';
-    
     // Determine the model URI
     let modelUri: string;
     switch (model) {
@@ -85,7 +137,7 @@ export async function POST(request: Request) {
         modelUri = `gpt://${folderId}/yandexgpt/latest`;
         break;
     }
-    
+
     // Prepare completion options for streaming
     const completionOptions: any = {
       stream: true,
@@ -122,6 +174,15 @@ export async function POST(request: Request) {
     // Create a ReadableStream for Server-Sent Events
     const stream = new ReadableStream({
       async start(controller) {
+        // Prepare metadata for sources
+        const uniqueSources = Array.from(new Map(
+          (documents || []).map((doc: any) => [doc.post_id, { title: doc.title, slug: doc.slug }])
+        ).values());
+
+        if (uniqueSources.length > 0) {
+          controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ metadata: { sources: uniqueSources } })}\n\n`));
+        }
+
         try {
           const yandexGPTResponse = await fetch('https://llm.api.cloud.yandex.net/foundationModels/v1/completion', {
             method: 'POST',
@@ -152,7 +213,7 @@ export async function POST(request: Request) {
 
           while (true) {
             const { done, value } = await reader.read();
-            
+
             if (done) {
               controller.close();
               break;
@@ -164,17 +225,17 @@ export async function POST(request: Request) {
 
             for (const line of lines) {
               if (line.trim() === '') continue;
-              
+
               if (line.startsWith('data: ')) {
                 const data = line.slice(6);
                 if (data === '[DONE]') {
                   controller.close();
                   return;
                 }
-                
+
                 try {
                   const parsed = JSON.parse(data);
-                  
+
                   // Forward the streaming data to the client
                   controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(parsed)}\n\n`));
                 } catch (e) {
@@ -196,6 +257,9 @@ export async function POST(request: Request) {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     });
 

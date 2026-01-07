@@ -15,7 +15,8 @@ import {
   TableDataItem,
   Label,
   DropdownMenu,
-  HelpMark
+  HelpMark,
+  Dialog
 } from '@gravity-ui/uikit';
 import { Copy, Plus, TrashBin, Key, BookOpen, EyeSlash, Eye, CircleStop, CirclePlay, Ellipsis } from '@gravity-ui/icons';
 import { useToast } from '@/hooks/use-toast';
@@ -140,18 +141,17 @@ export const ApiKeysManager: React.FC = () => {
       setShowCreateModal(false);
       setNewKeyName('');
 
-      // Обновляем список ключей
       await fetchApiKeys();
 
       toast({
-        title: 'Успешно',
-        description: 'API ключ создан',
+        title: 'Success',
+        description: 'API key created',
       });
     } catch (error) {
       console.error('Error creating API key:', error);
       toast({
-        title: 'Ошибка',
-        description: error instanceof Error ? error.message : 'Не удалось создать API ключ',
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to create API key',
         variant: 'destructive',
       });
     } finally {
@@ -159,10 +159,9 @@ export const ApiKeysManager: React.FC = () => {
     }
   };
 
-  // Переключение статуса API ключа (активировать/деактивировать)
   const toggleApiKeyStatus = async (keyId: string, keyName: string, currentStatus: boolean) => {
-    const action = currentStatus ? 'деактивировать' : 'активировать';
-    if (!confirm(`Вы уверены, что хотите ${action} API ключ "${keyName}"?`)) {
+    const action = currentStatus ? 'deactivate' : 'activate';
+    if (!confirm(`Are you sure you want to ${action} API key "${keyName}"?`)) {
       return;
     }
 
@@ -184,20 +183,20 @@ export const ApiKeysManager: React.FC = () => {
 
       await fetchApiKeys();
       toast({
-        title: 'Успешно',
-        description: `API ключ ${currentStatus ? 'Деактивирован' : 'Активирован'}`,
+        title: 'Success',
+        description: `API key ${currentStatus ? 'Deactivated' : 'Activated'}`,
       });
     } catch (error) {
       console.error('Error toggling API key status:', error);
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось изменить статус API ключа',
+        title: 'Error',
+        description: 'Failed to toggle API key status',
         variant: 'destructive',
       });
     }
   };
 
-  // Удаление API ключа
+  // Delete API key
   const deleteApiKey = async (keyId: string, keyName: string) => {
     if (!confirm(`Вы уверены, что хотите удалить API ключ "${keyName}"?`)) {
       return;
@@ -220,32 +219,32 @@ export const ApiKeysManager: React.FC = () => {
     } catch (error) {
       console.error('Error deleting API key:', error);
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось удалить API ключ',
+        title: 'Error',
+        description: 'Failed to delete API key',
         variant: 'destructive',
       });
     }
   };
 
-  // Копирование в буфер обмена
+  // Copy to clipboard
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
       toast({
-        title: 'Скопировано',
-        description: 'API ключ скопирован в буфер обмена',
+        title: 'Copied',
+        description: 'API key copied to clipboard',
       });
     } catch (error) {
       console.error('Error copying to clipboard:', error);
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось скопировать в буфер обмена',
+        title: 'Error',
+        description: 'Failed to copy to clipboard',
         variant: 'destructive',
       });
     }
   };
 
-  // Форматирование даты
+  // Format date
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Never';
     const date = new Date(dateString);
@@ -257,7 +256,7 @@ export const ApiKeysManager: React.FC = () => {
     return `${day}.${month}.${year} ${hours}:${minutes}`;
   };
 
-  // Форматирование относительного времени
+  // Format relative time
   const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -272,7 +271,7 @@ export const ApiKeysManager: React.FC = () => {
     return formatDate(dateString);
   };
 
-  // Подготовка данных для таблицы
+  // Prepare data for table
   const tableData: TableApiKey[] = apiKeys.map((apiKey) => ({
     id: apiKey.id,
     name: apiKey.name,
@@ -280,10 +279,10 @@ export const ApiKeysManager: React.FC = () => {
     status: apiKey.is_active ? 'Active' : 'Inactive',
     created_at: formatRelativeTime(apiKey.created_at),
     last_used_at: apiKey.last_used_at ? formatRelativeTime(apiKey.last_used_at) : 'Never',
-    actions: apiKey.id, // Используем ID для действий
+    actions: apiKey.id, // Use ID for actions
   }));
 
-  // Конфигурация колонок таблицы
+  // Table column configuration
   const columns: TableColumnConfig<TableApiKey>[] = [
     {
       id: 'name',
@@ -466,10 +465,15 @@ export const ApiKeysManager: React.FC = () => {
       </Card>
 
       {/* Модальное окно создания API ключа */}
-      <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)}>
-        <div className="p-6 w-[500px]">
-          <Text variant="header-2" className="mb-4">Create API key</Text>
-          <div className="space-y-4 mt-4">
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onEnterKeyDown={createApiKey}
+        aria-labelledby="create-api-key-dialog-title"
+      >
+        <Dialog.Header caption="Create API key" id="create-api-key-dialog-title" />
+        <Dialog.Body>
+          <div className="space-y-4">
             <div>
               <Text variant="subheader-1" className="mb-2">Key name</Text>
               <TextInput
@@ -478,44 +482,34 @@ export const ApiKeysManager: React.FC = () => {
                 value={newKeyName}
                 className="mt-1"
                 onChange={(e) => setNewKeyName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && createApiKey()}
+                autoFocus
               />
-
             </div>
 
             <div className="mt-4">
               <Alert theme="info" title="The API key will be shown only once after creation" message="Be sure to save it in a safe place" />
             </div>
           </div>
-
-          <div className="flex justify-end gap-3 mt-6">
-            <Button
-              view="flat"
-              size="l"
-              onClick={() => setShowCreateModal(false)}
-              disabled={creating}
-            >
-              Cancel
-            </Button>
-            <Button
-              view="action"
-              size="l"
-              onClick={createApiKey}
-              loading={creating}
-            >
-              Create key
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        </Dialog.Body>
+        <Dialog.Footer
+          textButtonApply="Create key"
+          textButtonCancel="Cancel"
+          onClickButtonCancel={() => setShowCreateModal(false)}
+          onClickButtonApply={createApiKey}
+          propsButtonApply={{ loading: creating, disabled: creating }}
+          propsButtonCancel={{ disabled: creating }}
+        />
+      </Dialog>
 
       {/* Модальное окно с новым API ключом */}
-      <Modal open={showNewKey} onClose={() => setShowNewKey(false)}>
-        <div className="p-6 w-[500px]">
-          <Text variant="header-2" className="mb-4">API ключ создан</Text>
-          <Alert theme="success" title="API ключ успешно создан" message="Скопируйте его сейчас - вы не сможете увидеть его снова!
-" />
-
+      <Dialog
+        size='m'
+        open={showNewKey}
+        onClose={() => setShowNewKey(false)}
+        aria-labelledby="new-api-key-dialog-title"
+      >
+        <Dialog.Header caption="API ключ создан" id="new-api-key-dialog-title" />
+        <Dialog.Body>
           {newKeyData && (
             <div className="space-y-4">
               <div>
@@ -530,7 +524,7 @@ export const ApiKeysManager: React.FC = () => {
                   вы не сможете увидеть полный ключ снова.
                 </Text>
                 <div className="flex items-center gap-2 p-3  rounded border">
-                  <Text variant="body-2" className="flex-1 font-mono text-sm">
+                  <Text variant="body-2" className="flex-1 font-mono text-sm break-all">
                     {showNewKey ? newKeyData.key : '••••••••••••••••••••••••••••••••'}
                   </Text>
                   <Button
@@ -552,21 +546,15 @@ export const ApiKeysManager: React.FC = () => {
               </div>
             </div>
           )}
-
-          <div className="flex justify-end mt-6">
-            <Button
-              view="outlined"
-              size="l"
-              onClick={() => {
-                setShowNewKey(false);
-                setNewKeyData(null);
-              }}
-            >
-              Закрыть
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        </Dialog.Body>
+        <Dialog.Footer
+          textButtonCancel="Закрыть"
+          onClickButtonCancel={() => {
+            setShowNewKey(false);
+            setNewKeyData(null);
+          }}
+        />
+      </Dialog>
     </>
 
   );

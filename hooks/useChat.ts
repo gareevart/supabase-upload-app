@@ -18,6 +18,12 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   attachments?: FileAttachment[];
+  metadata?: {
+    sources?: {
+      title: string;
+      slug: string;
+    }[];
+  };
   created_at?: string;
 }
 
@@ -81,7 +87,7 @@ export const useChat = (chatId: string) => {
         .from("chat_sessions")
         .update({ system_prompt: systemPrompt })
         .eq("id", chatId);
-      
+
       if (error) throw error;
       return { success: true };
     },
@@ -108,7 +114,7 @@ export const useChat = (chatId: string) => {
         .from("chat_sessions")
         .update({ title })
         .eq("id", chatId);
-      
+
       if (error) throw error;
       return { success: true };
     },
@@ -132,7 +138,7 @@ export const useChat = (chatId: string) => {
       try {
         // Analyze images/files before sending
         let enrichedContent = content;
-        
+
         if (attachments && attachments.length > 0) {
           // Process each attachment
           const fileDescriptions = await Promise.all(
@@ -153,7 +159,7 @@ export const useChat = (chatId: string) => {
                       imageType: file.type,
                     }),
                   });
-                  
+
                   if (response.ok) {
                     const analysis = await response.json();
                     console.log('Image analysis response:', {
@@ -162,7 +168,7 @@ export const useChat = (chatId: string) => {
                       descriptionLength: analysis.description?.length,
                       description: analysis.description?.substring(0, 100)
                     });
-                    
+
                     if (analysis.success && analysis.description && analysis.description.trim()) {
                       return `[Изображение: ${file.name}]\n${analysis.description}`;
                     } else {
@@ -177,7 +183,7 @@ export const useChat = (chatId: string) => {
                 // Fallback for images if analysis fails
                 return `[Изображение: ${file.name} - изображение прикреплено, но анализ недоступен]`;
               }
-              
+
               // Check if it's a PDF
               if (file.type === 'application/pdf') {
                 try {
@@ -194,7 +200,7 @@ export const useChat = (chatId: string) => {
                       fileName: file.name,
                     }),
                   });
-                  
+
                   if (response.ok) {
                     const analysis = await response.json();
                     console.log('PDF analysis response:', {
@@ -203,7 +209,7 @@ export const useChat = (chatId: string) => {
                       descriptionLength: analysis.description?.length,
                       pageCount: analysis.pageCount
                     });
-                    
+
                     if (analysis.success && analysis.description && analysis.description.trim()) {
                       return analysis.description;
                     } else {
@@ -218,10 +224,10 @@ export const useChat = (chatId: string) => {
                 // Fallback for PDFs if analysis fails
                 return `[Файл: ${file.name} - PDF документ прикреплен, но анализ текста недоступен]`;
               }
-              
+
               // Check if it's a Word document (.docx)
-              if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
-                  file.name.endsWith('.docx')) {
+              if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+                file.name.endsWith('.docx')) {
                 try {
                   // Call document analysis API
                   const { data: { session } } = await supabase.auth.getSession();
@@ -237,7 +243,7 @@ export const useChat = (chatId: string) => {
                       fileType: file.type,
                     }),
                   });
-                  
+
                   if (response.ok) {
                     const analysis = await response.json();
                     console.log('Document analysis response:', {
@@ -245,7 +251,7 @@ export const useChat = (chatId: string) => {
                       hasDescription: !!analysis.description,
                       descriptionLength: analysis.description?.length
                     });
-                    
+
                     if (analysis.success && analysis.description && analysis.description.trim()) {
                       return analysis.description;
                     } else {
@@ -260,27 +266,27 @@ export const useChat = (chatId: string) => {
                 // Fallback for Word documents if analysis fails
                 return `[Файл: ${file.name} - Word документ прикреплен, но анализ текста недоступен]`;
               }
-              
+
               // Check if it's an old .doc file
               if (file.type === 'application/msword' || file.name.endsWith('.doc')) {
                 return `[Файл: ${file.name} - старый формат .doc не поддерживается. Пожалуйста, конвертируйте в .docx]`;
               }
-              
+
               // For other files, just mention them
               return `[Файл: ${file.name} (${file.type})]`;
             })
           );
-          
+
           // Filter out any undefined/null values
           const validDescriptions = fileDescriptions.filter(desc => desc && desc.trim());
-          
+
           console.log('File processing result:', {
             attachmentsCount: attachments.length,
             descriptionsCount: fileDescriptions.length,
             validDescriptionsCount: validDescriptions.length,
             validDescriptions: validDescriptions
           });
-          
+
           // Add file analysis to message content for AI (compact format)
           if (validDescriptions.length > 0) {
             enrichedContent = content.trim()
@@ -291,14 +297,14 @@ export const useChat = (chatId: string) => {
             enrichedContent = '[Прикреплены файлы, но их содержимое не может быть проанализировано]';
           }
         }
-        
+
         console.log('Enriched content for YandexGPT:', {
           originalContent: content,
           enrichedContent: enrichedContent.substring(0, 200),
           enrichedContentLength: enrichedContent.length,
           isEmpty: !enrichedContent.trim()
         });
-        
+
         // Add user message to the database with ORIGINAL content
         // (user doesn't need to see technical image analysis)
         const userMessage: Message = {
@@ -324,7 +330,7 @@ export const useChat = (chatId: string) => {
             // If message has attachments, add their info to context for AI
             if (msg.attachments && msg.attachments.length > 0) {
               const fileInfo = msg.attachments
-                .map(f => f.type.startsWith('image/') 
+                .map(f => f.type.startsWith('image/')
                   ? `[Прикреплено изображение: ${f.name}]`
                   : `[Прикреплен файл: ${f.name}]`
                 )
@@ -339,12 +345,12 @@ export const useChat = (chatId: string) => {
               text: msg.content
             };
           });
-          
+
         // YandexGPT requires non-empty text
         if (!enrichedContent.trim()) {
           throw new Error("Сообщение не может быть пустым");
         }
-        
+
         // Add current message with ENRICHED content for AI understanding
         messageHistory.push({
           role: "user",
@@ -353,11 +359,11 @@ export const useChat = (chatId: string) => {
 
         // Get system prompt from chat settings or use default with image understanding support
         const systemPrompt = chat?.system_prompt || "Ты полезный ассистент с возможностью анализа изображений и файлов. Когда пользователь прикрепляет изображение, ты получаешь его описание и извлеченный текст. Используй эту информацию для детального и точного ответа. Отвечай на вопросы пользователя чётко и лаконично.";
-        
+
         // Create a temporary reasoning message to show thinking process
         let reasoningMessageId: string | null = null;
-        
-        const { text, error, usage } = await generateText(
+
+        const { text, error, usage, metadata } = await generateText(
           enrichedContent, // Use enrichedContent with image analysis
           systemPrompt,
           messageHistory, // Pass message history for context
@@ -377,6 +383,7 @@ export const useChat = (chatId: string) => {
           chat_id: chatId,
           role: "assistant",
           content: text,
+          metadata: metadata,
         };
 
         const { error: assistantMessageError } = await supabase
@@ -388,10 +395,10 @@ export const useChat = (chatId: string) => {
         // Update chat timestamp and token usage
         const currentTokensUsed = chat?.tokens_used || 0;
         const newTokens = usage ? parseInt(usage.totalTokens) : 0;
-        
+
         const { error: updateError } = await supabase
           .from("chat_sessions")
-          .update({ 
+          .update({
             updated_at: new Date().toISOString(),
             tokens_used: currentTokensUsed + newTokens
           })
@@ -405,9 +412,9 @@ export const useChat = (chatId: string) => {
             role: msg.role,
             text: msg.content
           }));
-          
+
           const newTitle = await generateChatTitle(allMessages);
-          
+
           if (newTitle && newTitle !== "Новый чат") {
             updateChatTitle.mutate(newTitle);
           }
