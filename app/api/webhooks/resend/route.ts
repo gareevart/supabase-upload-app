@@ -18,16 +18,26 @@ const supabaseAdmin = createClient<Database>(
 export async function POST(request: NextRequest) {
     try {
         const payload = await request.json();
-        console.log('📬 Resend webhook payload:', JSON.stringify(payload, null, 2));
+        console.log('📬 Resend webhook received:', {
+            type: payload.type,
+            email_id: payload.data?.email_id,
+            has_tags: !!payload.data?.tags,
+            timestamp: payload.created_at
+        });
 
         const { type, data } = payload;
 
-        // We expect broadcast_id to be in tags
-        const broadcastId = data.tags?.broadcast_id;
+        // Attempt to get the broadcast identification
+        // 1. From tags (our internal UUID)
+        // 2. From email_id (Resend's ID, which we also store)
+        const broadcastIdFromTag = data.tags?.broadcast_id;
+        const emailId = data.email_id;
 
-        if (!broadcastId) {
-            console.log('⚠️ No broadcast_id found in webhook payload tags');
-            return NextResponse.json({ message: 'No broadcast_id found' }, { status: 200 });
+        const targetId = broadcastIdFromTag || emailId;
+
+        if (!targetId) {
+            console.log('⚠️ No identification found in webhook payload (checked tags.broadcast_id and email_id)');
+            return NextResponse.json({ message: 'No ID found' }, { status: 200 });
         }
 
         let statColumn: 'opened_count' | 'clicked_count' | null = null;
@@ -39,10 +49,10 @@ export async function POST(request: NextRequest) {
         }
 
         if (statColumn) {
-            console.log(`📈 Incrementing ${statColumn} for broadcast ${broadcastId}`);
+            console.log(`📈 Incrementing ${statColumn} for broadcast identification: ${targetId}`);
 
             const { error } = await supabaseAdmin.rpc('increment_broadcast_stat', {
-                broadcast_id_param: broadcastId,
+                target_id: targetId,
                 stat_column: statColumn
             });
 
@@ -50,6 +60,8 @@ export async function POST(request: NextRequest) {
                 console.error('❌ Error updating broadcast stats:', error);
                 return NextResponse.json({ error: 'Failed to update stats' }, { status: 500 });
             }
+
+            console.log(`✅ Successfully updated ${statColumn} for ${targetId}`);
         }
 
         return NextResponse.json({ success: true });
