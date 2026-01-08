@@ -32,44 +32,29 @@ export const withApiAuth = (handler: (req: NextRequest, user: { id: string }) =>
       console.log('withApiAuth: Authorization header:', authHeader ? 'Present' : 'Missing');
 
       if (authHeader?.startsWith('Bearer ')) {
-        // Используем токен из Authorization header
         const token = authHeader.substring(7);
-        console.log('withApiAuth: Using Bearer token, length:', token.length);
-        console.log('withApiAuth: Token prefix:', token.substring(0, 50) + '...');
-        console.log('withApiAuth: Supabase URL:', supabaseUrl);
-        console.log('withApiAuth: Supabase Anon Key prefix:', supabaseAnonKey.substring(0, 20) + '...');
-        
-        // Используем обычный createClient и передаем токен напрямую в getUser()
+        console.log('withApiAuth: Using plain createClient for Bearer token');
+
         const { createClient } = await import('@supabase/supabase-js');
-        const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
-        
-        console.log('withApiAuth: About to call supabase.auth.getUser(token)');
+        const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+          }
+        });
+
         try {
-          // Передаем токен напрямую в getUser() - это правильный способ
           const result = await supabase.auth.getUser(token);
           user = result.data.user;
           error = result.error;
-          console.log('withApiAuth: getUser(token) completed successfully');
-        } catch (getUserError) {
-          console.error('withApiAuth: getUser(token) threw an error:', getUserError);
-          error = getUserError instanceof Error 
-            ? { message: getUserError.message } 
-            : { message: 'Unknown error occurred' };
+          console.log('withApiAuth: getUser(token) result:', JSON.stringify(result, null, 2));
+        } catch (authError) {
+          console.error('withApiAuth: Auth error with Bearer token:', authError);
+          error = authError instanceof Error ? { message: authError.message } : { message: 'Auth failed' };
         }
-        
-        console.log('withApiAuth: Token validation result:', {
-          hasUser: !!user,
-          userId: user?.id,
-          error: error?.message,
-          errorCode: error?.code,
-          errorStatus: error?.status,
-          fullError: error,
-        });
       } else {
-        console.log('withApiAuth: No Bearer token, trying cookies');
-        
-        // Use standard cookie method with createServerClient
-        // This will automatically handle the correct cookie name based on the Supabase URL
+        console.log('withApiAuth: Using createServerClient for Cookies');
+
         const supabase = createServerClient<Database>(
           supabaseUrl,
           supabaseAnonKey,
@@ -89,26 +74,20 @@ export const withApiAuth = (handler: (req: NextRequest, user: { id: string }) =>
             },
           }
         );
-        
+
         try {
           const result = await supabase.auth.getUser();
           user = result.data.user;
           error = result.error;
-          
-          console.log('withApiAuth: Cookie validation result:', {
-            hasUser: !!user,
-            userId: user?.id,
-            error: error?.message,
-            errorCode: error?.code,
-          });
+          console.log('withApiAuth: getUser() result with Cookies:', JSON.stringify(result, null, 2));
         } catch (cookieError) {
           console.error('withApiAuth: Cookie validation threw error:', cookieError);
-          error = cookieError instanceof Error 
-            ? { message: cookieError.message, code: 'cookie_error' } 
+          error = cookieError instanceof Error
+            ? { message: cookieError.message, code: 'cookie_error' }
             : { message: 'Unknown cookie error', code: 'cookie_error' };
         }
       }
-      
+
       if (error || !user) {
         const errorDetails = {
           error: error?.message || 'Auth session missing!',
@@ -125,7 +104,7 @@ export const withApiAuth = (handler: (req: NextRequest, user: { id: string }) =>
           method: req.method
         };
         console.error('API auth check failed:', errorDetails);
-        
+
         return NextResponse.json(
           {
             error: 'Unauthorized',
@@ -144,11 +123,11 @@ export const withApiAuth = (handler: (req: NextRequest, user: { id: string }) =>
       }
 
       const response = await handler(req, { id: user.id });
-      
+
       // Add CORS headers to successful responses
       response.headers.set('Access-Control-Allow-Origin', process.env.NEXT_PUBLIC_APP_URL || '*');
       response.headers.set('Access-Control-Allow-Credentials', 'true');
-      
+
       return response;
     } catch (err) {
       console.error('Auth middleware error:', {

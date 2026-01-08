@@ -64,13 +64,20 @@ export const ApiKeysManager: React.FC = () => {
       const response = await authFetch('/api/api-keys');
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('API error:', {
+        let errorData;
+        const responseText = await response.text();
+        try {
+          errorData = JSON.parse(responseText);
+        } catch (e) {
+          errorData = { rawResponse: responseText };
+        }
+
+        console.error('API error detail:', {
           status: response.status,
           statusText: response.statusText,
           error: errorData,
         });
-        throw new Error(errorData.error || errorData.details || 'Failed to fetch API keys');
+        throw new Error(errorData.error || errorData.details || `Failed to fetch API keys (${response.status} ${response.statusText})`);
       }
 
       const data = await response.json();

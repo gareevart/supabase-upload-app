@@ -360,7 +360,7 @@ const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
 
           {/* Show blog sources if present */}
           {message.metadata?.sources && message.metadata.sources.length > 0 && (
-            <div>
+            <div className="flex flex-col gap-2 mt-2">
               {message.metadata.sources.map((source, idx) => (
                 <Label key={idx} theme="clear" size="m" className="cursor-pointer">
                   Source: <a href={`/blog/${source.slug}`} target="_blank" rel="noopener noreferrer" className="ml-1 underline hover:text-primary-foreground/80">
