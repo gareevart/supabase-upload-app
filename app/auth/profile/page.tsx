@@ -13,7 +13,6 @@ import { useQuotaInfo } from './hooks/useQuota';
 
 // Import components
 import { ProfileView } from './components/ProfileView';
-import { ProfileEditForm } from './components/ProfileEditForm';
 import { SubscriptionSection } from './components/SubscriptionSection';
 import { QuotaSection } from './components/QuotaSection';
 import { ApiKeysManager } from '@/app/components/profile/ApiKeysManager';
@@ -23,7 +22,7 @@ const Profile = () => {
     const mounted = useClientSideRendering();
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
-    
+
     // Use custom hooks
     const { profile, setProfile, loading, saveProfile } = useUserProfile(user?.id, mounted);
     const { subscription, isSubscriptionLoading, handleSubscriptionToggle } = useSubscription(user?.id, user?.email, mounted);
@@ -33,11 +32,11 @@ const Profile = () => {
         if (!user || !profile) return;
 
         setIsSaving(true);
-            
+
         const success = await saveProfile(user.id, profile, () => {
             setIsEditing(false);
         });
-        
+
         if (!success) {
             setIsSaving(false);
         }
@@ -63,33 +62,26 @@ const Profile = () => {
         <div className="profile pt-4 pb-2">
             <Text variant="header-2">Profile</Text>
 
-            {isEditing ? (
-                <ProfileEditForm 
-                    profile={profile}
-                    setProfile={setProfile}
-                    onSave={handleSaveProfile}
-                    onCancel={() => setIsEditing(false)}
-                    isSaving={isSaving}
-                />
-            ) : (
-                <>
-                    <ProfileView 
-                        profile={profile}
-                        user={user}
-                        onEdit={() => setIsEditing(true)}
-                        onLogout={handleLogout}
-                    />
-                    
-                    <SubscriptionSection
-                        subscription={subscription}
-                        isLoading={isSubscriptionLoading}
-                        onToggle={handleSubscriptionToggle}
-                    />
-                    
-                    <QuotaSection dailyQuota={dailyQuota} />
-                    <ApiKeysManager />
-                </>
-            )}
+            <ProfileView
+                profile={profile}
+                user={user}
+                isEditing={isEditing}
+                isSaving={isSaving}
+                setProfile={setProfile}
+                onEdit={() => setIsEditing(true)}
+                onSave={handleSaveProfile}
+                onCancel={() => setIsEditing(false)}
+                onLogout={handleLogout}
+            />
+
+            <SubscriptionSection
+                subscription={subscription}
+                isLoading={isSubscriptionLoading}
+                onToggle={handleSubscriptionToggle}
+            />
+
+            <QuotaSection dailyQuota={dailyQuota} />
+            <ApiKeysManager />
         </div>
     );
 };

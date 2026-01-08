@@ -7,7 +7,7 @@ import { Spin, Text, Button } from '@gravity-ui/uikit';
 // Dynamically import the widget to prevent SSR issues
 const BroadcastListWidget = dynamicImport(
   () => import('@/widgets/broadcast-list/ui/BroadcastListWidget'),
-  { 
+  {
     ssr: false,
     loading: () => (
       <div className="flex flex-col gap-4 py-8 px-4 text-center justify-center items-center min-h-[400px]">
@@ -26,15 +26,15 @@ export default function BroadcastsPageClient() {
 
   useEffect(() => {
     setIsClient(true);
-    
+
     const checkAuth = async () => {
       try {
         // Dynamically import supabase to avoid SSR issues
         const { supabase } = await import('@/lib/supabase');
-        
+
         // Get current session
         const { data: { session } } = await supabase.auth.getSession();
-        
+
         if (!session?.user) {
           console.log('No session found, redirecting to auth');
           window.location.href = '/auth';
@@ -58,7 +58,7 @@ export default function BroadcastsPageClient() {
 
         console.log('User role:', profile.role);
         setUserRole(profile.role);
-        
+
         // Check if user has admin or editor role
         const hasAccess = profile.role === 'admin' || profile.role === 'editor';
         setIsAuthorized(hasAccess);
@@ -77,7 +77,7 @@ export default function BroadcastsPageClient() {
     return (
       <div className="flex flex-col gap-4 py-8 px-4 text-center justify-center items-center min-h-[400px]">
         <Spin size="l" />
-        <Text variant="body-1">Проверка прав доступа...</Text>
+        <Text variant="body-1">Checking access...</Text>
       </div>
     );
   }
@@ -94,7 +94,7 @@ export default function BroadcastsPageClient() {
             Доступ запрещён
           </Text>
           <Text variant="body-1" className="mb-4">
-            {userRole 
+            {userRole
               ? `Ваша роль: ${userRole}. Требуется роль admin или editor.`
               : 'У вас нет профиля или роли. Пожалуйста, настройте профиль.'}
           </Text>

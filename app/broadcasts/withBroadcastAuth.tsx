@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { withAuth } from '@/features/auth/ui/withAuth';
-import { UserRole } from '@/entities/user/model';
 
 // Higher-order component to restrict access to broadcast features
 export const withBroadcastAuth = <P extends object>(

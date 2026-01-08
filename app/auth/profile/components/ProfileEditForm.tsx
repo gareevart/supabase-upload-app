@@ -32,7 +32,7 @@ export const ProfileEditForm = ({
     const router = useRouter();
 
     return (
-        <>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
             <div className="flex-col profile-field w-full">
                 <Text variant="body-2">Name</Text>
                 <TextInput
@@ -124,9 +124,16 @@ export const ProfileEditForm = ({
                 />
             </div>
 
-            <Button size="l" view="normal" onClick={() => router.push('/auth/update-password')}>Update password</Button>
+            <Button
+                size="l"
+                view="normal"
+                onClick={() => router.push('/auth/update-password')}
+                style={{ alignSelf: 'flex-start' }}
+            >
+                Update password
+            </Button>
 
-            <div className="profile-actions">
+            <div className="profile-actions" style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                 <Button
                     size="l"
                     view="action"
@@ -135,10 +142,10 @@ export const ProfileEditForm = ({
                 >
                     Save
                 </Button>
-                <Button size="l" view="flat" onClick={onCancel}>
+                <Button size="l" view="flat" onClick={onCancel} disabled={isSaving}>
                     Cancel
                 </Button>
             </div>
-        </>
+        </div>
     );
 };
