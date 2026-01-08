@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { useBroadcastList } from '../useBroadcastList';
 import { BroadcastApi } from '@/shared/api/broadcast';
 import { useToast } from '@/hooks/use-toast';
@@ -15,7 +15,7 @@ describe('useBroadcastList', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseToast.mockReturnValue({ toast: mockToast } as any);
-    
+
     // Default mock implementation
     mockBroadcastApi.getBroadcasts = jest.fn().mockResolvedValue({
       data: [],
@@ -25,7 +25,7 @@ describe('useBroadcastList', () => {
   });
 
   describe('Initial state', () => {
-    it('should initialize with loading state', () => {
+    it('should initialize with loading state', async () => {
       mockBroadcastApi.getBroadcasts.mockResolvedValue({
         data: [],
         count: 0,
@@ -37,6 +37,11 @@ describe('useBroadcastList', () => {
       expect(result.current.isLoading).toBe(true);
       expect(result.current.broadcasts).toEqual([]);
       expect(result.current.error).toBeNull();
+
+      // Wait for the mount fetch to complete to avoid act() warning
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
     });
   });
 
@@ -46,12 +51,19 @@ describe('useBroadcastList', () => {
         {
           id: '1',
           subject: 'Test Broadcast',
-          content: 'Test content',
+          content: { text: 'Test content' },
+          content_html: '<p>Test content</p>',
           status: 'draft' as const,
+          scheduled_for: null,
           created_at: '2024-01-01',
+          updated_at: '2024-01-01',
           user_id: 'user-1',
+          sent_at: null,
+          broadcast_id: null,
           recipients: ['test@example.com'],
-          total_recipients: 1
+          total_recipients: 1,
+          opened_count: 0,
+          clicked_count: 0
         }
       ];
 
@@ -135,22 +147,36 @@ describe('useBroadcastList', () => {
         {
           id: '1',
           subject: 'Test 1',
-          content: 'Content 1',
+          content: { text: 'Content 1' },
+          content_html: '<p>Content 1</p>',
           status: 'draft' as const,
+          scheduled_for: null,
           created_at: '2024-01-01',
+          updated_at: '2024-01-01',
           user_id: 'user-1',
+          sent_at: null,
+          broadcast_id: null,
           recipients: ['test@example.com'],
-          total_recipients: 1
+          total_recipients: 1,
+          opened_count: 0,
+          clicked_count: 0
         },
         {
           id: '2',
           subject: 'Test 2',
-          content: 'Content 2',
+          content: { text: 'Content 2' },
+          content_html: '<p>Content 2</p>',
           status: 'draft' as const,
+          scheduled_for: null,
           created_at: '2024-01-02',
+          updated_at: '2024-01-02',
           user_id: 'user-1',
+          sent_at: null,
+          broadcast_id: null,
           recipients: ['test2@example.com'],
-          total_recipients: 1
+          total_recipients: 1,
+          opened_count: 0,
+          clicked_count: 0
         }
       ];
 
@@ -168,9 +194,13 @@ describe('useBroadcastList', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      await result.current.deleteBroadcast('1');
+      await act(async () => {
+        await result.current.deleteBroadcast('1');
+      });
 
-      expect(result.current.broadcasts).toHaveLength(1);
+      await waitFor(() => {
+        expect(result.current.broadcasts).toHaveLength(1);
+      });
       expect(result.current.broadcasts[0].id).toBe('2');
       expect(mockToast).toHaveBeenCalledWith({
         title: 'Success',
@@ -210,12 +240,19 @@ describe('useBroadcastList', () => {
         {
           id: '1',
           subject: 'Test',
-          content: 'Content',
+          content: { text: 'Content' },
+          content_html: '<p>Content</p>',
           status: 'draft' as const,
+          scheduled_for: null,
           created_at: '2024-01-01',
+          updated_at: '2024-01-01',
           user_id: 'user-1',
+          sent_at: null,
+          broadcast_id: null,
           recipients: ['test@example.com'],
-          total_recipients: 1
+          total_recipients: 1,
+          opened_count: 0,
+          clicked_count: 0
         }
       ];
 
@@ -233,9 +270,13 @@ describe('useBroadcastList', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      await result.current.sendBroadcast('1');
+      await act(async () => {
+        await result.current.sendBroadcast('1');
+      });
 
-      expect(result.current.broadcasts[0].status).toBe('sent');
+      await waitFor(() => {
+        expect(result.current.broadcasts[0].status).toBe('sent');
+      });
       expect(mockToast).toHaveBeenCalledWith({
         title: 'Success',
         description: 'Broadcast sent successfully',
@@ -249,13 +290,19 @@ describe('useBroadcastList', () => {
         {
           id: '1',
           subject: 'Test',
-          content: 'Content',
+          content: { text: 'Content' },
+          content_html: '<p>Content</p>',
           status: 'scheduled' as const,
           scheduled_for: '2024-12-31',
           created_at: '2024-01-01',
+          updated_at: '2024-01-01',
           user_id: 'user-1',
+          sent_at: null,
+          broadcast_id: null,
           recipients: ['test@example.com'],
-          total_recipients: 1
+          total_recipients: 1,
+          opened_count: 0,
+          clicked_count: 0
         }
       ];
 
@@ -273,9 +320,13 @@ describe('useBroadcastList', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      await result.current.cancelSchedule('1');
+      await act(async () => {
+        await result.current.cancelSchedule('1');
+      });
 
-      expect(result.current.broadcasts[0].status).toBe('draft');
+      await waitFor(() => {
+        expect(result.current.broadcasts[0].status).toBe('draft');
+      });
       expect(result.current.broadcasts[0].scheduled_for).toBeNull();
       expect(mockToast).toHaveBeenCalledWith({
         title: 'Success',

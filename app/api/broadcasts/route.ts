@@ -25,7 +25,7 @@ export const GET = withApiAuth(async (request: NextRequest, user: { id: string }
     });
 
     const url = new URL(request.url);
-    const status = url.searchParams.get('status');
+    const statuses = url.searchParams.getAll('status');
     const limit = parseInt(url.searchParams.get('limit') || '10');
     const offset = parseInt(url.searchParams.get('offset') || '0');
 
@@ -34,7 +34,7 @@ export const GET = withApiAuth(async (request: NextRequest, user: { id: string }
       method: request.method,
       headers: Object.fromEntries(request.headers.entries()),
       cookies: request.cookies.getAll(),
-      query: { status, limit, offset }
+      query: { statuses, limit, offset }
     });
 
     // Create a new supabase client for this request
@@ -101,8 +101,8 @@ export const GET = withApiAuth(async (request: NextRequest, user: { id: string }
       .eq('user_id', user.id);  // Only show broadcasts created by this user
 
     // Apply status filter if provided
-    if (status) {
-      query = query.eq('status', status);
+    if (statuses && statuses.length > 0) {
+      query = query.in('status', statuses);
     }
 
     // Apply pagination

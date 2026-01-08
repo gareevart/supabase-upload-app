@@ -1,8 +1,8 @@
 "use client";
 
 import React from 'react';
-import { Button, Text, Icon, SegmentedRadioGroup, Table, TableColumnConfig, Spin } from '@gravity-ui/uikit';
-import { Plus, Pencil, TrashBin, ArrowUturnCwLeft, ChevronRight, Eye } from '@gravity-ui/icons';
+import { Button, Text, Icon, Table, TableColumnConfig, Spin, Select, DropdownMenu } from '@gravity-ui/uikit';
+import { Plus, Pencil, TrashBin, ArrowUturnCwLeft, ChevronRight, Eye, Ellipsis } from '@gravity-ui/icons';
 import { Broadcast, BroadcastStatus } from '@/entities/broadcast/model';
 import { useBroadcastList } from '@/features/broadcast-list/model/useBroadcastList';
 import { useRouter } from 'next/navigation';
@@ -46,10 +46,9 @@ const BroadcastListWidget: React.FC = () => {
     await cancelSchedule(id);
   };
 
-  const handleStatusFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value as StatusFilter;
+  const handleStatusFilterChange = (values: string[]) => {
     updateFilters({
-      status: value === 'all' ? undefined : value as BroadcastStatus
+      status: values.length === 0 ? undefined : values as BroadcastStatus[]
     });
   };
 
@@ -95,128 +94,78 @@ const BroadcastListWidget: React.FC = () => {
   };
 
   // Render actions based on broadcast status
-  const renderActions = (broadcast: Broadcast) => {
+  const getActionMenuItems = (broadcast: Broadcast) => {
     const { id, status } = broadcast;
-
-    const actionButtons = [];
+    const items = [];
 
     switch (status) {
       case 'draft':
-        actionButtons.push(
-          <Button
-            key="edit"
-            view="flat"
-            size="s"
-            onClick={() => handleEdit(id)}
-            title="Редактировать"
-          >
-            <Icon data={Pencil} size={16} />
-          </Button>,
-          <Button
-            key="send"
-            view="flat"
-            size="s"
-            onClick={() => handleSend(id)}
-            title="Отправить"
-          >
-            <Icon data={ArrowUturnCwLeft} size={16} />
-          </Button>,
-          <Button
-            key="delete"
-            view="flat-danger"
-            size="s"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleDelete(id);
-            }}
-            title="Удалить"
-          >
-            <Icon data={TrashBin} size={16} />
-          </Button>
+        items.push(
+          {
+            text: 'Редактировать',
+            iconStart: <Icon data={Pencil} size={16} />,
+            action: () => handleEdit(id),
+          },
+          {
+            text: 'Отправить',
+            iconStart: <Icon data={ArrowUturnCwLeft} size={16} />,
+            action: () => handleSend(id),
+          },
+          {
+            text: 'Удалить',
+            iconStart: <Icon data={TrashBin} size={16} />,
+            action: () => handleDelete(id),
+            theme: 'danger' as const,
+          }
         );
         break;
       case 'scheduled':
-        actionButtons.push(
-          <Button
-            key="send"
-            view="flat"
-            size="s"
-            onClick={() => handleSend(id)}
-            title="Отправить сейчас"
-          >
-            <Icon data={ArrowUturnCwLeft} size={16} />
-          </Button>,
-          <Button
-            key="cancel"
-            view="flat"
-            size="s"
-            onClick={() => handleCancelSchedule(id)}
-            title="Отменить планирование"
-          >
-            <Icon data={ChevronRight} size={16} />
-          </Button>
+        items.push(
+          {
+            text: 'Отправить сейчас',
+            iconStart: <Icon data={ArrowUturnCwLeft} size={16} />,
+            action: () => handleSend(id),
+          },
+          {
+            text: 'Отменить планирование',
+            iconStart: <Icon data={ChevronRight} size={16} />,
+            action: () => handleCancelSchedule(id),
+          }
         );
         break;
       case 'sent':
-        actionButtons.push(
-          <Button
-            key="view"
-            view="flat"
-            size="s"
-            onClick={() => handleView(id)}
-            title="Просмотр деталей"
-          >
-            <Icon data={Eye} size={16} />
-          </Button>,
-          <Button
-            key="delete"
-            view="flat-danger"
-            size="s"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleDelete(id);
-            }}
-            title="Удалить"
-          >
-            <Icon data={TrashBin} size={16} />
-          </Button>
+        items.push(
+          {
+            text: 'Просмотр деталей',
+            iconStart: <Icon data={Eye} size={16} />,
+            action: () => handleView(id),
+          },
+          {
+            text: 'Удалить',
+            iconStart: <Icon data={TrashBin} size={16} />,
+            action: () => handleDelete(id),
+            theme: 'danger' as const,
+          }
         );
         break;
       case 'failed':
-        actionButtons.push(
-          <Button
-            key="retry"
-            view="flat"
-            size="s"
-            onClick={() => handleSend(id)}
-            title="Повторить отправку"
-          >
-            <Icon data={ArrowUturnCwLeft} size={16} />
-          </Button>,
-          <Button
-            key="delete"
-            view="flat-danger"
-            size="s"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleDelete(id);
-            }}
-            title="Удалить"
-          >
-            <Icon data={TrashBin} size={16} />
-          </Button>
+        items.push(
+          {
+            text: 'Повторить отправку',
+            iconStart: <Icon data={ArrowUturnCwLeft} size={16} />,
+            action: () => handleSend(id),
+          },
+          {
+            text: 'Удалить',
+            iconStart: <Icon data={TrashBin} size={16} />,
+            action: () => handleDelete(id),
+            theme: 'danger' as const,
+          }
         );
         break;
     }
 
-    return (
-      <div className="flex gap-1">
-        {actionButtons}
-      </div>
-    );
+    return items;
   };
 
   // Table columns configuration
@@ -225,12 +174,7 @@ const BroadcastListWidget: React.FC = () => {
       id: 'subject',
       name: 'Тема',
       template: (item) => (
-        <Text
-          variant="body-2"
-          className="font-medium cursor-pointer text-blue-600 hover:text-blue-800 hover:underline"
-          onClick={() => handleView(item.id)}
-          title="Кликните для просмотра рассылки"
-        >
+        <Text variant="body-2" className="font-medium">
           {item.subject}
         </Text>
       ),
@@ -304,9 +248,21 @@ const BroadcastListWidget: React.FC = () => {
     },
     {
       id: 'actions',
-      name: 'Действия',
-      template: (item) => renderActions(item),
-      width: 150,
+      name: '',
+      width: 50,
+      sticky: 'end',
+      template: (item) => (
+        <div onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu
+            items={getActionMenuItems(item)}
+            switcher={
+              <Button view="flat" size="s">
+                <Icon data={Ellipsis} size={16} />
+              </Button>
+            }
+          />
+        </div>
+      ),
     },
   ];
 
@@ -330,15 +286,18 @@ const BroadcastListWidget: React.FC = () => {
         </Button>
       </div>
 
-      <div className="mb-6">
-        <SegmentedRadioGroup
+      <div className="mb-6 w-full md:w-80">
+        <Select
           size="m"
-          value={filters.status || 'all'}
-          onChange={handleStatusFilterChange}
+          multiple
+          hasClear
+          placeholder="Все статусы"
+          value={Array.isArray(filters.status) ? filters.status : (filters.status ? [filters.status] : [])}
+          onUpdate={handleStatusFilterChange}
           options={[
-            { value: 'all', content: 'Все' },
             { value: 'draft', content: 'Черновики' },
             { value: 'scheduled', content: 'Запланированные' },
+            { value: 'sending', content: 'Отправляются' },
             { value: 'sent', content: 'Отправленные' },
             { value: 'failed', content: 'С ошибками' },
           ]}
@@ -375,7 +334,9 @@ const BroadcastListWidget: React.FC = () => {
         <Table
           data={broadcasts}
           columns={columns}
-          verticalAlign="top"
+          verticalAlign="middle"
+          onRowClick={(item) => handleView(item.id)}
+          className="cursor-pointer"
         />
       )}
     </div>

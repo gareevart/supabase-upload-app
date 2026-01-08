@@ -61,7 +61,7 @@ export type BroadcastError = {
 
 // Filter types
 export type BroadcastFilters = {
-  status?: BroadcastStatus;
+  status?: BroadcastStatus | BroadcastStatus[];
   limit?: number;
   offset?: number;
 };

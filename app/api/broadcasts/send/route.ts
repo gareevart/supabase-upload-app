@@ -118,6 +118,10 @@ export const POST = withApiAuth(async (request: NextRequest, user: { id: string 
         to: broadcast.recipients,
         subject: broadcast.subject,
         html: processedHtml,
+        // Add tags for tracking
+        tags: [
+          { name: 'broadcast_id', value: broadcast.id }
+        ]
       });
 
       if (resendError) {

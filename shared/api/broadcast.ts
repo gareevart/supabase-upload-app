@@ -29,7 +29,7 @@ export class BroadcastApi {
           };
           console.log('🔴 Could not parse error response');
         }
-        
+
         // Log detailed error for debugging
         console.error('🔴 Broadcast API Error:', {
           endpoint: `${API_BASE}${endpoint}`,
@@ -38,12 +38,12 @@ export class BroadcastApi {
           error: errorData,
           timestamp: new Date().toISOString()
         });
-        
+
         // If unauthorized, provide helpful message
         if (response.status === 401) {
           throw new Error('Не авторизован. Пожалуйста, войдите в систему через /auth');
         }
-        
+
         throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
       }
 
@@ -61,8 +61,14 @@ export class BroadcastApi {
 
   static async getBroadcasts(filters: BroadcastFilters = {}): Promise<BroadcastsResponse> {
     const params = new URLSearchParams();
-    
-    if (filters.status) params.append('status', filters.status);
+
+    if (filters.status) {
+      if (Array.isArray(filters.status)) {
+        filters.status.forEach(s => params.append('status', s));
+      } else {
+        params.append('status', filters.status);
+      }
+    }
     if (filters.limit) params.append('limit', filters.limit.toString());
     if (filters.offset) params.append('offset', filters.offset.toString());
 

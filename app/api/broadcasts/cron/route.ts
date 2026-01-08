@@ -96,6 +96,10 @@ export async function GET(request: NextRequest) {
             to: broadcast.recipients,
             subject: broadcast.subject,
             html: processedHtml,
+            // Add tags for tracking
+            tags: [
+              { name: 'broadcast_id', value: broadcast.id }
+            ]
           });
 
           if (resendError) {
