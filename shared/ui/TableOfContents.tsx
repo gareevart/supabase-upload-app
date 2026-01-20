@@ -129,7 +129,7 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ content, class
   return (
     <Card className="grid p-4" size="l">
       <Text variant="subheader-3" className='pb-4'>
-        Содержание
+        Content
       </Text>
       <List
         filterable={false}
