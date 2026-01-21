@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useChat, Message, FileAttachment } from "@/hooks/useChat";
 import ReactMarkdown from 'react-markdown';
-import { Button, TextArea, Icon, Dialog, Text, Spin, Label, useToaster, Select, HelpMark, ClipboardButton } from '@gravity-ui/uikit';
+import { Button, TextArea, Icon, Dialog, Text, Spin, Label, List, Link, DropdownMenu, useToaster, Select, HelpMark, ClipboardButton } from '@gravity-ui/uikit';
 import { Gear, Bars } from '@gravity-ui/icons';
 import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
 import { ReasoningBlock } from "./ReasoningBlock";
@@ -10,6 +10,7 @@ import { ChatMessageForm } from "./ChatMessageForm";
 import { useChatSidebar } from "./ChatSidebarContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import "./ChatInterface.css";
+import "@/app/blog/blog.css";
 
 interface ChatInterfaceProps {
   chatId: string;
@@ -129,9 +130,9 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
   }
 
   return (
-    <div className="flex flex-col w-full flex-1 overflow-hidden chat-interface">
-      <header className="p-4 gap-2 justify-between flex items-center">
-        <div className="flex gap-2 items-center">
+    <div className="chat-interface">
+      <header className="chat-interface__header">
+        <div className="chat-interface__header-left">
           {/* Mobile burger button */}
           {isMobile && (
             <Button
@@ -145,7 +146,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
             </Button>
           )}
 
-          <div className="flex gap-2">
+          <div className="chat-interface__status">
             {reasoningMode && selectedModel === 'yandexgpt' && (
               <Label theme="info" size="m">
                 Thinking mode
@@ -154,7 +155,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
           </div>
         </div>
 
-        <div className="flex gap-2 items-center">
+        <div className="chat-interface__header-right">
           {(chat.tokens_used || 0) > 0 && (
             <HelpMark iconSize="m">
               <b>Использовано токенов:</b> {chat.tokens_used?.toString()}
@@ -172,7 +173,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
         </div>
       </header>
 
-      <div className="flex-1 p-4 chat-messages">
+      <div className="chat-interface__messages chat-messages">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="chat-empty-state">
@@ -215,10 +216,12 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
         )}
       </div>
 
-      <ChatMessageForm
-        onSubmit={handleMessageSubmit}
-        isMessageSending={isMessageSending}
-      />
+      <div className="chat-interface__form">
+        <ChatMessageForm
+          onSubmit={handleMessageSubmit}
+          isMessageSending={isMessageSending}
+        />
+      </div>
 
       <Dialog
         open={open}
@@ -282,6 +285,9 @@ interface ChatMessageProps {
 
 const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
   const isUser = message.role === "user";
+  const sources = message.metadata?.sources ?? [];
+  const hasSources = sources.length > 0;
+  const hasMultipleSources = sources.length > 1;
 
   const getFileIcon = (type: string) => {
     if (type.startsWith('image/')) return '🖼️';
@@ -353,21 +359,59 @@ const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
 
           {/* Message content */}
           {message.content && (
-            <div className="whitespace-pre-wrap break-words prose prose-sm dark:prose-invert max-w-none">
+            <div className="chat-message-content tiptap-content">
               <ReactMarkdown>{message.content}</ReactMarkdown>
             </div>
           )}
 
           {/* Show blog sources if present */}
-          {message.metadata?.sources && message.metadata.sources.length > 0 && (
+          {hasSources && (
             <div className="flex flex-col gap-2 mt-2">
-              {message.metadata.sources.map((source, idx) => (
-                <Label key={idx} theme="clear" size="m" className="cursor-pointer">
-                  Source: <a href={`/blog/${source.slug}`} target="_blank" rel="noopener noreferrer" className="ml-1 underline hover:text-primary-foreground/80">
-                    {source.title}
-                  </a>
+              {hasMultipleSources ? (
+                <DropdownMenu
+                  renderSwitcher={(props) => (
+                    <span {...props}>
+                      <Label theme="clear" size="m" className="cursor-pointer">
+                        Sources +{sources.length}
+                      </Label>
+                    </span>
+                  )}
+                  popupProps={{ placement: 'bottom-start' }}
+                >
+                  <div style={{ padding: 8 }}>
+                    <List
+                      items={sources}
+                      filterable={false}
+                      sortable={false}
+                      virtualized={false}
+                      renderItem={(source) => (
+                        <div style={{ padding: '4px 0' }}>
+                          <Link
+                            href={`/blog/${source.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            view="secondary"
+                          >
+                            {source.title}
+                          </Link>
+                        </div>
+                      )}
+                    />
+                  </div>
+                </DropdownMenu>
+              ) : (
+                <Label theme="clear" size="m">
+                  Source:{" "}
+                  <Link
+                    href={`/blog/${sources[0].slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    view="secondary"
+                  >
+                    {sources[0].title}
+                  </Link>
                 </Label>
-              ))}
+              )}
             </div>
           )}
         </div>

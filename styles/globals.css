@@ -17,7 +17,7 @@
   --g-border-radius-s: 5px;
   --g-border-radius-m: 6px;
   --g-border-radius-l: 8px;
-  --g-border-radius-xl: 10px;
+  --g-border-radius-xl: 12px;
   --g-border-radius-2xl: 16px;
 }
 
@@ -226,8 +226,6 @@ a {
 .subscribe-container {
   background-color: var(--g-color-base-neutral-light);
 }
-
-
 
 .LinkHover {
   display: flex;

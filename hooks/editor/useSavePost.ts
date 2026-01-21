@@ -1,7 +1,7 @@
 
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
 import { EditorContent } from "@/app/components/blog/editor/types";
+import { supabase } from "@/lib/supabase";
 
 interface SavePostProps {
   title: string;
@@ -71,44 +71,42 @@ export function useSavePost() {
         }
       }
 
-      // Use current user's ID
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
         throw new Error("Пользователь не авторизован");
       }
 
+      const serializedContent = typeof content === "string" ? content : JSON.stringify(content);
       const postData = {
         title,
-        content,
+        content: serializedContent,
         excerpt: excerpt || null,
         slug,
         featured_image: featuredImageUrl,
         published: publish,
-        author_id: user.id,
       };
 
       let result;
       
-      if (initialPostId) {
-        // Обновляем существующий пост
-        result = await supabase
-          .from("blog_posts")
-          .update(postData)
-          .eq("id", initialPostId)
-          .select()
-          .single();
-      } else {
-        // Создаем новый пост
-        result = await supabase
-          .from("blog_posts")
-          .insert(postData)
-          .select()
-          .single();
+      const response = await fetch(
+        initialPostId ? `/api/blog-posts/${initialPostId}` : "/api/blog-posts",
+        {
+          method: initialPostId ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`
+          },
+          credentials: "include",
+          body: JSON.stringify(postData),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.details || "Не удалось сохранить пост");
       }
 
-      const { data, error } = result;
-      
-      if (error) throw error;
+      result = await response.json();
 
       toast({
         title: publish ? "Пост опубликован" : "Черновик сохранен",

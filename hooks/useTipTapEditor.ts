@@ -105,40 +105,28 @@ export const useTipTapEditor = (initialPost?: any, onSave?: (published: boolean,
       };
 
       let result;
-      
-      // Use Supabase client directly instead of API routes
-      if (initialPost?.id) {
-        // Update existing post
-        const { data, error } = await supabase
-          .from('blog_posts')
-          .update(postData)
-          .eq('id', initialPost.id)
-          .select()
-          .single();
-          
-        if (error) {
-          console.error("Supabase update error:", error);
-          throw new Error(error.message || "Failed to update post");
-        }
-        result = data;
-      } else {
-        // Create new post
-        const { data, error } = await supabase
-          .from('blog_posts')
-          .insert({
-            ...postData,
-            author_id: session.user.id,
-            created_at: new Date().toISOString()
-          })
-          .select()
-          .single();
-          
-        if (error) {
-          console.error("Supabase insert error:", error);
-          throw new Error(error.message || "Failed to create post");
-        }
-        result = data;
+
+      const requestOptions: RequestInit = {
+        method: initialPost?.id ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`
+        },
+        credentials: 'include',
+        body: JSON.stringify(postData)
+      };
+
+      const response = await fetch(
+        initialPost?.id ? `/api/blog-posts/${initialPost.id}` : '/api/blog-posts',
+        requestOptions
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.details || 'Failed to save post');
       }
+
+      result = await response.json();
 
       toast({
         title: "Success",

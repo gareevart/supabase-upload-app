@@ -26,16 +26,18 @@
 /* Flex container for the chat interface */
 .chat-interface {
   height: 100%;
+  min-height: 0;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background-color: var(--g-color-base-background);
 }
 
 /* ==========================================================================
    Header Styles
    ========================================================================== */
 
-.chat-interface header {
+.chat-interface__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -46,11 +48,30 @@
   border-bottom: 1px solid var(--g-color-line-generic);
   flex-shrink: 0;
   z-index: 20;
+  position: sticky;
+  top: 0;
+}
+
+.chat-interface__header-left,
+.chat-interface__header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chat-interface__status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* ==========================================================================
    Messages Area
    ========================================================================== */
+
+.chat-interface__messages {
+  min-height: 0;
+}
 
 .chat-messages {
   flex: 1;
@@ -62,6 +83,16 @@
   scroll-behavior: smooth;
   scrollbar-width: thin;
   scrollbar-color: var(--g-color-line-generic) transparent;
+}
+
+.chat-interface__form {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  background-color: var(--g-color-base-background);
+  border-top: 1px solid var(--g-color-line-generic);
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
 }
 
 /* Custom Scrollbar */
@@ -110,6 +141,12 @@
   width: fit-content;
   border-radius: var(--g-border-radius-2xl);
   word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.chat-message-content {
+  white-space: pre-wrap;
+  word-break: break-word;
   overflow-wrap: break-word;
 }
 
@@ -284,6 +321,10 @@
     margin: 0.5rem 0;
     padding: 0.75rem;
     font-size: 0.875rem;
+  }
+
+  .chat-interface__form {
+    padding: 0.5rem 0.5rem calc(0.5rem + env(safe-area-inset-bottom));
   }
 }
 
