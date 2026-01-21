@@ -262,3 +262,7 @@ a {
   border-block-end: 1px solid var(--g-color-line-danger);
   border-radius: 8px;
 }
+
+.g-label_theme_clear {
+  width: fit-content;
+}
