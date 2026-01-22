@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import '../components.css';
 import { listFiles, deleteFile, getPublicUrl, FileObject } from '@/lib/yandexStorage';
@@ -26,6 +26,12 @@ interface FileViewState {
   userRole: string | null;
 }
 
+const PUBLIC_BUCKET_NAME = 'public-gareevde';
+const STORAGE_BASE_URL = 'https://storage.yandexcloud.net';
+
+const buildPublicImageUrl = (userId: string, fileName: string) =>
+  `${STORAGE_BASE_URL}/${PUBLIC_BUCKET_NAME}/profiles/${userId}/${fileName}`;
+
 export default function FileView() {
   const [state, setState] = useState<FileViewState>({
     images: [],
@@ -40,9 +46,6 @@ export default function FileView() {
   // Получаем userId безопасно
   const [userId, setUserId] = useState<string | null>(null);
   
-  // Кэш для URL изображений
-  const urlCache = useMemo(() => new Map<string, string>(), []);
-
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const id = localStorage.getItem('user_id');
@@ -141,32 +144,9 @@ export default function FileView() {
         tags: imageTagsMap[file.name]?.tags || []
       }));
 
-      // Параллельно получаем URL для всех изображений с кэшированием
-      const urlPromises = imagesWithTags.map(async (image: ImageWithTags) => {
-        const cacheKey = `${userId}/${image.name}`;
-        
-        // Проверяем кэш
-        if (urlCache.has(cacheKey)) {
-          return { name: image.name, url: urlCache.get(cacheKey)! };
-        }
-        
-        try {
-          const url = await getPublicUrl(`profiles/${userId}/${image.name}`);
-          // Сохраняем в кэш
-          urlCache.set(cacheKey, url);
-          return { name: image.name, url };
-        } catch {
-          return { name: image.name, url: '' };
-        }
-      });
-
-      const urlResults = await Promise.allSettled(urlPromises);
       const imageUrls: Record<string, string> = {};
-      
-      urlResults.forEach((result) => {
-        if (result.status === 'fulfilled') {
-          imageUrls[result.value.name] = result.value.url;
-        }
+      imagesWithTags.forEach((image) => {
+        imageUrls[image.name] = buildPublicImageUrl(userId, image.name);
       });
 
       updateState({
@@ -184,7 +164,7 @@ export default function FileView() {
         error: err.message || 'Ошибка при загрузке списка изображений'
       });
     }
-  }, [userId, updateState, urlCache]);
+  }, [userId, updateState]);
 
   const handleDelete = useCallback(async (fileName: string) => {
     if (!userId) {
