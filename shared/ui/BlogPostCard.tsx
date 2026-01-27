@@ -71,17 +71,34 @@ export const BlogPostCard = ({
         <div className="p-2">
           {post.featured_image ? (
             <div className="h-48 w-full overflow-hidden rounded-lg">
-              <Link href={`/blog/${post.slug}`} style={{ position: 'relative', display: 'block', height: '100%', width: '100%' }}>
-                <Image
-                  src={post.featured_image}
-                  alt={post.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover transition-all duration-300 hover:scale-105"
-                  priority={isPriority}
-                  loading={isPriority ? undefined : "lazy"}
-                />
-              </Link>
+              {isDraft ? (
+                <div style={{ position: 'relative', display: 'block', height: '100%', width: '100%' }}>
+                  <Image
+                    src={post.featured_image}
+                    alt={post.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover transition-all duration-300"
+                    priority={isPriority}
+                    loading={isPriority ? undefined : "lazy"}
+                  />
+                </div>
+              ) : (
+                <Link
+                  href={`/blog/${post.slug}`}
+                  style={{ position: 'relative', display: 'block', height: '100%', width: '100%' }}
+                >
+                  <Image
+                    src={post.featured_image}
+                    alt={post.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover transition-all duration-300 hover:scale-105"
+                    priority={isPriority}
+                    loading={isPriority ? undefined : "lazy"}
+                  />
+                </Link>
+              )}
             </div>
           ) : (
             <div className="h-48 w-full bg-emerald-700 dark:bg-black-800 rounded-lg"></div>
@@ -168,17 +185,34 @@ export const BlogPostCard = ({
         <div className="w-[30%] min-w-[200px] flex-shrink-0">
           {post.featured_image ? (
             <div className="h-full w-full overflow-hidden">
-              <Link href={`/blog/${post.slug}`} style={{ position: 'relative', display: 'block', height: '100%', width: '100%', minHeight: '200px' }}>
-                <Image
-                  src={post.featured_image}
-                  alt={post.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 30vw"
-                  className="object-cover transition-all duration-300 hover:scale-105"
-                  priority={isPriority}
-                  loading={isPriority ? undefined : "lazy"}
-                />
-              </Link>
+              {isDraft ? (
+                <div style={{ position: 'relative', display: 'block', height: '100%', width: '100%', minHeight: '200px' }}>
+                  <Image
+                    src={post.featured_image}
+                    alt={post.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 30vw"
+                    className="object-cover transition-all duration-300"
+                    priority={isPriority}
+                    loading={isPriority ? undefined : "lazy"}
+                  />
+                </div>
+              ) : (
+                <Link
+                  href={`/blog/${post.slug}`}
+                  style={{ position: 'relative', display: 'block', height: '100%', width: '100%', minHeight: '200px' }}
+                >
+                  <Image
+                    src={post.featured_image}
+                    alt={post.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 30vw"
+                    className="object-cover transition-all duration-300 hover:scale-105"
+                    priority={isPriority}
+                    loading={isPriority ? undefined : "lazy"}
+                  />
+                </Link>
+              )}
             </div>
           ) : (
             <div className="h-full w-full bg-emerald-700 dark:bg-black-800 min-h-[200px]"></div>
