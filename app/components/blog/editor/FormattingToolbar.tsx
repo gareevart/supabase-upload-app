@@ -23,6 +23,7 @@ interface FormattingToolbarProps {
   applyList: (prefix: string) => void;
   applyAlignment: (alignment: 'left' | 'center' | 'right') => void;
   onOpenDialog: (type: string) => void;
+  onToolbarBackgroundClick?: () => void;
 }
 
 const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
@@ -30,7 +31,8 @@ const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
   applyFormatting,
   applyList,
   applyAlignment,
-  onOpenDialog
+  onOpenDialog,
+  onToolbarBackgroundClick
 }) => {
   const formatOptions = [
     { 
@@ -59,7 +61,23 @@ const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
   ];
 
   return (
-    <div className="mb-2 flex flex-wrap gap-1 border p-2 rounded-md bg-background">
+    <div
+      className="mb-2 flex flex-wrap gap-1 border p-2 rounded-md bg-background"
+      onMouseDown={(event) => {
+        const target = event.target as HTMLElement;
+        if (
+          target.closest("button") ||
+          target.closest("a") ||
+          target.closest("input") ||
+          target.closest("textarea") ||
+          target.closest('[role="button"]')
+        ) {
+          return;
+        }
+        onToolbarBackgroundClick?.();
+        event.preventDefault();
+      }}
+    >
       <div className="flex items-center gap-1 flex-wrap">
         {formatOptions.map((option) => (
           <Button

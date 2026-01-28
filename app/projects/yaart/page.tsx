@@ -2,7 +2,8 @@
 import React from 'react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
-import { Flex, Text, Button, Alert, Spin, Label, TextArea, useToaster, Skeleton } from '@gravity-ui/uikit';
+import { Flex, Text, Button, Alert, Spin, Label, TextArea, useToaster, Skeleton, Icon } from '@gravity-ui/uikit';
+import {Sparkles} from '@gravity-ui/icons';
 import { supabase } from '@/lib/supabase';
 import CustomBreadcrumbs from '@/app/components/Breadcrumbs/Breadcrumbs';
 import { uploadFile } from '@/lib/yandexStorage';
@@ -318,7 +319,10 @@ const Yaart = () => {
             {isAuthenticated === null ? (
               <Skeleton style={{ width: '100%', height: '28px' }} />
             ) : isAuthenticated ? (
-              <Label size="m" theme="normal">Daily limit: {remainingGenerations}/10</Label>
+              <Label size="m" theme="normal"
+              icon={<Icon size={16} data={Sparkles} />}
+              >
+                Daily limit: {remainingGenerations}/10</Label>
             ) : null}
 
             <Flex direction="column" gap={4}>

@@ -77,6 +77,23 @@ export const Toolbar = ({
   onUploadFile,
   onInsertImageGenerator,
 }: ToolbarProps) => {
+  const handleToolbarBackgroundMouseDown = (
+    event: React.MouseEvent<HTMLDivElement>
+  ) => {
+    const target = event.target as HTMLElement;
+    if (
+      target.closest("button") ||
+      target.closest("a") ||
+      target.closest("input") ||
+      target.closest("textarea") ||
+      target.closest('[role="button"]')
+    ) {
+      return;
+    }
+    editor.chain().focus().run();
+    event.preventDefault();
+  };
+
   const headingMenuItems = [
     {
       iconStart: <Icon size={16} data={Heading1} />,
@@ -111,7 +128,10 @@ export const Toolbar = ({
   ];
 
   return (
-    <div className={`toolbar flex flex-wrap gap-1 p-2 border-b sticky top-0 z-10 shadow-sm ${isScrolled ? 'scrolled' : ''}`}>
+    <div
+      className={`toolbar flex flex-wrap gap-1 p-2 border-b sticky top-0 z-10 shadow-sm ${isScrolled ? 'scrolled' : ''}`}
+      onMouseDown={handleToolbarBackgroundMouseDown}
+    >
       <Button
         view="flat"
         size="m"

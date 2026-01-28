@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 
 import { useRouter, usePathname } from 'next/navigation';
 import { Icon, Button, Popover } from '@gravity-ui/uikit';
-import { House, Circles4Square, Person, Magnifier, BookOpen, Bars } from '@gravity-ui/icons';
+import { House, Circles4Square, Person, Magnifier, BookOpen, Bars, Xmark } from '@gravity-ui/icons';
 import Image from 'next/image';
 import UserAvatar from '../UserAvatar';
 import NavigationItem from './NavigationItem';
+import { DrawerMenu } from '@/shared/ui/DrawerMenu';
 import Link from 'next/link'
 import './Navigation.css';
 
@@ -48,7 +49,11 @@ const Navigation: React.FC = () => {
 
 
   const toggleDrawer = () => {
-    setIsDrawerOpen(!isDrawerOpen);
+    setIsDrawerOpen((prev) => !prev);
+  };
+
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
   };
 
   return (
@@ -109,10 +114,10 @@ const Navigation: React.FC = () => {
                 view="flat"
                 className="menu-button"
                 onClick={toggleDrawer}
-                aria-label="Open menu"
+                aria-label={isDrawerOpen ? "Close menu" : "Open menu"}
                 aria-expanded={isDrawerOpen}
               >
-                <Icon data={Bars} size={24} />
+                <Icon data={isDrawerOpen ? Xmark : Bars} size={24} />
               </Button>
             </Popover>
           </div>
@@ -131,29 +136,25 @@ const Navigation: React.FC = () => {
         </div>
       </nav>
 
-      {/* Drawer Menu */}
-      <div className={`drawer-menu ${isDrawerOpen ? 'open' : ''}`}>
-        <div className="drawer-content">
-          {drawerNavItems.map((item) => (
-            <NavigationItem
-              key={item.id}
-              icon={item.icon}
-              label={item.label}
-              isActive={activeItem === item.id}
-              onClick={() => {
-                setActiveItem(item.id);
-                setIsDrawerOpen(false);
-                localStorage.setItem('activeItem', item.id);
-                if (item.link) {
-                  router.push(item.link);
-                }
-              }}
-              showLabel
-            />
-          ))}
-        </div>
-        <div className="drawer-overlay" onClick={toggleDrawer} />
-      </div>
+      <DrawerMenu open={isDrawerOpen} onClose={closeDrawer} bottomOffset={65}>
+        {drawerNavItems.map((item) => (
+          <NavigationItem
+            key={item.id}
+            icon={item.icon}
+            label={item.label}
+            isActive={activeItem === item.id}
+            onClick={() => {
+              setActiveItem(item.id);
+              closeDrawer();
+              localStorage.setItem('activeItem', item.id);
+              if (item.link) {
+                router.push(item.link);
+              }
+            }}
+            showLabel
+          />
+        ))}
+      </DrawerMenu>
     </>
   );
 };

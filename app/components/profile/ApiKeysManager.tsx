@@ -7,7 +7,6 @@ import {
   Text,
   Card,
   TextInput,
-  Modal,
   Icon,
   Skeleton,
   Table,
@@ -21,6 +20,8 @@ import {
 import { Copy, Plus, TrashBin, Key, BookOpen, EyeSlash, Eye, CircleStop, CirclePlay, Ellipsis } from '@gravity-ui/icons';
 import { useToast } from '@/hooks/use-toast';
 import { authFetch } from '@/lib/auth-fetch';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { DrawerMenu } from '@/shared/ui/DrawerMenu';
 
 interface ApiKey {
   id: string;
@@ -49,6 +50,7 @@ interface TableApiKey extends TableDataItem {
 }
 
 export const ApiKeysManager: React.FC = () => {
+  const isMobile = useIsMobile();
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -407,6 +409,102 @@ export const ApiKeysManager: React.FC = () => {
     );
   }
 
+  const createKeyContent = (
+    <div className="space-y-4">
+      <div>
+        <Text variant="subheader-1" className="mb-2">Key name</Text>
+        <TextInput
+          size="l"
+          placeholder="My magic key"
+          value={newKeyName}
+          className="mt-1"
+          onChange={(e) => setNewKeyName(e.target.value)}
+          autoFocus
+        />
+      </div>
+
+      <div className="mt-4">
+        <Alert theme="info" title="The API key will be shown only once after creation" message="Be sure to save it in a safe place" />
+      </div>
+    </div>
+  );
+
+  const createKeyFooter = (
+    <>
+      <Button
+        view="outlined"
+        size="l"
+        onClick={() => setShowCreateModal(false)}
+        disabled={creating}
+      >
+        Cancel
+      </Button>
+      <Button
+        view="action"
+        size="l"
+        onClick={createApiKey}
+        loading={creating}
+        disabled={creating}
+      >
+        Create key
+      </Button>
+    </>
+  );
+
+  const newKeyContent = (
+    <>
+      {newKeyData && (
+        <div className="space-y-4">
+          <div>
+            <Text variant="subheader-1" className="mb-2">Название </Text>
+            <Text variant="body-1">{newKeyData.name}</Text>
+          </div>
+
+          <div>
+            <Text variant="subheader-1" className="mb-2">API ключ</Text>
+            <Text variant="body-1" color="secondary" className='grid mb-2'>
+              Сохраните этот ключ в безопасном месте. После закрытия этого окна
+              вы не сможете увидеть полный ключ снова.
+            </Text>
+            <div className="flex items-center gap-2 p-3  rounded border">
+              <Text variant="body-2" className="flex-1 font-mono text-sm break-all">
+                {showNewKey ? newKeyData.key : '••••••••••••••••••••••••••••••••'}
+              </Text>
+              <Button
+                view="flat"
+                size="s"
+                onClick={() => setShowNewKey(!showNewKey)}
+              >
+                <Icon data={showNewKey ? EyeSlash : Eye} size={16} />
+              </Button>
+              <Button
+                view="action"
+                size="l"
+                onClick={() => newKeyData.key && copyToClipboard(newKeyData.key)}
+              >
+                <Icon data={Copy} size={16} />
+                Копировать
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  const newKeyFooter = (
+    <Button
+      view="outlined"
+      size="l"
+      onClick={() => {
+        setShowNewKey(false);
+        setNewKeyData(null);
+      }}
+    >
+      Закрыть
+    </Button>
+  );
+
   return (
     <>
       <Card theme="normal" size="l" className='responsive-card'>
@@ -472,96 +570,63 @@ export const ApiKeysManager: React.FC = () => {
       </Card>
 
       {/* Модальное окно создания API ключа */}
-      <Dialog
-        open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onEnterKeyDown={createApiKey}
-        aria-labelledby="create-api-key-dialog-title"
-      >
-        <Dialog.Header caption="Create API key" id="create-api-key-dialog-title" />
-        <Dialog.Body>
-          <div className="space-y-4">
-            <div>
-              <Text variant="subheader-1" className="mb-2">Key name</Text>
-              <TextInput
-                size="l"
-                placeholder="My magic key"
-                value={newKeyName}
-                className="mt-1"
-                onChange={(e) => setNewKeyName(e.target.value)}
-                autoFocus
-              />
-            </div>
-
-            <div className="mt-4">
-              <Alert theme="info" title="The API key will be shown only once after creation" message="Be sure to save it in a safe place" />
-            </div>
-          </div>
-        </Dialog.Body>
-        <Dialog.Footer
-          textButtonApply="Create key"
-          textButtonCancel="Cancel"
-          onClickButtonCancel={() => setShowCreateModal(false)}
-          onClickButtonApply={createApiKey}
-          propsButtonApply={{ loading: creating, disabled: creating }}
-          propsButtonCancel={{ disabled: creating }}
-        />
-      </Dialog>
+      {isMobile ? (
+        <DrawerMenu
+          open={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          title="Create API key"
+          footer={createKeyFooter}
+        >
+          {createKeyContent}
+        </DrawerMenu>
+      ) : (
+        <Dialog
+          open={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onEnterKeyDown={createApiKey}
+          aria-labelledby="create-api-key-dialog-title"
+        >
+          <Dialog.Header caption="Create API key" id="create-api-key-dialog-title" />
+          <Dialog.Body>{createKeyContent}</Dialog.Body>
+          <Dialog.Footer
+            textButtonApply="Create key"
+            textButtonCancel="Cancel"
+            onClickButtonCancel={() => setShowCreateModal(false)}
+            onClickButtonApply={createApiKey}
+            propsButtonApply={{ loading: creating, disabled: creating }}
+            propsButtonCancel={{ disabled: creating }}
+          />
+        </Dialog>
+      )}
 
       {/* Модальное окно с новым API ключом */}
-      <Dialog
-        size='m'
-        open={showNewKey}
-        onClose={() => setShowNewKey(false)}
-        aria-labelledby="new-api-key-dialog-title"
-      >
-        <Dialog.Header caption="API ключ создан" id="new-api-key-dialog-title" />
-        <Dialog.Body>
-          {newKeyData && (
-            <div className="space-y-4">
-              <div>
-                <Text variant="subheader-1" className="mb-2">Название </Text>
-                <Text variant="body-1">{newKeyData.name}</Text>
-              </div>
-
-              <div>
-                <Text variant="subheader-1" className="mb-2">API ключ</Text>
-                <Text variant="body-1" color="secondary" className='grid mb-2'>
-                  Сохраните этот ключ в безопасном месте. После закрытия этого окна
-                  вы не сможете увидеть полный ключ снова.
-                </Text>
-                <div className="flex items-center gap-2 p-3  rounded border">
-                  <Text variant="body-2" className="flex-1 font-mono text-sm break-all">
-                    {showNewKey ? newKeyData.key : '••••••••••••••••••••••••••••••••'}
-                  </Text>
-                  <Button
-                    view="flat"
-                    size="s"
-                    onClick={() => setShowNewKey(!showNewKey)}
-                  >
-                    <Icon data={showNewKey ? EyeSlash : Eye} size={16} />
-                  </Button>
-                  <Button
-                    view="action"
-                    size="l"
-                    onClick={() => newKeyData.key && copyToClipboard(newKeyData.key)}
-                  >
-                    <Icon data={Copy} size={16} />
-                    Копировать
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </Dialog.Body>
-        <Dialog.Footer
-          textButtonCancel="Закрыть"
-          onClickButtonCancel={() => {
-            setShowNewKey(false);
-            setNewKeyData(null);
-          }}
-        />
-      </Dialog>
+      {isMobile ? (
+        <DrawerMenu
+          open={showNewKey}
+          onClose={() => setShowNewKey(false)}
+          title="API ключ создан"
+          footer={newKeyFooter}
+        >
+          {newKeyContent}
+        </DrawerMenu>
+      ) : (
+        <Dialog
+          size='m'
+          open={showNewKey}
+          onClose={() => setShowNewKey(false)}
+          aria-labelledby="new-api-key-dialog-title"
+        >
+          <Dialog.Header caption="API ключ создан" id="new-api-key-dialog-title" />
+          <Dialog.Body>{newKeyContent}</Dialog.Body>
+          <Dialog.Footer
+            textButtonCancel="Закрыть"
+            onClickButtonCancel={() => {
+              setShowNewKey(false);
+              setNewKeyData(null);
+            }}
+          />
+        </Dialog>
+      )}
     </>
 
   );

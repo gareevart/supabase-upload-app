@@ -76,6 +76,10 @@ const WYSIWYGEditor: React.FC<WYSIWYGEditorProps> = ({
     insertTextAtSelection(markdown);
   };
 
+  const handleToolbarBackgroundClick = () => {
+    textareaRef.current?.focus();
+  };
+
   return (
     <div className={cn("w-full", className)}>
       <FormattingToolbar
@@ -84,6 +88,7 @@ const WYSIWYGEditor: React.FC<WYSIWYGEditorProps> = ({
         applyList={applyList}
         applyAlignment={applyAlignment}
         onOpenDialog={handleOpenDialog}
+        onToolbarBackgroundClick={handleToolbarBackgroundClick}
       />
       
       <Textarea

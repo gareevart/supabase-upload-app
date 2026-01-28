@@ -1,7 +1,7 @@
 import React from 'react';
-import { Button, Icon, Modal, Text, TextInput } from '@gravity-ui/uikit';
-import { Xmark } from '@gravity-ui/icons';
-import { Flex } from '@gravity-ui/uikit';
+import { Button, Dialog, Flex, Text, TextInput } from '@gravity-ui/uikit';
+import { DrawerMenu } from '@/shared/ui/DrawerMenu';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type LinkDialogProps = {
   open: boolean;
@@ -21,19 +21,14 @@ export const LinkDialog = ({
   linkText,
   onLinkTextChange,
   onSubmit,
-}: LinkDialogProps) => (
-  <Modal open={open} onClose={onClose}>
-    <div className="modal-content">
-      <div className="top-modal">
-        <Text variant="subheader-3">Add Link</Text>
-        <Button size="xl" view="flat" onClick={onClose}>
-          <Icon data={Xmark} size={18} />
-        </Button>
-      </div>
-
+}: LinkDialogProps) => {
+  const isMobile = useIsMobile();
+  const dialogTitleId = React.useId();
+  const formContent = (
+    <Flex direction="column" gap={3}>
       <Text variant="body-1">Add a link to your content. Enter the URL and optional text for the link.</Text>
-      <div className="grid gap-4 py-4">
-        <div className="grid gap-2">
+      <Flex direction="column" gap={4} style={{ padding: '16px 0' }}>
+        <Flex direction="column" gap={2}>
           <Text variant="body-1">URL</Text>
           <TextInput
             id="link-url"
@@ -41,8 +36,8 @@ export const LinkDialog = ({
             onChange={(e) => onLinkUrlChange(e.target.value)}
             placeholder="https://example.com"
           />
-        </div>
-        <div className="grid gap-2">
+        </Flex>
+        <Flex direction="column" gap={2}>
           <Text variant="body-1">Text (optional)</Text>
           <TextInput
             id="link-text"
@@ -50,24 +45,45 @@ export const LinkDialog = ({
             onChange={(e) => onLinkTextChange(e.target.value)}
             placeholder="Link text"
           />
-        </div>
-      </div>
-      <Flex direction="row" justifyContent="flex-end" gap={2} style={{ marginTop: '24px' }}>
-        <Button
-          view="outlined"
-          size="l"
-          onClick={onClose}
-        >
-          Cancel
-        </Button>
-        <Button
-          view="action"
-          size="l"
-          onClick={onSubmit}
-        >
-          Add Link
-        </Button>
+        </Flex>
       </Flex>
-    </div>
-  </Modal>
-);
+    </Flex>
+  );
+  const footerActions = (
+    <>
+      <Button view="outlined" size="l" onClick={onClose}>
+        Cancel
+      </Button>
+      <Button view="action" size="l" onClick={onSubmit}>
+        Add Link
+      </Button>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <DrawerMenu open={open} onClose={onClose} title="Add Link" footer={footerActions}>
+        {formContent}
+      </DrawerMenu>
+    );
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      size="s"
+      aria-labelledby={dialogTitleId}
+      className="editor-dialog"
+    >
+      <Dialog.Header caption="Add Link" id={dialogTitleId} />
+      <Dialog.Body>{formContent}</Dialog.Body>
+      <Dialog.Footer
+        onClickButtonCancel={onClose}
+        onClickButtonApply={onSubmit}
+        textButtonApply="Add Link"
+        textButtonCancel="Cancel"
+      />
+    </Dialog>
+  );
+};

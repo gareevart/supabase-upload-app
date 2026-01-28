@@ -6,12 +6,15 @@ import { useCreateChat } from "@/hooks/useCreateChat";
 import { Button, Skeleton, Text, Icon, TextArea, List, DropdownMenu, Dialog } from "@gravity-ui/uikit";
 import { Plus, Pencil, TrashBin, Xmark, Check } from '@gravity-ui/icons';
 import "./ChatList.css";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { DrawerMenu } from "@/shared/ui/DrawerMenu";
 
 interface ChatListProps {
   onChatSelect?: () => void;
 }
 
 export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
+  const isMobile = useIsMobile();
   const router = useRouter();
   const {
     chats,
@@ -136,15 +139,9 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
 
             return (
               <div
-                className={`flex items-center justify-between p-3 rounded-md list-item relative ${isActive ? "active" : ""}`}
+                className={`p-3 rounded-md list-item relative ${isActive ? "active" : ""}`}
                 style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
                   overflow: 'hidden',
-                  width: '100%',
-                  ...(isActive ? { backgroundColor: 'var(--g-color-base-selection)' } : {})
                 }}
               >
                 {/* Navigation Overlay - Z-index 10 */}
@@ -185,26 +182,57 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
         />
       )}
 
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        aria-labelledby="delete-dialog-title"
-      >
-        <Dialog.Header caption="Удаление чата" id="delete-dialog-title" />
-        <Dialog.Body>Вы уверены, что хотите удалить этот чат? Это действие нельзя отменить.</Dialog.Body>
-        <Dialog.Footer
-          onClickButtonCancel={() => setDeleteDialogOpen(false)}
-          onClickButtonApply={async () => {
-            if (chatToDelete) {
-              await deleteChat.mutateAsync(chatToDelete);
-            }
-            setDeleteDialogOpen(false);
-          }}
-          textButtonApply="Удалить"
-          textButtonCancel="Отмена"
-          propsButtonApply={{ view: 'outlined-danger' }}
-        />
-      </Dialog>
+      {isMobile ? (
+        <DrawerMenu
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          title="Удаление чата"
+          footer={
+            <>
+              <Button view="outlined" size="l" onClick={() => setDeleteDialogOpen(false)}>
+                Отмена
+              </Button>
+              <Button
+                view="outlined-danger"
+                size="l"
+                onClick={async () => {
+                  if (chatToDelete) {
+                    await deleteChat.mutateAsync(chatToDelete);
+                  }
+                  setDeleteDialogOpen(false);
+                }}
+              >
+                Удалить
+              </Button>
+            </>
+          }
+        >
+          <Text variant="body-1">
+            Вы уверены, что хотите удалить этот чат? Это действие нельзя отменить.
+          </Text>
+        </DrawerMenu>
+      ) : (
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          aria-labelledby="delete-dialog-title"
+        >
+          <Dialog.Header caption="Удаление чата" id="delete-dialog-title" />
+          <Dialog.Body>Вы уверены, что хотите удалить этот чат? Это действие нельзя отменить.</Dialog.Body>
+          <Dialog.Footer
+            onClickButtonCancel={() => setDeleteDialogOpen(false)}
+            onClickButtonApply={async () => {
+              if (chatToDelete) {
+                await deleteChat.mutateAsync(chatToDelete);
+              }
+              setDeleteDialogOpen(false);
+            }}
+            textButtonApply="Удалить"
+            textButtonCancel="Отмена"
+            propsButtonApply={{ view: 'outlined-danger' }}
+          />
+        </Dialog>
+      )}
     </div>
   );
 };

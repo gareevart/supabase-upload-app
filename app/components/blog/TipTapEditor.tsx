@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { EditorContent } from '@tiptap/react';
 import { Card } from '@gravity-ui/uikit';
+import "../../blog/blog.css";
 import './editor/editor.css';
 import './editor/drag-handle.css';
 import { useToast } from '@/hooks/use-toast';
@@ -85,6 +86,15 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
     editor.chain().focus().insertImageGenerator().run();
   };
 
+  const handleEditorBackgroundMouseDown = (
+    event: React.MouseEvent<HTMLDivElement>
+  ) => {
+    if (event.target === event.currentTarget) {
+      editor.chain().focus().run();
+      event.preventDefault();
+    }
+  };
+
   return (
     <Card>
       <div className="tiptap-editor">
@@ -100,7 +110,8 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
 
         <EditorContent
           editor={editor}
-          className="p-4 min-h-[300px] prose max-w-none tiptap-editor-content"
+          className="p-4 min-h-[300px] prose prose-lg max-w-none tiptap-editor-content tiptap-content"
+          onMouseDown={handleEditorBackgroundMouseDown}
         />
 
         <ImageBubbleMenu

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Button, Text, TextArea, Modal, Icon, SegmentedRadioGroup } from '@gravity-ui/uikit';
-import { Xmark } from '@gravity-ui/icons';
+import { Button, Text, TextArea, Dialog, SegmentedRadioGroup } from '@gravity-ui/uikit';
 import StoredImageGallery from "../StoredImageGallery";
 import { useToast } from "@/hooks/use-toast";
 import { Flex } from '@gravity-ui/uikit';
@@ -195,116 +194,118 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
   };
 
   return (
-    <Modal open={showDialog} onClose={() => setShowDialog(false)}>
-      <div className='modal-content'>
-        <div className='top-modal'>
-          <Text variant="subheader-3">Изображение для обложки</Text>
-          <Button size='xl' view='flat' onClick={() => setShowDialog(false)}>
-            <Icon data={Xmark} size={18} />
-          </Button>
-        </div>
+    <Dialog
+      size="s"
+      open={showDialog}
+      onClose={() => setShowDialog(false)}
+      aria-labelledby="featured-image-dialog-title"
+      className="editor-dialog"
+    >
+      <Dialog.Header caption="Image for the cover" id="featured-image-dialog-title" />
+      <Dialog.Body>
+        <div className="modal-content">
+          <div className="mb-6">
+            <SegmentedRadioGroup
+              size="l"
+              value={activeTab}
+              onChange={handleTabChange}
+              options={[
+                { value: 'prompt', content: 'Generate image' },
+                { value: 'gallery', content: 'Gallery' },
+              ]}
+              style={{ width: '100%' }}
+            />
+          </div>
 
-        <div className="mb-6">
-          <SegmentedRadioGroup
-            size="l"
-            value={activeTab}
-            onChange={handleTabChange}
-            options={[
-              { value: 'prompt', content: 'Генерация' },
-              { value: 'gallery', content: 'Галерея' },
-            ]}
-            style={{ width: '100%' }}
-          />
-        </div>
-
-        {activeTab === 'prompt' && (
-          <div className="space-y-4 mt-4">
-            <div>
-              <Text variant="body-1" className="block mb-2">
-                Опишите желаемое изображение
-              </Text>
-              <TextArea
-                value={imagePrompt}
-                onChange={(e) => setImagePrompt(e.target.value)}
-                placeholder="Например: узор из цветных пастельных суккулентов разных сортов, hd full wallpaper, четкий фокус, множество сложных деталей, глубина кадра, вид сверху"
-                rows={5}
-              />
-            </div>
-
-            {generatedImagePreview && (
-              <div className="mt-4">
-                <Text variant="body-1" className="block mb-2">Предпросмотр:</Text>
-                <div className="relative">
-                  <NextImage
-                    src={generatedImagePreview}
-                    alt="Generated preview"
-                    width={0}
-                    height={0}
-                    sizes="100vw"
-                    style={{ width: '100%', height: 'auto' }}
-                    className="w-full h-auto rounded-lg"
-                  />
-                  <Button
-                    view="normal-contrast"
-                    size="m"
-                    className="absolute top-2 right-2 bg-background/70 hover:bg-background"
-                    onClick={onGenerateImage}
-                  >
-                    Сгенерировать заново
-                  </Button>
-                </div>
+          {activeTab === 'prompt' && (
+            <div className="space-y-4 mt-4">
+              <div>
+                <Text variant="body-1" className="block mb-2">
+                  Describe the desired image
+                </Text>
+                <TextArea
+                  value={imagePrompt}
+                  onChange={(e) => setImagePrompt(e.target.value)}
+                  placeholder="For example: pattern of colorful pastel succulents of different varieties, hd full wallpaper, clear focus, many complex details, depth of field, top view"
+                  rows={5}
+                />
               </div>
-            )}
 
-            <Flex direction="row" justifyContent="flex-end" gap={2} style={{ marginTop: '24px' }}>
-              <Button view="outlined" size="l" onClick={() => setShowDialog(false)}>
-                Cancel
-              </Button>
-              {generatedImagePreview ? (
-                <Button view="action" size="l" onClick={onApplyGeneratedImage}>
-                  Apply
+              {generatedImagePreview && (
+                <div className="mt-4">
+                  <Text variant="body-1" className="block mb-2">Preview:</Text>
+                  <div className="relative">
+                    <NextImage
+                      src={generatedImagePreview}
+                      alt="Generated preview"
+                      width={0}
+                      height={0}
+                      sizes="100vw"
+                      style={{ width: '100%', height: 'auto' }}
+                      className="w-full h-auto rounded-lg"
+                    />
+                    <Button
+                      view="normal-contrast"
+                      size="m"
+                      className="absolute top-2 right-2 bg-background/70 hover:bg-background"
+                      onClick={onGenerateImage}
+                    >
+                      Generate again
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <Flex direction="row" justifyContent="flex-end" gap={2} style={{ marginTop: '24px' }}>
+                <Button view="outlined" size="l" onClick={() => setShowDialog(false)}>
+                  Cancel
                 </Button>
-              ) : (
+                {generatedImagePreview ? (
+                  <Button view="action" size="l" onClick={onApplyGeneratedImage}>
+                    Apply
+                  </Button>
+                ) : (
+                  <Button
+                    view="action"
+                    size="l"
+                    onClick={onGenerateImage}
+                    disabled={isGenerating || isUploading || !imagePrompt.trim()}
+                    loading={isGenerating}
+                  >
+                    {(isGenerating || isUploading) ? (
+                      <>
+                        <span className="w-4 h-4 mr-2 rounded-full border-2 border-t-transparent border-white animate-spin"></span>
+                        {isGenerating ? "Generating..." : "Saving..."}
+                      </>
+                    ) : "Generate"}
+                  </Button>
+                )}
+              </Flex>
+            </div>
+          )}
+
+          {activeTab === 'gallery' && (
+            <div className="mt-4">
+              <Text variant="body-1" className="block mb-4">Select an image from the gallery:</Text>
+              <div className="gallery-container" style={{ minHeight: "300px" }}>
+                <StoredImageGallery
+                  onImageSelect={onSelectGalleryImage}
+                />
+              </div>
+              <Flex direction="row" justifyContent="flex-end" style={{ marginTop: '24px' }}>
                 <Button
                   view="action"
                   size="l"
-                  onClick={onGenerateImage}
-                  disabled={isGenerating || isUploading || !imagePrompt.trim()}
-                  loading={isGenerating}
+                  onClick={() => setShowDialog(false)}
                 >
-                  {(isGenerating || isUploading) ? (
-                    <>
-                      <span className="w-4 h-4 mr-2 rounded-full border-2 border-t-transparent border-white animate-spin"></span>
-                      {isGenerating ? "Генерация..." : "Сохранение..."}
-                    </>
-                  ) : "Сгенерировать"}
+                  Close
                 </Button>
-              )}
-            </Flex>
-          </div>
-        )}
-
-        {activeTab === 'gallery' && (
-          <div className="mt-4">
-            <Text variant="body-1" className="block mb-4">Выберите изображение из галереи:</Text>
-            <div className="gallery-container" style={{ minHeight: "300px" }}>
-              <StoredImageGallery
-                onImageSelect={onSelectGalleryImage}
-              />
+              </Flex>
             </div>
-            <Flex direction="row" justifyContent="flex-end" style={{ marginTop: '24px' }}>
-              <Button
-                view="action"
-                size="l"
-                onClick={() => setShowDialog(false)}
-              >
-                Закрыть
-              </Button>
-            </Flex>
-          </div>
-        )}
-      </div>
-    </Modal>
+          )}
+        </div>
+      </Dialog.Body>
+    </Dialog>
   );
 };
 

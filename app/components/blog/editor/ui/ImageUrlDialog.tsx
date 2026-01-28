@@ -1,7 +1,7 @@
 import React from 'react';
-import { Button, Icon, Modal, Text, TextInput } from '@gravity-ui/uikit';
-import { Xmark } from '@gravity-ui/icons';
-import { Flex } from '@gravity-ui/uikit';
+import { Button, Dialog, Flex, Text, TextInput } from '@gravity-ui/uikit';
+import { DrawerMenu } from '@/shared/ui/DrawerMenu';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type ImageUrlDialogProps = {
   open: boolean;
@@ -21,19 +21,16 @@ export const ImageUrlDialog = ({
   imageAlt,
   onImageAltChange,
   onSubmit,
-}: ImageUrlDialogProps) => (
-  <Modal open={open} onClose={onClose}>
-    <div className="modal-content">
-      <div className="top-modal">
-        <Text variant="subheader-3">Add Image from URL</Text>
-        <Button size="xl" view="flat" onClick={onClose}>
-          <Icon data={Xmark} size={18} />
-        </Button>
-      </div>
-
-      <Text variant="body-1">Add an image to your content. Enter the image URL and alt text for accessibility.</Text>
-      <div className="grid gap-4 py-4">
-        <div className="grid gap-2">
+}: ImageUrlDialogProps) => {
+  const isMobile = useIsMobile();
+  const dialogTitleId = React.useId();
+  const formContent = (
+    <Flex direction="column" gap={3}>
+      <Text variant="body-1">
+        Add an image to your content. Enter the image URL and alt text for accessibility.
+      </Text>
+      <Flex direction="column" gap={4} style={{ padding: '16px 0' }}>
+        <Flex direction="column" gap={2}>
           <Text variant="body-1">Image URL</Text>
           <TextInput
             id="image-url"
@@ -41,8 +38,8 @@ export const ImageUrlDialog = ({
             onChange={(e) => onImageUrlChange(e.target.value)}
             placeholder="https://example.com/image.jpg"
           />
-        </div>
-        <div className="grid gap-2">
+        </Flex>
+        <Flex direction="column" gap={2}>
           <Text variant="body-1">Alt Text</Text>
           <TextInput
             id="image-alt"
@@ -50,24 +47,50 @@ export const ImageUrlDialog = ({
             onChange={(e) => onImageAltChange(e.target.value)}
             placeholder="Image description"
           />
-        </div>
-      </div>
-      <Flex direction="row" justifyContent="flex-end" gap={2} style={{ marginTop: '24px' }}>
-        <Button
-          view="outlined"
-          size="l"
-          onClick={onClose}
-        >
-          Cancel
-        </Button>
-        <Button
-          view="action"
-          size="l"
-          onClick={onSubmit}
-        >
-          Add Image
-        </Button>
+        </Flex>
       </Flex>
-    </div>
-  </Modal>
-);
+    </Flex>
+  );
+  const footerActions = (
+    <>
+      <Button view="outlined" size="l" onClick={onClose}>
+        Cancel
+      </Button>
+      <Button view="action" size="l" onClick={onSubmit}>
+        Add Image
+      </Button>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <DrawerMenu
+        open={open}
+        onClose={onClose}
+        title="Add Image from URL"
+        footer={footerActions}
+      >
+        {formContent}
+      </DrawerMenu>
+    );
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      size="s"
+      aria-labelledby={dialogTitleId}
+      className="editor-dialog"
+    >
+      <Dialog.Header caption="Add Image from URL" id={dialogTitleId} />
+      <Dialog.Body>{formContent}</Dialog.Body>
+      <Dialog.Footer
+        onClickButtonCancel={onClose}
+        onClickButtonApply={onSubmit}
+        textButtonApply="Add Image"
+        textButtonCancel="Cancel"
+      />
+    </Dialog>
+  );
+};

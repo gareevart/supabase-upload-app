@@ -9,6 +9,7 @@ import { ReasoningBlock } from "./ReasoningBlock";
 import { ChatMessageForm } from "./ChatMessageForm";
 import { useChatSidebar } from "./ChatSidebarContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { DrawerMenu } from "@/shared/ui/DrawerMenu";
 import "./ChatInterface.css";
 import "@/app/blog/blog.css";
 
@@ -129,6 +130,55 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
     );
   }
 
+  const settingsContent = (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Text variant="body-1">Модель ИИ</Text>
+        <Text variant="body-1" color="secondary" className="flex gap-1">Будет применена только для этого чата</Text>
+        <Select
+          value={[selectedModel]}
+          options={[
+            { value: 'yandexgpt', content: 'YandexGPT' },
+            { value: 'yandexgpt-lite', content: 'YandexGPT Lite' },
+            { value: 'deepseek', content: 'Deepseek R1' },
+            { value: 'aliceai-llm', content: 'Alice AI LLM' },
+          ]}
+          onUpdate={(value) => {
+            if (value.length > 0) {
+              const newModel = value[0] as "yandexgpt" | "yandexgpt-lite" | "deepseek" | "gpt-oss-20b" | "aliceai-llm";
+              setSelectedModel(newModel);
+            }
+          }}
+          size="m"
+          width="max"
+          placeholder="Выберите модель"
+        />
+      </div>
+      <div className="space-y-2">
+        <Text variant="body-1">Системный промпт (роль ассистента)</Text>
+        <Text variant="body-1" color="secondary" className="flex gap-1">Определяет роль и поведение ассистента в этом чате</Text>
+        <TextArea
+          placeholder="Опишите, как должен вести себя ассистент, например: Ты полезный ассистент. Отвечай на вопросы пользователя чётко и лаконично."
+          value={systemPrompt}
+          onChange={(e) => setSystemPrompt(e.target.value)}
+          rows={5}
+          className="resize-none"
+        />
+      </div>
+    </div>
+  );
+
+  const settingsFooter = (
+    <>
+      <Button view="outlined" size="l" onClick={() => setOpen(false)}>
+        Отмена
+      </Button>
+      <Button view="action" size="l" onClick={handleSaveSettings}>
+        Сохранить
+      </Button>
+    </>
+  );
+
   return (
     <div className="chat-interface">
       <header className="chat-interface__header">
@@ -223,57 +273,32 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
         />
       </div>
 
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        onEnterKeyDown={handleSaveSettings}
-        aria-labelledby="chat-settings-dialog-title"
-      >
-        <Dialog.Header caption="Настройки чата" id="chat-settings-dialog-title" />
-        <Dialog.Body>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Text variant="body-1">Модель ИИ</Text>
-              <Text variant="body-1" color="secondary" className="flex gap-1">Будет применена только для этого чата</Text>
-              <Select
-                value={[selectedModel]}
-                options={[
-                  { value: 'yandexgpt', content: 'YandexGPT' },
-                  { value: 'yandexgpt-lite', content: 'YandexGPT Lite' },
-                  { value: 'deepseek', content: 'Deepseek R1' },
-                  { value: 'aliceai-llm', content: 'Alice AI LLM' },
-                ]}
-                onUpdate={(value) => {
-                  if (value.length > 0) {
-                    const newModel = value[0] as "yandexgpt" | "yandexgpt-lite" | "deepseek" | "gpt-oss-20b" | "aliceai-llm";
-                    setSelectedModel(newModel);
-                  }
-                }}
-                size="m"
-                width="max"
-                placeholder="Выберите модель"
-              />
-            </div>
-            <div className="space-y-2">
-              <Text variant="body-1">Системный промпт (роль ассистента)</Text>
-              <Text variant="body-1" color="secondary" className="flex gap-1">Определяет роль и поведение ассистента в этом чате</Text>
-              <TextArea
-                placeholder="Опишите, как должен вести себя ассистент, например: Ты полезный ассистент. Отвечай на вопросы пользователя чётко и лаконично."
-                value={systemPrompt}
-                onChange={(e) => setSystemPrompt(e.target.value)}
-                rows={5}
-                className="resize-none"
-              />
-            </div>
-          </div>
-        </Dialog.Body>
-        <Dialog.Footer
-          onClickButtonCancel={() => setOpen(false)}
-          onClickButtonApply={handleSaveSettings}
-          textButtonApply="Сохранить"
-          textButtonCancel="Отмена"
-        />
-      </Dialog>
+      {isMobile ? (
+        <DrawerMenu
+          open={open}
+          onClose={() => setOpen(false)}
+          title="Настройки чата"
+          footer={settingsFooter}
+        >
+          {settingsContent}
+        </DrawerMenu>
+      ) : (
+        <Dialog
+          open={open}
+          onClose={() => setOpen(false)}
+          onEnterKeyDown={handleSaveSettings}
+          aria-labelledby="chat-settings-dialog-title"
+        >
+          <Dialog.Header caption="Настройки чата" id="chat-settings-dialog-title" />
+          <Dialog.Body>{settingsContent}</Dialog.Body>
+          <Dialog.Footer
+            onClickButtonCancel={() => setOpen(false)}
+            onClickButtonApply={handleSaveSettings}
+            textButtonApply="Сохранить"
+            textButtonCancel="Отмена"
+          />
+        </Dialog>
+      )}
     </div>
   );
 };

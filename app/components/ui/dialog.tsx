@@ -1,5 +1,9 @@
+'use client';
+
 import React from 'react';
 import { Flex, Modal, Text } from '@gravity-ui/uikit';
+import { DrawerMenu } from '@/shared/ui/DrawerMenu';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DialogProps {
   open: boolean;
@@ -8,6 +12,16 @@ interface DialogProps {
 }
 
 export const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) => {
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return (
+      <DrawerMenu open={open} onClose={() => onOpenChange(false)}>
+        {children}
+      </DrawerMenu>
+    );
+  }
+
   return (
     <Modal open={open} onClose={() => onOpenChange(false)}>
       {children}
@@ -21,8 +35,11 @@ interface DialogContentProps {
 }
 
 export const DialogContent: React.FC<DialogContentProps> = ({ children, className = '' }) => {
+  const isMobile = useIsMobile();
+  const style = isMobile ? { padding: '24px' } : { padding: '24px', minWidth: '400px' };
+
   return (
-    <div className={`dialog-content ${className}`} style={{ padding: '24px', minWidth: '400px' }}>
+    <div className={`dialog-content ${className}`} style={style}>
       {children}
     </div>
   );

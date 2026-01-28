@@ -27,25 +27,14 @@ function absoluteRect(node: Element) {
 }
 
 function nodeDOMAtCoords(coords: { x: number; y: number }) {
-  return document
-    .elementsFromPoint(coords.x, coords.y)
-    .find(
-      (elem: Element) =>
-        elem.parentElement?.matches?.('.ProseMirror') ||
-        elem.matches?.(
-          [
-            'li',
-            'p',
-            'pre',
-            'blockquote',
-            'h1, h2, h3, h4, h5, h6',
-            '.resizable-image',
-            '.image-resizer-container',
-            'ul, ol',
-            'div[data-type]'
-          ].join(', '),
-        ),
-    );
+  const elements = document.elementsFromPoint(coords.x, coords.y);
+  for (const element of elements) {
+    const paragraph = element.closest('p');
+    if (paragraph && paragraph.closest('.ProseMirror')) {
+      return paragraph;
+    }
+  }
+  return null;
 }
 
 function nodePosAtDOM(node: Element, view: EditorView): number | null {
@@ -60,6 +49,16 @@ function nodePosAtDOM(node: Element, view: EditorView): number | null {
 function DragHandle(options: DragHandleOptions) {
   let dragHandleElement: HTMLElement | null = null;
   let isDragging = false;
+  let transparentDragImage: HTMLImageElement | null = null;
+
+  function getTransparentDragImage() {
+    if (!transparentDragImage) {
+      transparentDragImage = new Image();
+      transparentDragImage.src =
+        'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+    }
+    return transparentDragImage;
+  }
 
   function handleDragStart(event: DragEvent, view: EditorView) {
     if (!event.dataTransfer) return;
@@ -111,18 +110,9 @@ function DragHandle(options: DragHandleOptions) {
     const { dom, text } = serializeForClipboard(view, slice);
 
     event.dataTransfer.clearData();
-    event.dataTransfer.setData('text/html', dom instanceof DocumentFragment ? 
-      Array.from(dom.childNodes).map(node => (node as Element).outerHTML || node.textContent).join('') : 
-      (dom as Element).outerHTML || '');
-    event.dataTransfer.setData('text/plain', text);
+    event.dataTransfer.setData('text/plain', text || ' ');
     event.dataTransfer.effectAllowed = 'copyMove';
-
-    // Create a drag image
-    const dragImage = node.cloneNode(true) as HTMLElement;
-    dragImage.style.opacity = '0.5';
-    dragImage.style.transform = 'rotate(5deg)';
-    dragImage.style.pointerEvents = 'none';
-    event.dataTransfer.setDragImage(dragImage, 0, 0);
+    event.dataTransfer.setDragImage(getTransparentDragImage(), 0, 0);
 
     // Store the slice for later use
     (view as any).dragging = { slice, move: !event.ctrlKey };
@@ -159,12 +149,14 @@ function DragHandle(options: DragHandleOptions) {
   function hideDragHandle() {
     if (dragHandleElement) {
       dragHandleElement.classList.add('hide');
+      dragHandleElement.style.opacity = '0';
     }
   }
 
   function showDragHandle() {
     if (dragHandleElement) {
       dragHandleElement.classList.remove('hide');
+      dragHandleElement.style.opacity = '1';
     }
   }
 
@@ -275,7 +267,17 @@ function DragHandle(options: DragHandleOptions) {
         mousewheel: () => {
           hideDragHandle();
         },
-        dragstart: (view) => {
+        dragstart: (view, event) => {
+          const target = event.target as HTMLElement | null;
+          if (target?.dataset?.dragHandle !== undefined) {
+            return false;
+          }
+          if (event.dataTransfer) {
+            event.dataTransfer.clearData();
+            event.dataTransfer.setData('text/plain', ' ');
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setDragImage(getTransparentDragImage(), 0, 0);
+          }
           view.dom.classList.add('dragging');
           isDragging = true;
         },
