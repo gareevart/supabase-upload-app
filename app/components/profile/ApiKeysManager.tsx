@@ -66,34 +66,64 @@ export const ApiKeysManager: React.FC = () => {
       const response = await authFetch('/api/api-keys');
 
       if (!response.ok) {
-        let errorData;
         const responseText = await response.text();
-        try {
-          errorData = JSON.parse(responseText);
-        } catch (e) {
-          errorData = { rawResponse: responseText };
+        const contentType = response.headers.get('content-type') || '';
+        let errorData: Record<string, unknown> = {};
+
+        if (responseText) {
+          if (contentType.includes('application/json')) {
+            try {
+              errorData = JSON.parse(responseText);
+              if (!errorData || Object.keys(errorData).length === 0) {
+                errorData = { message: 'Empty JSON body', rawResponse: responseText };
+              }
+            } catch {
+              errorData = { rawResponse: responseText };
+            }
+          } else {
+            errorData = { rawResponse: responseText };
+          }
+        } else {
+          errorData = { message: 'Empty response body' };
         }
 
+        const errorMessage =
+          typeof errorData === 'object' && errorData !== null
+            ? String(
+                (errorData as { error?: string; details?: string; message?: string }).error ||
+                  (errorData as { details?: string }).details ||
+                  (errorData as { message?: string }).message ||
+                  ''
+              ).trim() || undefined
+            : undefined;
+
         console.error('API error detail:', {
+          url: response.url,
           status: response.status,
           statusText: response.statusText,
+          contentType,
+          responseLength: responseText.length,
           error: errorData,
         });
-        throw new Error(errorData.error || errorData.details || `Failed to fetch API keys (${response.status} ${response.statusText})`);
+        const resolvedMessage =
+          response.status === 401 ? 'No active session' : errorMessage;
+        throw new Error(resolvedMessage || `Failed to fetch API keys (${response.status} ${response.statusText || 'Unknown status'})`);
       }
 
       const data = await response.json();
       setApiKeys(data.apiKeys || []);
     } catch (error) {
-      console.error('Error fetching API keys:', error);
-
       let description = 'Не удалось загрузить API ключи';
-      if (error instanceof Error) {
-        if (error.message === 'No active session') {
-          description = 'Пожалуйста, войдите в систему';
-        } else {
-          description = error.message;
-        }
+      const isNoSession = error instanceof Error && error.message === 'No active session';
+
+      if (isNoSession) {
+        description = 'Пожалуйста, войдите в систему';
+      } else if (error instanceof Error) {
+        description = error.message;
+      }
+
+      if (!isNoSession) {
+        console.error('Error fetching API keys:', error);
       }
 
       toast({

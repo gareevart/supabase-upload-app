@@ -133,3 +133,24 @@
   margin: 2rem 0;
 }
 
+.blog-post-actionbar {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin-top: -1.5rem;
+  background-color: var(--g-color-base-background);
+  width: 100%;
+  left: 0;
+  right: 0;
+}
+
+@media (max-width: 767px) {
+  .blog-post-actionbar {
+    position: -webkit-sticky;
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+  }
+}
+

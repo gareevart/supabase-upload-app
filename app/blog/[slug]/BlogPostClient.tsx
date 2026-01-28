@@ -10,6 +10,8 @@ import { notFound, useRouter } from "next/navigation"
 import TipTapContent from "@/app/components/blog/TipTapContent"
 import { useState, useEffect } from "react"
 import { Button, Icon, Skeleton, Card as GravityCard } from "@gravity-ui/uikit"
+import { Breadcrumbs as LegacyBreadcrumbs } from "@gravity-ui/uikit/legacy"
+import { ActionBar } from "@gravity-ui/navigation"
 import { useToast } from "@/hooks/use-toast"
 import React from "react"
 import { TableOfContents } from "@/shared/ui/TableOfContents"
@@ -186,86 +188,114 @@ export default function BlogPostClient({ params }: { params: { slug: string } })
   const canEditPost = userRole === 'admin' || userRole === 'editor';
 
   return (
-    <div className="container mx-auto px-4 md:px-6" style={{ maxWidth: '1400px' }}>
-      <div style={{
+    <React.Fragment>
+      <div className="blog-post-actionbar">
+        <div className="container mx-auto md:px-6" style={{ maxWidth: '1400px' }}>
+          <ActionBar aria-label="Post actions">
+            <ActionBar.Section>
+              <ActionBar.Group>
+                <ActionBar.Item>
+                  <LegacyBreadcrumbs
+                    lastDisplayedItemsCount={1}
+                    firstDisplayedItemsCount={1}
+                    items={[
+                      {
+                        text: "Blog",
+                        action: () => router.push("/blog")
+                      },
+                      { text: post.title, href: post.slug ? `/blog/${post.slug}` : "/blog" }
+                    ]}
+                  />
+                </ActionBar.Item>
+              </ActionBar.Group>
+
+              {canEditPost && (
+                <ActionBar.Group pull="right">
+                  <ActionBar.Item>
+                    <Link href={`/blog/edit/${post.id}`} passHref>
+                      <Button view="normal">
+                        <Icon data={Pencil} size={16} />
+                        Edit
+                      </Button>
+                    </Link>
+                  </ActionBar.Item>
+                  <ActionBar.Item>
+                    <Button
+                      view="outlined-danger"
+                      onClick={handleDelete}
+                      loading={isDeleting}
+                      disabled={isDeleting}
+                    >
+                      <Icon data={TrashBin} size={16} />
+                    </Button>
+                  </ActionBar.Item>
+                </ActionBar.Group>
+              )}
+            </ActionBar.Section>
+          </ActionBar>
+        </div>
+      </div>
+
+      <div className="container mx-auto p-4 md:px-6" style={{ maxWidth: '1400px' }}>
+        <div style={{
         display: 'flex',
         gap: '24px',
         flexDirection: isMobile ? 'column' : 'row',
         alignItems: 'flex-start'
-      }}>
-        {/* Основной контент */}
-        <div style={{ flex: '1', minWidth: 0, maxWidth: isMobile ? '100%' : 'calc(100% - 300px)' }}>
-          <div className="flex justify-between items-start mb-4">
-            <CardTitle className="text-3xl font-bold">{post.title}</CardTitle>
+        }}>
+          {/* Основной контент */}
+          <div style={{ flex: '1', minWidth: 0, maxWidth: isMobile ? '100%' : 'calc(100% - 300px)' }}>
+            <CardTitle className="text-3xl font-bold mb-4">{post.title}</CardTitle>
 
-            {canEditPost && (
-              <div className="flex gap-2">
-                <Link href={`/blog/edit/${post.id}`} passHref>
-                  <Button view="normal">
-                    <Icon data={Pencil} size={16} />
-                    Edit
-                  </Button>
-                </Link>
-                <Button
-                  view="outlined-danger"
-                  onClick={handleDelete}
-                  loading={isDeleting}
-                  disabled={isDeleting}
-                >
-                  <Icon data={TrashBin} size={16} />
-                </Button>
+            <div className="flex flex-wrap items-center gap-4 mb-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Calendar className="w-4 h-4" />
+                <span>{post.created_at ? formatDate(post.created_at) : 'Дата не указана'}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Person className="w-4 h-4" />
+                <span>{post.author?.name || post.author?.username || "Anonymous"}</span>
+              </div>
+            </div>
+
+            {/* ToC для мобильных устройств - показывать над контентом */}
+            {isMobile && (
+              <div className="py-4">
+                <TableOfContents content={post.content} />
               </div>
             )}
+
+            {post.featured_image && post.show_featured_image !== false && (
+              <div className="w-full h-[300px] md:h-[400px] rounded-lg overflow-hidden relative">
+                <Image
+                  src={post.featured_image}
+                  alt={post.title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+              </div>
+            )}
+
+            <CardContent className="prose prose-lg max-w-none">
+              {/* Use TipTapContent to render content regardless of format */}
+              <TipTapContent content={post.content} />
+            </CardContent>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 mb-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
-              <span>{post.created_at ? formatDate(post.created_at) : 'Дата не указана'}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Person className="w-4 h-4" />
-              <span>{post.author?.name || post.author?.username || "Anonymous"}</span>
-            </div>
-          </div>
-
-          {/* ToC для мобильных устройств - показывать над контентом */}
-          {isMobile && (
-            <div style={{ marginBottom: '16px' }}>
+          {/* Table of Contents - только на десктопе справа */}
+          {!isMobile && (
+            <aside style={{
+              width: '280px',
+              position: 'sticky',
+              top: '72px',
+              alignSelf: 'flex-start'
+            }}>
               <TableOfContents content={post.content} />
-            </div>
+            </aside>
           )}
-
-          {post.featured_image && post.show_featured_image !== false && (
-            <div className="w-full h-[300px] md:h-[400px] rounded-lg overflow-hidden relative">
-              <Image
-                src={post.featured_image}
-                alt={post.title}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-            </div>
-          )}
-
-          <CardContent className="prose prose-lg max-w-none">
-            {/* Use TipTapContent to render content regardless of format */}
-            <TipTapContent content={post.content} />
-          </CardContent>
         </div>
-
-        {/* Table of Contents - только на десктопе справа */}
-        {!isMobile && (
-          <aside style={{
-            width: '280px',
-            position: 'sticky',
-            top: '24px',
-            alignSelf: 'flex-start'
-          }}>
-            <TableOfContents content={post.content} />
-          </aside>
-        )}
       </div>
-    </div>
+    </React.Fragment>
   );
 }

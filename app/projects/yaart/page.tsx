@@ -226,12 +226,12 @@ const Yaart = () => {
 
   const handleSaveToGallery = async () => {
     if (!isAuthenticated) {
-      setError('Для сохранения изображения необходимо авторизоваться');
+      setError('To save the image, you need to log in');
       return;
     }
 
     if (!generatedImage) {
-      setError('Нет изображения для сохранения');
+      setError('There is no image to save');
       return;
     }
 
@@ -243,7 +243,7 @@ const Yaart = () => {
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id;
 
-      if (!userId) throw new Error('Не удалось получить ID пользователя');
+      if (!userId) throw new Error('Failed to get user ID');
 
       let imageFile: File;
       if (imageData) {
@@ -276,8 +276,8 @@ const Yaart = () => {
       setSaveSuccess(true);
       toaster.add({
         name: 'save-success',
-        title: 'Успешно!',
-        content: 'Изображение сохранено в галерею',
+        title: 'Success!',
+        content: 'Image successfully saved to your gallery',
         theme: 'success',
         autoHiding: 5000
       });
@@ -286,7 +286,7 @@ const Yaart = () => {
       setSaveError(errorMessage);
       toaster.add({
         name: 'save-error',
-        title: 'Ошибка!',
+        title: 'Error',
         content: errorMessage,
         theme: 'danger',
         autoHiding: 10000
@@ -366,7 +366,7 @@ const Yaart = () => {
             )}
 
             {generatedImage && !loading && (
-              <Flex direction="column" gap={10}>
+              <Flex direction="column" gap={2}>
                 <Text variant="body-1" color="secondary">Generated Image:</Text>
                 <div style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '16px', position: 'relative', width: '100%', minHeight: '400px' }}>
                   <Image
@@ -415,7 +415,7 @@ const Yaart = () => {
                 {saveSuccess && (
                   <Alert
                     theme="success"
-                    message="Изображение успешно сохранено в вашу галерею"
+                    message="Image successfully saved to your gallery"
                     onClose={() => setSaveSuccess(false)}
                   />
                 )}

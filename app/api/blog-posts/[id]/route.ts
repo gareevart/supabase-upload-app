@@ -1,12 +1,36 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import type { Database } from '@/lib/types';
 import { withAuth } from '@/app/auth/withApiKeyAuth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
+
+const canManagePost = async (userId: string) => {
+  const supabaseAdmin = createClient<Database>(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
+
+  const { data: profile, error } = await supabaseAdmin
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching user role:', error);
+    return false;
+  }
+
+  return profile?.role === 'admin' || profile?.role === 'editor';
+};
 
 // GET a single blog post by ID
 export const GET = withAuth(async (request: NextRequest, user: { id: string }) => {
@@ -151,13 +175,26 @@ export const PUT = withAuth(async (request: NextRequest, user: { id: string }) =
       );
     }
 
-    // Check if the user is the author
-    if (existingPost.author_id !== user.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized to update this blog post' },
-        { status: 403 }
-      );
+    // Check if the user is the author or has elevated role
+    const isAuthor = existingPost.author_id === user.id;
+    if (!isAuthor) {
+      const isAdminOrEditor = await canManagePost(user.id);
+      if (!isAdminOrEditor) {
+        return NextResponse.json(
+          { error: 'Unauthorized to update this blog post' },
+          { status: 403 }
+        );
+      }
     }
+
+    const updateClient = isAuthor
+      ? supabase
+      : createClient<Database>(supabaseUrl, supabaseServiceKey, {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        });
 
     // Parse the request body
     const { title, content, excerpt, slug, featured_image, published } = await request.json();
@@ -231,11 +268,11 @@ export const PUT = withAuth(async (request: NextRequest, user: { id: string }) =
     if (featured_image !== undefined) updateData.featured_image = featured_image;
     if (published !== undefined) updateData.published = published;
 
-    const { data, error } = await supabase
+    const { data, error } = await updateClient
       .from('blog_posts')
       .update(updateData)
       .eq('id', id)
-      .eq('author_id', user.id)
+      .eq('author_id', existingPost.author_id)
       .select()
       .single();
 
@@ -315,20 +352,33 @@ export const DELETE = withAuth(async (request: NextRequest, user: { id: string }
       );
     }
 
-    // Check if the user is the author
-    if (existingPost.author_id !== user.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized to delete this blog post' },
-        { status: 403 }
-      );
+    // Check if the user is the author or has elevated role
+    const isAuthor = existingPost.author_id === user.id;
+    if (!isAuthor) {
+      const isAdminOrEditor = await canManagePost(user.id);
+      if (!isAdminOrEditor) {
+        return NextResponse.json(
+          { error: 'Unauthorized to delete this blog post' },
+          { status: 403 }
+        );
+      }
     }
 
+    const deleteClient = isAuthor
+      ? supabase
+      : createClient<Database>(supabaseUrl, supabaseServiceKey, {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        });
+
     // Delete the blog post
-    const { error } = await supabase
+    const { error } = await deleteClient
       .from('blog_posts')
       .delete()
       .eq('id', id)
-      .eq('author_id', user.id);
+      .eq('author_id', existingPost.author_id);
 
     if (error) {
       throw error;
