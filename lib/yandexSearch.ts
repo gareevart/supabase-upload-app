@@ -38,31 +38,29 @@ const normalizeUrl = (value: unknown): string | undefined => {
 const extractFromItems = (items: unknown): WebSearchSource[] => {
   if (!Array.isArray(items)) return [];
 
-  return items
-    .map((item) => {
-      if (!item || typeof item !== "object") return null;
-      const record = item as UnknownRecord;
+  return items.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const record = item as UnknownRecord;
 
-      const url =
-        normalizeUrl(record.url) ||
-        normalizeUrl(record.link) ||
-        normalizeUrl(record.href);
-      const title =
-        toText(record.title) || toText(record.name) || toText(record.heading);
-      const snippet =
-        toText(record.snippet) ||
-        toText(record.headline) ||
-        toText(record.text) ||
-        toText(record.description) ||
-        (Array.isArray(record.passages)
-          ? toText(record.passages.join(" "))
-          : undefined);
+    const url =
+      normalizeUrl(record.url) ||
+      normalizeUrl(record.link) ||
+      normalizeUrl(record.href);
+    const title =
+      toText(record.title) || toText(record.name) || toText(record.heading);
+    const snippet =
+      toText(record.snippet) ||
+      toText(record.headline) ||
+      toText(record.text) ||
+      toText(record.description) ||
+      (Array.isArray(record.passages)
+        ? toText(record.passages.join(" "))
+        : undefined);
 
-      if (!url || !title) return null;
+    if (!url || !title) return [];
 
-      return { title, url, snippet };
-    })
-    .filter((item): item is WebSearchSource => Boolean(item));
+    return [{ title, url, snippet }];
+  });
 };
 
 const extractSources = (data: unknown): WebSearchSource[] => {
