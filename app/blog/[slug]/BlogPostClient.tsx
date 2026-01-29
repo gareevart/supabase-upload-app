@@ -244,7 +244,7 @@ export default function BlogPostClient({ params }: { params: { slug: string } })
         flexDirection: isMobile ? 'column' : 'row',
         alignItems: 'flex-start'
         }}>
-          {/* Основной контент */}
+          {/* Main content */}
           <div style={{ flex: '1', minWidth: 0, maxWidth: isMobile ? '100%' : 'calc(100% - 300px)' }}>
             <CardTitle className="text-3xl font-bold mb-4 blog-post-title">{post.title}</CardTitle>
 

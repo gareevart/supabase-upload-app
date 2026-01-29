@@ -45,6 +45,12 @@
   margin-bottom: 1rem;
 }
 
+.tiptap-content ul,
+.tiptap-content ol,
+.tiptap-content li {
+  white-space: normal;
+}
+
 .tiptap-content ul {
   list-style-type: disc;
   margin-bottom: 0.2rem;
@@ -56,6 +62,28 @@
 
 .tiptap-content li {
   margin-bottom: 0rem;
+}
+
+/* Keep list markers aligned with list content */
+.tiptap-content li > :first-child {
+  margin-top: 0;
+}
+
+.tiptap-content li > :last-child {
+  margin-bottom: 0;
+}
+
+/* ReactMarkdown wraps list items in <p> with default top margin */
+.tiptap-content li > p {
+  margin-top: 0;
+}
+
+/* Headings inside list items should not push content down */
+.tiptap-content li > h1,
+.tiptap-content li > h2,
+.tiptap-content li > h3,
+.tiptap-content li > h4 {
+  margin-top: 0;
 }
 
 .tiptap-content a {

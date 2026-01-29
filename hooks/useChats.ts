@@ -123,15 +123,30 @@ export const useChats = () => {
 
   const deleteChat = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("chat_sessions")
-        .delete()
-        .eq("id", id);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Требуется аутентификация");
+      }
+      const response = await fetch(`/api/chats/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => ({}));
+        const errorMessage =
+          typeof errorPayload?.error === "string"
+            ? errorPayload.error
+            : "Не удалось удалить чат";
+        throw new Error(errorMessage);
+      }
     },
-    onSuccess: () => {
+    onSuccess: (_data, deletedChatId) => {
       queryClient.invalidateQueries({ queryKey: ["chats"] });
+      queryClient.invalidateQueries({ queryKey: ["chat", deletedChatId] });
+      queryClient.invalidateQueries({ queryKey: ["messages", deletedChatId] });
       toast({
         description: "Чат успешно удален",
         autoHiding: 5000,

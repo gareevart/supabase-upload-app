@@ -53,7 +53,7 @@
   animation: pulse-reasoning 2s ease-in-out infinite;
 }
 
-/* Адаптивность */
+
 /* Адаптивность */
 @media (max-width: 768px) {
   .chat-message-form {

@@ -1,20 +1,24 @@
 import { useState, useRef } from "react";
 import { TextArea, Button, Icon } from '@gravity-ui/uikit';
-import { Bulb, Stop, ArrowUturnCwLeft } from '@gravity-ui/icons';
+import { Bulb, Stop, ArrowUturnCwLeft, Globe } from '@gravity-ui/icons';
 import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
 import { FileUploader, FileAttachment } from "./FileUploader";
 import "./ChatMessageForm.css";
 
 interface ChatMessageFormProps {
-  onSubmit: (message: string, files?: FileAttachment[]) => Promise<void>;
+  onSubmit: (message: string, files?: FileAttachment[], useWebSearch?: boolean) => Promise<void>;
   isMessageSending: boolean;
   disabled?: boolean;
+  useWebSearch: boolean;
+  onToggleWebSearch: () => void;
 }
 
 export const ChatMessageForm = ({
   onSubmit,
   isMessageSending,
-  disabled = false
+  disabled = false,
+  useWebSearch,
+  onToggleWebSearch
 }: ChatMessageFormProps) => {
   const { reasoningMode, setReasoningMode, selectedModel } = useModelSelection();
   const [messageText, setMessageText] = useState("");
@@ -33,7 +37,7 @@ export const ChatMessageForm = ({
     setAttachedFiles([]);
 
     try {
-      await onSubmit(message, files.length > 0 ? files : undefined);
+      await onSubmit(message, files.length > 0 ? files : undefined, useWebSearch);
     } catch (error) {
       console.error("Error sending message:", error);
       // Restore message and files if failed
@@ -91,13 +95,26 @@ export const ChatMessageForm = ({
             compact={true}
           />
 
+          <Button
+            type="button"
+            size="m"
+            view={useWebSearch ? "action" : "outlined"}
+            onClick={onToggleWebSearch}
+            title={useWebSearch ? "Web-search enabled" : "Use web-search"}
+            disabled={disabled}
+            className="chat-message-form__button chat-message-form__button--web-search"
+          >
+            <Icon data={Globe} size={16} />
+          </Button>
+
           {/* Show reasoning button only for YandexGPT */}
           {selectedModel === 'yandexgpt' && (
             <Button
+              type="button"
               size="m"
               view={reasoningMode ? "action" : "outlined"}
               onClick={() => setReasoningMode(!reasoningMode)}
-              title={reasoningMode ? "Отключить режим рассуждений" : "Включить режим рассуждений"}
+              title={reasoningMode ? "Disable reasoning mode" : "Enable reasoning mode"}
               disabled={disabled}
               className={`chat-message-form__button chat-message-form__button--reasoning ${reasoningMode ? 'active' : ''}`}
             >

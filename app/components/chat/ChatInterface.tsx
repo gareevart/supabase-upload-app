@@ -3,13 +3,14 @@ import Image from "next/image";
 import { useChat, Message, FileAttachment } from "@/hooks/useChat";
 import ReactMarkdown from 'react-markdown';
 import { Button, TextArea, Icon, Dialog, Text, Spin, Label, List, Link, DropdownMenu, useToaster, Select, HelpMark, ClipboardButton } from '@gravity-ui/uikit';
-import { Gear, Bars } from '@gravity-ui/icons';
+import { Gear, Bars, Plus } from '@gravity-ui/icons';
 import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
 import { ReasoningBlock } from "./ReasoningBlock";
 import { ChatMessageForm } from "./ChatMessageForm";
 import { useChatSidebar } from "./ChatSidebarContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DrawerMenu } from "@/shared/ui/DrawerMenu";
+import { useCreateChat } from "@/hooks/useCreateChat";
 import "./ChatInterface.css";
 import "@/app/blog/blog.css";
 
@@ -34,9 +35,11 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
   const { reasoningMode, selectedModel, setSelectedModel } = useModelSelection();
   const { toggleSidebar, isMobileSidebarOpen } = useChatSidebar();
   const isMobile = useIsMobile();
+  const { handleCreateChat, createChat } = useCreateChat();
   const [systemPrompt, setSystemPrompt] = useState("");
   const [currentReasoning, setCurrentReasoning] = useState("");
   const [isReasoningActive, setIsReasoningActive] = useState(false);
+  const [useWebSearch, setUseWebSearch] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
 
@@ -64,7 +67,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
     scrollToBottom();
   }, [messages]);
 
-  const handleMessageSubmit = async (message: string, files?: FileAttachment[]) => {
+  const handleMessageSubmit = async (message: string, files?: FileAttachment[], useWebSearch?: boolean) => {
     // Reset reasoning state
     setCurrentReasoning("");
     setIsReasoningActive(false);
@@ -75,7 +78,11 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
         setIsReasoningActive(true);
       }
 
-      await sendMessage.mutateAsync({ content: message, attachments: files });
+      await sendMessage.mutateAsync({
+        content: message,
+        attachments: files,
+        useWebSearch: useWebSearch
+      });
 
       // Stop reasoning when done
       setIsReasoningActive(false);
@@ -124,8 +131,26 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
 
   if (!chat) {
     return (
-      <div>
-        <Text variant="body-2" color="secondary">Chat not found or deleted</Text>
+      <div className="chat-empty-state-container">
+        <div className="chat-empty-state">
+          <Text variant="header-1" className="chat-empty-title">
+            Чат удален
+          </Text>
+          <Text variant="body-1" className="chat-empty-subtitle" color="secondary">
+            Создайте новый чат и продолжайте общение.
+          </Text>
+          <div className="chat-empty-actions">
+            <Button
+              view="action"
+              size="l"
+              onClick={handleCreateChat}
+              loading={createChat.isPending}
+            >
+              <Icon data={Plus} size={16} />
+              Создать чат
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -197,11 +222,17 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
           )}
 
           <div className="chat-interface__status">
+          {useWebSearch && (
+              <Label theme="info" size="m">
+                Web-search
+              </Label>
+            )}
             {reasoningMode && selectedModel === 'yandexgpt' && (
               <Label theme="info" size="m">
                 Thinking mode
               </Label>
             )}
+
           </div>
         </div>
 
@@ -225,10 +256,12 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
 
       <div className="chat-interface__messages chat-messages">
         {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
+          <div className="chat-empty-state-container">
             <div className="chat-empty-state">
-              <Text variant="header-1" className="mb-2">Начните общение с ассистентом</Text>
-              <Text variant="body-1" className="mb-1" color="complementary">Задайте вопрос или опишите, что вам нужно</Text>
+              <Text variant="header-1" className="chat-empty-title">Начните общение с ассистентом</Text>
+              <Text variant="body-1" className="chat-empty-subtitle" color="complementary">
+                Задайте вопрос или опишите, что вам нужно
+              </Text>
             </div>
           </div>
         ) : (
@@ -257,7 +290,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
             )}
             {isAssistantTyping && (
               <div className="flex items-center gap-2 py-2 px-4 bg-muted rounded-lg w-fit">
-                <div className="text-sm">Ассистент печатает</div>
+                <div className="text-sm">Чат отвечает...</div>
                 <Spin size="xs" />
               </div>
             )}
@@ -270,6 +303,8 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
         <ChatMessageForm
           onSubmit={handleMessageSubmit}
           isMessageSending={isMessageSending}
+          useWebSearch={useWebSearch}
+          onToggleWebSearch={() => setUseWebSearch((prev) => !prev)}
         />
       </div>
 
@@ -311,8 +346,18 @@ interface ChatMessageProps {
 const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
   const isUser = message.role === "user";
   const sources = message.metadata?.sources ?? [];
-  const hasSources = sources.length > 0;
-  const hasMultipleSources = sources.length > 1;
+  const normalizedSources = sources
+    .map((source) => {
+      const href = source.url ? source.url : source.slug ? `/blog/${source.slug}` : undefined;
+      return {
+        ...source,
+        href,
+        isExternal: Boolean(source.url && !source.slug)
+      };
+    })
+    .filter((source) => source.href || source.title);
+  const hasSources = normalizedSources.length > 0;
+  const hasMultipleSources = normalizedSources.length > 1;
 
   const getFileIcon = (type: string) => {
     if (type.startsWith('image/')) return '🖼️';
@@ -405,20 +450,29 @@ const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
                 >
                   <div style={{ padding: 8 }}>
                     <List
-                      items={sources}
+                      items={normalizedSources}
                       filterable={false}
                       sortable={false}
                       virtualized={false}
                       renderItem={(source) => (
                         <div style={{ padding: '4px 0' }}>
-                          <Link
-                            href={`/blog/${source.slug}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            view="secondary"
-                          >
-                            {source.title}
-                          </Link>
+                          {source.href ? (
+                            <Link
+                              href={source.href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              view="secondary"
+                            >
+                              {source.title}
+                            </Link>
+                          ) : (
+                            <Text variant="body-2">{source.title}</Text>
+                          )}
+                          {source.snippet && (
+                            <Text variant="caption-2" color="secondary" className="chat-source-snippet">
+                              {source.snippet}
+                            </Text>
+                          )}
                         </div>
                       )}
                     />
@@ -427,14 +481,18 @@ const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
               ) : (
                 <Label theme="clear" size="m">
                   Source:{" "}
-                  <Link
-                    href={`/blog/${sources[0].slug}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    view="secondary"
-                  >
-                    {sources[0].title}
-                  </Link>
+                  {normalizedSources[0]?.href ? (
+                    <Link
+                      href={normalizedSources[0].href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      view="secondary"
+                    >
+                      {normalizedSources[0].title}
+                    </Link>
+                  ) : (
+                    <Text variant="body-2">{normalizedSources[0]?.title}</Text>
+                  )}
                 </Label>
               )}
             </div>

@@ -58,6 +58,20 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
     setDeleteDialogOpen(true);
   };
 
+  const confirmDeleteChat = async () => {
+    if (!chatToDelete) {
+      setDeleteDialogOpen(false);
+      return;
+    }
+
+    try {
+      await deleteChat.mutateAsync(chatToDelete);
+      onChatSelect?.();
+    } finally {
+      setDeleteDialogOpen(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -195,12 +209,7 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
               <Button
                 view="outlined-danger"
                 size="l"
-                onClick={async () => {
-                  if (chatToDelete) {
-                    await deleteChat.mutateAsync(chatToDelete);
-                  }
-                  setDeleteDialogOpen(false);
-                }}
+                onClick={confirmDeleteChat}
               >
                 Удалить
               </Button>
@@ -221,12 +230,7 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
           <Dialog.Body>Вы уверены, что хотите удалить этот чат? Это действие нельзя отменить.</Dialog.Body>
           <Dialog.Footer
             onClickButtonCancel={() => setDeleteDialogOpen(false)}
-            onClickButtonApply={async () => {
-              if (chatToDelete) {
-                await deleteChat.mutateAsync(chatToDelete);
-              }
-              setDeleteDialogOpen(false);
-            }}
+            onClickButtonApply={confirmDeleteChat}
             textButtonApply="Удалить"
             textButtonCancel="Отмена"
             propsButtonApply={{ view: 'outlined-danger' }}

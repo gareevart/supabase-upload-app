@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { fetchGenerativeSearch, fetchWebPagesContent } from '@/lib/yandexSearch';
 
 export async function POST(request: Request) {
-  const { prompt, systemPrompt, messageContext, model, reasoningMode } = await request.json();
+  const {
+    prompt,
+    systemPrompt,
+    messageContext,
+    model,
+    reasoningMode,
+    useWebSearch,
+    webSearchQuery
+  } = await request.json();
 
   try {
     // Get auth header from request
@@ -45,6 +54,32 @@ export async function POST(request: Request) {
     }
 
     const folderId = process.env.YANDEX_FOLDER_ID || process.env.YANDEX_CLOUD_FOLDER || 'b1gb5lrqp1jr1tmamu2t';
+
+    const callYandexGPT = async (
+      modelUri: string,
+      messages: any[],
+      completionOptions: any
+    ) => {
+      const response = await fetch('https://llm.api.cloud.yandex.net/foundationModels/v1/completion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Api-Key ${apiKey}`
+        },
+        body: JSON.stringify({
+          modelUri,
+          completionOptions,
+          messages
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`YandexGPT API error: ${response.status} ${errorText}`);
+      }
+
+      return response.json();
+    };
 
     // RAG Implementation: Retrieve context from blog posts
     let contextText = '';
@@ -92,6 +127,80 @@ export async function POST(request: Request) {
       // Continue without context if RAG fails
     }
 
+    const truncateText = (value: string, maxLength: number) =>
+      value.length > maxLength ? `${value.slice(0, maxLength)}…` : value;
+
+    const formatWebSources = (
+      sources: Array<{ title: string; url: string; snippet?: string }>,
+      snippetLimit = 280
+    ) =>
+      sources
+        .map((source) => {
+          const snippet = source.snippet ? `\nSnippet: ${truncateText(source.snippet, snippetLimit)}` : '';
+          return `- ${source.title}\nURL: ${source.url}${snippet}`;
+        })
+        .join('\n');
+
+    const buildSourcesContext = (
+      sources: Array<{ title: string; url: string; snippet?: string }>
+    ) =>
+      sources
+        .map((source, index) => {
+          const snippet = source.snippet ? truncateText(source.snippet, 400) : '';
+          return `Source ${index + 1}: ${source.title}\nURL: ${source.url}\n${snippet}`;
+        })
+        .join('\n\n');
+
+    const countUrls = (text: string) => (text.match(/https?:\/\/\S+/gi) || []).length;
+
+    const appendSourcesIfMissing = (
+      text: string,
+      _sources: Array<{ title: string; url: string }>
+    ) => text;
+
+    // Web search (generative response) integration
+    let webSearchSummary = '';
+    let webSearchSources: Array<{ title: string; url: string; snippet?: string }> = [];
+    let webArticlesContext = '';
+    let webEvidenceContext = '';
+    let webArticlesSummary = '';
+    if (useWebSearch) {
+      try {
+        const searchQuery =
+          (typeof webSearchQuery === 'string' && webSearchQuery.trim()) ||
+          (typeof prompt === 'string' && prompt.trim()) ||
+          '';
+
+        if (searchQuery) {
+          const webSearchResult = await fetchGenerativeSearch(searchQuery, 5);
+          webSearchSummary = webSearchResult.summary || '';
+          webSearchSources = webSearchResult.sources || [];
+
+          if (webSearchSources.length > 0) {
+            const articles = await fetchWebPagesContent(webSearchSources);
+            if (articles.length > 0) {
+              const maxTotalChars = 6000;
+              let currentTotal = 0;
+              const chunks: string[] = [];
+
+              for (const [index, article] of articles.entries()) {
+                const text = article.text.slice(0, 1000);
+                const chunk = `Article ${index + 1}: ${article.title}\nURL: ${article.url}\nContent:\n${text}`;
+                if (currentTotal + chunk.length > maxTotalChars) break;
+                chunks.push(chunk);
+                currentTotal += chunk.length;
+              }
+
+              webArticlesContext = chunks.join('\n\n');
+            }
+            webEvidenceContext = webArticlesContext || buildSourcesContext(webSearchSources);
+          }
+        }
+      } catch (webSearchError) {
+        console.error('Web search error:', webSearchError);
+      }
+    }
+
     // Prepare messages for the API
     const messages = [];
 
@@ -102,8 +211,76 @@ export async function POST(request: Request) {
       finalSystemPrompt += `\n\nUse the following context from the user's blog to answer the question if relevant:\n\n${contextText}\n\nIf the context doesn't contain the answer, answer from your general knowledge but prioritize the context.`;
     }
 
+    if (webSearchSummary || webSearchSources.length > 0) {
+      const formattedSources = formatWebSources(webSearchSources);
+      finalSystemPrompt += `\n\nYou have access to web search results below. Use them to answer the user and do not say you cannot access real-time information.\n` +
+        `${webSearchSummary ? `\nSummary:\n${webSearchSummary}\n` : ''}` +
+        `${formattedSources ? `\nSources:\n${formattedSources}\n` : ''}` +
+        `\nIf the web data is insufficient, explain the limitation briefly and answer using general knowledge without disclaimers about internet access.`;
+    }
+
     if (finalSystemPrompt && finalSystemPrompt.trim()) {
       messages.push({ role: 'system', text: finalSystemPrompt.trim() });
+    }
+
+    if (webSearchSources.length > 0 || webSearchSummary || webEvidenceContext) {
+      if (webEvidenceContext) {
+        const summaryMessages = [
+          {
+            role: 'system',
+            text:
+              'You are a research assistant. Summarize the key facts from the provided sources. ' +
+              'Keep it concise, factual, and avoid speculation. Provide a single summary in Russian. ' +
+              'Prefer using at least three different sources and mention concrete facts.'
+          },
+          {
+            role: 'user',
+            text: webEvidenceContext
+          }
+        ];
+
+        try {
+          const summaryResult = await callYandexGPT(
+            `gpt://${folderId}/yandexgpt/latest`,
+            summaryMessages,
+            { stream: false, temperature: 0.2, maxTokens: '700' }
+          );
+          webArticlesSummary = summaryResult.result?.alternatives?.[0]?.message?.text || '';
+        } catch (summaryError) {
+          console.error('Web articles summary error:', summaryError);
+        }
+      }
+
+      const shouldIncludeArticleContext = !webArticlesSummary && webEvidenceContext;
+      const contextLines = [
+        webSearchSummary ? `Summary:\n${webSearchSummary}` : undefined,
+        webArticlesSummary ? `Articles summary:\n${webArticlesSummary}` : undefined,
+        shouldIncludeArticleContext ? `Sources excerpts:\n${webEvidenceContext}` : undefined,
+        webSearchSources.length > 0
+          ? `Sources:\n${webSearchSources
+              .map((source) => {
+                const snippet = source.snippet ? `\nSnippet: ${truncateText(source.snippet, 280)}` : '';
+                return `- ${source.title}\nURL: ${source.url}${snippet}`;
+              })
+              .join('\n')}`
+          : undefined
+      ]
+        .filter(Boolean)
+        .join('\n\n');
+
+      if (contextLines.trim()) {
+        messages.push({
+          role: 'system',
+          text:
+            `Web search context:\n${contextLines}\n\n` +
+            `Instructions (highest priority):\n` +
+            `- Use the web search context to answer.\n` +
+            `- Do NOT say you lack real-time data or internet access.\n` +
+            `- If information is limited, answer based on the sources and say it's a summary of search results.\n` +
+            `- Synthesize information from at least 3 sources when possible.\n` +
+            `- Include sources in the response.`
+        });
+      }
     }
 
     // Add message context (conversation history) if provided
@@ -119,6 +296,15 @@ export async function POST(request: Request) {
     // If no context is provided, just add the user prompt
     else if (prompt && prompt.trim()) {
       messages.push({ role: 'user', text: prompt.trim() });
+    }
+
+    if (webSearchSources.length > 0 || webSearchSummary) {
+      messages.push({
+        role: 'system',
+        text:
+          `Reminder: web search context is available. Answer using it and never claim lack of real-time access.\n` +
+          `Provide a concise summary and 3-6 facts. Do not include sources in the text response.`
+      });
     }
 
     // Ensure we have at least one non-system message
@@ -158,7 +344,7 @@ export async function POST(request: Request) {
     // Prepare completion options
     const completionOptions: any = {
       stream: false,
-      temperature: reasoningMode ? 0.1 : 0.6,
+      temperature: reasoningMode ? 0.1 : (useWebSearch ? 0.2 : 0.6),
       maxTokens: reasoningMode ? '1000' : '2000'
     };
 
@@ -204,10 +390,14 @@ export async function POST(request: Request) {
     console.log('YandexGPT API response:', result);
 
     // Extract the text from the response
-    const generatedText = result.result?.alternatives?.[0]?.message?.text;
+    let generatedText = result.result?.alternatives?.[0]?.message?.text;
 
     if (!generatedText) {
       throw new Error('No text found in the response');
+    }
+
+    if (useWebSearch && webSearchSources.length > 0) {
+      generatedText = appendSourcesIfMissing(generatedText, webSearchSources);
     }
 
     // Extract token usage information
@@ -219,14 +409,26 @@ export async function POST(request: Request) {
     } : undefined;
 
     // Extract unique sources for metadata
-    const uniqueSources = Array.from(new Map(
-      ((documents as any[]) || []).map((doc: any) => [doc.post_id, { title: doc.title, slug: doc.slug }])
+    const blogSources = Array.from(new Map(
+      ((documents as any[]) || []).map((doc: any) => [
+        doc.post_id,
+        { title: doc.title, slug: doc.slug, type: 'blog' }
+      ])
     ).values());
+
+    const webSources = (webSearchSources || []).map((source) => ({
+      title: source.title,
+      url: source.url,
+      snippet: source.snippet,
+      type: 'web'
+    }));
+
+    const combinedSources = [...blogSources, ...webSources];
 
     return NextResponse.json({
       text: generatedText,
       usage,
-      metadata: uniqueSources.length > 0 ? { sources: uniqueSources } : undefined
+      metadata: combinedSources.length > 0 ? { sources: combinedSources } : undefined
     });
 
   } catch (error) {

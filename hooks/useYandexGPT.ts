@@ -13,7 +13,10 @@ interface YandexGPTResponse {
   metadata?: {
     sources?: {
       title: string;
-      slug: string;
+      slug?: string;
+      url?: string;
+      snippet?: string;
+      type?: "blog" | "web";
     }[];
   };
   error?: string;
@@ -96,7 +99,9 @@ export const useYandexGPT = () => {
     prompt: string,
     systemPrompt?: string,
     messageContext?: MessageContext[],
-    onReasoningChunk?: (chunk: string) => void
+    onReasoningChunk?: (chunk: string) => void,
+    useWebSearch?: boolean,
+    webSearchQuery?: string
   ): Promise<YandexGPTResponse> => {
     setIsGenerating(true);
     setError(null);
@@ -124,7 +129,9 @@ export const useYandexGPT = () => {
             : (systemPrompt || 'Ты профессиональный ассистент с возможностью работы с изображениями и документами. Если в сообщении есть информация об изображении, используй её для создания интересного и привлекательного контента.'),
           messageContext: messageContext || [],
           model: selectedModel,
-          reasoningMode: reasoningMode
+          reasoningMode: reasoningMode,
+          useWebSearch: Boolean(useWebSearch),
+          webSearchQuery: webSearchQuery || undefined
         })
       });
 

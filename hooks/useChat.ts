@@ -21,7 +21,10 @@ export interface Message {
   metadata?: {
     sources?: {
       title: string;
-      slug: string;
+      slug?: string;
+      url?: string;
+      snippet?: string;
+      type?: "blog" | "web";
     }[];
   };
   created_at?: string;
@@ -54,10 +57,10 @@ export const useChat = (chatId: string) => {
         .from("chat_sessions")
         .select("*")
         .eq("id", chatId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      return data as ChatSession;
+      return data as ChatSession | null;
     },
     enabled: !!chatId,
   });
@@ -133,7 +136,15 @@ export const useChat = (chatId: string) => {
   });
 
   const sendMessage = useMutation({
-    mutationFn: async ({ content, attachments }: { content: string; attachments?: FileAttachment[] }) => {
+    mutationFn: async ({
+      content,
+      attachments,
+      useWebSearch
+    }: {
+      content: string;
+      attachments?: FileAttachment[];
+      useWebSearch?: boolean;
+    }) => {
       setIsMessageSending(true);
       try {
         // Analyze images/files before sending
@@ -371,7 +382,9 @@ export const useChat = (chatId: string) => {
             // Handle reasoning chunks in real-time
             console.log('Reasoning chunk:', reasoningChunk);
             // TODO: Update UI with reasoning chunks
-          }
+          },
+          Boolean(useWebSearch && content.trim()),
+          content.trim()
         );
 
         if (error) {
