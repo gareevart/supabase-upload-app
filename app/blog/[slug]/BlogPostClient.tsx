@@ -190,12 +190,13 @@ export default function BlogPostClient({ params }: { params: { slug: string } })
   return (
     <React.Fragment>
       <div className="blog-post-actionbar">
-        <div className="container mx-auto md:px-6" style={{ maxWidth: '1400px' }}>
+      <div className="container mx-auto md:px-6 blog-post-content" style={{ maxWidth: '1400px' }}>
           <ActionBar aria-label="Post actions">
-            <ActionBar.Section>
-              <ActionBar.Group>
-                <ActionBar.Item>
+            <ActionBar.Section style={{ columnGap: 20, gap: 20 }}>
+              <ActionBar.Group stretchContainer style={{ minWidth: 0 }}>
+                <ActionBar.Item style={{ minWidth: 0, width: '100%' }}>
                   <LegacyBreadcrumbs
+                    className="blog-post-breadcrumbs"
                     lastDisplayedItemsCount={1}
                     firstDisplayedItemsCount={1}
                     items={[
@@ -236,7 +237,7 @@ export default function BlogPostClient({ params }: { params: { slug: string } })
         </div>
       </div>
 
-      <div className="container mx-auto p-4 md:px-6" style={{ maxWidth: '1400px' }}>
+      <div className="container mx-auto p-4 md:px-6 py-8" style={{ maxWidth: '1400px' }}>
         <div style={{
         display: 'flex',
         gap: '24px',
@@ -245,7 +246,7 @@ export default function BlogPostClient({ params }: { params: { slug: string } })
         }}>
           {/* Основной контент */}
           <div style={{ flex: '1', minWidth: 0, maxWidth: isMobile ? '100%' : 'calc(100% - 300px)' }}>
-            <CardTitle className="text-3xl font-bold mb-4">{post.title}</CardTitle>
+            <CardTitle className="text-3xl font-bold mb-4 blog-post-title">{post.title}</CardTitle>
 
             <div className="flex flex-wrap items-center gap-4 mb-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
