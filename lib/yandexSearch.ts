@@ -1,6 +1,3 @@
-import { Readability } from "@mozilla/readability";
-import { JSDOM } from "jsdom";
-
 type UnknownRecord = Record<string, unknown>;
 
 export interface WebSearchSource {
@@ -172,8 +169,12 @@ const stripHtml = (html: string): string => {
   return withoutTags.replace(/\s+/g, " ").trim();
 };
 
-const extractReadableText = (html: string, url: string) => {
+const extractReadableText = async (html: string, url: string) => {
   try {
+    const [{ Readability }, { JSDOM }] = await Promise.all([
+      import("@mozilla/readability"),
+      import("jsdom"),
+    ]);
     const dom = new JSDOM(html, { url });
     const reader = new Readability(dom.window.document);
     const article = reader.parse();
@@ -217,7 +218,7 @@ export async function fetchWebPagesContent(
   const tasks = sources.map(async (source) => {
     try {
       const html = await fetchWithTimeout(source.url, timeoutMs);
-      const readable = extractReadableText(html, source.url);
+      const readable = await extractReadableText(html, source.url);
       const text = readable?.text || stripHtml(html);
       return {
         title: readable?.title || source.title,
