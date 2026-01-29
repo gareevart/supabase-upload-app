@@ -158,21 +158,42 @@ export async function POST(request: Request) {
       _sources: Array<{ title: string; url: string }>
     ) => text;
 
+    const normalizeList = (text: string) =>
+      text
+        .split('\n')
+        .map((line) => line.replace(/^\s*[-*\d.)]+\s*/g, '').trim())
+        .filter(Boolean);
+
+    const hasBulletList = (text: string) => /(^|\n)\s*[-*•]\s+\S+/m.test(text);
+
+    const appendEntityListIfMissing = (text: string, entityList: string) => {
+      if (!entityList) return text;
+      const items = normalizeList(entityList);
+      if (!items.length) return text;
+      if (hasBulletList(text)) return text;
+      const list = items.slice(0, 10).map((item) => `- ${item}`).join('\n');
+      return `${text}\n\nСписок заведений:\n${list}`;
+    };
+
+    const userQuestion =
+      (typeof webSearchQuery === 'string' && webSearchQuery.trim()) ||
+      (typeof prompt === 'string' && prompt.trim()) ||
+      '';
+    const requiresEntityList =
+      /(?:какие|перечисли|список|назови)/i.test(userQuestion) &&
+      /(?:кафе|ресторан|бар|кофейня|пекарня)/i.test(userQuestion);
+
     // Web search (generative response) integration
     let webSearchSummary = '';
     let webSearchSources: Array<{ title: string; url: string; snippet?: string }> = [];
     let webArticlesContext = '';
     let webEvidenceContext = '';
     let webArticlesSummary = '';
+    let webEntityList = '';
     if (useWebSearch) {
       try {
-        const searchQuery =
-          (typeof webSearchQuery === 'string' && webSearchQuery.trim()) ||
-          (typeof prompt === 'string' && prompt.trim()) ||
-          '';
-
-        if (searchQuery) {
-          const webSearchResult = await fetchGenerativeSearch(searchQuery, 5);
+        if (userQuestion) {
+          const webSearchResult = await fetchGenerativeSearch(userQuestion, 5);
           webSearchSummary = webSearchResult.summary || '';
           webSearchSources = webSearchResult.sources || [];
 
@@ -231,11 +252,12 @@ export async function POST(request: Request) {
             text:
               'You are a research assistant. Summarize the key facts from the provided sources. ' +
               'Keep it concise, factual, and avoid speculation. Provide a single summary in Russian. ' +
-              'Prefer using at least three different sources and mention concrete facts.'
+              'Prefer using at least three different sources and mention concrete facts. ' +
+              'If the user asks for a list of venues, include a separate section "Список заведений".'
           },
           {
             role: 'user',
-            text: webEvidenceContext
+            text: `Question: ${userQuestion}\n\nSources:\n${webEvidenceContext}`
           }
         ];
 
@@ -251,10 +273,38 @@ export async function POST(request: Request) {
         }
       }
 
+      if (requiresEntityList && webEvidenceContext) {
+        const extractMessages = [
+          {
+            role: 'system',
+            text:
+              'Extract venue names from the provided sources. ' +
+              'Return only a bullet list of venue names in Russian. ' +
+              'If no venue names are present, return an empty list.'
+          },
+          {
+            role: 'user',
+            text: `Question: ${userQuestion}\n\nSources:\n${webEvidenceContext}`
+          }
+        ];
+
+        try {
+          const extractResult = await callYandexGPT(
+            `gpt://${folderId}/yandexgpt/latest`,
+            extractMessages,
+            { stream: false, temperature: 0.1, maxTokens: '300' }
+          );
+          webEntityList = extractResult.result?.alternatives?.[0]?.message?.text || '';
+        } catch (extractError) {
+          console.error('Web entity extraction error:', extractError);
+        }
+      }
+
       const shouldIncludeArticleContext = !webArticlesSummary && webEvidenceContext;
       const contextLines = [
         webSearchSummary ? `Summary:\n${webSearchSummary}` : undefined,
         webArticlesSummary ? `Articles summary:\n${webArticlesSummary}` : undefined,
+        webEntityList ? `Entity list:\n${webEntityList}` : undefined,
         shouldIncludeArticleContext ? `Sources excerpts:\n${webEvidenceContext}` : undefined,
         webSearchSources.length > 0
           ? `Sources:\n${webSearchSources
@@ -278,7 +328,7 @@ export async function POST(request: Request) {
             `- Do NOT say you lack real-time data or internet access.\n` +
             `- If information is limited, answer based on the sources and say it's a summary of search results.\n` +
             `- Synthesize information from at least 3 sources when possible.\n` +
-            `- Include sources in the response.`
+            `- Do not include sources in the response text.`
         });
       }
     }
@@ -303,7 +353,8 @@ export async function POST(request: Request) {
         role: 'system',
         text:
           `Reminder: web search context is available. Answer using it and never claim lack of real-time access.\n` +
-          `Provide a concise summary and 3-6 facts. Do not include sources in the text response.`
+          `Provide a concise summary and 3-6 facts. Do not include sources in the text response.` +
+          (requiresEntityList ? `\nProvide a clear list of venue names with short notes.` : '')
       });
     }
 
@@ -398,6 +449,10 @@ export async function POST(request: Request) {
 
     if (useWebSearch && webSearchSources.length > 0) {
       generatedText = appendSourcesIfMissing(generatedText, webSearchSources);
+    }
+
+    if (useWebSearch && requiresEntityList && webEntityList) {
+      generatedText = appendEntityListIfMissing(generatedText, webEntityList);
     }
 
     // Extract token usage information
