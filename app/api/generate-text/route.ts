@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { fetchGenerativeSearch, fetchWebPagesContent } from '@/lib/yandexSearch';
 
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204 });
+}
+
 export async function POST(request: Request) {
   const {
     prompt,
