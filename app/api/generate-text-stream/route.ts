@@ -29,6 +29,12 @@ export async function POST(request: Request) {
         },
       },
     });
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const admin = supabaseServiceKey
+      ? createClient(supabaseUrl, supabaseServiceKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        })
+      : null;
 
     // Verify user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -72,11 +78,20 @@ export async function POST(request: Request) {
         const queryEmbedding = await getEmbeddings(searchQuery, 'QUERY');
 
         // Search for similar blog posts
-        const { data: searchResults, error: searchError } = await supabase.rpc('match_blog_posts', {
+        let { data: searchResults, error: searchError } = await (admin || supabase).rpc('match_blog_posts', {
           query_embedding: queryEmbedding,
-          match_threshold: 0.1, // Threshold for relevance
-          match_count: 3 // Top 3 results
+          match_threshold: 0.05,
+          match_count: 5
         });
+        if ((!searchResults || searchResults.length === 0) && !searchError) {
+          const retry = await (admin || supabase).rpc('match_blog_posts', {
+            query_embedding: queryEmbedding,
+            match_threshold: 0.02,
+            match_count: 5
+          });
+          searchResults = retry.data || [];
+          searchError = retry.error || null;
+        }
         documents = searchResults || [];
 
         if (searchError) {
@@ -179,9 +194,29 @@ export async function POST(request: Request) {
     const stream = new ReadableStream({
       async start(controller) {
         // Prepare metadata for sources
+        // Ensure we have title/slug in streaming metadata as well
+        let enrichedDocs = documents || [];
+        const missingMeta = enrichedDocs.some((d: any) => !d.title || !d.slug);
+        if (missingMeta) {
+          try {
+            const postIds = Array.from(new Set(enrichedDocs.map((d: any) => d.post_id).filter(Boolean)));
+            if (postIds.length > 0) {
+              const { data: postsMeta } = await supabase
+                .from('blog_posts')
+                .select('id, title, slug')
+                .in('id', postIds);
+              const byId = new Map((postsMeta || []).map((p: any) => [p.id, p]));
+              enrichedDocs = enrichedDocs.map((d: any) => {
+                const meta = byId.get(d.post_id);
+                return meta ? { ...d, title: d.title || meta.title, slug: d.slug || meta.slug } : d;
+              });
+            }
+          } catch {}
+        }
+
         const uniqueSources = Array.from(new Map(
-          (documents || []).map((doc: any) => [doc.post_id, { title: doc.title, slug: doc.slug }])
-        ).values());
+          (enrichedDocs || []).map((doc: any) => [doc.post_id, { title: doc.title || 'Blog post', slug: doc.slug }])
+        ).values()).filter((s: any) => s.slug || s.title);
 
         if (uniqueSources.length > 0) {
           controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ metadata: { sources: uniqueSources } })}\n\n`));

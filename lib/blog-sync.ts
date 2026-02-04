@@ -18,13 +18,35 @@ export function extractTextFromTiptap(content: any): string {
             const parsed = JSON.parse(content);
             return extractTextFromTiptap(parsed);
         } catch (e) {
-            // Not a JSON string, return as is
+            // Not a JSON string, return as-is (plain text)
             return content;
         }
     }
 
+    // NEW: Support current blog editor format (EditorContent[])
+    // [{ type: 'paragraph'|'heading'|'image', content: string, alt?: string }]
+    if (Array.isArray(content)) {
+        return content
+            .map((block) => {
+                if (!block || typeof block !== 'object') return '';
+                const type = block.type;
+                if (type === 'image') {
+                    // Prefer descriptive alt text; skip raw image URLs
+                    return (block.alt || '').trim();
+                }
+                // paragraph or heading
+                const val = (block.content || '').toString();
+                return val;
+            })
+            .filter(Boolean)
+            .join(' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
     let text = '';
 
+    // Legacy TipTap JSON tree support
     if (content.type === 'text') {
         const val = content.text || '';
         // Skip large chunks without spaces (likely images or noise)
