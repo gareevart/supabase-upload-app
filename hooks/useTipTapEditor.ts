@@ -11,6 +11,19 @@ export const useTipTapEditor = (initialPost?: any, onSave?: (published: boolean,
   const [slug, setSlug] = useState(initialPost?.slug || "");
   const [excerpt, setExcerpt] = useState(initialPost?.excerpt || "");
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(!!initialPost?.slug);
+
+  const normalizeSlug = (value: string): string => {
+    const hasCyrillic = /[а-яА-ЯёЁ]/.test(value);
+    const processedValue = hasCyrillic ? transliterate(value) : value;
+
+    return processedValue
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .substring(0, 50);
+  };
   
   // Initialize content based on the format of initialPost.content
   const [tipTapContent, setTipTapContent] = useState(() => {
@@ -74,22 +87,16 @@ export const useTipTapEditor = (initialPost?: any, onSave?: (published: boolean,
         return;
       }
 
-      // Generate slug if not provided
-      let finalSlug = slug;
-      if (!finalSlug.trim()) {
-        // Check if title contains Cyrillic characters
-        const hasCyrillic = /[а-яА-ЯёЁ]/.test(title);
-        
-        // If title has Cyrillic characters, transliterate them
-        const processedTitle = hasCyrillic ? transliterate(title) : title;
-        
-        finalSlug = processedTitle
-          .toLowerCase()
-          .replace(/[^\w\s-]/g, '')
-          .replace(/\s+/g, '-')
-          .replace(/-+/g, '-')
-          .replace(/^-+|-+$/g, '')
-          .substring(0, 50);
+      // Normalize slug (manual or generated from title)
+      const finalSlug = normalizeSlug(slug.trim() ? slug : title);
+      if (!finalSlug) {
+        setIsLoading(false);
+        toast({
+          title: "Error",
+          description: "Slug is required and must contain only lowercase letters, numbers, and hyphens",
+          variant: "destructive"
+        });
+        return;
       }
 
       // Prepare post data
@@ -294,7 +301,7 @@ export const useTipTapEditor = (initialPost?: any, onSave?: (published: boolean,
 
   // Custom setSlug function that tracks manual edits
   const handleSlugChange = (newSlug: string) => {
-    setSlug(newSlug);
+    setSlug(normalizeSlug(newSlug));
     setSlugManuallyEdited(true);
   };
 
@@ -302,19 +309,7 @@ export const useTipTapEditor = (initialPost?: any, onSave?: (published: boolean,
   useEffect(() => {
     // Only auto-generate slug if it hasn't been manually edited
     if (title && !slugManuallyEdited) {
-      // Check if title contains Cyrillic characters
-      const hasCyrillic = /[а-яА-ЯёЁ]/.test(title);
-      
-      // If title has Cyrillic characters, transliterate them
-      const processedTitle = hasCyrillic ? transliterate(title) : title;
-      
-      const generatedSlug = processedTitle
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-+|-+$/g, '');
-      setSlug(generatedSlug);
+      setSlug(normalizeSlug(title));
     }
   }, [title, slugManuallyEdited]);
 

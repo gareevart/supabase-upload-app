@@ -20,7 +20,7 @@ function BlogPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  // Получаем фильтр и вид из URL параметров
+  // Get filter and view from URL parameters
   const filterParam = searchParams?.get('filter') as PostFilter | null
   const viewParam = searchParams?.get('view')
 
@@ -28,7 +28,7 @@ function BlogPageContent() {
   const [postFilter, setPostFilter] = useState<PostFilter>(filterParam || 'all');
   const isMobile = useIsMobile()
 
-  // Синхронизируем состояние с URL параметрами
+  // Synchronize state with URL parameters
   useEffect(() => {
     if (filterParam && ['all', 'published', 'drafts'].includes(filterParam)) {
       setPostFilter(filterParam)
@@ -38,7 +38,7 @@ function BlogPageContent() {
     }
   }, [filterParam, viewParam])
 
-  // Используем хуки с кэшированием
+  // Use hooks with caching
   const { isAuthenticated } = useAuth()
   const { hasDrafts, userId } = useUserDrafts()
 
@@ -50,8 +50,8 @@ function BlogPageContent() {
     const hasContent = !!query.trim()
     setSearchActive(hasContent)
 
-    // Если есть содержимое, оставляем контролы скрытыми
-    // Если содержимого нет и нет фокуса, показываем контролы
+    // If there is content, keep controls hidden
+    // If there is no content and no focus, show controls
     if (!hasContent && !searchFocused) {
       setControlsHidden(false)
     } else if (hasContent) {
@@ -95,9 +95,9 @@ function BlogPageContent() {
   }
 
   const filterOptions = [
-    { value: 'all', content: 'Все статьи' },
-    { value: 'published', content: 'Опубликованные' },
-    { value: 'drafts', content: 'Черновики' }
+    { value: 'all', content: 'All posts' },
+    { value: 'published', content: 'Published' },
+    { value: 'drafts', content: 'Drafts' }
   ];
 
   // Handle filter change
@@ -116,16 +116,16 @@ function BlogPageContent() {
   const getPostListProps = () => {
     const baseProps = {
       gridView,
-      onlyMyPosts: false // На публичной странице блога показываем все посты
+      onlyMyPosts: false // On the public blog page, show all posts
     };
 
     switch (postFilter) {
       case 'published':
         return { ...baseProps, publishedOnly: true, onlyMyPosts: isAuthenticated && userId ? true : false };
       case 'drafts':
-        return { ...baseProps, draftsOnly: true, onlyMyPosts: true }; // Черновики только свои
+        return { ...baseProps, draftsOnly: true, onlyMyPosts: true }; // Drafts only own
       default:
-        return { ...baseProps, publishedOnly: true }; // По умолчанию показываем все опубликованные посты
+        return { ...baseProps, publishedOnly: true }; // By default, show all published posts
     }
   };
 

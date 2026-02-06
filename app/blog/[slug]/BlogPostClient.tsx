@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast"
 import React from "react"
 import { TableOfContents } from "@/shared/ui/TableOfContents"
 import { useIsMobile } from "@/hooks/use-mobile"
+import Subscribe from "@/app/components/Subscribe/Subscribe"
 
 interface BlogPost {
   id: string
@@ -282,6 +283,7 @@ export default function BlogPostClient({ params }: { params: { slug: string } })
               {/* Use TipTapContent to render content regardless of format */}
               <TipTapContent content={post.content} />
             </CardContent>
+            <Subscribe />
           </div>
 
           {/* Table of Contents - только на десктопе справа */}

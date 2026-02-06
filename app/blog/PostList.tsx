@@ -28,7 +28,7 @@ export const PostList = ({
 
   const POSTS_PER_PAGE = 10;
 
-  // Используем хук с кэшированием через SWR
+  // Use hook with caching through SWR
   const { posts, totalCount, isLoading, mutate } = useBlogPosts({
     publishedOnly,
     draftsOnly,
@@ -39,7 +39,7 @@ export const PostList = ({
   });
 
   const handleDeletePost = async (postId: string) => {
-    if (!confirm("Вы уверены, что хотите удалить этот черновик? Это действие нельзя отменить.")) {
+    if (!confirm("Are you sure you want to delete this draft? This action cannot be undone.")) {
       return;
     }
 
@@ -48,12 +48,12 @@ export const PostList = ({
     try {
       await deleteBlogPost(postId);
       
-      // Обновляем кэш после удаления
+      // Update cache after deletion
       mutate();
       
       showToast({
-        title: "Черновик удален",
-        description: "Черновик был успешно удален",
+        title: "Draft deleted",
+        description: "Draft was successfully deleted",
         variant: "default"
       });
     } catch (error) {
