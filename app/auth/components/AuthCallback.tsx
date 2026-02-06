@@ -9,7 +9,7 @@ const AuthCallback = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [message, setMessage] = useState('Обработка авторизации...');
+  const [message, setMessage] = useState('Processing authorization...');
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -34,7 +34,7 @@ const AuthCallback = () => {
         if (error) {
           console.error('OAuth error:', error, errorDescription);
           setStatus('error');
-          setMessage(`Ошибка авторизации: ${errorDescription || error}`);
+          setMessage(`Authorization error: ${errorDescription || error}`);
           setTimeout(() => router.push('/auth'), 3000);
           return;
         }
@@ -51,7 +51,7 @@ const AuthCallback = () => {
           if (sessionError) {
             console.error('Session error:', sessionError);
             setStatus('error');
-            setMessage(`Ошибка установки сессии: ${sessionError.message}`);
+            setMessage(`Session setup error: ${sessionError.message}`);
             setTimeout(() => router.push('/auth'), 3000);
             return;
           }
@@ -59,7 +59,7 @@ const AuthCallback = () => {
           if (data.user) {
             console.log('User authenticated successfully:', data.user.id);
             setStatus('success');
-            setMessage('Авторизация успешна! Перенаправление...');
+            setMessage('Authorization successful!');
             
             // Проверяем сохраненный return URL или используем профиль по умолчанию
             const returnUrl = typeof window !== 'undefined' ? sessionStorage.getItem('returnUrl') : null;
@@ -74,7 +74,7 @@ const AuthCallback = () => {
             }, 1500);
           } else {
             setStatus('error');
-            setMessage('Не удалось получить данные пользователя');
+            setMessage('Failed to get user data');
             setTimeout(() => router.push('/auth'), 3000);
           }
         } else {
@@ -94,9 +94,9 @@ const AuthCallback = () => {
           if (session?.user) {
             console.log('Existing session found:', session.user.id);
             setStatus('success');
-            setMessage('Авторизация успешна! Перенаправление...');
+            setMessage('Authorization successful! Redirecting...');
             
-            // Проверяем сохраненный return URL или используем профиль по умолчанию
+            // Check saved return URL or use default profile
             const returnUrl = typeof window !== 'undefined' ? sessionStorage.getItem('returnUrl') : null;
             const redirectPath = returnUrl || '/auth/profile';
             if (returnUrl) {
@@ -107,7 +107,7 @@ const AuthCallback = () => {
           } else {
             console.log('No session found, redirecting to auth');
             setStatus('error');
-            setMessage('Сессия не найдена. Перенаправление на страницу входа...');
+            setMessage('Session not found. Redirecting to login page...');
             setTimeout(() => router.push('/auth'), 3000);
           }
         }

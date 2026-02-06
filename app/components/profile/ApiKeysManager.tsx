@@ -97,16 +97,18 @@ export const ApiKeysManager: React.FC = () => {
               ).trim() || undefined
             : undefined;
 
-        console.error('API error detail:', {
-          url: response.url,
-          status: response.status,
-          statusText: response.statusText,
-          contentType,
-          responseLength: responseText.length,
-          error: errorData,
-        });
         const resolvedMessage =
           response.status === 401 ? 'No active session' : errorMessage;
+        if (response.status !== 401) {
+          console.error('API error detail:', {
+            url: response.url,
+            status: response.status,
+            statusText: response.statusText,
+            contentType,
+            responseLength: responseText.length,
+            error: errorData,
+          });
+        }
         throw new Error(resolvedMessage || `Failed to fetch API keys (${response.status} ${response.statusText || 'Unknown status'})`);
       }
 

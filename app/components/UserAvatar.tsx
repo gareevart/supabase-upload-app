@@ -1,58 +1,67 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Avatar, Skeleton } from '@gravity-ui/uikit';
 import { EyesLookRight, EyesLookLeft } from '@gravity-ui/icons';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/app/contexts/AuthContext';
 
-interface UserData {
-  email: string | null;
-  avatar_url: string | null;
-}
-
 export default function UserAvatar() {
   const { user, loading: authLoading } = useAuth();
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [currentIcon, setCurrentIcon] = useState<typeof EyesLookRight | typeof EyesLookLeft>(EyesLookRight);
+  const emailText = useMemo(() => {
+    if (!user?.email) return null;
+    return user.email.substring(0, 2).toUpperCase();
+  }, [user?.email]);
 
   useEffect(() => {
+    let isActive = true;
     async function fetchUserData() {
       try {
+        setLoading(true);
         if (!user) {
-          setUserData(null);
-          setLoading(false);
+          if (isActive) {
+            setAvatarUrl(null);
+            setLoading(false);
+          }
           return;
         }
         
         // Get the user's profile
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('avatar_url')
           .eq('id', user.id)
           .single();
-        
-        setUserData({
-          email: user.email || null,
-          avatar_url: profile?.avatar_url || null
-        });
+
+        if (error) {
+          throw error;
+        }
+
+        if (isActive) {
+          setAvatarUrl(profile?.avatar_url || null);
+        }
       } catch (error) {
         console.error('Error fetching user data:', error);
+        if (isActive) {
+          setAvatarUrl(null);
+        }
       } finally {
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     }
     
-    if (!authLoading) {
-      fetchUserData();
-    }
+    if (!authLoading) fetchUserData();
 
     // Subscribe to profile changes only if user exists
     let profileSubscription: any = null;
     if (user) {
       profileSubscription = supabase
-        .channel('profile_changes')
+        .channel(`profile_changes_${user.id}`)
         .on(
           'postgres_changes',
           {
@@ -67,6 +76,7 @@ export default function UserAvatar() {
     }
 
     return () => {
+      isActive = false;
       if (profileSubscription) {
         profileSubscription.unsubscribe();
       }
@@ -93,15 +103,15 @@ export default function UserAvatar() {
   }
 
   // If no user is authenticated, show avatar with animated icon
-  if (!user || !userData) {
+  if (!user) {
     return <Avatar icon={currentIcon} size="l" />;
   }
 
   // If user has an avatar, show it
-  if (userData.avatar_url) {
+  if (avatarUrl) {
     return (
       <Avatar 
-        imgUrl={userData.avatar_url} 
+        imgUrl={avatarUrl} 
         fallbackImgUrl="https://loremflickr.com/640/480/cats?lock=3552647338524672" 
         size="l" 
       />
@@ -109,8 +119,7 @@ export default function UserAvatar() {
   }
 
   // If user has no avatar but has an email, show first two letters of email
-  if (userData.email) {
-    const emailText = userData.email.substring(0, 2).toUpperCase();
+  if (emailText) {
     return <Avatar text={emailText} size="l" />;
   }
 

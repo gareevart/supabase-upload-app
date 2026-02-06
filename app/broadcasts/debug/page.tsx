@@ -57,7 +57,7 @@ const DebugBroadcastPage = () => {
                   onClick={() => window.open('/auth', '_blank')}
                   className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
                 >
-                  Открыть Авторизацию
+                  Open Authorization
                 </button>
               </div>
             </div>
@@ -95,7 +95,7 @@ const DebugBroadcastPage = () => {
             {debugResult.status === 401 && (
               <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
                 <p className="text-blue-800 font-medium">
-                  ✅ Это ожидаемая ошибка! Авторизуйтесь в системе и проблема решится.
+                  ✅ This is expected error! Authorize in the system and the problem will be resolved.
                 </p>
               </div>
             )}
@@ -103,7 +103,7 @@ const DebugBroadcastPage = () => {
             {debugResult.status === 200 && (
               <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
                 <p className="text-green-800 font-medium">
-                  ✅ Авторизация успешна! Теперь можно редактировать broadcasts.
+                  ✅ Authorization successful! Now you can edit broadcasts.
                 </p>
               </div>
             )}

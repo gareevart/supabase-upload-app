@@ -160,10 +160,10 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
     return (
       <Card className="w-full text-center p-8">
         <Text variant="subheader-1" className="mb-2">
-          Необходима авторизация
+          Authorization required
         </Text>
         <Text variant="body-1" color="secondary">
-          Войдите в систему для поиска по своим изображениям
+          Enter the system to search for your images
         </Text>
       </Card>
     );

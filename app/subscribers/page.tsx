@@ -22,8 +22,8 @@ function SubscribersPage() {
         
         if (!session) {
           toast({
-            title: 'Требуется авторизация',
-            description: 'Войдите в систему для доступа к управлению подписчиками',
+            title: 'Authorization required',
+            description: 'Enter the system to access subscriber management',
             variant: 'destructive',
           });
           router.push('/auth');
