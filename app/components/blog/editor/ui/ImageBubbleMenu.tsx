@@ -2,14 +2,7 @@ import React from 'react';
 import type { Editor } from '@tiptap/react';
 import { BubbleMenu } from '@tiptap/react';
 import { Button, Card, Icon } from '@gravity-ui/uikit';
-import {
-  Bold,
-  Italic,
-  Underline as UnderlineIcon,
-  Link as LinkIcon,
-  Picture,
-  Strikethrough,
-} from '@gravity-ui/icons';
+import { Picture, TrashBin } from '@gravity-ui/icons';
 
 type ImageBubbleMenuProps = {
   editor: Editor;
@@ -37,57 +30,21 @@ export const ImageBubbleMenu = ({
         <Button
           view="flat"
           size="s"
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          className={editor.isActive('bold') ? 'is-active' : ''}
-        >
-          <Icon data={Bold} size={14} />
-        </Button>
-
-        <Button
-          view="flat"
-          size="s"
-          onClick={() => editor.chain().focus().toggleStrike().run()}
-          className={editor.isActive('strike') ? 'is-active' : ''}
-        >
-          <Icon data={Strikethrough} size={14} />
-        </Button>
-
-        <Button
-          view="flat"
-          size="s"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={editor.isActive('italic') ? 'is-active' : ''}
-        >
-          <Icon data={Italic} size={14} />
-        </Button>
-
-        <Button
-          view="flat"
-          size="s"
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-          className={editor.isActive('underline') ? 'is-active' : ''}
-        >
-          <Icon data={UnderlineIcon} size={14} />
-        </Button>
-
-        <Button
-          view="flat"
-          size="s"
-          onClick={onOpenLinkDialog}
-          className={editor.isActive('link') ? 'is-active' : ''}
-        >
-          <Icon data={LinkIcon} size={14} />
-        </Button>
-
-        <Button
-          view="flat"
-          size="s"
           onClick={onOpenImageResizeDialog}
           className={isImageCursorOnElement() ? 'is-active' : ''}
           disabled={!isImageCursorOnElement()}
           title="Изменить размер"
         >
           <Icon data={Picture} size={14} />
+        </Button>
+
+        <Button
+          view="flat"
+          size="s"
+          onClick={() => editor.chain().focus().deleteSelection().run()}
+          title="Удалить изображение"
+        >
+          <Icon data={TrashBin} size={14} />
         </Button>
       </div>
     </Card>
