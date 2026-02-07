@@ -5,10 +5,19 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import type { Database } from '@/lib/types';
 import { withAuth } from '@/app/auth/withApiKeyAuth';
+import { redisDeleteByPrefix, redisGetJson, redisSetJson } from '@/lib/redis';
+import {
+  BLOG_POST_ID_PREFIX,
+  BLOG_POST_SLUG_PREFIX,
+  BLOG_POSTS_LIST_PREFIX,
+  buildBlogPostIdKey
+} from '@/shared/lib/blog/cache';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
+
+const BLOG_POST_TTL_SECONDS = 300;
 
 const canManagePost = async (userId: string) => {
   const supabaseAdmin = createClient<Database>(supabaseUrl, supabaseServiceKey, {
@@ -43,6 +52,12 @@ export const GET = withAuth(async (request: NextRequest, user: { id: string }) =
         { error: 'Blog post ID is required' },
         { status: 400 }
       );
+    }
+
+    const cacheKey = buildBlogPostIdKey({ id, userId: user.id });
+    const cachedPost = await redisGetJson<any>(cacheKey);
+    if (cachedPost !== null) {
+      return NextResponse.json(cachedPost);
     }
 
     // Create a new supabase client for this request
@@ -113,6 +128,8 @@ export const GET = withAuth(async (request: NextRequest, user: { id: string }) =
       }
     };
 
+    await redisSetJson(cacheKey, postWithAuthor, BLOG_POST_TTL_SECONDS);
+
     return NextResponse.json(postWithAuthor);
   } catch (error) {
     console.error('Error fetching blog post:', error);
@@ -160,7 +177,7 @@ export const PUT = withAuth(async (request: NextRequest, user: { id: string }) =
     // Check if the post exists and if the user is the author
     const { data: existingPost, error: fetchError } = await supabase
       .from('blog_posts')
-      .select('author_id')
+      .select('author_id, slug')
       .eq('id', id)
       .single();
 
@@ -174,6 +191,8 @@ export const PUT = withAuth(async (request: NextRequest, user: { id: string }) =
         { status: 404 }
       );
     }
+
+    const previousSlug = existingPost.slug;
 
     // Check if the user is the author or has elevated role
     const isAuthor = existingPost.author_id === user.id;
@@ -285,6 +304,15 @@ export const PUT = withAuth(async (request: NextRequest, user: { id: string }) =
       syncBlogPostEmbeddings(data.id);
     }).catch(err => console.error('Failed to trigger sync:', err));
 
+    await redisDeleteByPrefix(BLOG_POSTS_LIST_PREFIX);
+    await redisDeleteByPrefix(`${BLOG_POST_ID_PREFIX}${id}:`);
+    if (previousSlug) {
+      await redisDeleteByPrefix(`${BLOG_POST_SLUG_PREFIX}${previousSlug}`);
+    }
+    if (data.slug && data.slug !== previousSlug) {
+      await redisDeleteByPrefix(`${BLOG_POST_SLUG_PREFIX}${data.slug}`);
+    }
+
     return NextResponse.json(data);
   } catch (err) {
     const error = err as { code?: string, message?: string };
@@ -337,7 +365,7 @@ export const DELETE = withAuth(async (request: NextRequest, user: { id: string }
     // Check if the post exists and if the user is the author
     const { data: existingPost, error: fetchError } = await supabase
       .from('blog_posts')
-      .select('author_id')
+      .select('author_id, slug')
       .eq('id', id)
       .single();
 
@@ -382,6 +410,12 @@ export const DELETE = withAuth(async (request: NextRequest, user: { id: string }
 
     if (error) {
       throw error;
+    }
+
+    await redisDeleteByPrefix(BLOG_POSTS_LIST_PREFIX);
+    await redisDeleteByPrefix(`${BLOG_POST_ID_PREFIX}${id}:`);
+    if (existingPost.slug) {
+      await redisDeleteByPrefix(`${BLOG_POST_SLUG_PREFIX}${existingPost.slug}`);
     }
 
     return NextResponse.json(

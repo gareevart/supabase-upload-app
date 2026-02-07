@@ -4,10 +4,19 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/types';
 import { withAuth } from '@/app/auth/withApiKeyAuth';
+import { redisDeleteByPrefix, redisGetJson, redisSetJson } from '@/lib/redis';
+import {
+  BLOG_POST_ID_PREFIX,
+  BLOG_POST_SLUG_PREFIX,
+  BLOG_POSTS_LIST_PREFIX,
+  buildBlogPostsListKey
+} from '@/shared/lib/blog/cache';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
+
+const BLOG_POSTS_LIST_TTL_SECONDS = 120;
 
 // Generate a slug from a title
 const generateSlug = (title: string) => {
@@ -48,6 +57,14 @@ export const GET = withAuth(async (request: NextRequest, user: { id: string }) =
     const publishedOnly = url.searchParams.get('publishedOnly') === 'true';
     const draftsOnly = url.searchParams.get('draftsOnly') === 'true';
     const inspectSchema = url.searchParams.get('inspectSchema') === 'true';
+    const listCacheKey = inspectSchema
+      ? null
+      : buildBlogPostsListKey({
+          userId: user.id,
+          onlyMine,
+          publishedOnly,
+          draftsOnly
+        });
 
     // Use service role client to bypass RLS for authenticated API requests
     const supabase = createClient<Database>(
@@ -121,6 +138,13 @@ export const GET = withAuth(async (request: NextRequest, user: { id: string }) =
       });
     }
 
+    if (listCacheKey) {
+      const cachedPosts = await redisGetJson<any[]>(listCacheKey);
+      if (cachedPosts !== null) {
+        return NextResponse.json(cachedPosts);
+      }
+    }
+
     let query = supabase
       .from('blog_posts')
       .select(`
@@ -184,7 +208,15 @@ export const GET = withAuth(async (request: NextRequest, user: { id: string }) =
         }
       }));
 
+      if (listCacheKey) {
+        await redisSetJson(listCacheKey, postsWithAuthors, BLOG_POSTS_LIST_TTL_SECONDS);
+      }
+
       return NextResponse.json(postsWithAuthors);
+    }
+
+    if (listCacheKey) {
+      await redisSetJson(listCacheKey, data, BLOG_POSTS_LIST_TTL_SECONDS);
     }
 
     return NextResponse.json(data);
@@ -351,6 +383,10 @@ export const POST = withAuth(async (request: NextRequest, user: { id: string }) 
         syncBlogPostEmbeddings(data.id);
       }).catch(err => console.error('Failed to trigger sync:', err));
     }
+
+    await redisDeleteByPrefix(BLOG_POSTS_LIST_PREFIX);
+    await redisDeleteByPrefix(`${BLOG_POST_ID_PREFIX}${data.id}:`);
+    await redisDeleteByPrefix(`${BLOG_POST_SLUG_PREFIX}${data.slug}`);
 
     return NextResponse.json(data, { status: 201 });
   } catch (err) {
