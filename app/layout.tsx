@@ -1,6 +1,3 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Analytics } from '@vercel/analytics/next';
@@ -12,6 +9,7 @@ import { ModelSelectionProvider } from './contexts/ModelSelectionContext';
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import "@/styles/globals.css";
 import '@/styles/styles.css';
+import ClientThemeProvider from './components/ClientThemeProvider';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,117 +30,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Initialize with a default, but we'll update it based on saved preference or system preference
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-
-  // Detect theme preference and listen for changes
-  useEffect(() => {
-    // Check if window is available (client-side)
-    if (typeof window !== 'undefined') {
-      let systemThemeListener: ((e: MediaQueryListEvent) => void) | null = null;
-      let mediaQuery: MediaQueryList | null = null;
-
-      const initializeTheme = () => {
-        // First check if there's a saved theme preference in localStorage
-        const savedTheme = localStorage.getItem('app-theme');
-
-        // Clean up any existing system theme listener
-        if (systemThemeListener && mediaQuery) {
-          mediaQuery.removeEventListener('change', systemThemeListener);
-          systemThemeListener = null;
-          mediaQuery = null;
-        }
-
-        if (savedTheme === 'light' || savedTheme === 'dark') {
-          // Use saved theme preference
-          setTheme(savedTheme);
-        } else if (savedTheme === 'system' || !savedTheme) {
-          // Use system preference if theme is set to 'system' or no theme is saved
-          mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-          setTheme(mediaQuery.matches ? 'dark' : 'light');
-
-          // Add listener for system theme changes
-          systemThemeListener = (e: MediaQueryListEvent) => {
-            setTheme(e.matches ? 'dark' : 'light');
-          };
-
-          mediaQuery.addEventListener('change', systemThemeListener);
-        }
-      };
-
-      // Initialize theme on mount
-      initializeTheme();
-
-      // Listen for storage events (theme changes from other components)
-      const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'app-theme') {
-          // Clean up existing system theme listener
-          if (systemThemeListener && mediaQuery) {
-            mediaQuery.removeEventListener('change', systemThemeListener);
-            systemThemeListener = null;
-            mediaQuery = null;
-          }
-
-          if (e.newValue === 'light' || e.newValue === 'dark') {
-            setTheme(e.newValue);
-          } else if (e.newValue === 'system') {
-            // If theme is set to system, use system preference
-            mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-            setTheme(mediaQuery.matches ? 'dark' : 'light');
-
-            // Add listener for system theme changes
-            systemThemeListener = (event: MediaQueryListEvent) => {
-              setTheme(event.matches ? 'dark' : 'light');
-            };
-
-            mediaQuery.addEventListener('change', systemThemeListener);
-          }
-        }
-      };
-
-      // Add event listener for storage changes
-      window.addEventListener('storage', handleStorageChange);
-
-      // Also listen for custom theme-change events
-      const handleCustomThemeChange = (e: CustomEvent) => {
-        const { theme } = e.detail;
-
-        // Clean up existing system theme listener
-        if (systemThemeListener && mediaQuery) {
-          mediaQuery.removeEventListener('change', systemThemeListener);
-          systemThemeListener = null;
-          mediaQuery = null;
-        }
-
-        if (theme === 'light' || theme === 'dark') {
-          setTheme(theme);
-        } else if (theme === 'system') {
-          // If theme is set to system, use system preference
-          mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-          setTheme(mediaQuery.matches ? 'dark' : 'light');
-
-          // Add listener for system theme changes
-          systemThemeListener = (event: MediaQueryListEvent) => {
-            setTheme(event.matches ? 'dark' : 'light');
-          };
-
-          mediaQuery.addEventListener('change', systemThemeListener);
-        }
-      };
-
-      window.addEventListener('theme-change', handleCustomThemeChange as EventListener);
-
-      // Clean up event listeners on component unmount
-      return () => {
-        window.removeEventListener('storage', handleStorageChange);
-        window.removeEventListener('theme-change', handleCustomThemeChange as EventListener);
-        if (systemThemeListener && mediaQuery) {
-          mediaQuery.removeEventListener('change', systemThemeListener);
-        }
-      };
-    }
-  }, []);
-
   return (
     <html lang="en">
       <head>
@@ -161,26 +48,24 @@ export default function RootLayout({
         <QueryClientProvider client={queryClient}>
           <SWRConfig
             value={{
-              // Глобальные настройки кэширования для SWR
-              dedupingInterval: 5 * 60 * 1000, // 5 минут дедупликации
-              revalidateOnFocus: false, // Отключаем ревалидацию при фокусе
-              revalidateOnReconnect: false, // Отключаем ревалидацию при восстановлении соединения
-              errorRetryCount: 3, // Количество повторных попыток при ошибке
-              errorRetryInterval: 1000, // Интервал между попытками
-              // Провайдер для кэширования в localStorage (опционально)
+              dedupingInterval: 5 * 60 * 1000,
+              revalidateOnFocus: false,
+              revalidateOnReconnect: false,
+              errorRetryCount: 3,
+              errorRetryInterval: 1000,
               provider: () => new Map(),
             }}
           >
             <AuthProvider>
               <ModelSelectionProvider>
-                <ThemeWrapper theme={theme}>
+                <ClientThemeProvider>
                   <Navigation />
                   <main className="main-content py-6">
                     {children}
                     <Analytics />
                     <SpeedInsights />
                   </main>
-                </ThemeWrapper>
+                </ClientThemeProvider>
               </ModelSelectionProvider>
             </AuthProvider>
           </SWRConfig>
