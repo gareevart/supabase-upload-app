@@ -74,6 +74,11 @@ export const redisDeleteByPrefix = async (prefix: string) => {
 
   const keys: string[] = [];
   for await (const key of redis.scanIterator({ MATCH: `${prefix}*` })) {
+    if (Array.isArray(key)) {
+      keys.push(...key);
+      continue;
+    }
+
     keys.push(key);
   }
 
