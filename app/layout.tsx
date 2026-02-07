@@ -154,6 +154,28 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png" />
         <meta name="theme-color" content="#1D4634" />
+        {/* Blocking script to prevent theme flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                function getTheme() {
+                  var savedTheme = localStorage.getItem('app-theme');
+                  if (savedTheme === 'light' || savedTheme === 'dark') {
+                    return savedTheme;
+                  }
+                  if (savedTheme === 'system' || !savedTheme) {
+                    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                  }
+                  return 'light';
+                }
+                var theme = getTheme();
+                document.documentElement.setAttribute('data-theme', theme);
+                document.documentElement.classList.add('g-root', 'g-root_theme_' + theme);
+              })();
+            `,
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
