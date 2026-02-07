@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Editor } from '@tiptap/react';
-import { BubbleMenu } from '@tiptap/react';
+import { BubbleMenu } from '@tiptap/react/menus';
 import { Button, Card, Icon } from '@gravity-ui/uikit';
 import { Picture, TrashBin } from '@gravity-ui/icons';
 
@@ -17,7 +17,6 @@ export const ImageBubbleMenu = ({
 }: ImageBubbleMenuProps) => (
   <BubbleMenu
     editor={editor}
-    tippyOptions={{ duration: 100 }}
     shouldShow={({ state, from }) => {
       const node = state.doc.nodeAt(from);
       return node?.type.name === 'resizableImage';
