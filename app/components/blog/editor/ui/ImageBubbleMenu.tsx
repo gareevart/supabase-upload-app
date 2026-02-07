@@ -6,14 +6,12 @@ import { Picture, TrashBin } from '@gravity-ui/icons';
 
 type ImageBubbleMenuProps = {
   editor: Editor;
-  onOpenLinkDialog: () => void;
   onOpenImageResizeDialog: () => void;
   isImageCursorOnElement: () => boolean;
 };
 
 export const ImageBubbleMenu = ({
   editor,
-  onOpenLinkDialog,
   onOpenImageResizeDialog,
   isImageCursorOnElement,
 }: ImageBubbleMenuProps) => (
