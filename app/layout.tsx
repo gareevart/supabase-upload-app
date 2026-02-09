@@ -147,6 +147,30 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        {/* Prevent theme flash: set initial theme class before paint */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(() => {
+  try {
+    var KEY = 'app-theme';
+    var stored = localStorage.getItem(KEY);
+    var mql = window.matchMedia('(prefers-color-scheme: dark)');
+    var theme = (stored === 'light' || stored === 'dark')
+      ? stored
+      : (stored === 'system' || stored == null)
+        ? (mql.matches ? 'dark' : 'light')
+        : 'light';
+    var root = document.documentElement; // <html>
+    root.classList.remove('g-root_theme_light','g-root_theme_dark');
+    root.classList.add(theme === 'dark' ? 'g-root_theme_dark' : 'g-root_theme_light');
+    // Improve native UI colors early
+    root.style.colorScheme = theme;
+    // Paint background immediately (before CSS loads)
+    root.style.backgroundColor = theme === 'dark' ? '#0a0a0a' : '#ffffff';
+  } catch (_) {}
+})();`,
+          }}
+        />
         <link rel="icon" type="image/x-icon" href="/favicon.ico" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
