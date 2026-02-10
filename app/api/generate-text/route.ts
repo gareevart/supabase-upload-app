@@ -67,6 +67,15 @@ export async function POST(request: Request) {
 
     const folderId = process.env.YANDEX_FOLDER_ID || process.env.YANDEX_CLOUD_FOLDER || 'b1gb5lrqp1jr1tmamu2t';
 
+    // Retrieval thresholds and limits (auto-mode)
+    const THRESH_HIGH = 0.12; // high match
+    const THRESH_LOW = 0.04;  // low match
+    const MAX_DOCS = 3;
+    const TOP_CHUNKS_PER_MSG = 3;
+    type Mode = 'DOCS_STRICT' | 'DOCS_PREFERRED' | 'GENERAL' | 'WEB';
+    let mode: Mode = 'GENERAL';
+    let bestScore = 0;
+
     const callYandexGPT = async (
       modelUri: string,
       messages: any[],
@@ -117,24 +126,14 @@ export async function POST(request: Request) {
           let { data: searchResults, error: searchError } = await (admin || supabase).rpc('match_chat_messages', {
             query_embedding: queryEmbedding,
             match_chat_id: chatId,
-            match_threshold: 0.05,
-            match_count: 8
+            match_threshold: 0.0,
+            match_count: 20
           });
-          if ((!searchResults || searchResults.length === 0) && !searchError) {
-            const retry = await (admin || supabase).rpc('match_chat_messages', {
-              query_embedding: queryEmbedding,
-              match_chat_id: chatId,
-              match_threshold: 0.02,
-              match_count: 8
-            });
-            searchResults = retry.data || [];
-            searchError = retry.error || null;
-          }
           documents = searchResults || [];
           if (searchError) {
             console.error('Error searching chat documents:', searchError);
           } else if (documents && documents.length > 0) {
-            // Group top chunks by message to avoid duplicate sources
+            // Group chunks by message and compute per-message scores
             type DocRow = { message_id: string; content: string; similarity: number };
             const byMessage = new Map<string, DocRow[]>();
             (documents as DocRow[]).forEach((row) => {
@@ -143,7 +142,6 @@ export async function POST(request: Request) {
               byMessage.set(row.message_id, arr);
             });
             // sort chunks inside each group by similarity desc and keep top N
-            const TOP_CHUNKS_PER_MSG = 3;
             const perMessageTop: { message_id: string; topChunk: DocRow; topChunks: DocRow[]; score: number }[] = [];
             for (const [messageId, rows] of byMessage.entries()) {
               rows.sort((a, b) => b.similarity - a.similarity);
@@ -151,10 +149,22 @@ export async function POST(request: Request) {
               const score = top[0]?.similarity || 0;
               perMessageTop.push({ message_id: messageId, topChunk: top[0], topChunks: top, score });
             }
-            // choose top K messages to support summarization over several documents
-            perMessageTop.sort((a, b) => b.score - a.score);
-            const MAX_DOCS = 3;
-            const selected = perMessageTop.slice(0, MAX_DOCS).filter((g) => g.score >= 0.02);
+            // Decide mode and select top documents
+            bestScore = perMessageTop.reduce((m, g) => Math.max(m, g.score), 0);
+            const high = perMessageTop.filter((g) => g.score >= THRESH_HIGH).sort((a, b) => b.score - a.score);
+            const mid = perMessageTop.filter((g) => g.score >= THRESH_LOW && g.score < THRESH_HIGH).sort((a, b) => b.score - a.score);
+
+            let selected: typeof perMessageTop = [];
+            if (high.length > 0) {
+              mode = 'DOCS_STRICT';
+              selected = high.slice(0, MAX_DOCS);
+            } else if (mid.length > 0) {
+              mode = 'DOCS_PREFERRED';
+              selected = mid.slice(0, MAX_DOCS);
+            } else {
+              mode = 'GENERAL';
+            }
+
             if (selected.length > 0) {
               const sections = selected.map((g, idx) => {
                 const body = g.topChunks.map((r) => r.content).join('\n');
@@ -162,10 +172,11 @@ export async function POST(request: Request) {
               });
               contextText = sections.join('\n---\n');
               documents = selected.map((g) => ({ message_id: g.message_id, topChunk: g.topChunk }));
-              console.log(`Selected ${selected.length} message group(s) as sources`);
+              console.log(`Auto-mode=${mode} docs=${selected.length} bestScore=${bestScore.toFixed(3)}`);
             } else {
               documents = [] as any;
               contextText = '';
+              console.log(`Auto-mode=GENERAL (no relevant docs). bestScore=${bestScore.toFixed(3)}`);
             }
           } else {
             console.log('No chat documents found');
@@ -233,6 +244,14 @@ export async function POST(request: Request) {
       /(?:какие|перечисли|список|назови)/i.test(userQuestion) &&
       /(?:кафе|ресторан|бар|кофейня|пекарня)/i.test(userQuestion);
 
+    // Decide whether to enable web search (heuristic)
+    const looksTimely = /\b(сегодня|сейчас|новост|последн(яя|ий)\s+(верси|релиз)|курс|цен[аы]|когда\s+выйдет|\d{4}|\?|обновлени|релиз)\b/i.test(userQuestion);
+    let doWebSearch = false;
+    if (bestScore < THRESH_LOW && looksTimely) {
+      doWebSearch = true;
+      mode = 'WEB';
+    }
+
     // Web search (generative response) integration
     let webSearchSummary = '';
     let webSearchSources: Array<{ title: string; url: string; snippet?: string }> = [];
@@ -240,7 +259,7 @@ export async function POST(request: Request) {
     let webEvidenceContext = '';
     let webArticlesSummary = '';
     let webEntityList = '';
-    if (useWebSearch) {
+    if (doWebSearch) {
       try {
         if (userQuestion) {
           const webSearchResult = await fetchGenerativeSearch(userQuestion, 5);
@@ -275,15 +294,27 @@ export async function POST(request: Request) {
     // Prepare messages for the API
     const messages = [];
 
-    // Add system prompt with strict context-only policy
-    let finalSystemPrompt = systemPrompt || 'Ты ассистент, который отвечает ТОЛЬКО на основании предоставленного контекста из документов пользователя. Если в контексте нет ответа — явно скажи об этом и попроси загрузить или уточнить документ. Не используй внешние знания.';
-
-    if (contextText) {
-      finalSystemPrompt += `\n\nКонтекст (фрагменты из одного или нескольких документов пользователя):\n\n${contextText}\n\nИнструкции (обязательны):\n- Отвечай, обобщая сведения из всех представленных фрагментов.\n- Помечай противоречия, если они есть.\n- Если сведений недостаточно — явно укажи, чего не хватает.\n- Не используй внешние знания.`;
+    // Build system prompt depending on auto-mode
+    let finalSystemPrompt = '';
+    if (mode === 'DOCS_STRICT') {
+      finalSystemPrompt = (systemPrompt && systemPrompt.trim()) || 'Ты ассистент, который отвечает ТОЛЬКО фактами из контекста документов. Если сведений недостаточно — прямо скажи об этом.';
+      if (contextText) {
+        finalSystemPrompt += `\n\nКонтекст (фрагменты документов):\n\n${contextText}\n\nПравила: отвечай только по контексту, без внешних знаний.`;
+      }
+    } else if (mode === 'DOCS_PREFERRED') {
+      finalSystemPrompt = (systemPrompt && systemPrompt.trim()) || 'Ты ассистент, который опирается на контекст документов, избегая неподтверждённых утверждений. Если фактов не хватает — укажи, чего не хватает.';
+      if (contextText) {
+        finalSystemPrompt += `\n\nКонтекст (фрагменты документов):\n\n${contextText}\n\nПравила: опирайся на контекст; не выдумывай данные; отмечай пробелы информации.`;
+      }
+    } else if (mode === 'WEB') {
+      finalSystemPrompt = (systemPrompt && systemPrompt.trim()) || 'Ты ассистент-исследователь. Используй предоставленный веб-контекст, дай краткий и фактический ответ на русском. Не спекулируй.';
+    } else {
+      // GENERAL
+      finalSystemPrompt = (systemPrompt && systemPrompt.trim()) || 'Ты полезный ассистент. Отвечай понятно и по делу.';
     }
 
-    // Disable web search when strict doc-only mode is on
-    if (false && (webSearchSummary || webSearchSources.length > 0)) {
+    // Add web context only when WEB mode is active
+    if (mode === 'WEB' && (webSearchSummary || webSearchSources.length > 0)) {
       const formattedSources = formatWebSources(webSearchSources);
       finalSystemPrompt += `\n\nYou have access to web search results below. Use them to answer the user and do not say you cannot access real-time information.\n` +
         `${webSearchSummary ? `\nSummary:\n${webSearchSummary}\n` : ''}` +
@@ -295,7 +326,7 @@ export async function POST(request: Request) {
       messages.push({ role: 'system', text: finalSystemPrompt.trim() });
     }
 
-    if (webSearchSources.length > 0 || webSearchSummary || webEvidenceContext) {
+    if (mode === 'WEB' && (webSearchSources.length > 0 || webSearchSummary || webEvidenceContext)) {
       if (webEvidenceContext) {
         const summaryMessages = [
           {
@@ -399,7 +430,7 @@ export async function POST(request: Request) {
       messages.push({ role: 'user', text: prompt.trim() });
     }
 
-    if (webSearchSources.length > 0 || webSearchSummary) {
+    if (mode === 'WEB' && (webSearchSources.length > 0 || webSearchSummary)) {
       messages.push({
         role: 'system',
         text:
@@ -446,7 +477,7 @@ export async function POST(request: Request) {
     // Prepare completion options
     const completionOptions: any = {
       stream: false,
-      temperature: reasoningMode ? 0.1 : (useWebSearch ? 0.2 : 0.6),
+      temperature: reasoningMode ? 0.1 : ( (mode === 'WEB') ? 0.2 : 0.6),
       maxTokens: reasoningMode ? '1000' : '2000'
     };
 
@@ -498,11 +529,11 @@ export async function POST(request: Request) {
       throw new Error('No text found in the response');
     }
 
-    if (useWebSearch && webSearchSources.length > 0) {
+    if (mode === 'WEB' && webSearchSources.length > 0) {
       generatedText = appendSourcesIfMissing(generatedText, webSearchSources);
     }
 
-    if (useWebSearch && requiresEntityList && webEntityList) {
+    if (mode === 'WEB' && requiresEntityList && webEntityList) {
       generatedText = appendEntityListIfMissing(generatedText, webEntityList);
     }
 
@@ -514,40 +545,51 @@ export async function POST(request: Request) {
       reasoningTokens: result.result.usage.reasoningTokens || 0
     } : undefined;
 
-    // Build sources per message, listing ALL files from that message if several
+    // Build sources per mode: docs-only sources OR web sources OR none
     let combinedSources: any[] = [];
     try {
-      const topPerMessage = (documents as any[]) || [];
-      const messageIds = topPerMessage.map((d: any) => d.message_id).filter(Boolean);
-      if (messageIds.length > 0) {
-        const { data: msgMeta } = await (admin || supabase)
-          .from('chat_messages')
-          .select('id, attachments, created_at')
-          .in('id', messageIds);
-        const byId = new Map((msgMeta || []).map((m: any) => [m.id, m]));
-        const sources: any[] = [];
-        topPerMessage.forEach((item: any, idx: number) => {
-          const meta = byId.get(item.message_id);
-          const snippet = (item.topChunk?.content || '').slice(0, 200);
-          const files = Array.isArray(meta?.attachments) ? meta.attachments : [];
-          if (files.length > 0) {
-            files.forEach((file: any) => {
+      if (mode === 'WEB') {
+        combinedSources = (webSearchSources || []).map((source) => ({
+          title: source.title,
+          url: source.url,
+          snippet: source.snippet,
+          type: 'web'
+        }));
+      } else if (mode === 'DOCS_STRICT' || mode === 'DOCS_PREFERRED') {
+        const topPerMessage = (documents as any[]) || [];
+        const messageIds = topPerMessage.map((d: any) => d.message_id).filter(Boolean);
+        if (messageIds.length > 0) {
+          const { data: msgMeta } = await (admin || supabase)
+            .from('chat_messages')
+            .select('id, attachments, created_at')
+            .in('id', messageIds);
+          const byId = new Map((msgMeta || []).map((m: any) => [m.id, m]));
+          const sources: any[] = [];
+          topPerMessage.forEach((item: any, idx: number) => {
+            const meta = byId.get(item.message_id);
+            const snippet = (item.topChunk?.content || '').slice(0, 200);
+            const files = Array.isArray(meta?.attachments) ? meta.attachments : [];
+            if (files.length > 0) {
+              files.forEach((file: any) => {
+                sources.push({
+                  title: file?.name || `Файл ${idx + 1}`,
+                  url: file?.url || undefined,
+                  snippet,
+                  type: 'doc'
+                });
+              });
+            } else {
               sources.push({
-                title: file?.name || `Файл ${idx + 1}`,
-                url: file?.url || undefined,
+                title: `Сообщение ${idx + 1}`,
                 snippet,
                 type: 'doc'
               });
-            });
-          } else {
-            sources.push({
-              title: `Сообщение ${idx + 1}`,
-              snippet,
-              type: 'doc'
-            });
-          }
-        });
-        combinedSources = sources;
+            }
+          });
+          combinedSources = sources;
+        }
+      } else {
+        combinedSources = [];
       }
     } catch (e) {
       console.log('Sources build error, falling back:', e);
