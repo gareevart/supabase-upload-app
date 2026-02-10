@@ -116,7 +116,6 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
 
         <ImageBubbleMenu
           editor={editor}
-          onOpenLinkDialog={openLinkDialog}
           onOpenImageResizeDialog={openImageResizeDialog}
           isImageCursorOnElement={isImageCursorOnElement}
         />
