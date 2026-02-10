@@ -1,6 +1,7 @@
-import React from 'react';
+"use client";
+
+import React, { useMemo } from 'react';
 import type { Editor } from '@tiptap/react';
-import { BubbleMenu } from '@tiptap/react';
 import { Button, Card, Icon } from '@gravity-ui/uikit';
 import {
   Bold,
@@ -23,15 +24,20 @@ export const ImageBubbleMenu = ({
   onOpenLinkDialog,
   onOpenImageResizeDialog,
   isImageCursorOnElement,
-}: ImageBubbleMenuProps) => (
-  <BubbleMenu
-    editor={editor}
-    tippyOptions={{ duration: 100 }}
-    shouldShow={({ state, from }) => {
-      const node = state.doc.nodeAt(from);
-      return node?.type.name === 'resizableImage';
-    }}
-  >
+}: ImageBubbleMenuProps) => {
+  // Check if we should show the menu
+  const shouldShowMenu = useMemo(() => {
+    const { state } = editor;
+    const { from } = state.selection;
+    const node = state.doc.nodeAt(from);
+    return node?.type.name === 'resizableImage';
+  }, [editor]);
+
+  if (!shouldShowMenu) {
+    return null;
+  }
+
+  return (
     <Card>
       <div className="flex shadow BubbleMenu p-1 gap-1">
         <Button
@@ -91,5 +97,5 @@ export const ImageBubbleMenu = ({
         </Button>
       </div>
     </Card>
-  </BubbleMenu>
-);
+  );
+};
