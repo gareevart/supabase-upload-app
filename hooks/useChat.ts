@@ -333,6 +333,21 @@ export const useChat = (chatId: string) => {
 
         if (userMessageError) throw userMessageError;
 
+        // Index this user message into per-chat embeddings (if has text or extracted descriptions)
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          await fetch('/api/chat/index-message', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session?.access_token}`,
+            },
+            body: JSON.stringify({ chatId, messageId: savedMessage.id, text: enrichedContent })
+          });
+        } catch (e) {
+          console.error('Failed to index message for RAG:', e);
+        }
+
         // Get the message history for context - limit to last 10 messages for token efficiency
         // For previous messages with attachments, we need to reconstruct enriched content
         const messageHistory = messages
@@ -383,8 +398,9 @@ export const useChat = (chatId: string) => {
             console.log('Reasoning chunk:', reasoningChunk);
             // TODO: Update UI with reasoning chunks
           },
-          Boolean(useWebSearch && content.trim()),
-          content.trim()
+          false,
+          undefined,
+          chatId
         );
 
         if (error) {

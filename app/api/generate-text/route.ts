@@ -14,7 +14,8 @@ export async function POST(request: Request) {
     model,
     reasoningMode,
     useWebSearch,
-    webSearchQuery
+    webSearchQuery,
+    chatId
   } = await request.json();
 
   try {
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
       return response.json();
     };
 
-    // RAG Implementation: Retrieve context from blog posts
+    // RAG Implementation: Retrieve context from per-chat documents (user uploads/messages)
     let contextText = '';
     let documents: any[] = [];
     try {
@@ -109,57 +110,66 @@ export async function POST(request: Request) {
       if (searchQuery) {
         console.log('Generating embedding for query:', searchQuery);
 
-        // Dynamic import to avoid issues if lib/yandex is not perfectly robust yet
         const { getEmbeddings } = await import('@/lib/yandex');
         const queryEmbedding = await getEmbeddings(searchQuery, 'QUERY');
 
-        // Search for similar blog posts
-        let { data: searchResults, error: searchError } = await (admin || supabase).rpc('match_blog_posts', {
-          query_embedding: queryEmbedding,
-          match_threshold: 0.05,
-          match_count: 5
-        });
-        // Soft retry with lower threshold if nothing found
-        if ((!searchResults || searchResults.length === 0) && !searchError) {
-          const retry = await (admin || supabase).rpc('match_blog_posts', {
+        if (chatId) {
+          let { data: searchResults, error: searchError } = await (admin || supabase).rpc('match_chat_messages', {
             query_embedding: queryEmbedding,
-            match_threshold: 0.02,
-            match_count: 5
+            match_chat_id: chatId,
+            match_threshold: 0.05,
+            match_count: 8
           });
-          searchResults = retry.data || [];
-          searchError = retry.error || null;
-        }
-        documents = searchResults || [];
-
-        if (searchError) {
-          console.error('Error searching documents:', searchError);
-        } else if (documents && documents.length > 0) {
-          console.log(`Found ${documents.length} relevant documents`);
-          console.log('Similarity scores:', documents.map((doc: any) => doc.similarity).join(', '));
-
-          contextText = documents.map((doc: any) => doc.content).join('\n---\n');
-
-          // Enrich documents with post title/slug if missing
-          const missingMeta = documents.some((d: any) => !d.title || !d.slug);
-          if (missingMeta) {
-            const postIds = Array.from(new Set(documents.map((d: any) => d.post_id).filter(Boolean)));
-            if (postIds.length > 0) {
-              const { data: postsMeta, error: postsMetaError } = await (admin || supabase)
-                .from('blog_posts')
-                .select('id, title, slug')
-                .in('id', postIds);
-              if (!postsMetaError && postsMeta) {
-                const byId = new Map(postsMeta.map((p: any) => [p.id, p]));
-                documents = documents.map((d: any) => {
-                  const meta = byId.get(d.post_id);
-                  return meta ? { ...d, title: d.title || meta.title, slug: d.slug || meta.slug } : d;
-                });
-              }
-            }
+          if ((!searchResults || searchResults.length === 0) && !searchError) {
+            const retry = await (admin || supabase).rpc('match_chat_messages', {
+              query_embedding: queryEmbedding,
+              match_chat_id: chatId,
+              match_threshold: 0.02,
+              match_count: 8
+            });
+            searchResults = retry.data || [];
+            searchError = retry.error || null;
           }
-          console.log('Context preview:', contextText.substring(0, 100) + '...');
-        } else {
-          console.log('No relevant documents found');
+          documents = searchResults || [];
+          if (searchError) {
+            console.error('Error searching chat documents:', searchError);
+          } else if (documents && documents.length > 0) {
+            // Group top chunks by message to avoid duplicate sources
+            type DocRow = { message_id: string; content: string; similarity: number };
+            const byMessage = new Map<string, DocRow[]>();
+            (documents as DocRow[]).forEach((row) => {
+              const arr = byMessage.get(row.message_id) || [];
+              arr.push(row);
+              byMessage.set(row.message_id, arr);
+            });
+            // sort chunks inside each group by similarity desc and keep top N
+            const TOP_CHUNKS_PER_MSG = 3;
+            const perMessageTop: { message_id: string; topChunk: DocRow; topChunks: DocRow[]; score: number }[] = [];
+            for (const [messageId, rows] of byMessage.entries()) {
+              rows.sort((a, b) => b.similarity - a.similarity);
+              const top = rows.slice(0, TOP_CHUNKS_PER_MSG);
+              const score = top[0]?.similarity || 0;
+              perMessageTop.push({ message_id: messageId, topChunk: top[0], topChunks: top, score });
+            }
+            // choose top K messages to support summarization over several documents
+            perMessageTop.sort((a, b) => b.score - a.score);
+            const MAX_DOCS = 3;
+            const selected = perMessageTop.slice(0, MAX_DOCS).filter((g) => g.score >= 0.02);
+            if (selected.length > 0) {
+              const sections = selected.map((g, idx) => {
+                const body = g.topChunks.map((r) => r.content).join('\n');
+                return `Документ ${idx + 1}:\n${body}`;
+              });
+              contextText = sections.join('\n---\n');
+              documents = selected.map((g) => ({ message_id: g.message_id, topChunk: g.topChunk }));
+              console.log(`Selected ${selected.length} message group(s) as sources`);
+            } else {
+              documents = [] as any;
+              contextText = '';
+            }
+          } else {
+            console.log('No chat documents found');
+          }
         }
       }
     } catch (ragError) {
@@ -265,14 +275,15 @@ export async function POST(request: Request) {
     // Prepare messages for the API
     const messages = [];
 
-    // Add system prompt if provided
-    let finalSystemPrompt = systemPrompt || 'You are a helpful assistant.';
+    // Add system prompt with strict context-only policy
+    let finalSystemPrompt = systemPrompt || 'Ты ассистент, который отвечает ТОЛЬКО на основании предоставленного контекста из документов пользователя. Если в контексте нет ответа — явно скажи об этом и попроси загрузить или уточнить документ. Не используй внешние знания.';
 
     if (contextText) {
-      finalSystemPrompt += `\n\nUse the following context from the user's blog to answer the question if relevant:\n\n${contextText}\n\nIf the context doesn't contain the answer, answer from your general knowledge but prioritize the context.`;
+      finalSystemPrompt += `\n\nКонтекст (фрагменты из одного или нескольких документов пользователя):\n\n${contextText}\n\nИнструкции (обязательны):\n- Отвечай, обобщая сведения из всех представленных фрагментов.\n- Помечай противоречия, если они есть.\n- Если сведений недостаточно — явно укажи, чего не хватает.\n- Не используй внешние знания.`;
     }
 
-    if (webSearchSummary || webSearchSources.length > 0) {
+    // Disable web search when strict doc-only mode is on
+    if (false && (webSearchSummary || webSearchSources.length > 0)) {
       const formattedSources = formatWebSources(webSearchSources);
       finalSystemPrompt += `\n\nYou have access to web search results below. Use them to answer the user and do not say you cannot access real-time information.\n` +
         `${webSearchSummary ? `\nSummary:\n${webSearchSummary}\n` : ''}` +
@@ -503,22 +514,45 @@ export async function POST(request: Request) {
       reasoningTokens: result.result.usage.reasoningTokens || 0
     } : undefined;
 
-    // Extract unique sources for metadata
-    const blogSources = Array.from(new Map(
-      ((documents as any[]) || []).map((doc: any) => [
-        doc.post_id,
-        { title: doc.title || 'Blog post', slug: doc.slug, type: 'blog' }
-      ])
-    ).values()).filter((s: any) => s.slug || s.title);
-
-    const webSources = (webSearchSources || []).map((source) => ({
-      title: source.title,
-      url: source.url,
-      snippet: source.snippet,
-      type: 'web'
-    }));
-
-    const combinedSources = [...blogSources, ...webSources];
+    // Build sources per message, listing ALL files from that message if several
+    let combinedSources: any[] = [];
+    try {
+      const topPerMessage = (documents as any[]) || [];
+      const messageIds = topPerMessage.map((d: any) => d.message_id).filter(Boolean);
+      if (messageIds.length > 0) {
+        const { data: msgMeta } = await (admin || supabase)
+          .from('chat_messages')
+          .select('id, attachments, created_at')
+          .in('id', messageIds);
+        const byId = new Map((msgMeta || []).map((m: any) => [m.id, m]));
+        const sources: any[] = [];
+        topPerMessage.forEach((item: any, idx: number) => {
+          const meta = byId.get(item.message_id);
+          const snippet = (item.topChunk?.content || '').slice(0, 200);
+          const files = Array.isArray(meta?.attachments) ? meta.attachments : [];
+          if (files.length > 0) {
+            files.forEach((file: any) => {
+              sources.push({
+                title: file?.name || `Файл ${idx + 1}`,
+                url: file?.url || undefined,
+                snippet,
+                type: 'doc'
+              });
+            });
+          } else {
+            sources.push({
+              title: `Сообщение ${idx + 1}`,
+              snippet,
+              type: 'doc'
+            });
+          }
+        });
+        combinedSources = sources;
+      }
+    } catch (e) {
+      console.log('Sources build error, falling back:', e);
+      combinedSources = [];
+    }
 
     return NextResponse.json({
       text: generatedText,
