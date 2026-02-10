@@ -101,7 +101,8 @@ export const useYandexGPT = () => {
     messageContext?: MessageContext[],
     onReasoningChunk?: (chunk: string) => void,
     useWebSearch?: boolean,
-    webSearchQuery?: string
+    webSearchQuery?: string,
+    chatId?: string
   ): Promise<YandexGPTResponse> => {
     setIsGenerating(true);
     setError(null);
@@ -130,8 +131,9 @@ export const useYandexGPT = () => {
           messageContext: messageContext || [],
           model: selectedModel,
           reasoningMode: reasoningMode,
-          useWebSearch: Boolean(useWebSearch),
-          webSearchQuery: webSearchQuery || undefined
+          useWebSearch: false,
+          webSearchQuery: undefined,
+          chatId
         })
       });
 

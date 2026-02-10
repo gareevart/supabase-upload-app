@@ -270,16 +270,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
               <ChatMessage
                 key={message.id}
                 message={message}
-                onCopy={(content) => {
-                  navigator.clipboard.writeText(content);
-                  toaster.add({
-                    name: 'copy-notification',
-                    title: 'Успешно!',
-                    content: 'Скопировано в буфер обмена',
-                    theme: 'success',
-                    autoHiding: 3000,
-                  });
-                }}
+                onCopy={() => { /* silent copy handled by ClipboardButton tooltip */ }}
               />
             ))}
             {isReasoningActive && selectedModel === 'yandexgpt' && (
