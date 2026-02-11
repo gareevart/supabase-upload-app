@@ -134,6 +134,43 @@ export async function POST(request: Request) {
           if (searchError) {
             console.error('Error searching chat documents:', searchError);
           } else if (documents && documents.length > 0) {
+            // Keep only chunks that belong to document-like messages (attachments/long uploads).
+            // This prevents normal short chat turns from pushing the assistant into docs-only mode.
+            const messageIds = Array.from(
+              new Set((documents as Array<{ message_id: string }>).map((row) => row.message_id).filter(Boolean))
+            );
+
+            let allowedMessageIds = new Set<string>();
+            if (messageIds.length > 0) {
+              const { data: sourceMessages, error: sourceMessagesError } = await (admin || supabase)
+                .from('chat_messages')
+                .select('id, content, attachments')
+                .in('id', messageIds)
+                .eq('chat_id', chatId);
+
+              if (sourceMessagesError) {
+                console.error('Error loading source chat messages for RAG filtering:', sourceMessagesError);
+              } else {
+                allowedMessageIds = new Set(
+                  (sourceMessages || [])
+                    .filter((row: any) => {
+                      const attachments = Array.isArray(row.attachments) ? row.attachments : [];
+                      const contentLength = typeof row.content === 'string' ? row.content.trim().length : 0;
+                      return attachments.length > 0 || contentLength >= 500;
+                    })
+                    .map((row: any) => row.id)
+                );
+              }
+            }
+
+            if (allowedMessageIds.size > 0) {
+              documents = (documents as Array<{ message_id: string }>).filter((row) =>
+                allowedMessageIds.has(row.message_id)
+              );
+            } else {
+              documents = [];
+            }
+
             // Group chunks by message and compute per-message scores
             type DocRow = { message_id: string; content: string; similarity: number };
             const byMessage = new Map<string, DocRow[]>();
