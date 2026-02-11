@@ -3,8 +3,11 @@
 import { Text, Icon, Link } from '@gravity-ui/uikit';
 import { Globe } from '@gravity-ui/icons';
 import GradientHoverImage from './components/GradientHoverImage';
+import { useI18n } from './contexts/I18nContext';
 
 export default function HomeClient() {
+  const { t } = useI18n();
+
   return (
     <div className="page-container">
       <div className="content-container">
@@ -19,18 +22,18 @@ export default function HomeClient() {
             height={36}
             priority
           />{' '}
-          Yandex Infrastructure. I work at the intersection of product design and AI, helping shape internal tools for developers. My focus is on making complex systems feel simple — designing scalable, intuitive interfaces that adapt to how people actually work.
+          {t('home.bio')}
         </Text>
 
         <div className="links-container">
           <Link href="https://x.com/gareev" target="_blank" rel="noopener noreferrer">
-            <Text className="LinkHover" variant='subheader-3'><Icon data={Globe} size={16} /> X.com </Text>
+            <Text className="LinkHover" variant='subheader-3'><Icon data={Globe} size={16} /> {t('home.social.x')} </Text>
           </Link>
           <Link href="https://t.me/gareev45" target="_blank" rel="noopener noreferrer">
-            <Text className="LinkHover" variant='subheader-3'><Icon data={Globe} size={16} /> Telegram </Text>
+            <Text className="LinkHover" variant='subheader-3'><Icon data={Globe} size={16} /> {t('home.social.telegram')} </Text>
           </Link>
           <Link href="https://www.linkedin.com/in/dmitrii-gareev-234146253" target="_blank" rel="noopener noreferrer">
-            <Text className="LinkHover" variant='subheader-3'><Icon data={Globe} size={16} /> Linkedin </Text>
+            <Text className="LinkHover" variant='subheader-3'><Icon data={Globe} size={16} /> {t('home.social.linkedin')} </Text>
           </Link>
         </div>
       </div>
