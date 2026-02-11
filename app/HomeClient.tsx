@@ -13,7 +13,7 @@ export default function HomeClient() {
       <div className="content-container">
       <div className="text-container">
         <Text className="home-title" variant="display-1">
-          Dmitrii Gareev is a Product Designer at{' '}
+          {t('home.bio.prefix')}{' '}
           <GradientHoverImage
             src="/infra-logo.svg"
             alt="Infra logo"
@@ -22,7 +22,7 @@ export default function HomeClient() {
             height={36}
             priority
           />{' '}
-          {t('home.bio')}
+          {t('home.bio.suffix')}
         </Text>
 
         <div className="links-container">

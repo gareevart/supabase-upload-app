@@ -1,5 +1,6 @@
 {
-  "home.bio": "Dmitrii Gareev is a Product Designer at Yandex Infrastructure. I work at the intersection of product design and AI, helping shape internal tools for developers. My focus is on making complex systems feel simple — designing scalable, intuitive interfaces that adapt to how people actually work.",
+  "home.bio.prefix": "Dmitrii Gareev is a Product Designer at",
+  "home.bio.suffix": "Yandex Infrastructure. I work at the intersection of product design and AI, helping shape internal tools for developers. My focus is on making complex systems feel simple — designing scalable, intuitive interfaces that adapt to how people actually work.",
   "home.social.x": "X.com",
   "home.social.telegram": "Telegram",
   "home.social.linkedin": "LinkedIn"
