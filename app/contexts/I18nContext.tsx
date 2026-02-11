@@ -1,33 +1,33 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import homeEn from '@/app/HomeClient.i18n/en.json';
+import homeRu from '@/app/HomeClient.i18n/ru.json';
+import languageToggleEn from '@/app/components/Navigation/LanguageToggle.i18n/en.json';
+import languageToggleRu from '@/app/components/Navigation/LanguageToggle.i18n/ru.json';
+import profileViewEn from '@/app/auth/profile/components/ProfileView.i18n/en.json';
+import profileViewRu from '@/app/auth/profile/components/ProfileView.i18n/ru.json';
 
 export type AppLanguage = 'en' | 'ru';
 
 type TranslationValue = string;
 type TranslationDict = Record<string, TranslationValue>;
 
+const enTranslations: TranslationDict = {
+  ...homeEn,
+  ...languageToggleEn,
+  ...profileViewEn,
+};
+
+const ruTranslations: TranslationDict = {
+  ...homeRu,
+  ...languageToggleRu,
+  ...profileViewRu,
+};
+
 const translations: Record<AppLanguage, TranslationDict> = {
-  en: {
-    'home.bio': 'Dmitrii Gareev is a Product Designer at Yandex Infrastructure. I work at the intersection of product design and AI, helping shape internal tools for developers. My focus is on making complex systems feel simple — designing scalable, intuitive interfaces that adapt to how people actually work.',
-    'home.social.x': 'X.com',
-    'home.social.telegram': 'Telegram',
-    'home.social.linkedin': 'LinkedIn',
-    'profile.appearance': 'Appearance',
-    'profile.appearance.language': 'Language',
-    'profile.language.en': 'English',
-    'profile.language.ru': 'Russian',
-  },
-  ru: {
-    'home.bio': 'Дмитрий Гареев — продуктовый дизайнер в Yandex Infrastructure. Я работаю на пересечении продуктового дизайна и AI, помогая создавать внутренние инструменты для разработчиков. Мой фокус — делать сложные системы простыми: проектировать масштабируемые и интуитивные интерфейсы, которые подстраиваются под реальные рабочие процессы людей.',
-    'home.social.x': 'X.com',
-    'home.social.telegram': 'Telegram',
-    'home.social.linkedin': 'LinkedIn',
-    'profile.appearance': 'Внешний вид',
-    'profile.appearance.language': 'Язык',
-    'profile.language.en': 'English',
-    'profile.language.ru': 'Русский',
-  },
+  en: enTranslations,
+  ru: ruTranslations,
 };
 
 interface I18nContextValue {
