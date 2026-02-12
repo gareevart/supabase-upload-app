@@ -5,6 +5,7 @@ import { Button, Text, Icon, Modal, TextInput, TextArea, Checkbox, Card, Spin } 
 import { Plus, Person, ChevronDown, ChevronUp } from '@gravity-ui/icons';
 import { BroadcastGroup, Subscriber } from './types';
 import { useToast } from '@/hooks/use-toast';
+import { useI18n } from '@/app/contexts/I18nContext';
 
 interface GroupSelectorProps {
   selectedGroups: string[];
@@ -17,6 +18,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
   onGroupsChange,
   disabled = false,
 }) => {
+  const { language, t } = useI18n();
   const { toast } = useToast();
   const [groups, setGroups] = useState<BroadcastGroup[]>([]);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
@@ -61,14 +63,14 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
     } catch (error) {
       console.error('Error fetching groups:', error);
       toast({
-        title: 'Ошибка',
-        description: error instanceof Error ? error.message : 'Не удалось загрузить группы',
+        title: t('broadcast.toast.error'),
+        description: error instanceof Error ? error.message : t('broadcast.groupSelector.loadGroupsFailed'),
         variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, toast]);
+  }, [isLoading, t, toast]);
 
   const fetchSubscribers = useCallback(async () => {
     try {
@@ -162,8 +164,8 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
   const handleCreateGroup = async () => {
     if (!newGroupName.trim()) {
       toast({
-        title: 'Ошибка',
-        description: 'Введите название группы',
+        title: t('broadcast.toast.error'),
+        description: t('broadcast.groupSelector.groupNameRequired'),
         variant: 'destructive',
       });
       return;
@@ -197,8 +199,8 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
       const data = await response.json();
 
       toast({
-        title: 'Успех',
-        description: 'Группа создана успешно',
+        title: t('broadcast.toast.success'),
+        description: t('broadcast.groupSelector.groupCreated'),
       });
 
       // Reset form
@@ -213,8 +215,8 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
     } catch (error) {
       console.error('Error creating group:', error);
       toast({
-        title: 'Ошибка',
-        description: error instanceof Error ? error.message : 'Не удалось создать группу',
+        title: t('broadcast.toast.error'),
+        description: error instanceof Error ? error.message : t('broadcast.groupSelector.createFailed'),
         variant: 'destructive',
       });
     } finally {
@@ -241,7 +243,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <Text variant="body-2">Группы получателей</Text>
+        <Text variant="body-2">{t('broadcast.groupSelector.title')}</Text>
         <Button
           view="outlined"
           size="s"
@@ -249,7 +251,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
           disabled={disabled}
         >
           <Icon data={Plus} size={16} />
-          Создать группу
+          {t('broadcast.groupSelector.createGroup')}
         </Button>
       </div>
 
@@ -271,12 +273,12 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
                     </Text>
                     {group.is_default && (
                       <Text variant="caption-1" color="secondary">
-                        (по умолчанию)
+                        {t('broadcast.groupSelector.defaultBadge')}
                       </Text>
                     )}
                   </div>
                   <Text variant="caption-1" color="secondary">
-                    {group.subscriber_count} подписчиков
+                    {group.subscriber_count} {t('broadcast.groupSelector.subscribers')}
                   </Text>
                 </div>
               </div>
@@ -303,7 +305,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
                   </Text>
                 )}
                 <Text variant="caption-1" color="secondary">
-                  Создано: {new Date(group.created_at).toLocaleDateString('ru-RU')}
+                  {t('broadcast.groupSelector.created')}: {new Date(group.created_at).toLocaleDateString(language === 'ru' ? 'ru-RU' : 'en-US')}
                 </Text>
               </div>
             )}
@@ -315,36 +317,36 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
       <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)}>
         <div className="w-full max-w-2xl p-2">
           <div className='mb-4'>
-            <Text variant="subheader-2">Создать новую группу</Text>
+            <Text variant="subheader-2">{t('broadcast.groupSelector.createNewGroup')}</Text>
           </div>
           <div className="space-y-4">
             <div>
-              <Text variant="body-2" className="mb-1">Название группы</Text>
+              <Text variant="body-2" className="mb-1">{t('broadcast.groupSelector.groupName')}</Text>
               <TextInput
                 value={newGroupName}
                 onChange={(e) => setNewGroupName(e.target.value)}
-                placeholder="Введите название группы"
+                placeholder={t('broadcast.groupSelector.groupNamePlaceholder')}
                 disabled={isCreating}
               />
             </div>
 
             <div>
-              <Text variant="body-2" className="mb-1">Описание (необязательно)</Text>
+              <Text variant="body-2" className="mb-1">{t('broadcast.groupSelector.descriptionOptional')}</Text>
               <TextArea
                 value={newGroupDescription}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewGroupDescription(e.target.value)}
-                placeholder="Введите описание группы"
+                placeholder={t('broadcast.groupSelector.descriptionPlaceholder')}
                 disabled={isCreating}
                 rows={3}
               />
             </div>
 
             <div>
-              <Text variant="body-2" className="mb-2">Выберите подписчиков</Text>
+              <Text variant="body-2" className="mb-2">{t('broadcast.groupSelector.selectSubscribers')}</Text>
               <div className="max-h-60 overflow-y-auto border rounded p-2">
                 {subscribers.length === 0 ? (
                   <Text variant="caption-1" color="secondary">
-                    Нет доступных подписчиков
+                    {t('broadcast.groupSelector.noSubscribers')}
                   </Text>
                 ) : (
                   <div className="space-y-2">
@@ -376,14 +378,14 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
                 onClick={() => setShowCreateModal(false)}
                 disabled={isCreating}
               >
-                Отмена
+                {t('broadcast.groupSelector.cancel')}
               </Button>
               <Button
                 view="action"
                 onClick={handleCreateGroup}
                 disabled={isCreating || !newGroupName.trim()}
               >
-                {isCreating ? <Spin size="s" /> : 'Создать группу'}
+                {isCreating ? <Spin size="s" /> : t('broadcast.groupSelector.createGroup')}
               </Button>
             </div>
           </div>

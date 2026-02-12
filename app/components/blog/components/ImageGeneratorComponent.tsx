@@ -6,6 +6,7 @@ import { Button, TextArea, Card, Text, Alert, Spin, Flex, Icon } from '@gravity-
 import { Picture, ArrowUpRightFromSquare, Xmark } from '@gravity-ui/icons';
 import { useRouter } from 'next/navigation';
 import NextImage from 'next/image';
+import { uploadImage } from '../editor/lib/uploadImage';
 
 const ImageGeneratorComponent: React.FC<ReactNodeViewProps> = ({
   node,
@@ -18,6 +19,21 @@ const ImageGeneratorComponent: React.FC<ReactNodeViewProps> = ({
   const [generatedImageUrl, setGeneratedImageUrl] = useState(node.attrs.generatedImageUrl || '');
   
   const router = useRouter();
+
+  const uploadGeneratedImageToBucket = async (sourceUrl: string): Promise<string> => {
+    const imageResponse = await fetch(sourceUrl);
+    if (!imageResponse.ok) {
+      throw new Error(`Не удалось получить сгенерированное изображение (${imageResponse.status})`);
+    }
+
+    const blob = await imageResponse.blob();
+    const mimeType = blob.type || 'image/jpeg';
+    const extension = mimeType.split('/')[1]?.split(';')[0] || 'jpg';
+    const fileName = `generated-image-${Date.now()}.${extension}`;
+    const file = new File([blob], fileName, { type: mimeType });
+
+    return uploadImage(file);
+  };
 
   const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newPrompt = e.target.value;
@@ -50,10 +66,11 @@ const ImageGeneratorComponent: React.FC<ReactNodeViewProps> = ({
       const data = await response.json();
       
       if (data.imageUrl) {
-        setGeneratedImageUrl(data.imageUrl);
+        const uploadedImageUrl = await uploadGeneratedImageToBucket(data.imageUrl);
+        setGeneratedImageUrl(uploadedImageUrl);
         updateAttributes({ 
           prompt,
-          generatedImageUrl: data.imageUrl 
+          generatedImageUrl: uploadedImageUrl
         });
       } else {
         throw new Error('Не получен URL изображения');

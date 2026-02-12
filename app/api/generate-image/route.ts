@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { prompt } = await request.json();
+    const { prompt, includeImageData = false } = await request.json();
 
     if (!prompt) {
       return NextResponse.json(
@@ -44,23 +44,24 @@ export async function POST(request: Request) {
       );
     }
 
-    // Fetch the image data from the URL to return both URL and data
-    try {
-      const imageResponse = await fetch(data.result.image.url);
-      const imageBuffer = await imageResponse.arrayBuffer();
-      const base64Data = Buffer.from(imageBuffer).toString('base64');
-      const dataUrl = `data:${imageResponse.headers.get('content-type') || 'image/jpeg'};base64,${base64Data}`;
-      
-      // Return both the URL and the base64 image data
-      return NextResponse.json({
-        imageUrl: data.result.image.url,
-        imageData: dataUrl
-      });
-    } catch (imageError) {
-      console.error('Error fetching image data:', imageError);
-      // If we can't fetch the image data, just return the URL
+    if (!includeImageData) {
+      // Default response is lightweight: URL only.
       return NextResponse.json({ imageUrl: data.result.image.url });
     }
+
+    // Optional compatibility mode for callers that explicitly need base64.
+    const imageResponse = await fetch(data.result.image.url);
+    if (!imageResponse.ok) {
+      throw new Error(`Failed to fetch generated image: ${imageResponse.status}`);
+    }
+    const imageBuffer = await imageResponse.arrayBuffer();
+    const base64Data = Buffer.from(imageBuffer).toString('base64');
+    const dataUrl = `data:${imageResponse.headers.get('content-type') || 'image/jpeg'};base64,${base64Data}`;
+
+    return NextResponse.json({
+      imageUrl: data.result.image.url,
+      imageData: dataUrl
+    });
   } catch (error) {
     console.error('Detailed error in generate-image:', error);
     return NextResponse.json(

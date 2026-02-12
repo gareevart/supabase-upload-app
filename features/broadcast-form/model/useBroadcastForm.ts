@@ -1,11 +1,13 @@
 import { useState, useCallback } from 'react';
-import { Broadcast, NewBroadcast, BroadcastFormData } from '@/entities/broadcast/model';
+import { NewBroadcast } from '@/entities/broadcast/model';
 import { BroadcastApi } from '@/shared/api/broadcast';
 import { useToast } from '@/hooks/use-toast';
+import { useI18n } from '@/app/contexts/I18nContext';
 
-export const useBroadcastForm = (initialData?: Partial<Broadcast>) => {
+export const useBroadcastForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { t } = useI18n();
 
   const saveAsDraft = useCallback(async (data: NewBroadcast) => {
     try {
@@ -18,17 +20,17 @@ export const useBroadcastForm = (initialData?: Partial<Broadcast>) => {
       });
       
       toast({
-        title: 'Success',
-        description: 'Broadcast saved as draft',
+        title: t('broadcast.toast.success'),
+        description: t('broadcast.toast.draftSaved'),
       });
       
       return response.data;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to save broadcast';
+      const errorMessage = err instanceof Error ? err.message : t('broadcast.toast.saveFailed');
       console.error('Error saving broadcast:', err);
       
       toast({
-        title: 'Error',
+        title: t('broadcast.toast.error'),
         description: errorMessage,
         variant: 'destructive',
       });
@@ -37,7 +39,7 @@ export const useBroadcastForm = (initialData?: Partial<Broadcast>) => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [toast]);
+  }, [t, toast]);
 
   const updateDraft = useCallback(async (id: string, data: NewBroadcast) => {
     try {
@@ -50,17 +52,17 @@ export const useBroadcastForm = (initialData?: Partial<Broadcast>) => {
       });
       
       toast({
-        title: 'Success',
-        description: 'Broadcast updated successfully',
+        title: t('broadcast.toast.success'),
+        description: t('broadcast.toast.draftUpdated'),
       });
       
       return response.data;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update broadcast';
+      const errorMessage = err instanceof Error ? err.message : t('broadcast.toast.updateFailed');
       console.error('Error updating broadcast:', err);
       
       toast({
-        title: 'Error',
+        title: t('broadcast.toast.error'),
         description: errorMessage,
         variant: 'destructive',
       });
@@ -69,7 +71,7 @@ export const useBroadcastForm = (initialData?: Partial<Broadcast>) => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [toast]);
+  }, [t, toast]);
 
   const scheduleBroadcast = useCallback(async (data: NewBroadcast, date: Date) => {
     try {
@@ -82,17 +84,17 @@ export const useBroadcastForm = (initialData?: Partial<Broadcast>) => {
       });
       
       toast({
-        title: 'Success',
-        description: 'Broadcast scheduled successfully',
+        title: t('broadcast.toast.success'),
+        description: t('broadcast.toast.scheduled'),
       });
       
       return response.data;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to schedule broadcast';
+      const errorMessage = err instanceof Error ? err.message : t('broadcast.toast.scheduleFailed');
       console.error('Error scheduling broadcast:', err);
       
       toast({
-        title: 'Error',
+        title: t('broadcast.toast.error'),
         description: errorMessage,
         variant: 'destructive',
       });
@@ -101,7 +103,7 @@ export const useBroadcastForm = (initialData?: Partial<Broadcast>) => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [toast]);
+  }, [t, toast]);
 
   const updateSchedule = useCallback(async (id: string, data: NewBroadcast, date: Date) => {
     try {
@@ -114,17 +116,17 @@ export const useBroadcastForm = (initialData?: Partial<Broadcast>) => {
       });
       
       toast({
-        title: 'Success',
-        description: 'Broadcast scheduled successfully',
+        title: t('broadcast.toast.success'),
+        description: t('broadcast.toast.scheduled'),
       });
       
       return response.data;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to schedule broadcast';
+      const errorMessage = err instanceof Error ? err.message : t('broadcast.toast.scheduleFailed');
       console.error('Error scheduling broadcast:', err);
       
       toast({
-        title: 'Error',
+        title: t('broadcast.toast.error'),
         description: errorMessage,
         variant: 'destructive',
       });
@@ -133,7 +135,7 @@ export const useBroadcastForm = (initialData?: Partial<Broadcast>) => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [toast]);
+  }, [t, toast]);
 
   const sendNow = useCallback(async (data: NewBroadcast) => {
     try {
@@ -146,17 +148,17 @@ export const useBroadcastForm = (initialData?: Partial<Broadcast>) => {
       await BroadcastApi.sendBroadcast(response.data.id);
       
       toast({
-        title: 'Success',
-        description: 'Broadcast sent successfully',
+        title: t('broadcast.toast.success'),
+        description: t('broadcast.toast.sent'),
       });
       
       return response.data;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to send broadcast';
+      const errorMessage = err instanceof Error ? err.message : t('broadcast.toast.sendFailed');
       console.error('Error sending broadcast:', err);
       
       toast({
-        title: 'Error',
+        title: t('broadcast.toast.error'),
         description: errorMessage,
         variant: 'destructive',
       });
@@ -165,7 +167,7 @@ export const useBroadcastForm = (initialData?: Partial<Broadcast>) => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [toast]);
+  }, [t, toast]);
 
   const updateAndSend = useCallback(async (id: string, data: NewBroadcast) => {
     try {
@@ -178,15 +180,15 @@ export const useBroadcastForm = (initialData?: Partial<Broadcast>) => {
       await BroadcastApi.sendBroadcast(id);
       
       toast({
-        title: 'Success',
-        description: 'Broadcast sent successfully',
+        title: t('broadcast.toast.success'),
+        description: t('broadcast.toast.sent'),
       });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to send broadcast';
+      const errorMessage = err instanceof Error ? err.message : t('broadcast.toast.sendFailed');
       console.error('Error sending broadcast:', err);
       
       toast({
-        title: 'Error',
+        title: t('broadcast.toast.error'),
         description: errorMessage,
         variant: 'destructive',
       });
@@ -195,7 +197,7 @@ export const useBroadcastForm = (initialData?: Partial<Broadcast>) => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [toast]);
+  }, [t, toast]);
 
   return {
     isSubmitting,

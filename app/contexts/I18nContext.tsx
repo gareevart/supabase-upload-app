@@ -7,6 +7,8 @@ import languageToggleEn from '@/app/components/Navigation/LanguageToggle.i18n/en
 import languageToggleRu from '@/app/components/Navigation/LanguageToggle.i18n/ru.json';
 import profileViewEn from '@/app/auth/profile/components/ProfileView.i18n/en.json';
 import profileViewRu from '@/app/auth/profile/components/ProfileView.i18n/ru.json';
+import broadcastFormEn from '@/widgets/broadcast-form/ui/BroadcastFormWidget.i18n/en.json';
+import broadcastFormRu from '@/widgets/broadcast-form/ui/BroadcastFormWidget.i18n/ru.json';
 
 export type AppLanguage = 'en' | 'ru';
 
@@ -17,12 +19,14 @@ const enTranslations: TranslationDict = {
   ...homeEn,
   ...languageToggleEn,
   ...profileViewEn,
+  ...broadcastFormEn,
 };
 
 const ruTranslations: TranslationDict = {
   ...homeRu,
   ...languageToggleRu,
   ...profileViewRu,
+  ...broadcastFormRu,
 };
 
 const translations: Record<AppLanguage, TranslationDict> = {

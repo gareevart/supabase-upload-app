@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Text } from '@gravity-ui/uikit';
 import { Calendar } from '@/app/components/ui/calendar';
 import { DateTimePickerProps } from './types';
+import { useI18n } from '@/app/contexts/I18nContext';
 
 const DateTimePicker: React.FC<DateTimePickerProps> = ({
   value,
@@ -11,6 +12,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   minDate,
   disabled = false,
 }) => {
+  const { language, t } = useI18n();
+  const dateLocale = language === 'ru' ? 'ru-RU' : 'en-US';
   // Split the date and time for the separate pickers
   const [date, setDate] = useState<Date | null>(value);
   const [time, setTime] = useState<string>(
@@ -102,10 +105,10 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 
   return (
     <div className="flex flex-col space-y-4">
-      <Text variant="subheader-2">Расписание отправки</Text>
+      <Text variant="subheader-2">{t('broadcast.dateTimePicker.title')}</Text>
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
-          <Text variant="body-2" className="mb-2 block">Дата</Text>
+          <Text variant="body-2" className="mb-2 block">{t('broadcast.dateTimePicker.dateLabel')}</Text>
           <Calendar
             mode="single"
             selected={date || undefined}
@@ -115,7 +118,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
           />
         </div>
         <div className="w-full sm:w-48">
-          <Text variant="body-2" className="mb-2 block">Время</Text>
+          <Text variant="body-2" className="mb-2 block">{t('broadcast.dateTimePicker.timeLabel')}</Text>
           <input
             type="time"
             value={time}
@@ -125,11 +128,11 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
           />
           {date && (
             <Text variant="caption-1" color="secondary" className="mt-2 block">
-              Выбрано: {date.toLocaleDateString('ru-RU', {
+              {t('broadcast.dateTimePicker.selected')}: {date.toLocaleDateString(dateLocale, {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric'
-              })} в {time}
+              })} {t('broadcast.dateTimePicker.at')} {time}
             </Text>
           )}
         </div>

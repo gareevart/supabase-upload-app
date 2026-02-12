@@ -330,7 +330,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
 
       {/* Preview Modal */}
       <Modal open={showPreview} onClose={() => setShowPreview(false)}>
-        <div className="w-full max-w-4xl h-[80vh]">
+        <div className="w-[min(100vw-64px,1100px)] h-[80vh]">
           <iframe
             ref={previewRef}
             srcDoc={renderEmailPreview(htmlContent)}

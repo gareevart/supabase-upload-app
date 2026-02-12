@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useRef, KeyboardEvent, ClipboardEvent } from 'react';
-import { Text, Button, Icon } from '@gravity-ui/uikit';
+import { Text, Icon } from '@gravity-ui/uikit';
 import { Xmark } from '@gravity-ui/icons';
 import { validateEmail } from '@/lib/resend';
+import { useI18n } from '@/app/contexts/I18nContext';
 
 interface TagInputProps {
   tags: string[];
@@ -22,6 +23,7 @@ const TagInput: React.FC<TagInputProps> = ({
   maxTags = 100,
   className = '',
 }) => {
+  const { t } = useI18n();
   const [inputValue, setInputValue] = useState('');
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -33,19 +35,19 @@ const TagInput: React.FC<TagInputProps> = ({
     
     // Validate email format
     if (!validateEmail(trimmedEmail)) {
-      setError(`Invalid email format: ${trimmedEmail}`);
+      setError(`${t('broadcast.tagInput.invalidEmail')}: ${trimmedEmail}`);
       return;
     }
     
     // Check if email already exists
     if (tags.includes(trimmedEmail)) {
-      setError(`Email already added: ${trimmedEmail}`);
+      setError(`${t('broadcast.tagInput.alreadyAdded')}: ${trimmedEmail}`);
       return;
     }
     
     // Check if max tags limit reached
     if (tags.length >= maxTags) {
-      setError(`Maximum of ${maxTags} emails allowed`);
+      setError(`${t('broadcast.tagInput.maxReached')}: ${maxTags}`);
       return;
     }
     
@@ -147,7 +149,7 @@ const TagInput: React.FC<TagInputProps> = ({
       )}
       
       <Text variant="caption-1" className="text-gray-500 mt-1">
-        Press Enter or comma to add email. Paste multiple emails separated by commas.
+        {t('broadcast.tagInput.hint')}
       </Text>
     </div>
   );

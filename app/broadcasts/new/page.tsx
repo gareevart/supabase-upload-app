@@ -4,22 +4,19 @@ import React, { useEffect, useState } from 'react';
 import BroadcastFormWidget from '@/widgets/broadcast-form/ui/BroadcastFormWidget';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { Spin, Text, Button } from '@gravity-ui/uikit';
+import { Skeleton, Text, Button, Card } from '@gravity-ui/uikit';
+import { useI18n } from '@/app/contexts/I18nContext';
 
 function NewBroadcastPage() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const { t } = useI18n();
   const router = useRouter();
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session?.user) {
-          router.push('/auth');
-          return;
-        }
+        if (!session?.user) return setIsAuthorized(false);
 
         const { data: profile } = await supabase
           .from('profiles')
@@ -29,32 +26,37 @@ function NewBroadcastPage() {
 
         const hasAccess = profile?.role === 'admin' || profile?.role === 'editor';
         setIsAuthorized(hasAccess);
-        
-        if (!hasAccess) {
-          router.push('/debug');
-        }
       } catch (error) {
         console.error('Auth check error:', error);
         setIsAuthorized(false);
-      } finally {
-        setIsLoading(false);
       }
     };
 
     checkAuth();
-  }, [router]);
+  }, []);
 
-  if (isLoading) {
+  if (isAuthorized === null) {
     return (
-      <div className="flex flex-col gap-4 py-8 px-4 text-center justify-center items-center min-h-[400px]">
-        <Spin size="l" />
-        <Text variant="body-1">Загрузка...</Text>
+      <div className="container max-w-4xl mx-auto p-4">
+        <Card>
+          <Skeleton className="h-96 w-full" />
+        </Card>
       </div>
     );
   }
 
   if (!isAuthorized) {
-    return null; // Will redirect
+    return (
+      <div className="container max-w-4xl mx-auto p-4">
+        <Card className="p-6">
+          <Text variant="display-1">{t('broadcast.page.accessDeniedTitle')}</Text>
+          <Text variant="body-1">{t('broadcast.page.accessDeniedDescription')}</Text>
+          <Button size="l" className="mt-4" onClick={() => router.push('/auth/profile')}>
+            {t('broadcast.page.loginButton')}
+          </Button>
+        </Card>
+      </div>
+    );
   }
 
   return <BroadcastFormWidget />;

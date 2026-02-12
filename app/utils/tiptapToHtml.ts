@@ -165,16 +165,87 @@ export function renderEmailPreview(html: string): string {
     <!DOCTYPE html>
     <html>
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; }
-          h1, h2, h3 { color: #333; }
-          p { margin-bottom: 1em; }
-          a { color: #0066cc; }
-          img { max-width: 100%; }
+          * {
+            box-sizing: border-box;
+          }
+
+          html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+          }
+
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background: #f3f4f6;
+            padding: 24px 12px;
+          }
+
+          /*
+           * Preview the email in a realistic desktop container.
+           * 600px is a common email client content width.
+           */
+          .email-shell {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+          }
+
+          .email-body {
+            padding: 24px;
+            word-break: break-word;
+          }
+
+          h1, h2, h3 {
+            color: #111827;
+            margin: 0 0 12px;
+            line-height: 1.3;
+          }
+
+          p {
+            margin: 0 0 16px;
+          }
+
+          a {
+            color: #2563eb;
+          }
+
+          img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+          }
+
+          table {
+            border-collapse: collapse;
+            max-width: 100%;
+          }
+
+          @media (max-width: 640px) {
+            body {
+              padding: 12px;
+            }
+
+            .email-body {
+              padding: 16px;
+            }
+          }
         </style>
       </head>
       <body>
-        ${html}
+        <div class="email-shell">
+          <div class="email-body">
+            ${html}
+          </div>
+        </div>
       </body>
     </html>
   `;

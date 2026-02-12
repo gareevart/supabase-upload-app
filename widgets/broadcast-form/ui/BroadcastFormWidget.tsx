@@ -1,17 +1,18 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Button, Card, Text, TextInput, Icon, Modal } from '@gravity-ui/uikit';
-import { ArrowUturnCwLeft, Pencil, Plus, ChevronDown, Eye, Bug } from '@gravity-ui/icons';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Button, Card, Text, TextInput, Icon, Modal, Dialog } from '@gravity-ui/uikit';
+import { ArrowUturnCwLeft, Pencil, ChevronDown, Eye, Bug } from '@gravity-ui/icons';
 import TipTapEditor from '@/app/components/blog/TipTapEditor';
 import TagInput from '@/app/components/broadcasts/TagInput';
 import DateTimePicker from '@/app/components/broadcasts/DateTimePicker';
 import GroupSelector from '@/app/components/broadcasts/GroupSelector';
-import { Broadcast, BroadcastFormData, NewBroadcast } from '@/entities/broadcast/model';
+import { Broadcast, NewBroadcast } from '@/entities/broadcast/model';
 import { useBroadcastForm } from '@/features/broadcast-form/model/useBroadcastForm';
 import { BroadcastApi } from '@/shared/api/broadcast';
 import { useRouter } from 'next/navigation';
 import { tiptapToHtml, renderEmailPreview } from '@/app/utils/tiptapToHtml';
+import { useI18n } from '@/app/contexts/I18nContext';
 
 interface BroadcastFormWidgetProps {
   id?: string;
@@ -24,7 +25,9 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
   initialData,
   isEdit = false,
 }) => {
+  const previewDialogTitleId = 'broadcast-preview-dialog-title';
   const router = useRouter();
+  const { t } = useI18n();
   const {
     isSubmitting,
     saveAsDraft,
@@ -33,7 +36,7 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
     updateSchedule,
     sendNow,
     updateAndSend,
-  } = useBroadcastForm(initialData);
+  } = useBroadcastForm();
 
   // Form state
   const [subject, setSubject] = useState<string>(initialData?.subject || '');
@@ -47,10 +50,10 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
   );
   const [showPreview, setShowPreview] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
-  const previewRef = useRef<HTMLIFrameElement>(null);
   const [htmlContent, setHtmlContent] = useState<string>('');
   const [isLoading, setIsLoading] = useState(isEdit && !initialData);
   const [loadedData, setLoadedData] = useState<Partial<Broadcast> | null>(initialData || null);
+  const [validationErrors, setValidationErrors] = useState<{ subject?: string; recipients?: string }>({});
 
   // Memoized HTML content generation
   const memoizedHtml = useMemo(() => {
@@ -99,20 +102,30 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
     }
   }, [id, isEdit, loadedData]);
 
-  // Update preview when HTML content changes
-  useEffect(() => {
-    if (showPreview && previewRef.current && htmlContent) {
-      const previewHtml = renderEmailPreview(htmlContent);
-      previewRef.current.srcdoc = previewHtml;
-    }
-  }, [htmlContent, subject, showPreview]);
-
   // Form validation
-  const isFormValid = subject.trim() && content && (recipients.length > 0 || groupEmails.length > 0);
+  const hasSubject = Boolean(subject.trim());
+  const hasContent = Boolean(content);
+  const hasRecipients = recipients.length > 0 || groupEmails.length > 0;
+  const isFormValid = hasSubject && hasContent && hasRecipients;
+
+  const validateForm = () => {
+    const nextErrors: { subject?: string; recipients?: string } = {};
+
+    if (!hasSubject) {
+      nextErrors.subject = t('broadcast.validation.subjectRequired');
+    }
+
+    if (!hasRecipients) {
+      nextErrors.recipients = t('broadcast.validation.recipientsRequired');
+    }
+
+    setValidationErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
 
   // Handle form submission
   const handleSave = async () => {
-    if (!isFormValid) return;
+    if (!validateForm()) return;
 
     const formData: NewBroadcast = {
       subject: subject.trim(),
@@ -135,7 +148,7 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
   };
 
   const handleSchedule = async () => {
-    if (!isFormValid || !scheduledDate) return;
+    if (!validateForm() || !scheduledDate) return;
 
     const formData: NewBroadcast = {
       subject: subject.trim(),
@@ -158,7 +171,7 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
   };
 
   const handleSend = async () => {
-    if (!isFormValid) return;
+    if (!validateForm()) return;
 
     const formData: NewBroadcast = {
       subject: subject.trim(),
@@ -187,6 +200,9 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
 
   const handleRecipientsChange = (newRecipients: string[]) => {
     setRecipients(newRecipients);
+    if (validationErrors.recipients) {
+      setValidationErrors((prev) => ({ ...prev, recipients: undefined }));
+    }
   };
 
   const handleScheduledDateChange = (date: Date | null) => {
@@ -221,7 +237,7 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
     return (
       <div className="container mx-auto py-8 px-4">
         <div className="text-center py-8">
-          <Text variant="body-1">Loading broadcast data...</Text>
+          <Text variant="body-1">{t('broadcast.form.loadingData')}</Text>
         </div>
       </div>
     );
@@ -231,25 +247,31 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
     <div className="container mx-auto py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <Text variant="display-1" className="mb-6">
-          {isEdit ? 'Edit Broadcast' : 'Create New Broadcast'}
+          {isEdit ? t('broadcast.form.editTitle') : t('broadcast.form.createTitle')}
         </Text>
 
         <div className="space-y-6">
           {/* Subject */}
           <Card className="p-6">
-            <Text variant="subheader-2" className="mb-4">Subject</Text>
+            <Text variant="subheader-2" className="mb-4">{t('broadcast.form.subjectLabel')}</Text>
             <TextInput
               value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="Enter email subject"
+              onChange={(e) => {
+                setSubject(e.target.value);
+                if (validationErrors.subject) {
+                  setValidationErrors((prev) => ({ ...prev, subject: undefined }));
+                }
+              }}
+              placeholder={t('broadcast.form.subjectPlaceholder')}
               size="l"
+              error={validationErrors.subject}
             />
           </Card>
 
           {/* Content Editor */}
           <Card className="p-6">
             <div className="flex justify-between items-center mb-4">
-              <Text variant="subheader-2">Content</Text>
+              <Text variant="subheader-2">{t('broadcast.form.contentLabel')}</Text>
               <div className="flex gap-2">
                 <Button
                   view="flat"
@@ -257,7 +279,7 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
                   onClick={togglePreview}
                 >
                   <Icon data={Eye} size={16} />
-                  Preview
+                  {t('broadcast.form.preview')}
                 </Button>
                 <Button
                   view="flat"
@@ -265,31 +287,35 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
                   onClick={toggleDebug}
                 >
                   <Icon data={Bug} size={16} />
-                  Debug
+                  {t('broadcast.form.debug')}
                 </Button>
               </div>
             </div>
             <TipTapEditor
               content={content}
               onChange={setContent}
-              placeholder="Write your email content here..."
+              placeholder={t('broadcast.form.contentPlaceholder')}
             />
           </Card>
 
           {/* Recipients */}
           <Card className="p-6">
-            <Text variant="subheader-2" className="mb-4">Recipients</Text>
+            <Text variant="subheader-2" className="mb-4">{t('broadcast.form.recipientsLabel')}</Text>
             <div className="space-y-4">
               <div>
-                <Text variant="body-2" className="mb-2">Manual Recipients</Text>
+                <Text variant="body-2" className="mb-2">{t('broadcast.form.manualRecipientsLabel')}</Text>
                 <TagInput
                   tags={recipients}
                   setTags={handleRecipientsChange}
-                  placeholder="Enter email addresses"
+                  placeholder={t('broadcast.tagInput.placeholder')}
                 />
+                {validationErrors.recipients && (
+                  <Text variant="caption-1" color="danger">
+                    {validationErrors.recipients}
+                  </Text>
+                )}
               </div>
               <div>
-                <Text variant="body-2" className="mb-2">Groups</Text>
                 <GroupSelector
                   selectedGroups={selectedGroups}
                   onGroupsChange={handleGroupsChange}
@@ -307,7 +333,7 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
               disabled={!isFormValid || isSubmitting}
             >
               <Icon data={Pencil} size={16} />
-              {isEdit ? 'Update Draft' : 'Save as Draft'}
+              {isEdit ? t('broadcast.form.updateDraft') : t('broadcast.form.saveDraft')}
             </Button>
 
             <Button
@@ -317,12 +343,12 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
               disabled={!isFormValid || isSubmitting}
             >
               <Icon data={ChevronDown} size={16} />
-              {showScheduler ? 'Cancel Schedule' : 'Schedule'}
+              {showScheduler ? t('broadcast.form.cancelSchedule') : t('broadcast.form.schedule')}
             </Button>
 
             {showScheduler && (
               <div className="w-full mt-4">
-                <Text variant="body-2" className="mb-2">Schedule for:</Text>
+                <Text variant="body-2" className="mb-2">{t('broadcast.form.scheduleFor')}</Text>
                 <DateTimePicker
                   value={scheduledDate}
                   onChange={handleScheduledDateChange}
@@ -335,7 +361,7 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
                   disabled={!isFormValid || !scheduledDate || isSubmitting}
                   className="mt-2"
                 >
-                  Schedule Broadcast
+                  {t('broadcast.form.scheduleConfirm')}
                 </Button>
               </div>
             )}
@@ -347,33 +373,45 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
               disabled={!isFormValid || isSubmitting}
             >
               <Icon data={ArrowUturnCwLeft} size={16} />
-              Send Now
+              {t('broadcast.form.sendNow')}
             </Button>
           </div>
 
         </div>
 
-        {/* Preview Modal */}
-        <Modal open={showPreview} onClose={() => setShowPreview(false)}>
-          <div className="p-6">
-            <Text variant="subheader-2" className="mb-4">Email Preview</Text>
-            <div className="border rounded-lg overflow-hidden">
+        {/* Preview Dialog */}
+        <Dialog
+          open={showPreview}
+          onClose={() => setShowPreview(false)}
+          onEnterKeyDown={() => setShowPreview(false)}
+          aria-labelledby={previewDialogTitleId}
+          size="l"
+        >
+          <Dialog.Header caption={t('broadcast.form.previewTitle')} id={previewDialogTitleId} />
+          <Dialog.Body>
+            <div className="border rounded-lg overflow-hidden w-full">
               <iframe
-                ref={previewRef}
-                className="w-full h-96"
-                title="Email Preview"
+                srcDoc={renderEmailPreview(htmlContent)}
+                className="w-full h-[80vh]"
+                title={t('broadcast.form.previewTitle')}
               />
             </div>
-          </div>
-        </Modal>
+          </Dialog.Body>
+          <Dialog.Footer
+            onClickButtonCancel={() => setShowPreview(false)}
+            onClickButtonApply={() => setShowPreview(false)}
+            textButtonApply={t('broadcast.form.previewClose')}
+            textButtonCancel={t('broadcast.form.previewCancel')}
+          />
+        </Dialog>
 
         {/* Debug Modal */}
         <Modal open={showDebug} onClose={() => setShowDebug(false)}>
           <div className="p-6">
-            <Text variant="subheader-2" className="mb-4">Debug Information</Text>
+            <Text variant="subheader-2" className="mb-4">{t('broadcast.form.debugTitle')}</Text>
             <div className="space-y-4">
               <div>
-                <Text variant="body-2" className="font-semibold">Form Data:</Text>
+                <Text variant="body-2" className="font-semibold">{t('broadcast.form.formData')}:</Text>
                 <pre className="bg-gray-100 p-2 rounded text-xs overflow-auto">
                   {JSON.stringify({
                     subject,
@@ -387,13 +425,13 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
                 </pre>
               </div>
               <div>
-                <Text variant="body-2" className="font-semibold">Content (JSON):</Text>
+                <Text variant="body-2" className="font-semibold">{t('broadcast.form.contentJson')}:</Text>
                 <pre className="bg-gray-100 p-2 rounded text-xs overflow-auto max-h-40">
                   {JSON.stringify(content, null, 2)}
                 </pre>
               </div>
               <div>
-                <Text variant="body-2" className="font-semibold">HTML Content:</Text>
+                <Text variant="body-2" className="font-semibold">{t('broadcast.form.generatedHtml')}:</Text>
                 <pre className="bg-gray-100 p-2 rounded text-xs overflow-auto max-h-40">
                   {htmlContent}
                 </pre>
