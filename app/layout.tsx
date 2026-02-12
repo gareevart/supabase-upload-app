@@ -28,13 +28,42 @@ const geistMono = Geist_Mono({
 
 const queryClient = new QueryClient();
 
+const themeBootstrapScript = `
+(function () {
+  var storedTheme = localStorage.getItem('app-theme');
+  var resolvedTheme =
+    storedTheme === 'light' || storedTheme === 'dark'
+      ? storedTheme
+      : window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+
+  var root = document.documentElement;
+  root.classList.remove('g-root_theme_light', 'g-root_theme_dark');
+  root.classList.add(resolvedTheme === 'dark' ? 'g-root_theme_dark' : 'g-root_theme_light');
+  root.style.colorScheme = resolvedTheme;
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Initialize with a default, but we'll update it based on saved preference or system preference
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  // Initialize theme synchronously to avoid light-theme flash before effects run
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof window === 'undefined') {
+      return 'light';
+    }
+
+    const savedTheme = window.localStorage.getItem('app-theme');
+
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      return savedTheme;
+    }
+
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
 
   // Detect theme preference and listen for changes
   useEffect(() => {
@@ -155,6 +184,7 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png" />
         <meta name="theme-color" content="#1D4634" />
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

@@ -26,6 +26,11 @@
   }
 }
 
+html,
+body {
+  background-color: var(--g-color-base-background);
+}
+
 body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   margin: 0;
