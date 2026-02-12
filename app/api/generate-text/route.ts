@@ -66,15 +66,16 @@ export async function POST(request: Request) {
     }
 
     const folderId = process.env.YANDEX_FOLDER_ID || process.env.YANDEX_CLOUD_FOLDER || 'b1gb5lrqp1jr1tmamu2t';
-
-    // Retrieval thresholds and limits (auto-mode)
-    const THRESH_HIGH = 0.12; // high match
-    const THRESH_LOW = 0.04;  // low match
+    // Auto-mode thresholds
+    const THRESH_HIGH = 0.12;
+    const THRESH_LOW = 0.04;
     const MAX_DOCS = 3;
     const TOP_CHUNKS_PER_MSG = 3;
     type Mode = 'DOCS_STRICT' | 'DOCS_PREFERRED' | 'GENERAL' | 'WEB';
     let mode: Mode = 'GENERAL';
     let bestScore = 0;
+
+    
 
     const callYandexGPT = async (
       modelUri: string,

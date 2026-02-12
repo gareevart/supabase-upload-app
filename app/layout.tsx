@@ -9,6 +9,7 @@ import ThemeWrapper from './components/ThemeWrapper';
 import Navigation from './components/Navigation/Navigation';
 import { AuthProvider } from './contexts/AuthContext';
 import { ModelSelectionProvider } from './contexts/ModelSelectionContext';
+import { I18nProvider } from './contexts/I18nContext';
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import "@/styles/globals.css";
 import '@/styles/styles.css';
@@ -173,14 +174,16 @@ export default function RootLayout({
           >
             <AuthProvider>
               <ModelSelectionProvider>
-                <ThemeWrapper theme={theme}>
+                <I18nProvider>
+                  <ThemeWrapper theme={theme}>
                   <Navigation />
                   <main className="main-content py-6">
                     {children}
                     <Analytics />
                     <SpeedInsights />
                   </main>
-                </ThemeWrapper>
+                  </ThemeWrapper>
+                </I18nProvider>
               </ModelSelectionProvider>
             </AuthProvider>
           </SWRConfig>
