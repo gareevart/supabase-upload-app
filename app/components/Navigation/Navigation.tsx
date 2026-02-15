@@ -17,6 +17,7 @@ const Navigation: React.FC = () => {
   const [activeItem, setActiveItem] = useState('home');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [navigationPosition, setNavigationPosition] = useState<NavigationPosition>('left');
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   // Function to determine active item based on current path
   const getActiveItemFromPath = (pathname: string): string => {
@@ -64,6 +65,25 @@ const Navigation: React.FC = () => {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener(NAVIGATION_POSITION_EVENT, handleNavigationPositionChange as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    const applyViewport = (matches: boolean) => {
+      setIsMobileViewport(matches);
+    };
+
+    applyViewport(mediaQuery.matches);
+
+    const handleViewportChange = (event: MediaQueryListEvent) => {
+      applyViewport(event.matches);
+    };
+
+    mediaQuery.addEventListener('change', handleViewportChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleViewportChange);
     };
   }, []);
 
@@ -168,7 +188,7 @@ const Navigation: React.FC = () => {
         </div>
       </nav>
 
-      <DrawerMenu open={isDrawerOpen} onClose={closeDrawer} bottomOffset={navigationPosition === 'bottom' ? 81 : 65}>
+      <DrawerMenu open={isDrawerOpen} onClose={closeDrawer} bottomOffset={navigationPosition === 'bottom' || isMobileViewport ? 81 : 65}>
         {drawerNavItems.map((item) => (
           <NavigationItem
             key={item.id}

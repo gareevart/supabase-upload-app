@@ -133,21 +133,50 @@
 
 /* Mobile Navigation */
 @media (max-width: 767px) {
-  .navigation--left {
-    border-radius: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
+  .navigation {
+    position: fixed;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    height: 65px;
+    background-color: var(--g-color-base-float);
+    border: 1px solid var(--g-color-line-generic);
+    border-radius: var(--g-border-radius-xl);
+  }
+
+  .navigation .nav-container {
+    height: 100%;
+  }
+
+  .navigation .logo-area,
+  .navigation .avatarWrapper,
+  .navigation .theme-toggle {
+    display: none;
+  }
+
+  .navigation .nav-items {
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+  }
+
+  .navigation .menu-button {
+    width: 44px;
+    height: 44px;
+    background: none;
     border: none;
-    border-top: 1px solid var(--g-color-line-generic);
+    color: var(--g-color-text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
   }
 
-  .navigation--left .avatarWrapper {
-    display: none;
-  }
-
-  .navigation--left .theme-toggle {
-    display: none;
+  .navigation .menu-button:hover {
+    color: #374151;
   }
 }
 
