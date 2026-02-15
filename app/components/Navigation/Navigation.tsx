@@ -9,12 +9,15 @@ import NavigationItem from './NavigationItem';
 import { DrawerMenu } from '@/shared/ui/DrawerMenu';
 import Link from 'next/link'
 import './Navigation.css';
+import { NAVIGATION_POSITION_EVENT, NAVIGATION_POSITION_STORAGE_KEY, NavigationPosition } from './navigationPosition';
 
 const Navigation: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const [activeItem, setActiveItem] = useState('home');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [navigationPosition, setNavigationPosition] = useState<NavigationPosition>('left');
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   // Function to determine active item based on current path
   const getActiveItemFromPath = (pathname: string): string => {
@@ -34,6 +37,55 @@ const Navigation: React.FC = () => {
     setActiveItem(activeFromPath);
     localStorage.setItem('activeItem', activeFromPath);
   }, [pathname]);
+
+  useEffect(() => {
+    const applyNavigationPosition = (value: string | null) => {
+      const resolvedPosition: NavigationPosition = value === 'bottom' ? 'bottom' : 'left';
+      setNavigationPosition(resolvedPosition);
+      document.body.classList.toggle('navigation-position-bottom', resolvedPosition === 'bottom');
+      document.body.classList.toggle('navigation-position-left', resolvedPosition === 'left');
+    };
+
+    applyNavigationPosition(localStorage.getItem(NAVIGATION_POSITION_STORAGE_KEY));
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === NAVIGATION_POSITION_STORAGE_KEY) {
+        applyNavigationPosition(event.newValue);
+      }
+    };
+
+    const handleNavigationPositionChange = (event: Event) => {
+      const customEvent = event as CustomEvent<{ position?: NavigationPosition }>;
+      applyNavigationPosition(customEvent.detail?.position ?? null);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener(NAVIGATION_POSITION_EVENT, handleNavigationPositionChange as EventListener);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener(NAVIGATION_POSITION_EVENT, handleNavigationPositionChange as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    const applyViewport = (matches: boolean) => {
+      setIsMobileViewport(matches);
+    };
+
+    applyViewport(mediaQuery.matches);
+
+    const handleViewportChange = (event: MediaQueryListEvent) => {
+      applyViewport(event.matches);
+    };
+
+    mediaQuery.addEventListener('change', handleViewportChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleViewportChange);
+    };
+  }, []);
 
   const allNavItems = [
     { id: 'home', icon: House, label: 'Home', link: '/' },
@@ -58,7 +110,7 @@ const Navigation: React.FC = () => {
 
   return (
     <>
-      <nav className="navigation">
+      <nav className={`navigation navigation--${navigationPosition}`}>
         <div className="nav-container">
           <div className="logo-area">
             <div className="logo-wrapper">
@@ -136,7 +188,7 @@ const Navigation: React.FC = () => {
         </div>
       </nav>
 
-      <DrawerMenu open={isDrawerOpen} onClose={closeDrawer} bottomOffset={65}>
+      <DrawerMenu open={isDrawerOpen} onClose={closeDrawer} bottomOffset={navigationPosition === 'bottom' || isMobileViewport ? 81 : 65}>
         {drawerNavItems.map((item) => (
           <NavigationItem
             key={item.id}

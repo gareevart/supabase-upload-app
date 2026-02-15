@@ -1,3 +1,6 @@
 {
-  "profile.appearance": "Appearance"
+  "profile.appearance": "Appearance",
+  "profile.appearance.navigationPosition": "Navigation position",
+  "profile.appearance.navigationPosition.left": "Left",
+  "profile.appearance.navigationPosition.bottom": "Bottom"
 }
