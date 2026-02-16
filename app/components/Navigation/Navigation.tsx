@@ -173,18 +173,20 @@ const Navigation: React.FC = () => {
               </Button>
             </Popover>
           </div>
-          <Popover
-            content="Profile"
-            placement="right"
-            hasArrow
-            openDelay={50}
-            closeDelay={100}
-            className='profile-popup'
-          >
-            <Link href="/auth/profile">
-              <UserAvatar />
-            </Link>
-          </Popover>
+          {!isMobileViewport && (
+            <Popover
+              content="Profile"
+              placement="right"
+              hasArrow
+              openDelay={50}
+              closeDelay={100}
+              className='profile-popup'
+            >
+              <Link href="/auth/profile">
+                <UserAvatar />
+              </Link>
+            </Popover>
+          )}
         </div>
       </nav>
 
