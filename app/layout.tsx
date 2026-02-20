@@ -173,6 +173,19 @@ export default function RootLayout({
     }
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const root = document.documentElement;
+    root.classList.remove('g-root_theme_light', 'g-root_theme_dark');
+    root.classList.add(theme === 'dark' ? 'g-root_theme_dark' : 'g-root_theme_light');
+    root.style.colorScheme = theme;
+  }, [theme]);
+
+  const themeColor = theme === 'dark' ? '#101010' : '#1D4634';
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -183,7 +196,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png" />
-        <meta name="theme-color" content="#1D4634" />
+        <meta name="theme-color" content={themeColor} />
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>
       <body

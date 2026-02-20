@@ -6,15 +6,17 @@ import { Button, Icon, Text } from "@gravity-ui/uikit";
 import "./CalculatorPanel.css";
 
 const TOP_ACTIONS = ["⌫", "C", "%"];
-const DIGIT_ACTIONS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "+/-"];
+const DIGIT_ACTIONS = ["7", "8", "9", "4", "5", "6", "1", "2", "3", ".", "0", "+/-"];
 const OPERATOR_ACTIONS = ["/", "x", "-", "+", "="];
 
 type CalculatorPanelProps = {
   draggable?: boolean;
+  zIndex?: number;
+  onActivate?: () => void;
   onClose?: () => void;
 };
 
-export function CalculatorPanel({ draggable = false, onClose }: CalculatorPanelProps) {
+export function CalculatorPanel({ draggable = false, zIndex, onActivate, onClose }: CalculatorPanelProps) {
   const [display, setDisplay] = useState("0");
   const [storedValue, setStoredValue] = useState<number | null>(null);
   const [operator, setOperator] = useState<string | null>(null);
@@ -197,7 +199,8 @@ export function CalculatorPanel({ draggable = false, onClose }: CalculatorPanelP
     <section
       ref={panelRef}
       className={`calculator-panel ${draggable ? "calculator-panel--floating" : ""} ${isDragging ? "calculator-panel--dragging" : ""}`}
-      style={draggable ? { left: `${position.x}px`, top: `${position.y}px` } : undefined}
+      style={draggable ? { left: `${position.x}px`, top: `${position.y}px`, zIndex } : undefined}
+      onPointerDownCapture={draggable ? onActivate : undefined}
       aria-label="Calculator panel"
       role={draggable ? "dialog" : undefined}
       aria-modal={draggable ? "false" : undefined}

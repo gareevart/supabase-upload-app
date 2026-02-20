@@ -2,15 +2,18 @@ import React, { useState, useEffect, useRef } from 'react';
 
 import { useRouter, usePathname } from 'next/navigation';
 import { Icon, Button, Popover, Text } from '@gravity-ui/uikit';
-import { House, Circles4Square, Person, Magnifier, BookOpen, Bars, Xmark, Circles3Plus, Calculator } from '@gravity-ui/icons';
+import { House, Circles4Square, Person, Magnifier, BookOpen, Bars, Xmark, Circles3Plus, Calculator, Camera } from '@gravity-ui/icons';
 import Image from 'next/image';
 import UserAvatar from '../UserAvatar';
 import NavigationItem from './NavigationItem';
 import { DrawerMenu } from '@/shared/ui/DrawerMenu';
 import { CalculatorPanel } from '@/features/calculator/ui';
+import { CameraPanel } from '@/features/camera/ui';
 import Link from 'next/link'
 import './Navigation.css';
 import { NAVIGATION_POSITION_EVENT, NAVIGATION_POSITION_STORAGE_KEY, NavigationPosition } from './navigationPosition';
+
+type WidgetId = 'calculator' | 'camera';
 
 const Navigation: React.FC = () => {
   const router = useRouter();
@@ -20,9 +23,17 @@ const Navigation: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isWidgetsPanelOpen, setIsWidgetsPanelOpen] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [widgetLayers, setWidgetLayers] = useState<Record<WidgetId, number>>({
+    calculator: 70,
+    camera: 71,
+  });
+  const widgetLayerCounterRef = useRef(71);
   const [widgetsPanelStyle, setWidgetsPanelStyle] = useState<React.CSSProperties>({});
   const [navigationPosition, setNavigationPosition] = useState<NavigationPosition>('left');
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const isLeftAnchoredWidgetsPanel = navigationPosition === 'left' && !isMobileViewport;
+  const isBottomAnchoredWidgetsPanel = navigationPosition === 'bottom' || isMobileViewport;
 
   // Function to determine active item based on current path
   const getActiveItemFromPath = (pathname: string): string => {
@@ -125,13 +136,29 @@ const Navigation: React.FC = () => {
     setIsWidgetsPanelOpen(false);
   };
 
+  const bringWidgetToFront = (widgetId: WidgetId) => {
+    widgetLayerCounterRef.current += 1;
+    const nextLayer = widgetLayerCounterRef.current;
+    setWidgetLayers((prev) => ({
+      ...prev,
+      [widgetId]: nextLayer,
+    }));
+  };
+
   const openCalculatorWidget = () => {
+    bringWidgetToFront('calculator');
     setIsCalculatorOpen(true);
     setIsWidgetsPanelOpen(false);
   };
 
+  const openCameraWidget = () => {
+    bringWidgetToFront('camera');
+    setIsCameraOpen(true);
+    setIsWidgetsPanelOpen(false);
+  };
+
   useEffect(() => {
-    if (!isWidgetsPanelOpen || navigationPosition !== 'left' || !widgetsTriggerRef.current) {
+    if (!isWidgetsPanelOpen || !isLeftAnchoredWidgetsPanel || !widgetsTriggerRef.current) {
       return;
     }
 
@@ -156,7 +183,7 @@ const Navigation: React.FC = () => {
       window.removeEventListener('resize', updateWidgetsPanelPosition);
       window.removeEventListener('scroll', updateWidgetsPanelPosition, true);
     };
-  }, [isWidgetsPanelOpen, navigationPosition]);
+  }, [isWidgetsPanelOpen, isLeftAnchoredWidgetsPanel]);
 
   return (
     <>
@@ -226,7 +253,7 @@ const Navigation: React.FC = () => {
               </Popover>
             </div>
 
-            {navigationPosition === 'bottom' && (
+            {(isMobileViewport || navigationPosition === 'bottom') && (
               <Popover
                 content="Menu"
                 placement="top"
@@ -266,8 +293,8 @@ const Navigation: React.FC = () => {
       </nav>
 
       <div
-        className={`widgets-panel ${navigationPosition === 'left' ? 'widgets-panel--left' : ''} ${navigationPosition === 'bottom' ? 'widgets-panel--bottom' : ''} ${isWidgetsPanelOpen ? 'widgets-panel--open' : ''}`}
-        style={navigationPosition === 'left' ? widgetsPanelStyle : undefined}
+        className={`widgets-panel ${isLeftAnchoredWidgetsPanel ? 'widgets-panel--left' : ''} ${isBottomAnchoredWidgetsPanel ? 'widgets-panel--bottom' : ''} ${isWidgetsPanelOpen ? 'widgets-panel--open' : ''}`}
+        style={isLeftAnchoredWidgetsPanel ? widgetsPanelStyle : undefined}
         role="dialog"
         aria-modal="false"
         aria-label="Widgets list"
@@ -283,6 +310,14 @@ const Navigation: React.FC = () => {
         >
           <Icon data={Calculator} size={18} />
           <Text variant="body-1">Calculator</Text>
+        </button>
+        <button
+          type="button"
+          className="widgets-panel__item"
+          onClick={openCameraWidget}
+        >
+          <Icon data={Camera} size={18} />
+          <Text variant="body-1">Camera</Text>
         </button>
       </div>
       <button
@@ -313,7 +348,20 @@ const Navigation: React.FC = () => {
       </DrawerMenu>
 
       {isCalculatorOpen && (
-        <CalculatorPanel draggable onClose={() => setIsCalculatorOpen(false)} />
+        <CalculatorPanel
+          draggable
+          zIndex={widgetLayers.calculator}
+          onActivate={() => bringWidgetToFront('calculator')}
+          onClose={() => setIsCalculatorOpen(false)}
+        />
+      )}
+      {isCameraOpen && (
+        <CameraPanel
+          draggable
+          zIndex={widgetLayers.camera}
+          onActivate={() => bringWidgetToFront('camera')}
+          onClose={() => setIsCameraOpen(false)}
+        />
       )}
     </>
   );
