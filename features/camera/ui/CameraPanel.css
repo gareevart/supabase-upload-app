@@ -15,10 +15,30 @@
 .camera-panel--floating {
   position: fixed;
   z-index: 70;
+  transform: translateY(0);
+  opacity: 1;
 }
 
 .camera-panel--dragging {
   user-select: none;
+}
+
+.camera-panel--floating.camera-panel--entering {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.camera-panel--floating.camera-panel--open {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 250ms ease-in, transform 250ms ease-in;
+}
+
+.camera-panel--floating.camera-panel--exiting {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity 250ms ease-in-out, transform 250ms ease-in-out;
 }
 
 .camera-panel__drag-zone {

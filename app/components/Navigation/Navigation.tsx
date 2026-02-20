@@ -14,6 +14,7 @@ import './Navigation.css';
 import { NAVIGATION_POSITION_EVENT, NAVIGATION_POSITION_STORAGE_KEY, NavigationPosition } from './navigationPosition';
 
 type WidgetId = 'calculator' | 'camera';
+type WidgetAnimationState = 'closed' | 'entering' | 'open' | 'exiting';
 
 const Navigation: React.FC = () => {
   const router = useRouter();
@@ -22,8 +23,8 @@ const Navigation: React.FC = () => {
   const [activeItem, setActiveItem] = useState('home');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isWidgetsPanelOpen, setIsWidgetsPanelOpen] = useState(false);
-  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [calculatorWidgetState, setCalculatorWidgetState] = useState<WidgetAnimationState>('closed');
+  const [cameraWidgetState, setCameraWidgetState] = useState<WidgetAnimationState>('closed');
   const [widgetLayers, setWidgetLayers] = useState<Record<WidgetId, number>>({
     calculator: 70,
     camera: 71,
@@ -147,15 +148,55 @@ const Navigation: React.FC = () => {
 
   const openCalculatorWidget = () => {
     bringWidgetToFront('calculator');
-    setIsCalculatorOpen(true);
+    setCalculatorWidgetState((prev) => {
+      if (prev === 'closed') {
+        requestAnimationFrame(() => setCalculatorWidgetState('open'));
+        return 'entering';
+      }
+      return 'open';
+    });
     setIsWidgetsPanelOpen(false);
   };
 
   const openCameraWidget = () => {
     bringWidgetToFront('camera');
-    setIsCameraOpen(true);
+    setCameraWidgetState((prev) => {
+      if (prev === 'closed') {
+        requestAnimationFrame(() => setCameraWidgetState('open'));
+        return 'entering';
+      }
+      return 'open';
+    });
     setIsWidgetsPanelOpen(false);
   };
+
+  useEffect(() => {
+    if (calculatorWidgetState !== 'exiting') {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setCalculatorWidgetState('closed');
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [calculatorWidgetState]);
+
+  useEffect(() => {
+    if (cameraWidgetState !== 'exiting') {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setCameraWidgetState('closed');
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [cameraWidgetState]);
 
   useEffect(() => {
     if (!isWidgetsPanelOpen || !isLeftAnchoredWidgetsPanel || !widgetsTriggerRef.current) {
@@ -347,20 +388,34 @@ const Navigation: React.FC = () => {
         ))}
       </DrawerMenu>
 
-      {isCalculatorOpen && (
+      {calculatorWidgetState !== 'closed' && (
         <CalculatorPanel
           draggable
           zIndex={widgetLayers.calculator}
           onActivate={() => bringWidgetToFront('calculator')}
-          onClose={() => setIsCalculatorOpen(false)}
+          onClose={() => setCalculatorWidgetState('exiting')}
+          className={
+            calculatorWidgetState === 'entering'
+              ? 'calculator-panel--entering'
+              : calculatorWidgetState === 'exiting'
+                ? 'calculator-panel--exiting'
+                : 'calculator-panel--open'
+          }
         />
       )}
-      {isCameraOpen && (
+      {cameraWidgetState !== 'closed' && (
         <CameraPanel
           draggable
           zIndex={widgetLayers.camera}
           onActivate={() => bringWidgetToFront('camera')}
-          onClose={() => setIsCameraOpen(false)}
+          onClose={() => setCameraWidgetState('exiting')}
+          className={
+            cameraWidgetState === 'entering'
+              ? 'camera-panel--entering'
+              : cameraWidgetState === 'exiting'
+                ? 'camera-panel--exiting'
+                : 'camera-panel--open'
+          }
         />
       )}
     </>

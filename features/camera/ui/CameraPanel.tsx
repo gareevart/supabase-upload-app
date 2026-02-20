@@ -11,9 +11,10 @@ type CameraPanelProps = {
   zIndex?: number;
   onActivate?: () => void;
   onClose?: () => void;
+  className?: string;
 };
 
-export function CameraPanel({ draggable = false, zIndex, onActivate, onClose }: CameraPanelProps) {
+export function CameraPanel({ draggable = false, zIndex, onActivate, onClose, className }: CameraPanelProps) {
   const {
     videoRef,
     previewUrl,
@@ -97,7 +98,7 @@ export function CameraPanel({ draggable = false, zIndex, onActivate, onClose }: 
   return (
     <section
       ref={panelRef}
-      className={`camera-panel ${draggable ? "camera-panel--floating" : ""} ${isDragging ? "camera-panel--dragging" : ""}`}
+      className={`camera-panel ${draggable ? "camera-panel--floating" : ""} ${isDragging ? "camera-panel--dragging" : ""} ${className ?? ""}`}
       style={draggable ? { left: `${position.x}px`, top: `${position.y}px`, zIndex } : undefined}
       onPointerDownCapture={draggable ? onActivate : undefined}
       aria-label="Camera widget"

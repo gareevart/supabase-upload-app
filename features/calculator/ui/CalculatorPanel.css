@@ -14,10 +14,30 @@
   position: fixed;
   z-index: 70;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05), 0 4px 24px rgba(0, 0, 0, 0.05);
+  transform: translateY(0);
+  opacity: 1;
 }
 
 .calculator-panel--dragging {
   user-select: none;
+}
+
+.calculator-panel--floating.calculator-panel--entering {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.calculator-panel--floating.calculator-panel--open {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 250ms ease-in, transform 250ms ease-in;
+}
+
+.calculator-panel--floating.calculator-panel--exiting {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity 250ms ease-out, transform 250ms ease-out;
 }
 
 .calculator-panel__drag-zone {

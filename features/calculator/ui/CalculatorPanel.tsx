@@ -14,9 +14,10 @@ type CalculatorPanelProps = {
   zIndex?: number;
   onActivate?: () => void;
   onClose?: () => void;
+  className?: string;
 };
 
-export function CalculatorPanel({ draggable = false, zIndex, onActivate, onClose }: CalculatorPanelProps) {
+export function CalculatorPanel({ draggable = false, zIndex, onActivate, onClose, className }: CalculatorPanelProps) {
   const [display, setDisplay] = useState("0");
   const [storedValue, setStoredValue] = useState<number | null>(null);
   const [operator, setOperator] = useState<string | null>(null);
@@ -198,7 +199,7 @@ export function CalculatorPanel({ draggable = false, zIndex, onActivate, onClose
   return (
     <section
       ref={panelRef}
-      className={`calculator-panel ${draggable ? "calculator-panel--floating" : ""} ${isDragging ? "calculator-panel--dragging" : ""}`}
+      className={`calculator-panel ${draggable ? "calculator-panel--floating" : ""} ${isDragging ? "calculator-panel--dragging" : ""} ${className ?? ""}`}
       style={draggable ? { left: `${position.x}px`, top: `${position.y}px`, zIndex } : undefined}
       onPointerDownCapture={draggable ? onActivate : undefined}
       aria-label="Calculator panel"
