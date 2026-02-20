@@ -1,0 +1,107 @@
+.calculator-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-2);
+  width: fit-content;
+  padding: var(--g-spacing-6) var(--g-spacing-4);
+  border: 1px solid var(--g-color-line-generic);
+  border-radius: var(--g-border-radius-2xl);
+  background-color: var(--g-color-base-background);
+}
+
+.calculator-panel--floating {
+  position: fixed;
+  z-index: 70;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05), 0 4px 24px rgba(0, 0, 0, 0.05);
+}
+
+.calculator-panel--dragging {
+  user-select: none;
+}
+
+.calculator-panel__drag-zone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 16px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.calculator-panel--dragging .calculator-panel__drag-zone {
+  cursor: grabbing;
+}
+
+.calculator-panel__header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--g-spacing-2);
+  width: 100%;
+}
+
+.calculator-panel__header-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 26px;
+}
+
+.calculator-panel__header--draggable {
+  cursor: grab;
+  touch-action: none;
+}
+
+.calculator-panel--dragging .calculator-panel__header--draggable {
+  cursor: grabbing;
+}
+
+.calculator-panel__close-button {
+  flex-shrink: 0;
+}
+
+.calculator-panel__header-spacer {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.calculator-panel__result {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+}
+
+.calculator-panel__result-value {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.calculator-panel__layout {
+  display: flex;
+  align-items: stretch;
+  gap: var(--g-spacing-2);
+}
+
+.calculator-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 58px);
+  gap: var(--g-spacing-2);
+  width: max-content;
+}
+
+.calculator-panel__operators {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-2);
+}
+
+.calculator-panel__button {
+  min-width: 58px;
+  max-width: 58px;
+}

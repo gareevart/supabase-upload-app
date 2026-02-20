@@ -1,0 +1,15 @@
+.figma-calculator-page {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: var(--g-spacing-6) var(--g-spacing-4);
+}
+
+.figma-calculator-page__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-4);
+  width: 100%;
+  max-width: 968px;
+  align-items: flex-start;
+}

@@ -292,3 +292,10 @@ a {
 .g-label_theme_clear {
   width: fit-content;
 }
+
+.drawer-menu.open .drawer-content {
+  transform: translateY(0);
+  max-width: 600px;
+  margin: 0 auto;
+  border-radius: 16px;
+}

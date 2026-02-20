@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { Icon, Button, Popover } from '@gravity-ui/uikit';
-import { House, Circles4Square, Person, Magnifier, BookOpen, Bars, Xmark } from '@gravity-ui/icons';
+import { Icon, Button, Popover, Text } from '@gravity-ui/uikit';
+import { House, Circles4Square, Person, Magnifier, BookOpen, Bars, Xmark, Circles3Plus, Calculator } from '@gravity-ui/icons';
 import Image from 'next/image';
 import UserAvatar from '../UserAvatar';
 import NavigationItem from './NavigationItem';
 import { DrawerMenu } from '@/shared/ui/DrawerMenu';
+import { CalculatorPanel } from '@/features/calculator/ui';
 import Link from 'next/link'
 import './Navigation.css';
 import { NAVIGATION_POSITION_EVENT, NAVIGATION_POSITION_STORAGE_KEY, NavigationPosition } from './navigationPosition';
@@ -14,8 +15,12 @@ import { NAVIGATION_POSITION_EVENT, NAVIGATION_POSITION_STORAGE_KEY, NavigationP
 const Navigation: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
+  const widgetsTriggerRef = useRef<HTMLDivElement>(null);
   const [activeItem, setActiveItem] = useState('home');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isWidgetsPanelOpen, setIsWidgetsPanelOpen] = useState(false);
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [widgetsPanelStyle, setWidgetsPanelStyle] = useState<React.CSSProperties>({});
   const [navigationPosition, setNavigationPosition] = useState<NavigationPosition>('left');
   const [isMobileViewport, setIsMobileViewport] = useState(false);
 
@@ -36,6 +41,8 @@ const Navigation: React.FC = () => {
     const activeFromPath = getActiveItemFromPath(pathname || '');
     setActiveItem(activeFromPath);
     localStorage.setItem('activeItem', activeFromPath);
+    setIsWidgetsPanelOpen(false);
+    setIsDrawerOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -101,12 +108,55 @@ const Navigation: React.FC = () => {
 
 
   const toggleDrawer = () => {
+    setIsWidgetsPanelOpen(false);
     setIsDrawerOpen((prev) => !prev);
   };
 
   const closeDrawer = () => {
     setIsDrawerOpen(false);
   };
+
+  const toggleWidgetsPanel = () => {
+    setIsDrawerOpen(false);
+    setIsWidgetsPanelOpen((prev) => !prev);
+  };
+
+  const closeWidgetsPanel = () => {
+    setIsWidgetsPanelOpen(false);
+  };
+
+  const openCalculatorWidget = () => {
+    setIsCalculatorOpen(true);
+    setIsWidgetsPanelOpen(false);
+  };
+
+  useEffect(() => {
+    if (!isWidgetsPanelOpen || navigationPosition !== 'left' || !widgetsTriggerRef.current) {
+      return;
+    }
+
+    const updateWidgetsPanelPosition = () => {
+      if (!widgetsTriggerRef.current) {
+        return;
+      }
+
+      const rect = widgetsTriggerRef.current.getBoundingClientRect();
+      setWidgetsPanelStyle({
+        left: `${rect.right + 8}px`,
+        top: `${rect.top + rect.height / 2}px`,
+      });
+    };
+
+    updateWidgetsPanelPosition();
+
+    window.addEventListener('resize', updateWidgetsPanelPosition);
+    window.addEventListener('scroll', updateWidgetsPanelPosition, true);
+
+    return () => {
+      window.removeEventListener('resize', updateWidgetsPanelPosition);
+      window.removeEventListener('scroll', updateWidgetsPanelPosition, true);
+    };
+  }, [isWidgetsPanelOpen, navigationPosition]);
 
   return (
     <>
@@ -131,10 +181,10 @@ const Navigation: React.FC = () => {
               <Popover
                 key={item.id}
                 content={item.label}
-                placement="right"
+                placement="top"
                 hasArrow
                 openDelay={50}
-                closeDelay={100}
+                closeDelay={20}
                 className='profile-popup'
               >
                 <Button
@@ -154,32 +204,57 @@ const Navigation: React.FC = () => {
               </Popover>
             ))}
 
-            <Popover
-              content="Menu"
-              placement="bottom"
-              hasArrow
-              openDelay={50}
-              closeDelay={100}
-              className='profile-popup'
-            >
-              <Button
-                view="flat"
-                className="menu-button"
-                onClick={toggleDrawer}
-                aria-label={isDrawerOpen ? "Close menu" : "Open menu"}
-                aria-expanded={isDrawerOpen}
+            <div ref={widgetsTriggerRef}>
+              <Popover
+                content="Widgets"
+                placement={navigationPosition === 'bottom' ? "top" : "left"}
+                hasArrow
+                openDelay={50}
+                closeDelay={20}
+                className='profile-popup'
               >
-                <Icon data={isDrawerOpen ? Xmark : Bars} size={24} />
-              </Button>
-            </Popover>
+                <Button
+                  view={isWidgetsPanelOpen ? "action" : "flat"}
+                  selected={isWidgetsPanelOpen}
+                  size="xl"
+                  onClick={toggleWidgetsPanel}
+                  aria-label={isWidgetsPanelOpen ? "Close widgets panel" : "Open widgets panel"}
+                  aria-expanded={isWidgetsPanelOpen}
+                >
+                  <Icon data={Circles3Plus} size={20} />
+                </Button>
+              </Popover>
+            </div>
+
+            {navigationPosition === 'bottom' && (
+              <Popover
+                content="Menu"
+                placement="top"
+                hasArrow
+                openDelay={50}
+                closeDelay={20}
+                className='profile-popup'
+              >
+                <Button
+                  view={isDrawerOpen ? "action" : "flat"}
+                  selected={isDrawerOpen}
+                  size="xl"
+                  onClick={toggleDrawer}
+                  aria-label={isDrawerOpen ? "Close menu" : "Open menu"}
+                  aria-expanded={isDrawerOpen}
+                >
+                  <Icon data={isDrawerOpen ? Xmark : Bars} size={20} />
+                </Button>
+              </Popover>
+            )}
           </div>
-          {!isMobileViewport && (
+          {!isMobileViewport && navigationPosition !== 'bottom' && (
             <Popover
               content="Profile"
-              placement="right"
+              placement="left"
               hasArrow
               openDelay={50}
-              closeDelay={100}
+              closeDelay={20}
               className='profile-popup'
             >
               <Link href="/auth/profile">
@@ -189,6 +264,33 @@ const Navigation: React.FC = () => {
           )}
         </div>
       </nav>
+
+      <div
+        className={`widgets-panel ${navigationPosition === 'left' ? 'widgets-panel--left' : ''} ${navigationPosition === 'bottom' ? 'widgets-panel--bottom' : ''} ${isWidgetsPanelOpen ? 'widgets-panel--open' : ''}`}
+        style={navigationPosition === 'left' ? widgetsPanelStyle : undefined}
+        role="dialog"
+        aria-modal="false"
+        aria-label="Widgets list"
+      >
+        <div className="widgets-panel__header">
+          <Text variant="subheader-2">Widgets</Text>
+        </div>
+        <div className="widgets-panel__divider" />
+        <button
+          type="button"
+          className="widgets-panel__item"
+          onClick={openCalculatorWidget}
+        >
+          <Icon data={Calculator} size={18} />
+          <Text variant="body-1">Calculator</Text>
+        </button>
+      </div>
+      <button
+        type="button"
+        className={`widgets-panel__overlay ${isWidgetsPanelOpen ? 'widgets-panel__overlay--open' : ''}`}
+        onClick={closeWidgetsPanel}
+        aria-label="Close widgets panel"
+      />
 
       <DrawerMenu open={isDrawerOpen} onClose={closeDrawer} bottomOffset={navigationPosition === 'bottom' || isMobileViewport ? 81 : 65}>
         {drawerNavItems.map((item) => (
@@ -209,6 +311,10 @@ const Navigation: React.FC = () => {
           />
         ))}
       </DrawerMenu>
+
+      {isCalculatorOpen && (
+        <CalculatorPanel draggable onClose={() => setIsCalculatorOpen(false)} />
+      )}
     </>
   );
 };
