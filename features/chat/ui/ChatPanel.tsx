@@ -1,7 +1,8 @@
 "use client";
 
-import { Xmark, Comment } from "@gravity-ui/icons";
+import { Xmark, Comment, ArrowRightFromSquare } from "@gravity-ui/icons";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button, Icon, Spin, Text } from "@gravity-ui/uikit";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useChats } from "@/hooks/useChats";
@@ -18,7 +19,8 @@ type ChatPanelProps = {
 };
 
 export function ChatPanel({ draggable = false, zIndex, onActivate, onClose, className }: ChatPanelProps) {
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const { chats, isLoading: isChatsLoading, createChat } = useChats();
   const [resolvedChatId, setResolvedChatId] = useState<string | null>(null);
   const isCreatingRef = useRef(false);
@@ -139,7 +141,28 @@ export function ChatPanel({ draggable = false, zIndex, onActivate, onClose, clas
       </div>
 
       <div className="chat-panel__body">
-        {isReady ? (
+        {authLoading ? (
+          <div className="chat-panel__loading">
+            <Spin size="s" />
+          </div>
+        ) : !user ? (
+          <div className="chat-panel__auth-prompt">
+            <Icon data={Comment} size={32} />
+            <Text variant="subheader-2">Sign in to chat</Text>
+            <Text variant="body-1" color="secondary">You need to be signed in to use the chat</Text>
+            <Button
+              view="action"
+              size="l"
+              onClick={() => {
+                onClose?.();
+                router.push('/auth');
+              }}
+            >
+              <Icon data={ArrowRightFromSquare} size={16} />
+              Sign in
+            </Button>
+          </div>
+        ) : isReady ? (
           <ChatSidebarProvider>
             <ChatInterface chatId={resolvedChatId} />
           </ChatSidebarProvider>

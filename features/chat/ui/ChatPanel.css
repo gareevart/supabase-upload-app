@@ -113,6 +113,17 @@
   gap: var(--g-spacing-2);
 }
 
+.chat-panel__auth-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: var(--g-spacing-3);
+  padding: var(--g-spacing-6);
+  text-align: center;
+}
+
 @media (max-width: 767px) {
   .chat-panel {
     max-width: calc(100vw - 32px);
