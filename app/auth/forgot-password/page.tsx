@@ -61,7 +61,7 @@ const ForgotPassword = () => {
         <div className="login-container">
             {/* Add logo above the card */}
             <div className="app-logo">
-                <Image src={logo} alt="Application Logo" width={180} height={60} />
+                <Image src={logo} alt="Application Logo" width={180} height={60} loading="eager" style={{ height: 'auto' }} />
             </div>
 
             <Card className='login' maxWidth="360px" theme="normal" size="l">

@@ -9,7 +9,6 @@ import Image from 'next/image';
 import './Auth.css';
 
 const Login = () => {
-  console.log("[v0] Login component rendering");
   const router = useRouter();
   const theme = useThemeValue();
 
@@ -27,14 +26,11 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("[v0] handleLogin called, email:", email);
     setIsLoading(true);
     setError(null);
 
     try {
-      console.log("[v0] Calling supabase.auth.signInWithPassword");
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      console.log("[v0] signInWithPassword result, error:", error);
       if (error) throw error;
       
       // Проверяем сохраненный return URL или используем профиль по умолчанию
@@ -46,7 +42,6 @@ const Login = () => {
         router.push('/auth/profile');
       }
     } catch (error: any) {
-      console.log("[v0] Login error:", error.message);
       setError(error.message);
     } finally {
       setIsLoading(false);
@@ -79,7 +74,7 @@ const Login = () => {
     <div className="login-container">
       {/* Add logo above the card */}
       <div className="app-logo">
-        <Image src={logo} alt="Application Logo" width={180} height={60} />
+        <Image src={logo} alt="Application Logo" width={180} height={60} loading="eager" style={{ height: 'auto' }} />
       </div>
 
       <Card className='login' maxWidth="360px" theme="normal" size="l">
