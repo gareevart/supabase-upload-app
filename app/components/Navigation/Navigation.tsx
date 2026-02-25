@@ -2,18 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 
 import { useRouter, usePathname } from 'next/navigation';
 import { Icon, Button, Popover, Text } from '@gravity-ui/uikit';
-import { House, Circles4Square, Person, Magnifier, BookOpen, Bars, Xmark, Circles3Plus, Calculator, Camera } from '@gravity-ui/icons';
+import { House, Circles4Square, Person, Magnifier, BookOpen, Bars, Xmark, Circles3Plus, Calculator, Camera, Comment } from '@gravity-ui/icons';
 import Image from 'next/image';
 import UserAvatar from '../UserAvatar';
 import NavigationItem from './NavigationItem';
 import { DrawerMenu } from '@/shared/ui/DrawerMenu';
 import { CalculatorPanel } from '@/features/calculator/ui';
 import { CameraPanel } from '@/features/camera/ui';
+import { ChatPanel } from '@/features/chat/ui';
 import Link from 'next/link'
 import './Navigation.css';
 import { NAVIGATION_POSITION_EVENT, NAVIGATION_POSITION_STORAGE_KEY, NavigationPosition } from './navigationPosition';
 
-type WidgetId = 'calculator' | 'camera';
+type WidgetId = 'calculator' | 'camera' | 'chat';
 type WidgetAnimationState = 'closed' | 'entering' | 'open' | 'exiting';
 
 const Navigation: React.FC = () => {
@@ -25,11 +26,13 @@ const Navigation: React.FC = () => {
   const [isWidgetsPanelOpen, setIsWidgetsPanelOpen] = useState(false);
   const [calculatorWidgetState, setCalculatorWidgetState] = useState<WidgetAnimationState>('closed');
   const [cameraWidgetState, setCameraWidgetState] = useState<WidgetAnimationState>('closed');
+  const [chatWidgetState, setChatWidgetState] = useState<WidgetAnimationState>('closed');
   const [widgetLayers, setWidgetLayers] = useState<Record<WidgetId, number>>({
     calculator: 70,
     camera: 71,
+    chat: 72,
   });
-  const widgetLayerCounterRef = useRef(71);
+  const widgetLayerCounterRef = useRef(72);
   const [widgetsPanelStyle, setWidgetsPanelStyle] = useState<React.CSSProperties>({});
   const [navigationPosition, setNavigationPosition] = useState<NavigationPosition>('left');
   const [isMobileViewport, setIsMobileViewport] = useState(false);
@@ -170,6 +173,18 @@ const Navigation: React.FC = () => {
     setIsWidgetsPanelOpen(false);
   };
 
+  const openChatWidget = () => {
+    bringWidgetToFront('chat');
+    setChatWidgetState((prev) => {
+      if (prev === 'closed') {
+        requestAnimationFrame(() => setChatWidgetState('open'));
+        return 'entering';
+      }
+      return 'open';
+    });
+    setIsWidgetsPanelOpen(false);
+  };
+
   useEffect(() => {
     if (calculatorWidgetState !== 'exiting') {
       return;
@@ -197,6 +212,20 @@ const Navigation: React.FC = () => {
       window.clearTimeout(timeoutId);
     };
   }, [cameraWidgetState]);
+
+  useEffect(() => {
+    if (chatWidgetState !== 'exiting') {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setChatWidgetState('closed');
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [chatWidgetState]);
 
   useEffect(() => {
     if (!isWidgetsPanelOpen || !isLeftAnchoredWidgetsPanel || !widgetsTriggerRef.current) {
@@ -360,6 +389,14 @@ const Navigation: React.FC = () => {
           <Icon data={Camera} size={18} />
           <Text variant="body-1">Camera</Text>
         </button>
+        <button
+          type="button"
+          className="widgets-panel__item"
+          onClick={openChatWidget}
+        >
+          <Icon data={Comment} size={18} />
+          <Text variant="body-1">Chat</Text>
+        </button>
       </div>
       <button
         type="button"
@@ -415,6 +452,21 @@ const Navigation: React.FC = () => {
               : cameraWidgetState === 'exiting'
                 ? 'camera-panel--exiting'
                 : 'camera-panel--open'
+          }
+        />
+      )}
+      {chatWidgetState !== 'closed' && (
+        <ChatPanel
+          draggable
+          zIndex={widgetLayers.chat}
+          onActivate={() => bringWidgetToFront('chat')}
+          onClose={() => setChatWidgetState('exiting')}
+          className={
+            chatWidgetState === 'entering'
+              ? 'chat-panel--entering'
+              : chatWidgetState === 'exiting'
+                ? 'chat-panel--exiting'
+                : 'chat-panel--open'
           }
         />
       )}
