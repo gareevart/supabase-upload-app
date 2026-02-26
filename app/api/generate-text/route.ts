@@ -134,14 +134,39 @@ export async function POST(request: Request) {
           if (searchError) {
             console.error('Error searching chat documents:', searchError);
           } else if (documents && documents.length > 0) {
-            // Group chunks by message and compute per-message scores
+            // Only treat messages with file attachments as document sources.
+            // Plain chat text should not be treated as "provided documents".
             type DocRow = { message_id: string; content: string; similarity: number };
-            const byMessage = new Map<string, DocRow[]>();
-            (documents as DocRow[]).forEach((row) => {
-              const arr = byMessage.get(row.message_id) || [];
-              arr.push(row);
-              byMessage.set(row.message_id, arr);
-            });
+            const allMessageIds = Array.from(new Set((documents as DocRow[]).map((row) => row.message_id)));
+            let allowedMessageIds = new Set<string>();
+
+            if (allMessageIds.length > 0) {
+              const { data: msgMeta } = await (admin || supabase)
+                .from('chat_messages')
+                .select('id, attachments')
+                .in('id', allMessageIds);
+
+              allowedMessageIds = new Set(
+                (msgMeta || [])
+                  .filter((message: any) => Array.isArray(message.attachments) && message.attachments.length > 0)
+                  .map((message: any) => message.id)
+              );
+            }
+
+            documents = (documents as DocRow[]).filter((row) => allowedMessageIds.has(row.message_id));
+
+            if (documents.length === 0) {
+              bestScore = 0;
+              mode = 'GENERAL';
+              contextText = '';
+              console.log('No attachment-based documents found for RAG context');
+            } else {
+              const byMessage = new Map<string, DocRow[]>();
+              (documents as DocRow[]).forEach((row) => {
+                const arr = byMessage.get(row.message_id) || [];
+                arr.push(row);
+                byMessage.set(row.message_id, arr);
+              });
             // sort chunks inside each group by similarity desc and keep top N
             const perMessageTop: { message_id: string; topChunk: DocRow; topChunks: DocRow[]; score: number }[] = [];
             for (const [messageId, rows] of byMessage.entries()) {
@@ -179,6 +204,7 @@ export async function POST(request: Request) {
               contextText = '';
               console.log(`Auto-mode=GENERAL (no relevant docs). bestScore=${bestScore.toFixed(3)}`);
             }
+          }
           } else {
             console.log('No chat documents found');
           }
@@ -245,12 +271,15 @@ export async function POST(request: Request) {
       /(?:какие|перечисли|список|назови)/i.test(userQuestion) &&
       /(?:кафе|ресторан|бар|кофейня|пекарня)/i.test(userQuestion);
 
-    // Decide whether to enable web search (heuristic)
+    // Decide whether to enable web search.
+    // If user explicitly enabled web search in UI, always honor it.
     const looksTimely = /\b(сегодня|сейчас|новост|последн(яя|ий)\s+(верси|релиз)|курс|цен[аы]|когда\s+выйдет|\d{4}|\?|обновлени|релиз)\b/i.test(userQuestion);
-    let doWebSearch = false;
-    if (bestScore < THRESH_LOW && looksTimely) {
-      doWebSearch = true;
+    const hasExplicitWebSearch = Boolean(useWebSearch);
+    const doWebSearch = hasExplicitWebSearch || (bestScore < THRESH_LOW && looksTimely);
+    if (doWebSearch) {
       mode = 'WEB';
+      contextText = '';
+      documents = [];
     }
 
     // Web search (generative response) integration
@@ -578,12 +607,6 @@ export async function POST(request: Request) {
                   snippet,
                   type: 'doc'
                 });
-              });
-            } else {
-              sources.push({
-                title: `Сообщение ${idx + 1}`,
-                snippet,
-                type: 'doc'
               });
             }
           });
