@@ -131,8 +131,8 @@ export const useYandexGPT = () => {
           messageContext: messageContext || [],
           model: selectedModel,
           reasoningMode: reasoningMode,
-          useWebSearch: false,
-          webSearchQuery: undefined,
+          useWebSearch: Boolean(useWebSearch),
+          webSearchQuery: webSearchQuery || prompt,
           chatId
         })
       });

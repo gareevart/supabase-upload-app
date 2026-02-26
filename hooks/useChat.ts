@@ -398,8 +398,8 @@ export const useChat = (chatId: string) => {
             console.log('Reasoning chunk:', reasoningChunk);
             // TODO: Update UI with reasoning chunks
           },
-          false,
-          undefined,
+          Boolean(useWebSearch),
+          content,
           chatId
         );
 
