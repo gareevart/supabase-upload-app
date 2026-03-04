@@ -11,6 +11,100 @@ import {
   BLOG_POSTS_LIST_PREFIX,
   buildBlogPostsListKey
 } from '@/shared/lib/blog/cache';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+
+// ---------- Featured image data-URL normalization helpers ----------
+const BUCKET_NAME = 'public-gareevde';
+const ENDPOINT_URL = process.env.ENDPOINT_URL || 'https://storage.yandexcloud.net';
+const BUCKET_KEY_ID = process.env.BUCKET_KEY_ID || '';
+const BUCKET_SECRET_KEY = process.env.BUCKET_SECRET_KEY || '';
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
+
+const s3Client = new S3Client({
+  region: 'ru-central1',
+  endpoint: ENDPOINT_URL,
+  credentials: {
+    accessKeyId: BUCKET_KEY_ID,
+    secretAccessKey: BUCKET_SECRET_KEY,
+  },
+});
+
+function detectDataUrl(value: unknown): value is string {
+  return typeof value === 'string' && /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(value);
+}
+
+function extFromMime(mime: string): string | null {
+  const type = mime.replace(/^image\//, '').toLowerCase();
+  if (type === 'jpeg') return 'jpg';
+  if (['jpg', 'png', 'webp', 'gif'].includes(type)) return type;
+  return null;
+}
+
+function parseDataUrl(dataUrl: string): { mime: string; ext: string; buffer: Buffer } | null {
+  try {
+    const match = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(dataUrl);
+    if (!match) return null;
+    const mime = match[1];
+    const base64 = match[2];
+    const ext = extFromMime(mime);
+    if (!ext) return null;
+    const buffer = Buffer.from(base64, 'base64');
+    return { mime, ext, buffer };
+  } catch {
+    return null;
+  }
+}
+
+async function uploadToYandex(params: { buffer: Buffer; mime: string; userId: string; ext: string; folder?: string }) {
+  if (!BUCKET_KEY_ID || !BUCKET_SECRET_KEY) {
+    throw new Error('Storage credentials are not configured');
+  }
+  const { buffer, mime, userId, ext, folder = 'featured' } = params;
+  const ts = Date.now();
+  const rand = Math.random().toString(36).slice(2, 8);
+  const key = `${folder}/${userId}/${ts}-${rand}.${ext}`;
+
+  const command = new PutObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key,
+    Body: buffer,
+    ContentType: mime,
+    CacheControl: '3600',
+    ACL: 'public-read',
+  });
+
+  await s3Client.send(command);
+
+  const url = `https://${BUCKET_NAME}.storage.yandexcloud.net/${key}?${ts}`;
+  return { url, path: key };
+}
+
+async function normalizeFeaturedImage(featuredImage: any, userId: string): Promise<string | null | undefined> {
+  if (!featuredImage) return featuredImage; // null/undefined passthrough
+  if (typeof featuredImage !== 'string') return featuredImage;
+  if (/^https?:\/\//i.test(featuredImage)) return featuredImage; // already a URL
+  if (!detectDataUrl(featuredImage)) return featuredImage; // unknown format -> leave as-is
+
+  const parsed = parseDataUrl(featuredImage);
+  if (!parsed) {
+    throw Object.assign(new Error('Invalid featured_image data URL'), { status: 400 });
+  }
+  if (parsed.buffer.length > MAX_IMAGE_BYTES) {
+    throw Object.assign(new Error('featured_image exceeds 10MB limit'), { status: 413 });
+  }
+
+  const { url } = await uploadToYandex({
+    buffer: parsed.buffer,
+    mime: parsed.mime,
+    ext: parsed.ext,
+    userId,
+  });
+  console.log('[blog-posts] Uploaded featured_image to Yandex', {
+    userId,
+    size: parsed.buffer.length,
+  });
+  return url;
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
@@ -301,6 +395,17 @@ export const POST = withAuth(async (request: NextRequest, user: { id: string }) 
       );
     }
 
+    // Normalize featured_image if it's a data URL
+    let normalizedFeaturedImage: string | null | undefined = featured_image;
+    try {
+      normalizedFeaturedImage = await normalizeFeaturedImage(featured_image, user.id);
+    } catch (e: any) {
+      const status = typeof e?.status === 'number' ? e.status : 500;
+      const message = e instanceof Error ? e.message : 'Failed to normalize featured_image';
+      console.error('[blog-posts] Featured image normalization failed', { userId: user.id, message });
+      return NextResponse.json({ error: message }, { status });
+    }
+
     // Create a service role client for creating posts (bypasses RLS)
     const supabase = createClient<Database>(
       supabaseUrl,
@@ -360,7 +465,7 @@ export const POST = withAuth(async (request: NextRequest, user: { id: string }) 
         content,
         slug: finalSlug,
         excerpt,
-        featured_image,
+        featured_image: normalizedFeaturedImage ?? null,
         published,
         author_id: user.id,
         created_at: new Date().toISOString(),
