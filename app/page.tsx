@@ -11,9 +11,14 @@ export default function Home() {
   return (
     <main className="container mx-auto px-4 max-w-4xl">
       <div>
-        <MainPageSection />
-        <HomeClient />
-        <ShowApp />
+        <MainPageSection
+          fallback={(
+            <>
+              <HomeClient />
+              <ShowApp />
+            </>
+          )}
+        />
       </div>
     </main>
   );

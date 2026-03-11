@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { Text } from '@gravity-ui/uikit';
 import TipTapContent from '@/app/components/blog/TipTapContent';
 
-export default function MainPageSection() {
+interface MainPageSectionProps {
+  fallback?: ReactNode;
+}
+
+export default function MainPageSection({ fallback = null }: MainPageSectionProps) {
   const [page, setPage] = useState<any | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -22,7 +26,7 @@ export default function MainPageSection() {
   }, []);
 
   if (!loaded) return null;
-  if (!page) return null;
+  if (!page) return <>{fallback}</>;
 
   return (
     <section className="mt-8">
