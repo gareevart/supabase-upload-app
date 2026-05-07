@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <main className="container mx-auto px-4 max-w-4xl">
+    <main className="container mx-auto px-4 max-w-6xl">
       <div>
         <HomeClient />
         <ShowApp />
