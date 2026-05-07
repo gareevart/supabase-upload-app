@@ -35,6 +35,7 @@ const Navigation: React.FC = () => {
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const isLeftAnchoredWidgetsPanel = navigationPosition === 'left' && !isMobileViewport;
   const isBottomAnchoredWidgetsPanel = navigationPosition === 'bottom' || isMobileViewport;
+  const isChatRoute = pathname?.startsWith('/chat') ?? false;
 
   // Function to determine active item based on current path
   const getActiveItemFromPath = (pathname: string): string => {
@@ -228,7 +229,7 @@ const Navigation: React.FC = () => {
 
   return (
     <>
-      <nav className={`navigation navigation--${navigationPosition}`}>
+      <nav className={`navigation navigation--${navigationPosition} ${isChatRoute ? 'navigation--chat-route' : ''}`}>
         <div className="nav-container">
           <div className="logo-area">
             <div className="logo-wrapper">

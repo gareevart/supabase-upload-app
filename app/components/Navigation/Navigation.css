@@ -226,6 +226,10 @@
 
 /* Mobile Navigation */
 @media (max-width: 767px) {
+  .navigation--chat-route {
+    display: none;
+  }
+
   .navigation {
     position: fixed;
     bottom: 16px;
