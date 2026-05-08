@@ -44,15 +44,17 @@ export default function HomeClient() {
 
           <Text id="home-hero-title" className="home-title" variant="display-1">
             {t('home.bio.prefix')}{' '}
-            <GradientHoverImage
-              src="/infra-logo.svg"
-              alt="Infra logo"
-              className="infra-logo"
-              width={36}
-              height={36}
-              priority
-            />{' '}
-            {t('home.bio.suffix')}
+            <span className="home-company">
+              <GradientHoverImage
+                src="/infra-logo.svg"
+                alt="Infra logo"
+                className="infra-logo"
+                width={36}
+                height={36}
+                priority
+              />
+              {t('home.company.name')}
+            </span>{t('home.bio.suffix')}
           </Text>
 
           <Text className="home-subtitle" variant="subheader-3" color="secondary">
