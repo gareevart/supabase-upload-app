@@ -10,30 +10,13 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 export const withApiAuth = (handler: (req: NextRequest, user: { id: string }) => Promise<NextResponse>) => {
   return async (req: NextRequest) => {
     try {
-      // Enhanced debug logging
-      console.log('Auth middleware request details:', {
-        url: req.url,
-        method: req.method,
-        path: req.nextUrl.pathname,
-        timestamp: new Date().toISOString(),
-        headers: Object.fromEntries(req.headers.entries()),
-        cookies: req.cookies.getAll().map(c => ({ name: c.name, value: c.value })),
-        env: {
-          NODE_ENV: process.env.NODE_ENV,
-          SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL
-        }
-      });
-
       // Проверяем Authorization header (приоритет над cookies)
       const authHeader = req.headers.get('authorization');
       let user = null;
       let error: { message?: string; code?: string; status?: number } | null = null;
 
-      console.log('withApiAuth: Authorization header:', authHeader ? 'Present' : 'Missing');
-
       if (authHeader?.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
-        console.log('withApiAuth: Using plain createClient for Bearer token');
 
         const { createClient } = await import('@supabase/supabase-js');
         const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
@@ -47,14 +30,11 @@ export const withApiAuth = (handler: (req: NextRequest, user: { id: string }) =>
           const result = await supabase.auth.getUser(token);
           user = result.data.user;
           error = result.error;
-          console.log('withApiAuth: getUser(token) result:', JSON.stringify(result, null, 2));
         } catch (authError) {
           console.error('withApiAuth: Auth error with Bearer token:', authError);
           error = authError instanceof Error ? { message: authError.message } : { message: 'Auth failed' };
         }
       } else {
-        console.log('withApiAuth: Using createServerClient for Cookies');
-
         const supabase = createServerClient<Database>(
           supabaseUrl,
           supabaseAnonKey,
@@ -79,7 +59,6 @@ export const withApiAuth = (handler: (req: NextRequest, user: { id: string }) =>
           const result = await supabase.auth.getUser();
           user = result.data.user;
           error = result.error;
-          console.log('withApiAuth: getUser() result with Cookies:', JSON.stringify(result, null, 2));
         } catch (cookieError) {
           console.error('withApiAuth: Cookie validation threw error:', cookieError);
           error = cookieError instanceof Error
@@ -89,28 +68,11 @@ export const withApiAuth = (handler: (req: NextRequest, user: { id: string }) =>
       }
 
       if (error || !user) {
-        const errorDetails = {
-          error: error?.message || 'Auth session missing!',
-          code: error?.code,
-          status: error?.status,
-          headers: {
-            cookie: req.headers.get('cookie'),
-            authorization: req.headers.get('authorization'),
-            origin: req.headers.get('origin'),
-            referer: req.headers.get('referer')
-          },
-          timestamp: new Date().toISOString(),
-          path: req.nextUrl.pathname,
-          method: req.method
-        };
-        console.error('API auth check failed:', errorDetails);
-
         return NextResponse.json(
           {
             error: 'Unauthorized',
             details: error?.message || 'Auth session missing!',
             code: error?.code,
-            timestamp: errorDetails.timestamp
           },
           {
             status: 401,

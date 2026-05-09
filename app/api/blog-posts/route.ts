@@ -150,15 +150,12 @@ export const GET = withAuth(async (request: NextRequest, user: { id: string }) =
     const onlyMine = url.searchParams.get('onlyMine') === 'true';
     const publishedOnly = url.searchParams.get('publishedOnly') === 'true';
     const draftsOnly = url.searchParams.get('draftsOnly') === 'true';
-    const inspectSchema = url.searchParams.get('inspectSchema') === 'true';
-    const listCacheKey = inspectSchema
-      ? null
-      : buildBlogPostsListKey({
-          userId: user.id,
-          onlyMine,
-          publishedOnly,
-          draftsOnly
-        });
+    const listCacheKey = buildBlogPostsListKey({
+      userId: user.id,
+      onlyMine,
+      publishedOnly,
+      draftsOnly
+    });
 
     // Use service role client to bypass RLS for authenticated API requests
     const supabase = createClient<Database>(
@@ -171,66 +168,6 @@ export const GET = withAuth(async (request: NextRequest, user: { id: string }) =
         }
       }
     );
-
-    if (inspectSchema) {
-      // Query the information_schema to get table structure
-      // Query columns
-      const { data: columns, error: columnsError } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .limit(0); // Returns only schema info
-
-      if (columnsError) throw columnsError;
-
-      // Query constraints (using raw SQL)
-      const { data: constraints, error: constraintsError } = await supabase
-        .rpc('query', {
-          query: `
-            SELECT
-              tc.constraint_name,
-              tc.constraint_type,
-              kcu.column_name,
-              ccu.table_name AS foreign_table,
-              ccu.column_name AS foreign_column
-            FROM information_schema.table_constraints tc
-            LEFT JOIN information_schema.key_column_usage kcu
-              ON tc.constraint_name = kcu.constraint_name
-              AND tc.table_schema = kcu.table_schema
-            LEFT JOIN information_schema.constraint_column_usage ccu
-              ON ccu.constraint_name = tc.constraint_name
-              AND ccu.table_schema = tc.table_schema
-            WHERE tc.table_name = 'blog_posts'
-            AND tc.table_schema = 'public'
-          `
-        });
-
-      if (constraintsError) throw constraintsError;
-
-      // Query triggers (using raw SQL)
-      const { data: triggers, error: triggersError } = await supabase
-        .rpc('query', {
-          query: `
-            SELECT
-              trigger_name,
-              action_timing,
-              event_manipulation,
-              action_statement
-            FROM information_schema.triggers
-            WHERE event_object_table = 'blog_posts'
-            AND event_object_schema = 'public'
-          `
-        });
-
-      if (triggersError) throw triggersError;
-
-      if (triggersError) throw triggersError;
-
-      return NextResponse.json({
-        columns,
-        constraints,
-        triggers
-      });
-    }
 
     if (listCacheKey) {
       const cachedPosts = await redisGetJson<any[]>(listCacheKey);

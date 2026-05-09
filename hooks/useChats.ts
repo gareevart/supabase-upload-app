@@ -33,30 +33,31 @@ export const useChats = () => {
         throw error;
       }
 
-      // For each chat, get the last message
-      const chatsWithLastMessage = await Promise.all(
-        data.map(async (chat) => {
-          const { data: messages } = await supabase
+      const chatIds = data.map((c) => c.id);
+      const { data: allMessages } = chatIds.length
+        ? await supabase
             .from("chat_messages")
-            .select("content, role")
-            .eq("chat_id", chat.id)
+            .select("chat_id, content, role, created_at")
+            .in("chat_id", chatIds)
             .order("created_at", { ascending: false })
-            .limit(1);
+        : { data: [] as { chat_id: string; content: string; role: string; created_at: string }[] };
 
-          const lastMessage = messages && messages.length > 0
-            ? messages[0].role === 'user'
-              ? `Вы: ${messages[0].content}`
-              : `Ассистент: ${messages[0].content}`
-            : "Нет сообщений";
+      const lastMessageByChat = new Map<string, { content: string; role: string }>();
+      for (const msg of allMessages ?? []) {
+        if (!lastMessageByChat.has(msg.chat_id)) {
+          lastMessageByChat.set(msg.chat_id, msg);
+        }
+      }
 
-          return {
-            ...chat,
-            lastMessage,
-          };
-        })
-      );
-
-      return chatsWithLastMessage as Chat[];
+      return data.map((chat) => {
+        const lastMsg = lastMessageByChat.get(chat.id);
+        const lastMessage = lastMsg
+          ? lastMsg.role === "user"
+            ? `Вы: ${lastMsg.content}`
+            : `Ассистент: ${lastMsg.content}`
+          : "Нет сообщений";
+        return { ...chat, lastMessage };
+      }) as Chat[];
     },
     enabled: !!user,
   });

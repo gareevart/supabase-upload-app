@@ -125,16 +125,7 @@ export const DELETE = withApiAuth(async (request: NextRequest, user: { id: strin
       .map((attachment: Attachment) => (attachment?.url ? extractFilePath(attachment.url) : null))
       .filter((path): path is string => Boolean(path));
 
-    try {
-      await deleteFilesInBatches(filePaths);
-    } catch (storageError) {
-      console.error('Failed to delete chat attachments:', storageError);
-      return NextResponse.json(
-        { error: 'Failed to delete chat attachments' },
-        { status: 500 }
-      );
-    }
-
+    // Delete DB records first so the session is always removed atomically before S3 cleanup
     const { error: deleteMessagesError } = await supabase
       .from('chat_messages')
       .delete()
@@ -158,6 +149,11 @@ export const DELETE = withApiAuth(async (request: NextRequest, user: { id: strin
         { status: 500 }
       );
     }
+
+    // Best-effort S3 cleanup — DB records are already gone so don't block the response
+    deleteFilesInBatches(filePaths).catch((storageError) =>
+      console.error('Failed to delete chat attachments from storage:', storageError)
+    );
 
     return NextResponse.json({ data: { chatId } });
   } catch (error) {

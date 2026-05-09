@@ -421,17 +421,11 @@ export const useChat = (chatId: string) => {
 
         if (assistantMessageError) throw assistantMessageError;
 
-        // Update chat timestamp and token usage
-        const currentTokensUsed = chat?.tokens_used || 0;
+        // Atomically increment token counter via RPC to avoid lost-update race conditions
         const newTokens = usage ? parseInt(usage.totalTokens) : 0;
 
         const { error: updateError } = await supabase
-          .from("chat_sessions")
-          .update({
-            updated_at: new Date().toISOString(),
-            tokens_used: currentTokensUsed + newTokens
-          })
-          .eq("id", chatId);
+          .rpc('increment_chat_tokens', { chat_id: chatId, amount: newTokens }) as { error: { message: string } | null };
 
         if (updateError) throw updateError;
 

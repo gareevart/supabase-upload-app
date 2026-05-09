@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { withApiAuth } from '@/app/auth/withApiAuth';
 
-// Yandex Cloud Object Storage configuration
-// Public bucket for unauthenticated access
-const BUCKET_NAME = 'public-gareevde'; 
+const BUCKET_NAME = 'public-gareevde';
 const ENDPOINT_URL = process.env.ENDPOINT_URL || 'https://storage.yandexcloud.net';
 
-// Create S3 client for Yandex Cloud
 const s3Client = new S3Client({
   region: 'ru-central1',
   endpoint: ENDPOINT_URL,
@@ -16,28 +14,15 @@ const s3Client = new S3Client({
   },
 });
 
-export async function DELETE(request: NextRequest) {
+export const DELETE = withApiAuth(async (request: NextRequest, user: { id: string }) => {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = request.headers.get('x-user-id');
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized access' },
-        { status: 401 }
-      );
-    }
     const path = searchParams.get('path');
-    if (!path || !path.startsWith(`profiles/${userId}/`)) {
+
+    if (!path || !path.startsWith(`profiles/${user.id}/`)) {
       return NextResponse.json(
         { error: 'Unauthorized to delete this file' },
         { status: 403 }
-      );
-    }
-
-    if (!path) {
-      return NextResponse.json(
-        { error: 'No file path provided' },
-        { status: 400 }
       );
     }
 
@@ -56,4 +41,4 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
