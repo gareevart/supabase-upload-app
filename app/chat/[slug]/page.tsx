@@ -31,7 +31,7 @@ const ChatPage = () => {
   }
 
   return (
-    <div style={{ height: "calc(100vh - 60px)", overflow: "hidden" }}>
+    <div className="aikit-chat-page">
       <AikitChatPanel chatId={chatId} />
     </div>
   );
