@@ -1,10 +1,8 @@
-"use client"
-import { useParams } from "next/navigation";
-import { ChatInterface } from "@/app/components/chat/ChatInterface";
-import { ChatLayout } from "@/app/components/chat/ChatLayout";
+"use client";
+import { useParams, redirect } from "next/navigation";
+import { Spin } from "@gravity-ui/uikit";
 import { useAuth } from "@/app/contexts/AuthContext";
-import { redirect } from "next/navigation";
-import { Spin, Text } from "@gravity-ui/uikit";
+import { AikitChatPanel } from "@/features/chat-aikit/ui";
 
 const ChatPage = () => {
   const params = useParams<{ slug: string }>();
@@ -14,10 +12,7 @@ const ChatPage = () => {
   if (isAuthLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <Spin size="m" />
-          <div className="mt-4">Загрузка...</div>
-        </div>
+        <Spin size="m" />
       </div>
     );
   }
@@ -27,21 +22,18 @@ const ChatPage = () => {
     return null;
   }
 
+  if (!chatId) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p>Чат не найден</p>
+      </div>
+    );
+  }
+
   return (
-    <>
-      <ChatLayout>
-        <div className="chat-interface-container">
-          {chatId ? (
-            <ChatInterface chatId={chatId} />
-          ) : (
-            <div className="chat-empty-state">
-              <h2>Чат не найден</h2>
-              <p>Выберите существующий чат из списка или создайте новый.</p>
-            </div>
-          )}
-        </div>
-      </ChatLayout>
-    </>
+    <div style={{ height: "calc(100vh - 60px)", overflow: "hidden" }}>
+      <AikitChatPanel chatId={chatId} />
+    </div>
   );
 };
 

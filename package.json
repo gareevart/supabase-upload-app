@@ -16,6 +16,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.821.0",
     "@aws-sdk/s3-request-presigner": "^3.821.0",
+    "@gravity-ui/aikit": "^1.17.0",
     "@gravity-ui/navigation": "^4.0.3",
     "@mozilla/readability": "^0.6.0",
     "@supabase/ssr": "^0.6.1",

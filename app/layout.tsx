@@ -13,6 +13,7 @@ import { I18nProvider } from './contexts/I18nContext';
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import "@/styles/globals.css";
 import '@/styles/styles.css';
+import '@gravity-ui/aikit/styles';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

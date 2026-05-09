@@ -41,23 +41,37 @@ const nextConfig: NextConfig = {
   // Compress assets for better performance
   compress: true,
 
-  // Turbopack configuration (empty to silence warning while using webpack)
-  turbopack: {},
+  // Turbopack browser fallbacks for Node.js-only modules used by aikit peer deps
+  turbopack: {
+    resolveAlias: {
+      fs: './lib/browser-shims/fs.js',
+    },
+  },
 
   // Webpack configuration to handle file extensions
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     // Handle other file extensions
     config.resolve.extensionAlias = {
       '.js': ['.js', '.ts', '.tsx'],
       '.jsx': ['.jsx', '.tsx'],
     };
 
-    // Exclude problematic modules from client-side bundle
+    // Exclude server-only modules from client-side bundle
     config.externals = config.externals || [];
     config.externals.push({
       'mammoth': 'commonjs mammoth',
       'pdf2json': 'commonjs pdf2json',
     });
+
+    // @diplodoc/transform (aikit peer dep) references Node.js `fs` in utilsFS.
+    // Provide an empty stub for the browser bundle.
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+      };
+    }
 
     return config;
   },
