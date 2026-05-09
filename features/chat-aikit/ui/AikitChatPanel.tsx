@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChatContainer } from "@gravity-ui/aikit";
 import type { ChatType, TSubmitData } from "@gravity-ui/aikit";
 import { Button, Dialog, Icon, Select, Text, TextArea } from "@gravity-ui/uikit";
-import { Bulb, Globe } from "@gravity-ui/icons";
+import { Bulb, Globe, Gear } from "@gravity-ui/icons";
 import { useChat } from "@/hooks/useChat";
 import { useChats } from "@/hooks/useChats";
 import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
@@ -158,6 +158,16 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
         onDeleteChat={handleDeleteChat}
         shouldParseIncompleteMarkdown
         showActionsOnHover
+        headerProps={{
+          additionalActions: [
+            {
+              icon: <Icon data={Gear} size={18} />,
+              onClick: () => setSettingsOpen(true),
+              view: "flat",
+              title: "Настройки чата",
+            },
+          ],
+        }}
         promptInputProps={{
           topPanel:
             attachedFiles.length > 0
@@ -176,8 +186,6 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
               : { isOpen: false },
           footerProps: {
             bottomContent: footerTools,
-            showSettings: true,
-            onSettingsClick: () => setSettingsOpen(true),
           },
           bodyProps: {
             placeholder: "Напишите сообщение...",
