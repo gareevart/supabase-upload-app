@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { Button, Icon, Text, Progress } from '@gravity-ui/uikit';
+import { ActionButton } from '@gravity-ui/aikit';
 import { Xmark, Paperclip, File as FileIcon } from '@gravity-ui/icons';
 import { uploadFile } from "@/lib/yandexStorage";
 import { useAuth } from "@/app/contexts/AuthContext";
@@ -21,6 +22,7 @@ interface FileUploaderProps {
   disabled?: boolean;
   compact?: boolean; // Show only button without file list
   buttonView?: 'outlined' | 'flat' | 'action' | 'normal';
+  tooltipTitle?: string;
 }
 
 export const FileUploader = ({
@@ -32,6 +34,7 @@ export const FileUploader = ({
   disabled = false,
   compact = false,
   buttonView = 'outlined',
+  tooltipTitle,
 }: FileUploaderProps) => {
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
@@ -180,16 +183,16 @@ export const FileUploader = ({
           className="file-uploader__input"
           disabled={disabled || uploading}
         />
-        <Button
+        <ActionButton
           view={buttonView}
           size="m"
           onClick={handleButtonClick}
           disabled={disabled || uploading || files.length >= maxFiles}
-          title="Прикрепить файл"
+          tooltipTitle={tooltipTitle ?? "Прикрепить файл"}
           className="file-uploader__compact-button"
         >
           <Icon data={Paperclip} size={16} />
-        </Button>
+        </ActionButton>
       </>
     );
   }

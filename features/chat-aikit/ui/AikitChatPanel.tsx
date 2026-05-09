@@ -2,10 +2,10 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChatContainer } from "@gravity-ui/aikit";
+import { ChatContainer, ActionButton } from "@gravity-ui/aikit";
 import type { ChatType, TSubmitData } from "@gravity-ui/aikit";
 import { Button, Dialog, Icon, Select, Text, TextArea } from "@gravity-ui/uikit";
-import { Bulb, Globe, Sliders } from "@gravity-ui/icons";
+import { Bulb, Magnifier, Sliders } from "@gravity-ui/icons";
 import { useChat } from "@/hooks/useChat";
 import { useChats } from "@/hooks/useChats";
 import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
@@ -89,35 +89,36 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
         disabled={isMessageSending}
         compact
         buttonView="flat"
+        tooltipTitle="Прикрепить файл"
         maxFiles={3}
         maxFileSize={10 * 1024 * 1024}
       />
-      <Button
+      <ActionButton
         size="m"
-        view={useWebSearch ? "action" : "outlined"}
+        view={useWebSearch ? "action" : "flat"}
         onClick={() => setUseWebSearch((v) => !v)}
-        title={useWebSearch ? "Отключить веб-поиск" : "Включить веб-поиск"}
+        tooltipTitle={useWebSearch ? "Отключить веб-поиск" : "Включить веб-поиск"}
       >
-        <Icon data={Globe} size={16} />
-      </Button>
+        <Icon data={Magnifier} size={16} />
+      </ActionButton>
       {selectedModel === "yandexgpt" && (
-        <Button
+        <ActionButton
           size="m"
-          view={reasoningMode ? "action" : "outlined"}
+          view={reasoningMode ? "action" : "flat"}
           onClick={() => setReasoningMode(!reasoningMode)}
-          title={reasoningMode ? "Отключить режим рассуждений" : "Включить режим рассуждений"}
+          tooltipTitle={reasoningMode ? "Отключить режим рассуждений" : "Включить режим рассуждений"}
         >
           <Icon data={Bulb} size={16} />
-        </Button>
+        </ActionButton>
       )}
-      <Button
+      <ActionButton
         size="m"
         view="flat"
         onClick={() => setSettingsOpen(true)}
-        title="Настройки чата"
+        tooltipTitle="Настройки чата"
       >
         <Icon data={Sliders} size={16} />
-      </Button>
+      </ActionButton>
     </div>
   );
 
