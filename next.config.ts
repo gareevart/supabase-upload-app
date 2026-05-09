@@ -45,6 +45,11 @@ const nextConfig: NextConfig = {
   turbopack: {
     resolveAlias: {
       fs: './lib/browser-shims/fs.js',
+      // @diplodoc/tabs-extension does deep CJS require() into markdown-it,
+      // but markdown-it v14+ ships only .mjs files — map them explicitly.
+      'markdown-it/lib/token': './node_modules/markdown-it/lib/token.mjs',
+      'markdown-it/lib/rules_core/state_core': './node_modules/markdown-it/lib/rules_core/state_core.mjs',
+      'markdown-it/lib/common/utils': './node_modules/markdown-it/lib/common/utils.mjs',
     },
   },
 
@@ -72,6 +77,15 @@ const nextConfig: NextConfig = {
         path: false,
       };
     }
+
+    // @diplodoc/tabs-extension does deep require() into markdown-it v14+
+    // which ships only .mjs — alias to actual files for webpack too.
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'markdown-it/lib/token': require.resolve('markdown-it/lib/token.mjs'),
+      'markdown-it/lib/rules_core/state_core': require.resolve('markdown-it/lib/rules_core/state_core.mjs'),
+      'markdown-it/lib/common/utils': require.resolve('markdown-it/lib/common/utils.mjs'),
+    };
 
     return config;
   },
