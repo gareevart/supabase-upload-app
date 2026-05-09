@@ -20,6 +20,7 @@ interface FileUploaderProps {
   acceptedTypes?: string[];
   disabled?: boolean;
   compact?: boolean; // Show only button without file list
+  buttonView?: 'outlined' | 'flat' | 'action' | 'normal';
 }
 
 export const FileUploader = ({
@@ -29,7 +30,8 @@ export const FileUploader = ({
   maxFileSize = 10 * 1024 * 1024, // 10MB default
   acceptedTypes = ['image/*', 'application/pdf', '.doc', '.docx', '.txt'],
   disabled = false,
-  compact = false
+  compact = false,
+  buttonView = 'outlined',
 }: FileUploaderProps) => {
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
@@ -179,7 +181,7 @@ export const FileUploader = ({
           disabled={disabled || uploading}
         />
         <Button
-          view="outlined"
+          view={buttonView}
           size="m"
           onClick={handleButtonClick}
           disabled={disabled || uploading || files.length >= maxFiles}

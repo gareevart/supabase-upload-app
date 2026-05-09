@@ -88,6 +88,7 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
         onFilesChange={setAttachedFiles}
         disabled={isMessageSending}
         compact
+        buttonView="flat"
         maxFiles={3}
         maxFileSize={10 * 1024 * 1024}
       />
