@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChatContainer } from "@gravity-ui/aikit";
 import type { ChatType, TSubmitData } from "@gravity-ui/aikit";
 import { Button, Dialog, Icon, Select, Text, TextArea } from "@gravity-ui/uikit";
-import { Bulb, Globe } from "@gravity-ui/icons";
+import { Bulb, Globe, Sliders } from "@gravity-ui/icons";
 import { useChat } from "@/hooks/useChat";
 import { useChats } from "@/hooks/useChats";
 import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
@@ -109,6 +109,14 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
           <Icon data={Bulb} size={16} />
         </Button>
       )}
+      <Button
+        size="m"
+        view="flat"
+        onClick={() => setSettingsOpen(true)}
+        title="Настройки чата"
+      >
+        <Icon data={Sliders} size={16} />
+      </Button>
     </div>
   );
 
@@ -176,8 +184,6 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
               : { isOpen: false },
           footerProps: {
             bottomContent: footerTools,
-            showSettings: true,
-            onSettingsClick: () => setSettingsOpen(true),
           },
           bodyProps: {
             placeholder: "Напишите сообщение...",
