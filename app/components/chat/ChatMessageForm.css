@@ -20,20 +20,35 @@
 
 .chat-message-form__input-row {
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
+  align-items: stretch;
   gap: 8px;
 }
 
 .chat-message-form__textarea {
   /* Стили для текстового поля */
+  width: 100%;
   transition: all 0.2s ease;
 }
 
 .chat-message-form__toolbar {
-  /* Стили для панели инструментов с кнопками */
+  /* Стили для строки с дополнительными кнопками и отправкой */
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
+  width: 100%;
+}
+
+.chat-message-form__tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chat-message-form__button--submit {
+  flex-shrink: 0;
 }
 
 /* Анимации */

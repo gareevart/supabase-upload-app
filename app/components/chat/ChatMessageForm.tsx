@@ -72,8 +72,8 @@ export const ChatMessageForm = ({
         </div>
       )}
 
-      {/* Message input and buttons */}
-      <div className="chat-message-form__input-row flex items-end gap-2">
+      {/* Message input and controls */}
+      <div className="chat-message-form__input-row">
         <TextArea
           ref={textareaRef}
           value={messageText}
@@ -85,47 +85,50 @@ export const ChatMessageForm = ({
           className="chat-message-form__textarea"
         />
         <div className="chat-message-form__toolbar">
-          {/* File upload button - always visible, on the left */}
-          <FileUploader
-            files={attachedFiles}
-            onFilesChange={setAttachedFiles}
-            disabled={disabled || isMessageSending}
-            maxFiles={3}
-            maxFileSize={10 * 1024 * 1024} // 10MB
-            compact={true}
-          />
+          <div className="chat-message-form__tools">
+            {/* File upload button - always visible, on the left */}
+            <FileUploader
+              files={attachedFiles}
+              onFilesChange={setAttachedFiles}
+              disabled={disabled || isMessageSending}
+              maxFiles={3}
+              maxFileSize={10 * 1024 * 1024} // 10MB
+              compact={true}
+            />
 
-          <Button
-            type="button"
-            size="m"
-            view={useWebSearch ? "action" : "outlined"}
-            onClick={onToggleWebSearch}
-            title={useWebSearch ? "Web-search enabled" : "Use web-search"}
-            disabled={disabled}
-            className="chat-message-form__button chat-message-form__button--web-search"
-          >
-            <Icon data={Globe} size={16} />
-          </Button>
-
-          {/* Show reasoning button only for YandexGPT */}
-          {selectedModel === 'yandexgpt' && (
             <Button
               type="button"
               size="m"
-              view={reasoningMode ? "action" : "outlined"}
-              onClick={() => setReasoningMode(!reasoningMode)}
-              title={reasoningMode ? "Disable reasoning mode" : "Enable reasoning mode"}
+              view={useWebSearch ? "action" : "outlined"}
+              onClick={onToggleWebSearch}
+              title={useWebSearch ? "Web-search enabled" : "Use web-search"}
               disabled={disabled}
-              className={`chat-message-form__button chat-message-form__button--reasoning ${reasoningMode ? 'active' : ''}`}
+              className="chat-message-form__button chat-message-form__button--web-search"
             >
-              <Icon data={Bulb} size={16} />
+              <Icon data={Globe} size={16} />
             </Button>
-          )}
+
+            {/* Show reasoning button only for YandexGPT */}
+            {selectedModel === 'yandexgpt' && (
+              <Button
+                type="button"
+                size="m"
+                view={reasoningMode ? "action" : "outlined"}
+                onClick={() => setReasoningMode(!reasoningMode)}
+                title={reasoningMode ? "Disable reasoning mode" : "Enable reasoning mode"}
+                disabled={disabled}
+                className={`chat-message-form__button chat-message-form__button--reasoning ${reasoningMode ? 'active' : ''}`}
+              >
+                <Icon data={Bulb} size={16} />
+              </Button>
+            )}
+          </div>
 
           <Button
             type="submit"
             size="m"
             view="action"
+            className="chat-message-form__button chat-message-form__button--submit"
             disabled={(!messageText.trim() && attachedFiles.length === 0) || isMessageSending || disabled}
           >
             {isMessageSending ? (
