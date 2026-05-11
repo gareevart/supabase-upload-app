@@ -169,6 +169,7 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
         shouldParseIncompleteMarkdown
         showActionsOnHover
         promptInputProps={{
+          view: "full",
           topPanel:
             attachedFiles.length > 0
               ? {
