@@ -23,45 +23,51 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ content, class
   const [activeId, setActiveId] = useState<string>('');
 
   useEffect(() => {
-    // Извлекаем заголовки из TipTap контента
     const extractHeadings = (contentData: any): TocItem[] => {
       const items: TocItem[] = [];
-      
+
       try {
-        let parsedContent = contentData;
-        
-        // Парсим контент если это строка
-        if (typeof contentData === 'string') {
-          parsedContent = JSON.parse(contentData);
-        }
-        
-        // Проверяем, что это TipTap документ
-        if (parsedContent?.type === 'doc' && Array.isArray(parsedContent.content)) {
-          parsedContent.content.forEach((node: any, index: number) => {
+        if (typeof contentData !== 'string' || !contentData) return items;
+
+        // Try TipTap JSON first
+        let parsed: any = null;
+        try { parsed = JSON.parse(contentData); } catch { /* not JSON */ }
+
+        if (parsed?.type === 'doc' && Array.isArray(parsed.content)) {
+          parsed.content.forEach((node: any, index: number) => {
             if (node.type === 'heading' && node.content) {
-              // Извлекаем текст из заголовка
-              const text = node.content
-                .map((textNode: any) => textNode.text || '')
-                .join('');
-              
+              const text = node.content.map((n: any) => n.text || '').join('');
               if (text) {
                 const level = node.attrs?.level || 1;
-                // Создаем уникальный ID на основе текста
                 const id = `heading-${index}-${text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-')}`;
-                
-                items.push({
-                  id,
-                  level,
-                  text
-                });
+                items.push({ id, level, text });
               }
             }
           });
+          return items;
         }
+
+        // Markdown: extract headings with regex
+        const lines = contentData.split('\n');
+        lines.forEach((line: string, index: number) => {
+          const match = line.match(/^(#{1,6})\s+(.+)/);
+          if (match) {
+            const level = match[1].length;
+            const text = match[2]
+              .replace(/\*\*(.+?)\*\*/g, '$1')
+              .replace(/\*(.+?)\*/g, '$1')
+              .replace(/__(.+?)__/g, '$1')
+              .replace(/_(.+?)_/g, '$1')
+              .replace(/`(.+?)`/g, '$1')
+              .trim();
+            const id = `heading-${index}-${text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-')}`;
+            items.push({ id, level, text });
+          }
+        });
       } catch (error) {
         console.error('Error extracting headings:', error);
       }
-      
+
       return items;
     };
 

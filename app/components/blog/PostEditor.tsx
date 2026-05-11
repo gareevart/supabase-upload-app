@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import { Button, Text } from '@gravity-ui/uikit';
-import { useTipTapEditor } from "@/hooks/useTipTapEditor";
+import { Button } from '@gravity-ui/uikit';
+import { useBlogEditorContent } from "@/features/blog-editor/model/useBlogEditorContent";
 import PostMetadata from "./editor/PostMetadata";
-import TipTapEditor from "./TipTapEditor";
+import { MarkdownEditor } from "@/features/blog-editor/ui/MarkdownEditor";
 
 type PostEditorProps = {
   initialPost?: any;
@@ -16,7 +16,7 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
     title, setTitle,
     slug, setSlug,
     excerpt, setExcerpt,
-    tipTapContent,
+    markdownContent,
     featuredImageUrl,
     showFeaturedImage, setShowFeaturedImage,
     isLoading,
@@ -32,7 +32,7 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
     handleApplyGeneratedImage,
     handleSelectGalleryImage,
     savePost
-  } = useTipTapEditor(initialPost, onSave);
+  } = useBlogEditorContent(initialPost, onSave);
 
   return (
     <div className="container max-w-4xl mx-auto p-4 space-y-6">
@@ -61,8 +61,8 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
         showGenerationDialog={showGenerationDialog}
         setShowGenerationDialog={setShowGenerationDialog}
       />
-      <TipTapEditor 
-        content={tipTapContent}
+      <MarkdownEditor
+        content={markdownContent}
         onChange={handleContentChange}
         placeholder="Type your post content here..."
       />

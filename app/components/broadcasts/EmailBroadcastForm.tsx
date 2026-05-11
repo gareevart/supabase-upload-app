@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Button, Card, Text, TextInput, Icon, Modal } from '@gravity-ui/uikit';
 import { ArrowUturnCwLeft, Pencil, Plus, ChevronDown, Eye, Bug } from '@gravity-ui/icons';
-import TipTapEditor from '@/app/components/blog/TipTapEditor';
+import { MarkdownEditor } from '@/features/blog-editor/ui/MarkdownEditor';
 import TagInput from './TagInput';
 import DateTimePicker from './DateTimePicker';
 import GroupSelector from './GroupSelector';
@@ -224,7 +224,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
             <div>
               <Text variant="body-2" className="mb-1">Содержание письма</Text>
               <div className="border rounded-md">
-                <TipTapEditor
+                <MarkdownEditor
                   content={content}
                   onChange={setContent}
                   placeholder="Напишите содержание письма..."

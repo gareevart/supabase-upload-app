@@ -1,4 +1,10 @@
-import { EditorContent } from "@/app/components/blog/editor/types";
+type EditorContent = {
+  type: string;
+  content?: string;
+  level?: number;
+  url?: string;
+  alt?: string;
+};
 
 /**
  * Converts legacy content blocks to TipTap JSON format

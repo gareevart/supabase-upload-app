@@ -7,7 +7,7 @@ import { ArrowLeft, Calendar, Person, Pencil, TrashBin } from "@gravity-ui/icons
 import Image from "next/image"
 import Link from "next/link"
 import { notFound, useRouter } from "next/navigation"
-import TipTapContent from "@/app/components/blog/TipTapContent"
+import { MarkdownRenderer } from "@/features/blog-editor/ui/MarkdownRenderer"
 import { useState, useEffect } from "react"
 import { Button, Icon, Skeleton, Card as GravityCard } from "@gravity-ui/uikit"
 import { Breadcrumbs as LegacyBreadcrumbs } from "@gravity-ui/uikit/legacy"
@@ -280,8 +280,7 @@ export default function BlogPostClient({ params }: { params: { slug: string } })
             )}
 
             <CardContent className="prose prose-lg max-w-none">
-              {/* Use TipTapContent to render content regardless of format */}
-              <TipTapContent content={post.content} />
+              <MarkdownRenderer content={post.content} />
             </CardContent>
             <Subscribe />
           </div>

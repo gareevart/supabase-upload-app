@@ -1,13 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/types';
-import { redisGetJson, redisSetJson } from '@/lib/redis';
-import { buildBlogPostSlugKey } from '@/shared/lib/blog/cache';
-
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
-
-const BLOG_POST_PUBLIC_TTL_SECONDS = 300;
 
 export async function GET(
 	_request: Request,
@@ -18,12 +13,6 @@ export async function GET(
 
 		if (!slug) {
 			return NextResponse.json({ error: 'Slug is required' }, { status: 400 });
-		}
-
-		const cacheKey = buildBlogPostSlugKey(slug);
-		const cachedPost = await redisGetJson<any>(cacheKey);
-		if (cachedPost !== null) {
-			return NextResponse.json(cachedPost);
 		}
 
 		const supabase = createClient<Database>(supabaseUrl, supabaseServiceKey, {
@@ -60,8 +49,6 @@ export async function GET(
 			...post,
 			author: author || { name: null, username: null, avatar_url: null },
 		};
-
-		await redisSetJson(cacheKey, responseBody, BLOG_POST_PUBLIC_TTL_SECONDS);
 
 		return NextResponse.json(responseBody);
 	} catch (error) {

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button, Card, Text, TextInput, Icon, Modal, Dialog } from '@gravity-ui/uikit';
 import { ArrowUturnCwLeft, Pencil, ChevronDown, Eye, Bug } from '@gravity-ui/icons';
-import TipTapEditor from '@/app/components/blog/TipTapEditor';
+import { MarkdownEditor } from '@/features/blog-editor/ui/MarkdownEditor';
 import TagInput from '@/app/components/broadcasts/TagInput';
 import DateTimePicker from '@/app/components/broadcasts/DateTimePicker';
 import GroupSelector from '@/app/components/broadcasts/GroupSelector';
@@ -291,7 +291,7 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
                 </Button>
               </div>
             </div>
-            <TipTapEditor
+            <MarkdownEditor
               content={content}
               onChange={setContent}
               placeholder={t('broadcast.form.contentPlaceholder')}
