@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { useSubscribers } from '../useSubscribers';
 import { SubscriberApi } from '@/shared/api/subscribers';
 import type { Subscriber, CreateSubscriberData, UpdateSubscriberData } from '@/entities/subscriber/model';
@@ -14,6 +14,7 @@ describe('useSubscribers', () => {
     name: 'Test User',
     is_active: true,
     subscribed_at: '2023-01-01T00:00:00Z',
+    unsubscribed_at: null,
     created_at: '2023-01-01T00:00:00Z',
     updated_at: '2023-01-01T00:00:00Z',
   };
@@ -76,7 +77,9 @@ describe('useSubscribers', () => {
       name: 'New User',
     };
 
-    await result.current.createSubscriber(createData);
+    await act(async () => {
+      await result.current.createSubscriber(createData);
+    });
 
     expect(mockSubscriberApi.createSubscriber).toHaveBeenCalledWith(createData);
     expect(result.current.subscribers).toContain(newSubscriber);
@@ -107,7 +110,9 @@ describe('useSubscribers', () => {
       name: 'Updated Name',
     };
 
-    await result.current.updateSubscriber('1', updateData);
+    await act(async () => {
+      await result.current.updateSubscriber('1', updateData);
+    });
 
     expect(mockSubscriberApi.updateSubscriber).toHaveBeenCalledWith('1', updateData);
     expect(result.current.subscribers[0]).toEqual(updatedSubscriber);
@@ -129,7 +134,9 @@ describe('useSubscribers', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    await result.current.deleteSubscriber('1');
+    await act(async () => {
+      await result.current.deleteSubscriber('1');
+    });
 
     expect(mockSubscriberApi.deleteSubscriber).toHaveBeenCalledWith('1');
     expect(result.current.subscribers).toEqual([]);
@@ -156,7 +163,9 @@ describe('useSubscribers', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    await result.current.toggleSubscriberStatus('1');
+    await act(async () => {
+      await result.current.toggleSubscriberStatus('1');
+    });
 
     expect(mockSubscriberApi.toggleSubscriberStatus).toHaveBeenCalledWith('1');
     expect(result.current.subscribers[0]).toEqual(toggledSubscriber);
@@ -193,7 +202,9 @@ describe('useSubscribers', () => {
     // Clear the mock to verify it's called again
     mockSubscriberApi.getSubscribers.mockClear();
 
-    await result.current.refetch();
+    await act(async () => {
+      await result.current.refetch();
+    });
 
     expect(mockSubscriberApi.getSubscribers).toHaveBeenCalledTimes(1);
   });

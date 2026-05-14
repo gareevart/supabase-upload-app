@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { useBroadcastGroups } from '../useBroadcastGroups';
 import { BroadcastGroupApi } from '@/shared/api/broadcast-groups';
 import type { 
@@ -18,6 +18,7 @@ describe('useBroadcastGroups', () => {
     id: '1',
     name: 'Test Group',
     description: 'Test Description',
+    user_id: null,
     is_default: false,
     subscriber_count: 5,
     created_at: '2023-01-01T00:00:00Z',
@@ -82,7 +83,9 @@ describe('useBroadcastGroups', () => {
       description: 'New Description',
     };
 
-    await result.current.createGroup(createData);
+    await act(async () => {
+      await result.current.createGroup(createData);
+    });
 
     expect(mockBroadcastGroupApi.createBroadcastGroup).toHaveBeenCalledWith(createData);
     expect(result.current.groups).toContain(newGroup);
@@ -113,7 +116,9 @@ describe('useBroadcastGroups', () => {
       name: 'Updated Group',
     };
 
-    await result.current.updateGroup('1', updateData);
+    await act(async () => {
+      await result.current.updateGroup('1', updateData);
+    });
 
     expect(mockBroadcastGroupApi.updateBroadcastGroup).toHaveBeenCalledWith('1', updateData);
     expect(result.current.groups[0]).toEqual(updatedGroup);
@@ -135,7 +140,9 @@ describe('useBroadcastGroups', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    await result.current.deleteGroups(['1']);
+    await act(async () => {
+      await result.current.deleteGroups(['1']);
+    });
 
     expect(mockBroadcastGroupApi.deleteBroadcastGroups).toHaveBeenCalledWith(['1']);
     expect(result.current.groups).toEqual([]);
@@ -143,7 +150,16 @@ describe('useBroadcastGroups', () => {
 
   it('should get group subscribers', async () => {
     const mockSubscribers = [
-      { id: '1', email: 'test@example.com', name: 'Test User' },
+      {
+        id: '1',
+        email: 'test@example.com',
+        name: 'Test User',
+        is_active: true,
+        subscribed_at: '2023-01-01T00:00:00Z',
+        unsubscribed_at: null,
+        created_at: '2023-01-01T00:00:00Z',
+        updated_at: '2023-01-01T00:00:00Z',
+      },
     ];
 
     mockBroadcastGroupApi.getBroadcastGroups.mockResolvedValue({
@@ -163,10 +179,13 @@ describe('useBroadcastGroups', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    const subscribers = await result.current.getGroupSubscribers('1');
+    let subscribers: any[];
+    await act(async () => {
+      subscribers = await result.current.getGroupSubscribers('1');
+    });
 
     expect(mockBroadcastGroupApi.getGroupSubscribers).toHaveBeenCalledWith('1');
-    expect(subscribers).toEqual(mockSubscribers);
+    expect(subscribers!).toEqual(mockSubscribers);
   });
 
   it('should add subscribers to group', async () => {
@@ -191,10 +210,13 @@ describe('useBroadcastGroups', () => {
       emails: ['test1@example.com', 'test2@example.com'],
     };
 
-    const response = await result.current.addSubscribersToGroup('1', addData);
+    let response: { added_count: number };
+    await act(async () => {
+      response = await result.current.addSubscribersToGroup('1', addData);
+    });
 
     expect(mockBroadcastGroupApi.addSubscribersToGroup).toHaveBeenCalledWith('1', addData);
-    expect(response).toEqual({ added_count: 2 });
+    expect(response!).toEqual({ added_count: 2 });
   });
 
   it('should remove subscribers from group', async () => {
@@ -217,7 +239,9 @@ describe('useBroadcastGroups', () => {
       subscriber_ids: ['1', '2'],
     };
 
-    await result.current.removeSubscribersFromGroup('1', removeData);
+    await act(async () => {
+      await result.current.removeSubscribersFromGroup('1', removeData);
+    });
 
     expect(mockBroadcastGroupApi.removeSubscribersFromGroup).toHaveBeenCalledWith('1', removeData);
   });
@@ -253,7 +277,9 @@ describe('useBroadcastGroups', () => {
     // Clear the mock to verify it's called again
     mockBroadcastGroupApi.getBroadcastGroups.mockClear();
 
-    await result.current.refetch();
+    await act(async () => {
+      await result.current.refetch();
+    });
 
     expect(mockBroadcastGroupApi.getBroadcastGroups).toHaveBeenCalledTimes(1);
   });

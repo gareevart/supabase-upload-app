@@ -1,9 +1,15 @@
 import { renderHook, act } from '@testing-library/react';
 import { useAuth } from '../useAuth';
-import { AuthService } from '../../../../shared/lib/auth';
+import { AuthService } from '@/shared/lib/auth';
 
-// Mock the auth service
-jest.mock('../../../../shared/lib/auth');
+// Mock supabase before auth service to prevent client initialization error
+jest.mock('@/lib/supabase', () => ({
+  supabase: {
+    auth: { getSession: jest.fn() },
+    from: jest.fn(),
+  },
+}));
+jest.mock('@/shared/lib/auth');
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: jest.fn(),
