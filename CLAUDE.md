@@ -34,6 +34,27 @@ shared/       → reusable UI, API clients, utils, types
 - Business logic belongs in `features/*/model/use*.ts` hooks, not in UI components.
 - Widget pattern: `features/<name>/model/use<Name>.ts` + `features/<name>/ui/<Name>Panel.tsx` → composed at `widgets/<name>/ui/<Name>Widget.tsx`.
 
+## Internationalisation (i18n)
+
+All user-visible strings **must** be provided in both English and Russian. Never hardcode UI text.
+
+**Convention:**
+- Translation files live next to the component: `ComponentName.i18n/en.json` and `ComponentName.i18n/ru.json`.
+- Import both files and register them in `app/contexts/I18nContext.tsx` (`enTranslations` / `ruTranslations` spreads).
+- Use the `useI18n()` hook inside client components: `const { t } = useI18n(); ... t('key')`.
+- Keys must be unique across the whole app (prefix with component name, e.g. `"blogEditor.saveButton"`).
+
+**Example file pair:**
+```json
+// BlogEditor.i18n/en.json
+{ "blogEditor.saveButton": "Save", "blogEditor.title": "New post" }
+
+// BlogEditor.i18n/ru.json
+{ "blogEditor.saveButton": "Сохранить", "blogEditor.title": "Новый пост" }
+```
+
+This rule applies to every new page, widget, feature, and entity component.
+
 ## UI and Styling
 
 - **Use Gravity UI exclusively** (`@gravity-ui/uikit`, `@gravity-ui/icons`) for all new UI components and icons. Do not introduce other UI/icon libraries.
