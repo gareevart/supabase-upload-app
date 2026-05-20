@@ -1,7 +1,6 @@
 "use client"
 
-import { Text, Icon, Link, Button, Label } from '@gravity-ui/uikit';
-import { Globe } from '@gravity-ui/icons';
+import { Text, Link, Button, Label } from '@gravity-ui/uikit';
 import GradientHoverImage from './components/GradientHoverImage';
 import { useI18n } from './contexts/I18nContext';
 
@@ -34,13 +33,22 @@ export default function HomeClient() {
   const { t } = useI18n();
 
   return (
-    <div className="home-page page-container">
+    <div className="home-page page-container" data-terminal="dmitrii.gareev:/home">
+      <div className="home-terminal-bar" aria-hidden="true">
+        <span className="home-terminal-led" />
+        <span>tty0</span>
+        <span>unix portfolio monitor</span>
+        <span>115200 baud</span>
+      </div>
+
       <section className="home-hero content-container" aria-labelledby="home-hero-title">
         <div className="home-hero__content">
           <div className="home-eyebrow">
             <Label theme="info">{t('home.eyebrow')}</Label>
             <span>{t('home.availability')}</span>
           </div>
+
+          <div className="home-command" aria-hidden="true">$ cat ./profile.txt</div>
 
           <Text id="home-hero-title" className="home-title" variant="display-1">
             {t('home.bio.prefix')}{' '}
@@ -76,6 +84,7 @@ export default function HomeClient() {
             <span className="home-hero-card__dot" />
             <Text variant="caption-2" color="secondary">{t('home.hero.cardKicker')}</Text>
           </div>
+          <div className="home-command" aria-hidden="true">$ run ./positioning --fast</div>
           <Text variant="header-2">{t('home.hero.cardTitle')}</Text>
           <Text variant="body-2" color="secondary">{t('home.hero.cardText')}</Text>
           <div className="home-metrics">
@@ -91,6 +100,7 @@ export default function HomeClient() {
 
       <section className="home-section content-container" aria-labelledby="home-strengths-title">
         <div className="home-section__header">
+          <div className="home-command" aria-hidden="true">$ ls ./team-output</div>
           <Text id="home-strengths-title" variant="header-1">{t('home.strengths.title')}</Text>
           <Text variant="body-2" color="secondary">{t('home.strengths.description')}</Text>
         </div>
@@ -107,13 +117,14 @@ export default function HomeClient() {
 
       <section className="home-section home-section--highlight content-container" aria-labelledby="home-outcomes-title">
         <div className="home-section__header">
+          <div className="home-command" aria-hidden="true">$ tail -f ./workflow.log</div>
           <Text id="home-outcomes-title" variant="header-1">{t('home.outcomes.title')}</Text>
           <Text variant="body-2" color="secondary">{t('home.outcomes.description')}</Text>
         </div>
         <div className="home-outcomes">
           {outcomes.map((key) => (
             <div className="home-outcome" key={key}>
-              <span className="home-outcome__check">✓</span>
+              <span className="home-outcome__check">OK</span>
               <Text variant="body-2">{t(key)}</Text>
             </div>
           ))}
@@ -122,6 +133,7 @@ export default function HomeClient() {
 
       <section className="home-section content-container" aria-labelledby="home-proof-title">
         <div className="home-section__header">
+          <div className="home-command" aria-hidden="true">$ grep -R "why" ./2026</div>
           <Text id="home-proof-title" variant="header-1">{t('home.proof.title')}</Text>
           <Text variant="body-2" color="secondary">{t('home.proof.description')}</Text>
         </div>
@@ -137,6 +149,7 @@ export default function HomeClient() {
 
       <section className="home-cta content-container" aria-labelledby="home-cta-title">
         <div>
+          <div className="home-command" aria-hidden="true">$ ./connect --channel=telegram</div>
           <Text id="home-cta-title" variant="header-1">{t('home.finalCta.title')}</Text>
           <Text variant="body-2" color="secondary">{t('home.finalCta.text')}</Text>
         </div>
@@ -152,13 +165,13 @@ export default function HomeClient() {
 
       <div className="links-container home-socials" aria-label={t('home.social.label')}>
         <Link href="https://x.com/gareev" target="_blank" rel="noopener noreferrer">
-          <Text className="LinkHover" variant="subheader-3"><Icon data={Globe} size={16} /> {t('home.social.x')} </Text>
+          <Text className="LinkHover" variant="subheader-3">{t('home.social.x')}</Text>
         </Link>
         <Link href="https://t.me/gareev45" target="_blank" rel="noopener noreferrer">
-          <Text className="LinkHover" variant="subheader-3"><Icon data={Globe} size={16} /> {t('home.social.telegram')} </Text>
+          <Text className="LinkHover" variant="subheader-3">{t('home.social.telegram')}</Text>
         </Link>
         <Link href="https://www.linkedin.com/in/dmitrii-gareev-234146253" target="_blank" rel="noopener noreferrer">
-          <Text className="LinkHover" variant="subheader-3"><Icon data={Globe} size={16} /> {t('home.social.linkedin')} </Text>
+          <Text className="LinkHover" variant="subheader-3">{t('home.social.linkedin')}</Text>
         </Link>
       </div>
     </div>
