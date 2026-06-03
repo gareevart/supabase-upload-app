@@ -144,9 +144,9 @@ const Yaart = () => {
       if (!response.ok) throw new Error(`Error: ${response.status}`);
 
       const data = await response.json();
-      if (data.imageUrl) {
-        setGeneratedImage(data.imageUrl);
-        setImageData(data.imageData || null);
+      if (data.imageData) {
+        setGeneratedImage(data.imageData);
+        setImageData(data.imageData);
         setSaveSuccess(false);
 
         if (isAuthenticated) {

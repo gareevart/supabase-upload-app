@@ -172,7 +172,7 @@ export const useBlogEditorContent = (initialPost?: any, onSave?: (published: boo
       });
       if (!response.ok) throw new Error('Failed to generate image');
       const data = await response.json();
-      setGeneratedImagePreview(data.imageUrl);
+      setGeneratedImagePreview(data.imageData);
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to generate image', variant: 'destructive' });
     } finally {

@@ -250,7 +250,7 @@ const Navigation: React.FC = () => {
               <Popover
                 key={item.id}
                 content={item.label}
-                placement="top"
+                placement="right"
                 hasArrow
                 openDelay={50}
                 closeDelay={20}
