@@ -8,12 +8,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
 
-    const apiKey = process.env.YANDEX_CLOUD_API_KEY;
-    const folderId = process.env.YANDEX_CLOUD_FOLDER;
+    const apiKey = process.env.YANDEX_API_KEY || process.env.YANDEX_CLOUD_API_KEY;
+    const folderId = process.env.YANDEX_FOLDER_ID || process.env.YANDEX_CLOUD_FOLDER;
     const modelName = process.env.ALICEAI_AI_ART_MODEL;
 
     if (!apiKey || !folderId || !modelName) {
-      console.error('Missing env vars: YANDEX_CLOUD_API_KEY, YANDEX_CLOUD_FOLDER, ALICEAI_AI_ART_MODEL');
+      console.error('Missing env vars: YANDEX_API_KEY (or YANDEX_CLOUD_API_KEY), YANDEX_FOLDER_ID (or YANDEX_CLOUD_FOLDER), ALICEAI_AI_ART_MODEL');
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 

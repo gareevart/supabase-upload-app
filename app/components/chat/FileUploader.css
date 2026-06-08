@@ -9,10 +9,9 @@
 }
 
 .file-uploader__list {
-  display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 8px;
-  margin-bottom: 8px;
+  display: flex;
 }
 
 .file-uploader__item {
@@ -97,6 +96,7 @@
 }
 
 .file-uploader__item {
+  width: 220px;
   animation: slideIn 0.2s ease-out;
 }
 
