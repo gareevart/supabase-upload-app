@@ -3,7 +3,46 @@ import { useState, useEffect, useCallback } from 'react';
 import { Text, TextInput, Card, Skeleton, Icon } from '@gravity-ui/uikit';
 import { Magnifier } from '@gravity-ui/icons';
 import { supabase } from '@/lib/supabase';
-import { extractPlainText, extractSearchContext } from '@/lib/tiptapConverter';
+function extractPlainText(content: any): string {
+  if (!content) return '';
+  if (typeof content === 'string') {
+    return content
+      .replace(/^#{1,6}\s+/gm, '')
+      .replace(/!\[.*?\]\(.*?\)/g, '')
+      .replace(/\[(.+?)\]\(.*?\)/g, '$1')
+      .replace(/[*_`~]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+  return '';
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function extractSearchContext(
+  text: string,
+  searchTerm: string,
+  wordsBefore = 3,
+  wordsAfter = 5
+): { context: string; highlightedContext: string } | null {
+  if (!text || !searchTerm) return null;
+  const lowerText = text.toLowerCase();
+  const lowerTerm = searchTerm.toLowerCase();
+  if (lowerText.indexOf(lowerTerm) === -1) return null;
+  const words = text.split(/\s+/);
+  const matchWordIndex = words.findIndex(w => w.toLowerCase().includes(lowerTerm));
+  if (matchWordIndex === -1) return null;
+  const start = Math.max(0, matchWordIndex - wordsBefore);
+  const end = Math.min(words.length, matchWordIndex + wordsAfter + 1);
+  const context = words.slice(start, end).join(' ');
+  const highlightedContext = context.replace(
+    new RegExp(`(${escapeRegExp(searchTerm)})`, 'gi'),
+    '<mark class="search-highlight">$1</mark>'
+  );
+  return { context, highlightedContext };
+}
 import { BlogPostCard } from '@/shared/ui/BlogPostCard';
 import { useIsMobile } from '@/hooks/use-mobile';
 import './components.css';

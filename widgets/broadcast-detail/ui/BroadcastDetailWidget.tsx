@@ -6,6 +6,7 @@ import { ArrowUturnCwLeft, Pencil, TrashBin, ChevronLeft } from '@gravity-ui/ico
 import { Broadcast, BroadcastStats } from '@/entities/broadcast/model';
 import { useBroadcastDetail } from '@/features/broadcast-detail/model/useBroadcastDetail';
 import { useRouter } from 'next/navigation';
+import { markdownToHtml } from '@/app/utils/markdownToHtml';
 
 interface BroadcastDetailWidgetProps {
   id: string;
@@ -171,33 +172,7 @@ const BroadcastDetailWidget: React.FC<BroadcastDetailWidgetProps> = ({ id }) => 
         return broadcast.content_html;
       }
 
-      // If no content_html, use our tiptapToHtml utility
-      if (typeof window !== 'undefined') {
-        // Import dynamically on client side
-        const { tiptapToHtml } = require('@/app/utils/tiptapToHtml');
-        return tiptapToHtml(broadcast.content);
-      }
-
-      // Fallback for server-side rendering
-      if (typeof broadcast.content === 'string') {
-        // Check if it's already HTML
-        if (broadcast.content.trim().startsWith('<') && broadcast.content.trim().endsWith('>')) {
-          return broadcast.content;
-        }
-        // Check if it's JSON string
-        try {
-          const parsedContent = JSON.parse(broadcast.content);
-          return `<pre>${JSON.stringify(parsedContent, null, 2)}</pre>`;
-        } catch {
-          // It's plain text
-          return broadcast.content;
-        }
-      } else if (typeof broadcast.content === 'object') {
-        // It's already a JSON object
-        return `<pre>${JSON.stringify(broadcast.content, null, 2)}</pre>`;
-      }
-
-      return 'No content available';
+      return markdownToHtml(typeof broadcast.content === 'string' ? broadcast.content : '');
     } catch (e) {
       console.error('Error displaying content:', e);
       return 'Error displaying content';

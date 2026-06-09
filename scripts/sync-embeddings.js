@@ -27,30 +27,15 @@ function extractText(content) {
   if (!content) return '';
   if (typeof content === 'string') {
     if (content.length > 200 && !content.includes(' ')) return '';
-    try { return extractText(JSON.parse(content)); } catch { return content; }
-  }
-  if (Array.isArray(content)) {
     return content
-      .map((b) => {
-        if (!b || typeof b !== 'object') return '';
-        if (b.type === 'image') return (b.alt || '').trim();
-        return (b.content || '').toString();
-      })
-      .filter(Boolean)
-      .join(' ')
+      .replace(/^#{1,6}\s+/gm, '')
+      .replace(/!\[.*?\]\(.*?\)/g, '')
+      .replace(/\[(.+?)\]\(.*?\)/g, '$1')
+      .replace(/[*_`~>]/g, '')
       .replace(/\s+/g, ' ')
       .trim();
   }
-  // fallback for legacy tiptap
-  let text = '';
-  if (content.type === 'text') {
-    const val = content.text || '';
-    if (val.length < 500 || val.includes(' ')) text += val;
-  }
-  if (Array.isArray(content.content)) {
-    content.content.forEach((c) => (text += extractText(c) + ' '));
-  }
-  return text.trim();
+  return '';
 }
 
 async function main() {

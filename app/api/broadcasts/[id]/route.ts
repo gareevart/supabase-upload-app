@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import type { Database } from '@/lib/types';
 import { withApiAuth } from '@/app/auth/withApiAuth';
-import { loadTiptapToHtml } from '@/lib/tiptap-loader';
+import { markdownToHtml } from '@/app/utils/markdownToHtml';
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
@@ -148,7 +148,7 @@ export const PUT = withApiAuth(async (request: NextRequest, user: { id: string }
       .update({
         subject,
         content,
-        content_html: (await loadTiptapToHtml())(content),
+        content_html: markdownToHtml(content),
         recipients,
         status,
         scheduled_for,

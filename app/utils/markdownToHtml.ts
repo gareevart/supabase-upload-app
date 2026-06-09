@@ -1,9 +1,3 @@
-/**
- * Converts editor content (Markdown or legacy TipTap JSON) to HTML.
- * Used for email preview in broadcast forms.
- */
-import { isTipTapContent, convertTipTapToHtml, normalizeTipTapContent } from '@/lib/tiptapConverter';
-
 let _md: any = null;
 function getMarkdownIt(): any {
   if (!_md) {
@@ -14,11 +8,8 @@ function getMarkdownIt(): any {
   return _md;
 }
 
-export function tiptapToHtml(content: string): string {
+export function markdownToHtml(content: string): string {
   if (!content) return '';
-  if (isTipTapContent(content)) {
-    return convertTipTapToHtml(normalizeTipTapContent(content));
-  }
   return getMarkdownIt().render(content);
 }
 

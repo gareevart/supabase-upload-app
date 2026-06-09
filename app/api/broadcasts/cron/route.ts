@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/types';
 import { getResend } from '@/lib/resend';
-import { loadTiptapToHtml } from '@/lib/tiptap-loader';
+import { markdownToHtml } from '@/app/utils/markdownToHtml';
 import { processBase64Images } from '@/app/utils/imageProcessor';
 
 // Force dynamic rendering for this API route
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
           } else {
             emailHtml = typeof broadcast.content === 'string'
               ? broadcast.content
-              : (await loadTiptapToHtml())(broadcast.content);
+              : markdownToHtml(broadcast.content);
           }
 
           // Process base64 images in HTML content before sending

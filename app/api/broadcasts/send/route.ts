@@ -4,7 +4,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import type { Database } from '@/lib/types';
 import { withApiAuth } from '@/app/auth/withApiAuth';
 import { getResend } from '@/lib/resend';
-import { loadTiptapToHtml } from '@/lib/tiptap-loader';
+import { markdownToHtml } from '@/app/utils/markdownToHtml';
 import { processBase64Images } from '@/app/utils/imageProcessor';
 
 // Force dynamic rendering for this API route
@@ -101,7 +101,7 @@ export const POST = withApiAuth(async (request: NextRequest, user: { id: string 
 
     try {
       // Process base64 images in HTML content before sending
-      let emailHtml = broadcast.content_html || (await loadTiptapToHtml())(broadcast.content);
+      let emailHtml = broadcast.content_html || markdownToHtml(broadcast.content);
 
       // Process base64 images and upload them to storage
       const { html: processedHtml, uploadedImages } = await processBase64Images(emailHtml, broadcast.user_id);
