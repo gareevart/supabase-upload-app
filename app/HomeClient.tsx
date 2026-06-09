@@ -5,148 +5,59 @@ import { Globe } from '@gravity-ui/icons';
 import GradientHoverImage from './components/GradientHoverImage';
 import { useI18n } from './contexts/I18nContext';
 
-const metrics = [
-  { value: '10+', labelKey: 'home.metrics.years' },
-  { value: 'AI', labelKey: 'home.metrics.ai' },
-  { value: 'B2B', labelKey: 'home.metrics.b2b' },
-];
-
-const strengths = [
-  'home.strengths.strategy',
-  'home.strengths.systems',
-  'home.strengths.ai',
-];
-
-const outcomes = [
-  'home.outcomes.discovery',
-  'home.outcomes.prototypes',
-  'home.outcomes.designSystem',
-  'home.outcomes.launch',
-];
-
-const proofPoints = [
-  'home.proof.infrastructure',
-  'home.proof.developers',
-  'home.proof.ai',
-];
-
 export default function HomeClient() {
   const { t } = useI18n();
 
   return (
     <div className="home-page page-container">
-      <section className="home-hero content-container" aria-labelledby="home-hero-title">
-        <div className="home-hero__content">
-          <div className="home-eyebrow">
-            <Label theme="info">{t('home.eyebrow')}</Label>
-            <span>{t('home.availability')}</span>
-          </div>
-
-          <Text id="home-hero-title" className="home-title" variant="display-1">
-            {t('home.bio.prefix')}{' '}
-            <span className="home-company">
-              <GradientHoverImage
-                src="/infra-logo.svg"
-                alt="Infra logo"
-                className="infra-logo"
-                width={36}
-                height={36}
-                priority
-              />
-              {t('home.company.name')}
-            </span>{t('home.bio.suffix')}
-          </Text>
-
-          <Text className="home-subtitle" variant="subheader-3" color="secondary">
-            {t('home.subtitle')}
-          </Text>
-
-          <div className="home-actions" aria-label={t('home.actions.label')}>
-            <Button view="action" size="l" href="https://t.me/gareev45" target="_blank">
-              {t('home.cta.primary')}
-            </Button>
-            <Button view="outlined" size="l" href="/projects">
-              {t('home.cta.secondary')}
-            </Button>
-          </div>
+      <section className="home-terminal content-container" aria-labelledby="home-hero-title">
+        <div className="home-terminal__header" aria-hidden="true">
+          <span className="home-terminal__dot home-terminal__dot--red" />
+          <span className="home-terminal__dot home-terminal__dot--yellow" />
+          <span className="home-terminal__dot home-terminal__dot--green" />
+          <span className="home-terminal__title">gareev.dev ~ personal</span>
         </div>
 
-        <aside className="home-hero-card" aria-label={t('home.hero.cardLabel')}>
-          <div className="home-hero-card__header">
-            <span className="home-hero-card__dot" />
-            <Text variant="caption-2" color="secondary">{t('home.hero.cardKicker')}</Text>
+        <div className="home-terminal__body">
+          <div className="home-terminal__prompt" aria-hidden="true">
+            <span className="home-terminal__prompt-symbol">❯</span>
+            <span>whoami</span>
           </div>
-          <Text variant="header-2">{t('home.hero.cardTitle')}</Text>
-          <Text variant="body-2" color="secondary">{t('home.hero.cardText')}</Text>
-          <div className="home-metrics">
-            {metrics.map((metric) => (
-              <div className="home-metric" key={metric.labelKey}>
-                <Text variant="header-2">{metric.value}</Text>
-                <Text variant="caption-2" color="secondary">{t(metric.labelKey)}</Text>
-              </div>
-            ))}
-          </div>
-        </aside>
-      </section>
 
-      <section className="home-section content-container" aria-labelledby="home-strengths-title">
-        <div className="home-section__header">
-          <Text id="home-strengths-title" variant="header-1">{t('home.strengths.title')}</Text>
-          <Text variant="body-2" color="secondary">{t('home.strengths.description')}</Text>
-        </div>
-        <div className="home-card-grid home-card-grid--three">
-          {strengths.map((key, index) => (
-            <article className="home-card" key={key}>
-              <span className="home-card__number">0{index + 1}</span>
-              <Text variant="subheader-3">{t(`${key}.title`)}</Text>
-              <Text variant="body-2" color="secondary">{t(`${key}.text`)}</Text>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="home-section home-section--highlight content-container" aria-labelledby="home-outcomes-title">
-        <div className="home-section__header">
-          <Text id="home-outcomes-title" variant="header-1">{t('home.outcomes.title')}</Text>
-          <Text variant="body-2" color="secondary">{t('home.outcomes.description')}</Text>
-        </div>
-        <div className="home-outcomes">
-          {outcomes.map((key) => (
-            <div className="home-outcome" key={key}>
-              <span className="home-outcome__check">✓</span>
-              <Text variant="body-2">{t(key)}</Text>
+          <div className="home-terminal__content">
+            <div className="home-eyebrow">
+              <Label theme="info">{t('home.eyebrow')}</Label>
+              <span>{t('home.availability')}</span>
             </div>
-          ))}
-        </div>
-      </section>
 
-      <section className="home-section content-container" aria-labelledby="home-proof-title">
-        <div className="home-section__header">
-          <Text id="home-proof-title" variant="header-1">{t('home.proof.title')}</Text>
-          <Text variant="body-2" color="secondary">{t('home.proof.description')}</Text>
-        </div>
-        <div className="home-card-grid">
-          {proofPoints.map((key) => (
-            <article className="home-card home-card--proof" key={key}>
-              <Text variant="subheader-3">{t(`${key}.title`)}</Text>
-              <Text variant="body-2" color="secondary">{t(`${key}.text`)}</Text>
-            </article>
-          ))}
-        </div>
-      </section>
+            <Text id="home-hero-title" className="home-title" variant="display-1">
+              {t('home.bio.prefix')}{' '}
+              <span className="home-company">
+                <GradientHoverImage
+                  src="/infra-logo.svg"
+                  alt="Infra logo"
+                  className="infra-logo"
+                  width={36}
+                  height={36}
+                  priority
+                />
+                {t('home.company.name')}
+              </span>{t('home.bio.suffix')}
+            </Text>
 
-      <section className="home-cta content-container" aria-labelledby="home-cta-title">
-        <div>
-          <Text id="home-cta-title" variant="header-1">{t('home.finalCta.title')}</Text>
-          <Text variant="body-2" color="secondary">{t('home.finalCta.text')}</Text>
-        </div>
-        <div className="home-cta__actions">
-          <Button view="action" size="l" href="https://t.me/gareev45" target="_blank">
-            {t('home.finalCta.button')}
-          </Button>
-          <Link href="mailto:hello@gareev.dev">
-            <Text className="LinkHover" variant="subheader-3">hello@gareev.dev</Text>
-          </Link>
+            <Text className="home-subtitle" variant="subheader-3" color="secondary">
+              {t('home.subtitle')}
+            </Text>
+
+            <div className="home-actions" aria-label={t('home.actions.label')}>
+              <Button view="action" size="l" href="https://t.me/gareev45" target="_blank">
+                {t('home.cta.primary')}
+              </Button>
+              <Button view="outlined" size="l" href="/projects">
+                {t('home.cta.secondary')}
+              </Button>
+            </div>
+          </div>
         </div>
       </section>
 
