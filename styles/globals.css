@@ -231,44 +231,10 @@ a {
 
 .home-terminal {
   font-family: var(--font-jetbrains-mono, 'JetBrains Mono'), ui-monospace, monospace;
-  border: 1px solid var(--g-color-line-generic);
-  border-radius: clamp(12px, 2vw, 20px);
-  background: var(--g-color-base-float);
-  overflow: hidden;
-}
-
-.home-terminal__header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--g-color-line-generic);
-  background: var(--g-color-base-float-heavy);
-}
-
-.home-terminal__dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.home-terminal__dot--red   { background: #ff5f57; }
-.home-terminal__dot--yellow { background: #ffbd2e; }
-.home-terminal__dot--green  { background: #28c840; }
-
-.home-terminal__title {
-  margin-left: 8px;
-  font-size: 12px;
-  color: var(--g-color-text-hint);
-  letter-spacing: 0.02em;
-}
-
-.home-terminal__body {
-  padding: clamp(24px, 4vw, 48px);
   display: flex;
   flex-direction: column;
   gap: 28px;
+  padding: clamp(16px, 3vw, 32px) 0;
 }
 
 .home-terminal__prompt {
