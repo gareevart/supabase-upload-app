@@ -32,7 +32,7 @@ body {
 }
 
 body {
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-jetbrains-mono, 'JetBrains Mono'), ui-monospace, monospace;
   margin: 0;
   -webkit-text-size-adjust: 100%;
   touch-action: manipulation;
@@ -320,6 +320,8 @@ a {
 @media (max-width: 640px) {
   .home-page {
     padding-top: 0;
+    padding-left: 20px;
+    padding-right: 20px;
   }
 
   .home-actions,
