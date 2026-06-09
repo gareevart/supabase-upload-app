@@ -8,7 +8,7 @@ import TagInput from './TagInput';
 import DateTimePicker from './DateTimePicker';
 import GroupSelector from './GroupSelector';
 import { BroadcastFormProps, NewBroadcast } from './types';
-import { tiptapToHtml, renderEmailPreview } from '@/app/utils/tiptapToHtml';
+import { markdownToHtml, renderEmailPreview } from '@/app/utils/markdownToHtml';
 
 const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
   initialData,
@@ -37,7 +37,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
     if (!content) return '';
 
     try {
-      return tiptapToHtml(content);
+      return markdownToHtml(content);
     } catch (error) {
       console.error('Error converting content to HTML:', error);
       return '';

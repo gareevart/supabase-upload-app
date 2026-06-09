@@ -3,9 +3,6 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { transliterate } from '@/lib/transliterate';
-import { isTipTapContent } from '@/lib/tiptapConverter';
-import { convertTipTapToMarkdown } from '@/lib/tiptapToMarkdown';
-import { normalizeTipTapContent } from '@/lib/tiptapConverter';
 
 function normalizeSlug(value: string): string {
   const hasCyrillic = /[а-яА-ЯёЁ]/.test(value);
@@ -21,11 +18,7 @@ function normalizeSlug(value: string): string {
 
 function loadInitialContent(raw: any): string {
   if (!raw) return '';
-  const str = typeof raw === 'string' ? raw : JSON.stringify(raw);
-  if (isTipTapContent(str)) {
-    return convertTipTapToMarkdown(normalizeTipTapContent(str));
-  }
-  return str;
+  return typeof raw === 'string' ? raw : JSON.stringify(raw);
 }
 
 export const useBlogEditorContent = (initialPost?: any, onSave?: (published: boolean, post: any) => void) => {

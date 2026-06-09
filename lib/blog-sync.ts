@@ -2,66 +2,21 @@ import { createClient } from '@supabase/supabase-js';
 import { getEmbeddings } from './yandex';
 
 
-/**
- * Extracts plain text from Tiptap JSON content, filtering out junk data.
- */
-export function extractTextFromTiptap(content: any): string {
+export function extractTextFromContent(content: any): string {
     if (!content) return '';
 
-    // If it's a string, it might be a JSON string
     if (typeof content === 'string') {
-        // Simple heuristic for base64: long string with no spaces
-        if (content.length > 200 && !content.includes(' ')) {
-            return '';
-        }
-        try {
-            const parsed = JSON.parse(content);
-            return extractTextFromTiptap(parsed);
-        } catch (e) {
-            // Not a JSON string, return as-is (plain text)
-            return content;
-        }
-    }
-
-    // NEW: Support current blog editor format (EditorContent[])
-    // [{ type: 'paragraph'|'heading'|'image', content: string, alt?: string }]
-    if (Array.isArray(content)) {
+        if (content.length > 200 && !content.includes(' ')) return '';
         return content
-            .map((block) => {
-                if (!block || typeof block !== 'object') return '';
-                const type = block.type;
-                if (type === 'image') {
-                    // Prefer descriptive alt text; skip raw image URLs
-                    return (block.alt || '').trim();
-                }
-                // paragraph or heading
-                const val = (block.content || '').toString();
-                return val;
-            })
-            .filter(Boolean)
-            .join(' ')
+            .replace(/^#{1,6}\s+/gm, '')
+            .replace(/!\[.*?\]\(.*?\)/g, '')
+            .replace(/\[(.+?)\]\(.*?\)/g, '$1')
+            .replace(/[*_`~>]/g, '')
             .replace(/\s+/g, ' ')
             .trim();
     }
 
-    let text = '';
-
-    // Legacy TipTap JSON tree support
-    if (content.type === 'text') {
-        const val = content.text || '';
-        // Skip large chunks without spaces (likely images or noise)
-        if (val.length < 500 || val.includes(' ')) {
-            text += val;
-        }
-    }
-
-    if (content.content && Array.isArray(content.content)) {
-        content.content.forEach((child: any) => {
-            text += extractTextFromTiptap(child) + ' ';
-        });
-    }
-
-    return text.trim();
+    return '';
 }
 
 /**
@@ -104,7 +59,7 @@ export async function syncBlogPostEmbeddings(postId: string) {
     }
 
     // Extract text
-    const textContent = extractTextFromTiptap(post.content);
+    const textContent = extractTextFromContent(post.content);
     const fullText = `${post.title}. ${textContent}`;
 
     if (!fullText.trim()) {

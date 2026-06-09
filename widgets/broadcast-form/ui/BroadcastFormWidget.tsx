@@ -11,7 +11,7 @@ import { Broadcast, NewBroadcast } from '@/entities/broadcast/model';
 import { useBroadcastForm } from '@/features/broadcast-form/model/useBroadcastForm';
 import { BroadcastApi } from '@/shared/api/broadcast';
 import { useRouter } from 'next/navigation';
-import { tiptapToHtml, renderEmailPreview } from '@/app/utils/tiptapToHtml';
+import { markdownToHtml, renderEmailPreview } from '@/app/utils/markdownToHtml';
 import { useI18n } from '@/app/contexts/I18nContext';
 
 interface BroadcastFormWidgetProps {
@@ -60,7 +60,7 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
     if (!content) return '';
 
     try {
-      return tiptapToHtml(content);
+      return markdownToHtml(content);
     } catch (error) {
       console.error('Error converting content to HTML:', error);
       return '';

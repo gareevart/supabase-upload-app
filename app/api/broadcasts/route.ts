@@ -4,7 +4,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import type { Database } from '@/lib/types';
 import { withApiAuth } from '@/app/auth/withApiAuth';
 import { resend } from '@/lib/resend';
-import { loadTiptapToHtml } from '@/lib/tiptap-loader';
+import { markdownToHtml } from '@/app/utils/markdownToHtml';
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
@@ -309,7 +309,7 @@ export const POST = withApiAuth(async (request: NextRequest, user: { id: string 
         user_id: user.id,
         subject,
         content,
-        content_html: (await loadTiptapToHtml())(content),
+        content_html: markdownToHtml(content),
         recipients: finalRecipients,
         total_recipients: finalRecipients.length,
         status,
