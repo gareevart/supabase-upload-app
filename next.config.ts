@@ -36,6 +36,9 @@ const nextConfig: NextConfig = {
   // Improve page loading performance
   experimental: {
     scrollRestoration: true,
+    // Persist Turbopack compilation cache in .next/cache so Vercel can reuse
+    // it between deploys (Vercel restores .next/cache on every build).
+    turbopackFileSystemCacheForBuild: true,
   },
 
   // Compress assets for better performance
