@@ -15,7 +15,7 @@ export function transliterate(text: string): string {
     'Ъ': '', 'Ы': 'y', 'Ь': '', 'Э': 'e', 'Ю': 'yu', 'Я': 'ya'
   };
 
-  return text.split('').map(char => 
-    cyrillicMap[char] || char
+  return text.split('').map(char =>
+    char in cyrillicMap ? cyrillicMap[char] : char
   ).join('');
 }
