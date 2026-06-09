@@ -132,7 +132,7 @@ const BroadcastDetail: React.FC<BroadcastDetailProps> = ({
         return broadcast.content_html;
       }
       
-      return markdownToHtml(broadcast.content ?? '');
+      return markdownToHtml(typeof broadcast.content === 'string' ? broadcast.content : '');
     } catch (e) {
       console.error('Error displaying content:', e);
       return 'Error displaying content';

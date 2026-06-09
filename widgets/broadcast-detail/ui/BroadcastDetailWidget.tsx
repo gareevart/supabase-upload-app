@@ -172,7 +172,7 @@ const BroadcastDetailWidget: React.FC<BroadcastDetailWidgetProps> = ({ id }) => 
         return broadcast.content_html;
       }
 
-      return markdownToHtml(broadcast.content ?? '');
+      return markdownToHtml(typeof broadcast.content === 'string' ? broadcast.content : '');
     } catch (e) {
       console.error('Error displaying content:', e);
       return 'Error displaying content';
