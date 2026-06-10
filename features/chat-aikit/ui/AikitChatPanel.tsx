@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ChatContainer, ActionButton } from "@gravity-ui/aikit";
 import type { ChatType, TChatMessage, TSubmitData } from "@gravity-ui/aikit";
@@ -13,7 +13,9 @@ import { useI18n } from "@/app/contexts/I18nContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DrawerMenu } from "@/shared/ui/DrawerMenu";
 import { FileUploader, FileAttachment } from "@/app/components/chat/FileUploader";
+import { looksLikeWidgetRequest } from "@/features/widget-runtime/lib/widgetIntent";
 import { toAikitMessages, toAikitChats, toChatStatus } from "../model/adapters";
+import type { AikitChatMessage } from "../model/adapters";
 import { widgetMessageRegistry } from "./WidgetMessagePart";
 import "./AikitChatPanel.css";
 
@@ -39,12 +41,40 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
   const [useWidgetMode, setUseWidgetMode] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState("");
+  // Optimistic echo of the message being sent + generation skeleton:
+  // the messages query is refetched only after the whole round-trip,
+  // so without this the chat looks frozen during generation
+  const [pendingRequest, setPendingRequest] = useState<{
+    content: string;
+    isWidget: boolean;
+    baselineCount: number;
+  } | null>(null);
 
   useEffect(() => {
     setSystemPrompt(chat?.system_prompt ?? "");
   }, [chat?.system_prompt]);
 
-  const aikitMessages = toAikitMessages(messages);
+  const aikitMessages = useMemo(() => {
+    const result: AikitChatMessage[] = toAikitMessages(messages);
+    if (pendingRequest) {
+      result.push({
+        id: 'pending-user-message',
+        role: 'user',
+        content: pendingRequest.content,
+      });
+      result.push({
+        id: 'pending-assistant-skeleton',
+        role: 'assistant',
+        content: [
+          {
+            type: 'pending-skeleton',
+            data: { variant: pendingRequest.isWidget ? 'widget' : 'text' },
+          },
+        ],
+      });
+    }
+    return result;
+  }, [messages, pendingRequest]);
   const aikitChats = toAikitChats(chats);
   const activeChat = chat
     ? { id: chat.id, name: chat.title || "Новый чат", createTime: chat.created_at }
@@ -53,16 +83,34 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
 
   const handleSendMessage = useCallback(
     async (data: TSubmitData) => {
-      await sendMessage.mutateAsync({
+      setPendingRequest({
         content: data.content,
-        attachments: attachedFiles.length > 0 ? attachedFiles : undefined,
-        useWebSearch,
-        useWidgetMode,
+        isWidget: useWidgetMode || looksLikeWidgetRequest(data.content),
+        baselineCount: messages.length,
       });
-      setAttachedFiles([]);
+      try {
+        await sendMessage.mutateAsync({
+          content: data.content,
+          attachments: attachedFiles.length > 0 ? attachedFiles : undefined,
+          useWebSearch,
+          useWidgetMode,
+        });
+        setAttachedFiles([]);
+      } catch (error) {
+        setPendingRequest(null);
+        throw error;
+      }
+      // On success the pending echo is cleared by the effect below once the
+      // refetched messages (with the real user + assistant rows) arrive
     },
-    [sendMessage, attachedFiles, useWebSearch, useWidgetMode],
+    [sendMessage, attachedFiles, useWebSearch, useWidgetMode, messages.length],
   );
+
+  useEffect(() => {
+    setPendingRequest((pending) =>
+      pending && messages.length > pending.baselineCount ? null : pending
+    );
+  }, [messages]);
 
   const handleSelectChat = useCallback(
     (c: ChatType) => router.push(`/chat/${c.id}`),

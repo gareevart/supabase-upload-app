@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { fetchGenerativeSearch, fetchWebPagesContent } from '@/lib/yandexSearch';
 import { WIDGET_GENERATION_SYSTEM_PROMPT, WIDGET_GENERATION_REMINDER } from '@/lib/widgetPrompt';
+import { looksLikeWidgetRequest } from '@/features/widget-runtime/lib/widgetIntent';
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204 });
@@ -23,11 +24,6 @@ export async function POST(request: Request) {
   // Widget mode is enabled by the explicit UI toggle OR auto-detected from the
   // request text ("создай виджет ...", "make a widget ..."), so generation
   // works even if the user forgets to press the toggle
-  const looksLikeWidgetRequest = (text: unknown): boolean =>
-    typeof text === 'string' &&
-    /(виджет|widget)/i.test(text) &&
-    /(созда|сдела|напиш|сгенерир|построй|обнови|измени|доработ|generate|create|make|build|update|change)/i.test(text);
-
   const lastUserContextText = Array.isArray(messageContext)
     ? [...messageContext].reverse().find((m: any) => m?.role === 'user')?.text
     : undefined;

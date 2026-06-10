@@ -2,9 +2,9 @@ import type { ChatStatus, ChatType, TChatMessage } from '@gravity-ui/aikit';
 import type { Message } from '@/hooks/useChat';
 import type { Chat } from '@/hooks/useChats';
 import { parseMessageSegments } from '@/features/widget-runtime/lib/parseWidgetBlock';
-import type { WidgetMessageContent } from '../ui/WidgetMessagePart';
+import type { CustomMessageContent } from '../ui/WidgetMessagePart';
 
-export type AikitChatMessage = TChatMessage<WidgetMessageContent>;
+export type AikitChatMessage = TChatMessage<CustomMessageContent>;
 
 export function toAikitMessages(messages: Message[]): AikitChatMessage[] {
   return messages.map((msg) => {

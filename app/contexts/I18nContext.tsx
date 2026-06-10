@@ -27,6 +27,8 @@ import widgetGalleryEn from '@/widgets/widget-gallery/ui/WidgetGalleryWidget.i18
 import widgetGalleryRu from '@/widgets/widget-gallery/ui/WidgetGalleryWidget.i18n/ru.json';
 import widgetViewEn from '@/widgets/widget-view/ui/WidgetViewWidget.i18n/en.json';
 import widgetViewRu from '@/widgets/widget-view/ui/WidgetViewWidget.i18n/ru.json';
+import pendingMessageSkeletonEn from '@/features/chat-aikit/ui/PendingMessageSkeleton.i18n/en.json';
+import pendingMessageSkeletonRu from '@/features/chat-aikit/ui/PendingMessageSkeleton.i18n/ru.json';
 
 export type AppLanguage = 'en' | 'ru';
 
@@ -47,6 +49,7 @@ const enTranslations: TranslationDict = {
   ...widgetGridEn,
   ...widgetGalleryEn,
   ...widgetViewEn,
+  ...pendingMessageSkeletonEn,
 };
 
 const ruTranslations: TranslationDict = {
@@ -63,6 +66,7 @@ const ruTranslations: TranslationDict = {
   ...widgetGridRu,
   ...widgetGalleryRu,
   ...widgetViewRu,
+  ...pendingMessageSkeletonRu,
 };
 
 const translations: Record<AppLanguage, TranslationDict> = {
