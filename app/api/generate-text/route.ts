@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { fetchGenerativeSearch, fetchWebPagesContent } from '@/lib/yandexSearch';
-import { WIDGET_GENERATION_SYSTEM_PROMPT } from '@/lib/widgetPrompt';
+import { WIDGET_GENERATION_SYSTEM_PROMPT, WIDGET_GENERATION_REMINDER } from '@/lib/widgetPrompt';
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204 });
@@ -467,6 +467,12 @@ export async function POST(request: Request) {
       messages.push({ role: 'user', text: prompt.trim() });
     }
 
+    // Anchor the widget format requirement right before generation —
+    // with long histories the model tends to ignore the first system message
+    if (widgetMode) {
+      messages.push({ role: 'system', text: WIDGET_GENERATION_REMINDER });
+    }
+
     if (mode === 'WEB' && (webSearchSources.length > 0 || webSearchSummary)) {
       messages.push({
         role: 'system',
@@ -515,12 +521,14 @@ export async function POST(request: Request) {
     const completionOptions: any = {
       stream: false,
       temperature: widgetMode ? 0.3 : (reasoningMode ? 0.1 : ((mode === 'WEB') ? 0.2 : 0.6)),
-      // Widget HTML documents are long — give the model enough room
-      maxTokens: widgetMode ? '8000' : (reasoningMode ? '1000' : '2000')
+      // Widget HTML documents are long — give the model more room, but stay
+      // within model limits (8000 can exceed them and fail the request)
+      maxTokens: widgetMode ? '4000' : (reasoningMode ? '1000' : '2000')
     };
 
-    // Add reasoning options if reasoning mode is enabled
-    if (reasoningMode && model === 'yandexgpt') {
+    // Add reasoning options if reasoning mode is enabled (widget mode needs
+    // the full token budget for the HTML document, so reasoning is skipped)
+    if (reasoningMode && model === 'yandexgpt' && !widgetMode) {
       console.log('Adding reasoning options for YandexGPT');
       completionOptions.reasoningOptions = {
         mode: "ENABLED_HIDDEN"

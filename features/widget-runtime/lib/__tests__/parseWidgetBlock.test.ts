@@ -69,6 +69,29 @@ describe('parseMessageSegments', () => {
     const segments = parseMessageSegments(message);
     expect(segments).toEqual([{ type: 'text', content: message }]);
   });
+
+  it('recognizes a widget in an ```html fence when the manifest is present', () => {
+    const message = `Готово:\n\`\`\`html\n${WIDGET_HTML}\n\`\`\``;
+    const segments = parseMessageSegments(message);
+    expect(segments).toHaveLength(2);
+    expect(segments[1].type).toBe('widget');
+    if (segments[1].type === 'widget') {
+      expect(segments[1].widget.manifest.title).toBe('Часы');
+    }
+  });
+
+  it('recognizes a widget in a bare ``` fence when the manifest is present', () => {
+    const message = `\`\`\`\n${WIDGET_HTML}\n\`\`\``;
+    const segments = parseMessageSegments(message);
+    expect(segments).toHaveLength(1);
+    expect(segments[0].type).toBe('widget');
+  });
+
+  it('does not treat html blocks without a manifest as widgets', () => {
+    const message = 'Пример страницы:\n```html\n<!DOCTYPE html><html><body>hi</body></html>\n```';
+    const segments = parseMessageSegments(message);
+    expect(segments).toEqual([{ type: 'text', content: message }]);
+  });
 });
 
 describe('hasWidgetBlock', () => {
