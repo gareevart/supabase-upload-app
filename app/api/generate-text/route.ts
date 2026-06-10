@@ -20,6 +20,24 @@ export async function POST(request: Request) {
     widgetMode
   } = await request.json();
 
+  // Widget mode is enabled by the explicit UI toggle OR auto-detected from the
+  // request text ("создай виджет ...", "make a widget ..."), so generation
+  // works even if the user forgets to press the toggle
+  const looksLikeWidgetRequest = (text: unknown): boolean =>
+    typeof text === 'string' &&
+    /(виджет|widget)/i.test(text) &&
+    /(созда|сдела|напиш|сгенерир|построй|обнови|измени|доработ|generate|create|make|build|update|change)/i.test(text);
+
+  const lastUserContextText = Array.isArray(messageContext)
+    ? [...messageContext].reverse().find((m: any) => m?.role === 'user')?.text
+    : undefined;
+
+  const effectiveWidgetMode =
+    Boolean(widgetMode) ||
+    looksLikeWidgetRequest(webSearchQuery) ||
+    looksLikeWidgetRequest(prompt) ||
+    looksLikeWidgetRequest(lastUserContextText);
+
   try {
     // Get auth header from request
     const authHeader = request.headers.get('authorization');
@@ -277,7 +295,7 @@ export async function POST(request: Request) {
     // If user explicitly enabled web search in UI, always honor it.
     const looksTimely = /\b(сегодня|сейчас|новост|последн(яя|ий)\s+(верси|релиз)|курс|цен[аы]|когда\s+выйдет|\d{4}|\?|обновлени|релиз)\b/i.test(userQuestion);
     const hasExplicitWebSearch = Boolean(useWebSearch);
-    const doWebSearch = !widgetMode && (hasExplicitWebSearch || (bestScore < THRESH_LOW && looksTimely));
+    const doWebSearch = !effectiveWidgetMode && (hasExplicitWebSearch || (bestScore < THRESH_LOW && looksTimely));
     if (doWebSearch) {
       mode = 'WEB';
       contextText = '';
@@ -355,7 +373,7 @@ export async function POST(request: Request) {
     }
 
     // Widget mode: the widget generation prompt takes priority over RAG/web prompts
-    if (widgetMode) {
+    if (effectiveWidgetMode) {
       finalSystemPrompt = WIDGET_GENERATION_SYSTEM_PROMPT;
     }
 
@@ -469,7 +487,7 @@ export async function POST(request: Request) {
 
     // Anchor the widget format requirement right before generation —
     // with long histories the model tends to ignore the first system message
-    if (widgetMode) {
+    if (effectiveWidgetMode) {
       messages.push({ role: 'system', text: WIDGET_GENERATION_REMINDER });
     }
 
@@ -520,15 +538,15 @@ export async function POST(request: Request) {
     // Prepare completion options
     const completionOptions: any = {
       stream: false,
-      temperature: widgetMode ? 0.3 : (reasoningMode ? 0.1 : ((mode === 'WEB') ? 0.2 : 0.6)),
+      temperature: effectiveWidgetMode ? 0.3 : (reasoningMode ? 0.1 : ((mode === 'WEB') ? 0.2 : 0.6)),
       // Widget HTML documents are long — give the model more room, but stay
       // within model limits (8000 can exceed them and fail the request)
-      maxTokens: widgetMode ? '4000' : (reasoningMode ? '1000' : '2000')
+      maxTokens: effectiveWidgetMode ? '4000' : (reasoningMode ? '1000' : '2000')
     };
 
     // Add reasoning options if reasoning mode is enabled (widget mode needs
     // the full token budget for the HTML document, so reasoning is skipped)
-    if (reasoningMode && model === 'yandexgpt' && !widgetMode) {
+    if (reasoningMode && model === 'yandexgpt' && !effectiveWidgetMode) {
       console.log('Adding reasoning options for YandexGPT');
       completionOptions.reasoningOptions = {
         mode: "ENABLED_HIDDEN"
