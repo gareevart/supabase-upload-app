@@ -244,6 +244,87 @@ export interface Database {
           added_at?: string
         }
       }
+      user_widgets: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          description: string | null
+          html: string
+          permissions: string[]
+          is_public: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          description?: string | null
+          html: string
+          permissions?: string[]
+          is_public?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          description?: string | null
+          html?: string
+          permissions?: string[]
+          is_public?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      widget_grants: {
+        Row: {
+          user_id: string
+          widget_id: string
+          permissions: string[]
+          enabled: boolean
+          granted_at: string
+        }
+        Insert: {
+          user_id: string
+          widget_id: string
+          permissions?: string[]
+          enabled?: boolean
+          granted_at?: string
+        }
+        Update: {
+          user_id?: string
+          widget_id?: string
+          permissions?: string[]
+          enabled?: boolean
+          granted_at?: string
+        }
+      }
+      widget_storage: {
+        Row: {
+          widget_id: string
+          user_id: string
+          key: string
+          value: Json
+          updated_at: string
+        }
+        Insert: {
+          widget_id: string
+          user_id: string
+          key: string
+          value?: Json
+          updated_at?: string
+        }
+        Update: {
+          widget_id?: string
+          user_id?: string
+          key?: string
+          value?: Json
+          updated_at?: string
+        }
+      }
       api_keys: {
         Row: {
           id: string

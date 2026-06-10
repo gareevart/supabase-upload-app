@@ -1,0 +1,10 @@
+{
+  "widgetPreview.savePrivate": "Save for myself",
+  "widgetPreview.savePublic": "Publish",
+  "widgetPreview.showCode": "Show code",
+  "widgetPreview.openSaved": "Widget saved — open it",
+  "widgetPreview.savedPrivate": "Widget saved to your collection",
+  "widgetPreview.savedPublic": "Widget published",
+  "widgetPreview.saveError": "Failed to save widget",
+  "widgetPreview.open": "Open"
+}

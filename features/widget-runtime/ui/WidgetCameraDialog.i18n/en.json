@@ -1,0 +1,10 @@
+{
+  "widgetCamera.title": "Camera",
+  "widgetCamera.hint": "The widget requested a photo. It will be saved to your gallery and shared with the widget.",
+  "widgetCamera.previewAlt": "Captured photo preview",
+  "widgetCamera.unavailable": "Camera is unavailable",
+  "widgetCamera.shoot": "Shoot",
+  "widgetCamera.reshoot": "Reshoot",
+  "widgetCamera.usePhoto": "Use photo",
+  "widgetCamera.cancel": "Cancel"
+}

@@ -1,0 +1,10 @@
+{
+  "widgetPreview.savePrivate": "Сохранить для себя",
+  "widgetPreview.savePublic": "Опубликовать",
+  "widgetPreview.showCode": "Показать код",
+  "widgetPreview.openSaved": "Виджет сохранён — открыть",
+  "widgetPreview.savedPrivate": "Виджет сохранён в вашу коллекцию",
+  "widgetPreview.savedPublic": "Виджет опубликован",
+  "widgetPreview.saveError": "Не удалось сохранить виджет",
+  "widgetPreview.open": "Открыть"
+}

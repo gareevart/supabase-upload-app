@@ -1,0 +1,16 @@
+{
+  "widgetPermissions.title": "Разрешения виджета",
+  "widgetPermissions.author": "Автор",
+  "widgetPermissions.requests": "Виджет запрашивает доступ к:",
+  "widgetPermissions.profile": "Профиль",
+  "widgetPermissions.profileHint": "Ваше имя, никнейм, аватар и описание",
+  "widgetPermissions.gallery": "Галерея",
+  "widgetPermissions.galleryHint": "Просмотр ваших изображений и загрузка новых",
+  "widgetPermissions.camera": "Камера",
+  "widgetPermissions.cameraHint": "Съёмка фото камерой устройства (с вашим подтверждением)",
+  "widgetPermissions.storage": "Хранилище",
+  "widgetPermissions.storageHint": "Сохранение данных виджета для вашего аккаунта",
+  "widgetPermissions.noPermissions": "Виджет не запрашивает доступ к вашим данным.",
+  "widgetPermissions.allow": "Разрешить",
+  "widgetPermissions.cancel": "Отмена"
+}

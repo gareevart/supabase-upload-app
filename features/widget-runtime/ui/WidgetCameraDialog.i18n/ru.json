@@ -1,0 +1,10 @@
+{
+  "widgetCamera.title": "Камера",
+  "widgetCamera.hint": "Виджет запросил фото. Снимок будет сохранён в вашу галерею и передан виджету.",
+  "widgetCamera.previewAlt": "Предпросмотр снимка",
+  "widgetCamera.unavailable": "Камера недоступна",
+  "widgetCamera.shoot": "Снять",
+  "widgetCamera.reshoot": "Переснять",
+  "widgetCamera.usePhoto": "Использовать фото",
+  "widgetCamera.cancel": "Отмена"
+}

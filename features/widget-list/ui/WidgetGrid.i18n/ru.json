@@ -1,0 +1,11 @@
+{
+  "widgetGrid.emptyMy": "У вас пока нет сохранённых виджетов. Попросите ассистента в чате создать виджет.",
+  "widgetGrid.emptyPublic": "Публичных виджетов пока нет.",
+  "widgetGrid.public": "Публичный",
+  "widgetGrid.private": "Приватный",
+  "widgetGrid.author": "Автор",
+  "widgetGrid.enabled": "В панели",
+  "widgetGrid.makePublic": "Опубликовать",
+  "widgetGrid.makePrivate": "Сделать приватным",
+  "widgetGrid.delete": "Удалить"
+}

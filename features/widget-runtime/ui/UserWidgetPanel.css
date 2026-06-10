@@ -1,0 +1,92 @@
+.user-widget-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-2);
+  width: 100%;
+  max-width: 460px;
+  padding: var(--g-spacing-4);
+  border: 1px solid var(--g-color-line-generic);
+  border-radius: var(--g-border-radius-2xl);
+  background: var(--g-color-base-background);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05), 0 4px 24px rgba(0, 0, 0, 0.05);
+}
+
+.user-widget-panel--floating {
+  position: fixed;
+  z-index: 70;
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.user-widget-panel--dragging {
+  user-select: none;
+}
+
+.user-widget-panel--floating.user-widget-panel--entering {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.user-widget-panel--floating.user-widget-panel--open {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 250ms ease-in, transform 250ms ease-in;
+}
+
+.user-widget-panel--floating.user-widget-panel--exiting {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity 250ms ease-in-out, transform 250ms ease-out;
+}
+
+.user-widget-panel__drag-zone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 16px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.user-widget-panel--dragging .user-widget-panel__drag-zone {
+  cursor: grabbing;
+}
+
+.user-widget-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--g-spacing-2);
+  min-height: 28px;
+}
+
+.user-widget-panel__header--draggable {
+  cursor: grab;
+  touch-action: none;
+}
+
+.user-widget-panel--dragging .user-widget-panel__header--draggable {
+  cursor: grabbing;
+}
+
+.user-widget-panel__title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.user-widget-panel__body {
+  display: flex;
+  width: 100%;
+  min-height: 280px;
+}
+
+.user-widget-panel__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 280px;
+}

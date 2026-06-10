@@ -1,0 +1,16 @@
+{
+  "widgetPermissions.title": "Widget permissions",
+  "widgetPermissions.author": "Author",
+  "widgetPermissions.requests": "This widget requests access to:",
+  "widgetPermissions.profile": "Profile",
+  "widgetPermissions.profileHint": "Your name, username, avatar and bio",
+  "widgetPermissions.gallery": "Gallery",
+  "widgetPermissions.galleryHint": "View your images and upload new ones",
+  "widgetPermissions.camera": "Camera",
+  "widgetPermissions.cameraHint": "Take photos with your device camera (with your confirmation)",
+  "widgetPermissions.storage": "Storage",
+  "widgetPermissions.storageHint": "Save widget data linked to your account",
+  "widgetPermissions.noPermissions": "This widget does not request access to your data.",
+  "widgetPermissions.allow": "Allow",
+  "widgetPermissions.cancel": "Cancel"
+}

@@ -11,6 +11,8 @@ import { useChatSidebar } from "./ChatSidebarContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DrawerMenu } from "@/shared/ui/DrawerMenu";
 import { useCreateChat } from "@/hooks/useCreateChat";
+import { parseMessageSegments } from "@/features/widget-runtime/lib/parseWidgetBlock";
+import { WidgetPreviewCard } from "@/features/widget-generation/ui/WidgetPreviewCard";
 import "./ChatInterface.css";
 import "@/app/blog/blog.css";
 
@@ -40,6 +42,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
   const [currentReasoning, setCurrentReasoning] = useState("");
   const [isReasoningActive, setIsReasoningActive] = useState(false);
   const [useWebSearch, setUseWebSearch] = useState(false);
+  const [useWidgetMode, setUseWidgetMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
 
@@ -67,7 +70,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
     scrollToBottom();
   }, [messages]);
 
-  const handleMessageSubmit = async (message: string, files?: FileAttachment[], useWebSearch?: boolean) => {
+  const handleMessageSubmit = async (message: string, files?: FileAttachment[], useWebSearch?: boolean, useWidgetMode?: boolean) => {
     // Reset reasoning state
     setCurrentReasoning("");
     setIsReasoningActive(false);
@@ -81,7 +84,8 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
       await sendMessage.mutateAsync({
         content: message,
         attachments: files,
-        useWebSearch: useWebSearch
+        useWebSearch: useWebSearch,
+        useWidgetMode: useWidgetMode
       });
 
       // Stop reasoning when done
@@ -227,6 +231,11 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
                 Web-search
               </Label>
             )}
+            {useWidgetMode && (
+              <Label theme="info" size="m">
+                Widget mode
+              </Label>
+            )}
             {reasoningMode && selectedModel === 'yandexgpt' && (
               <Label theme="info" size="m">
                 Thinking mode
@@ -296,6 +305,8 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
           isMessageSending={isMessageSending}
           useWebSearch={useWebSearch}
           onToggleWebSearch={() => setUseWebSearch((prev) => !prev)}
+          useWidgetMode={useWidgetMode}
+          onToggleWidgetMode={() => setUseWidgetMode((prev) => !prev)}
         />
       </div>
 
@@ -418,10 +429,20 @@ const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
             </div>
           )}
 
-          {/* Message content */}
+          {/* Message content: assistant messages may contain generated widget blocks */}
           {message.content && (
             <div className="chat-message-content tiptap-content">
-              <ReactMarkdown>{message.content}</ReactMarkdown>
+              {isUser ? (
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+              ) : (
+                parseMessageSegments(message.content).map((segment, index) =>
+                  segment.type === 'text' ? (
+                    <ReactMarkdown key={index}>{segment.content}</ReactMarkdown>
+                  ) : (
+                    <WidgetPreviewCard key={index} widget={segment.widget} />
+                  )
+                )
+              )}
             </div>
           )}
 

@@ -1,0 +1,10 @@
+{
+  "widgetGallery.title": "Виджеты",
+  "widgetGallery.subtitle": "Управляйте встроенными виджетами и виджетами, созданными ИИ-чатом",
+  "widgetGallery.builtinTitle": "Встроенные виджеты",
+  "widgetGallery.builtin.calculator": "Калькулятор",
+  "widgetGallery.builtin.camera": "Камера",
+  "widgetGallery.myTab": "Мои виджеты",
+  "widgetGallery.publicTab": "Публичные",
+  "widgetGallery.actionError": "Не удалось выполнить действие"
+}

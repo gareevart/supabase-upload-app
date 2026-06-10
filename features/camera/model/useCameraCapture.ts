@@ -173,16 +173,16 @@ export function useCameraCapture(options?: CameraCaptureOptions) {
     setError(null);
   }, [isCameraActive, resolvedOptions.imageType, resolvedOptions.quality]);
 
-  const savePhoto = useCallback(async () => {
+  const savePhoto = useCallback(async (): Promise<string | null> => {
     if (!capturedBlob) {
       setError("Сначала сделайте снимок");
-      return;
+      return null;
     }
 
     const userId = window.localStorage.getItem("user_id");
     if (!userId) {
       setError("Для сохранения необходимо авторизоваться");
-      return;
+      return null;
     }
 
     const extension = resolvedOptions.imageType.split("/")[1] ?? "jpg";
@@ -232,6 +232,7 @@ export function useCameraCapture(options?: CameraCaptureOptions) {
         theme: "success",
         autoHiding: 4000,
       });
+      return url;
     } catch (saveError) {
       const message =
         saveError instanceof Error
@@ -245,6 +246,7 @@ export function useCameraCapture(options?: CameraCaptureOptions) {
         theme: "danger",
         autoHiding: 6000,
       });
+      return null;
     } finally {
       setIsSaving(false);
     }

@@ -1,0 +1,11 @@
+{
+  "widgetView.notFound": "Виджет не найден",
+  "widgetView.backToList": "К списку виджетов",
+  "widgetView.public": "Публичный",
+  "widgetView.private": "Приватный",
+  "widgetView.author": "Автор",
+  "widgetView.makePublic": "Опубликовать",
+  "widgetView.makePrivate": "Сделать приватным",
+  "widgetView.delete": "Удалить",
+  "widgetView.actionError": "Не удалось выполнить действие"
+}
