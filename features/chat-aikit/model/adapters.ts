@@ -1,8 +1,12 @@
 import type { ChatStatus, ChatType, TChatMessage } from '@gravity-ui/aikit';
 import type { Message } from '@/hooks/useChat';
 import type { Chat } from '@/hooks/useChats';
+import { parseMessageSegments } from '@/features/widget-runtime/lib/parseWidgetBlock';
+import type { WidgetMessageContent } from '../ui/WidgetMessagePart';
 
-export function toAikitMessages(messages: Message[]): TChatMessage[] {
+export type AikitChatMessage = TChatMessage<WidgetMessageContent>;
+
+export function toAikitMessages(messages: Message[]): AikitChatMessage[] {
   return messages.map((msg) => {
     if (msg.role === 'user') {
       return {
@@ -23,6 +27,22 @@ export function toAikitMessages(messages: Message[]): TChatMessage[] {
         })
         .join('\n');
       content = `${content}\n\n**Источники:**\n${sourceLines}`;
+    }
+
+    // Generated widget blocks are rendered as live previews via the custom
+    // 'widget' message part (see WidgetMessagePart)
+    const segments = parseMessageSegments(content);
+    if (segments.some((segment) => segment.type === 'widget')) {
+      return {
+        id: msg.id,
+        role: 'assistant' as const,
+        content: segments.map((segment) =>
+          segment.type === 'text'
+            ? { type: 'text' as const, data: { text: segment.content } }
+            : { type: 'widget' as const, data: segment.widget }
+        ),
+        timestamp: msg.created_at,
+      };
     }
 
     return {

@@ -3,21 +3,24 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChatContainer, ActionButton } from "@gravity-ui/aikit";
-import type { ChatType, TSubmitData } from "@gravity-ui/aikit";
+import type { ChatType, TChatMessage, TSubmitData } from "@gravity-ui/aikit";
 import { Button, Dialog, Icon, Select, Text, TextArea } from "@gravity-ui/uikit";
-import { Bulb, Magnifier, Sliders } from "@gravity-ui/icons";
+import { Bulb, Circles3Plus, Magnifier, Sliders } from "@gravity-ui/icons";
 import { useChat } from "@/hooks/useChat";
 import { useChats } from "@/hooks/useChats";
 import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
+import { useI18n } from "@/app/contexts/I18nContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DrawerMenu } from "@/shared/ui/DrawerMenu";
 import { FileUploader, FileAttachment } from "@/app/components/chat/FileUploader";
 import { toAikitMessages, toAikitChats, toChatStatus } from "../model/adapters";
+import { widgetMessageRegistry } from "./WidgetMessagePart";
 import "./AikitChatPanel.css";
 
 export function AikitChatPanel({ chatId }: { chatId: string }) {
   const router = useRouter();
   const isMobile = useIsMobile();
+  const { t } = useI18n();
 
   const {
     chat,
@@ -33,6 +36,7 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
 
   const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
   const [useWebSearch, setUseWebSearch] = useState(false);
+  const [useWidgetMode, setUseWidgetMode] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState("");
 
@@ -53,10 +57,11 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
         content: data.content,
         attachments: attachedFiles.length > 0 ? attachedFiles : undefined,
         useWebSearch,
+        useWidgetMode,
       });
       setAttachedFiles([]);
     },
-    [sendMessage, attachedFiles, useWebSearch],
+    [sendMessage, attachedFiles, useWebSearch, useWidgetMode],
   );
 
   const handleSelectChat = useCallback(
@@ -100,6 +105,14 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
         tooltipTitle={useWebSearch ? "Отключить веб-поиск" : "Включить веб-поиск"}
       >
         <Icon data={Magnifier} size={16} />
+      </ActionButton>
+      <ActionButton
+        size="m"
+        view={useWidgetMode ? "action" : "flat"}
+        onClick={() => setUseWidgetMode((v) => !v)}
+        tooltipTitle={useWidgetMode ? t('chatForm.widgetModeOn') : t('chatForm.widgetModeOff')}
+      >
+        <Icon data={Circles3Plus} size={16} />
       </ActionButton>
       {selectedModel === "yandexgpt" && (
         <ActionButton
@@ -160,7 +173,9 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
       <ChatContainer
         chats={aikitChats}
         activeChat={activeChat}
-        messages={aikitMessages}
+        // ChatContainer is not generic over custom message content; the
+        // 'widget' parts are handled by widgetMessageRegistry at render time
+        messages={aikitMessages as unknown as TChatMessage[]}
         status={status}
         onSendMessage={handleSendMessage}
         onSelectChat={handleSelectChat}
@@ -168,6 +183,7 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
         onDeleteChat={handleDeleteChat}
         shouldParseIncompleteMarkdown
         showActionsOnHover
+        messageListConfig={{ messageRendererRegistry: widgetMessageRegistry }}
         promptInputProps={{
           view: "full",
           topPanel:
