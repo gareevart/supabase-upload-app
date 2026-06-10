@@ -139,11 +139,13 @@ export const useChat = (chatId: string) => {
     mutationFn: async ({
       content,
       attachments,
-      useWebSearch
+      useWebSearch,
+      useWidgetMode
     }: {
       content: string;
       attachments?: FileAttachment[];
       useWebSearch?: boolean;
+      useWidgetMode?: boolean;
     }) => {
       setIsMessageSending(true);
       try {
@@ -400,7 +402,8 @@ export const useChat = (chatId: string) => {
           },
           Boolean(useWebSearch),
           content,
-          chatId
+          chatId,
+          Boolean(useWidgetMode)
         );
 
         if (error) {

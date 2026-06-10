@@ -1,0 +1,11 @@
+{
+  "widgetGrid.emptyMy": "You have no saved widgets yet. Ask the assistant in the chat to create one.",
+  "widgetGrid.emptyPublic": "No public widgets yet.",
+  "widgetGrid.public": "Public",
+  "widgetGrid.private": "Private",
+  "widgetGrid.author": "Author",
+  "widgetGrid.enabled": "In panel",
+  "widgetGrid.makePublic": "Publish",
+  "widgetGrid.makePrivate": "Make private",
+  "widgetGrid.delete": "Delete"
+}

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { fetchGenerativeSearch, fetchWebPagesContent } from '@/lib/yandexSearch';
+import { WIDGET_GENERATION_SYSTEM_PROMPT } from '@/lib/widgetPrompt';
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204 });
@@ -15,7 +16,8 @@ export async function POST(request: Request) {
     reasoningMode,
     useWebSearch,
     webSearchQuery,
-    chatId
+    chatId,
+    widgetMode
   } = await request.json();
 
   try {
@@ -275,7 +277,7 @@ export async function POST(request: Request) {
     // If user explicitly enabled web search in UI, always honor it.
     const looksTimely = /\b(сегодня|сейчас|новост|последн(яя|ий)\s+(верси|релиз)|курс|цен[аы]|когда\s+выйдет|\d{4}|\?|обновлени|релиз)\b/i.test(userQuestion);
     const hasExplicitWebSearch = Boolean(useWebSearch);
-    const doWebSearch = hasExplicitWebSearch || (bestScore < THRESH_LOW && looksTimely);
+    const doWebSearch = !widgetMode && (hasExplicitWebSearch || (bestScore < THRESH_LOW && looksTimely));
     if (doWebSearch) {
       mode = 'WEB';
       contextText = '';
@@ -350,6 +352,11 @@ export async function POST(request: Request) {
         `${webSearchSummary ? `\nSummary:\n${webSearchSummary}\n` : ''}` +
         `${formattedSources ? `\nSources:\n${formattedSources}\n` : ''}` +
         `\nIf the web data is insufficient, explain the limitation briefly and answer using general knowledge without disclaimers about internet access.`;
+    }
+
+    // Widget mode: the widget generation prompt takes priority over RAG/web prompts
+    if (widgetMode) {
+      finalSystemPrompt = WIDGET_GENERATION_SYSTEM_PROMPT;
     }
 
     if (finalSystemPrompt && finalSystemPrompt.trim()) {
@@ -507,8 +514,9 @@ export async function POST(request: Request) {
     // Prepare completion options
     const completionOptions: any = {
       stream: false,
-      temperature: reasoningMode ? 0.1 : ( (mode === 'WEB') ? 0.2 : 0.6),
-      maxTokens: reasoningMode ? '1000' : '2000'
+      temperature: widgetMode ? 0.3 : (reasoningMode ? 0.1 : ((mode === 'WEB') ? 0.2 : 0.6)),
+      // Widget HTML documents are long — give the model enough room
+      maxTokens: widgetMode ? '8000' : (reasoningMode ? '1000' : '2000')
     };
 
     // Add reasoning options if reasoning mode is enabled

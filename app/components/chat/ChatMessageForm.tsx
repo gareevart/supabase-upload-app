@@ -1,16 +1,19 @@
 import { useState, useRef } from "react";
 import { TextArea, Button, Icon } from '@gravity-ui/uikit';
-import { Bulb, Stop, ArrowUturnCwLeft, Globe } from '@gravity-ui/icons';
+import { Bulb, Stop, ArrowUturnCwLeft, Globe, Circles3Plus } from '@gravity-ui/icons';
 import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
+import { useI18n } from "@/app/contexts/I18nContext";
 import { FileUploader, FileAttachment } from "./FileUploader";
 import "./ChatMessageForm.css";
 
 interface ChatMessageFormProps {
-  onSubmit: (message: string, files?: FileAttachment[], useWebSearch?: boolean) => Promise<void>;
+  onSubmit: (message: string, files?: FileAttachment[], useWebSearch?: boolean, useWidgetMode?: boolean) => Promise<void>;
   isMessageSending: boolean;
   disabled?: boolean;
   useWebSearch: boolean;
   onToggleWebSearch: () => void;
+  useWidgetMode: boolean;
+  onToggleWidgetMode: () => void;
 }
 
 export const ChatMessageForm = ({
@@ -18,8 +21,11 @@ export const ChatMessageForm = ({
   isMessageSending,
   disabled = false,
   useWebSearch,
-  onToggleWebSearch
+  onToggleWebSearch,
+  useWidgetMode,
+  onToggleWidgetMode
 }: ChatMessageFormProps) => {
+  const { t } = useI18n();
   const { reasoningMode, setReasoningMode, selectedModel } = useModelSelection();
   const [messageText, setMessageText] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
@@ -37,7 +43,7 @@ export const ChatMessageForm = ({
     setAttachedFiles([]);
 
     try {
-      await onSubmit(message, files.length > 0 ? files : undefined, useWebSearch);
+      await onSubmit(message, files.length > 0 ? files : undefined, useWebSearch, useWidgetMode);
     } catch (error) {
       console.error("Error sending message:", error);
       // Restore message and files if failed
@@ -106,6 +112,18 @@ export const ChatMessageForm = ({
               className="chat-message-form__button chat-message-form__button--web-search"
             >
               <Icon data={Globe} size={16} />
+            </Button>
+
+            <Button
+              type="button"
+              size="m"
+              view={useWidgetMode ? "action" : "outlined"}
+              onClick={onToggleWidgetMode}
+              title={useWidgetMode ? t('chatForm.widgetModeOn') : t('chatForm.widgetModeOff')}
+              disabled={disabled}
+              className="chat-message-form__button chat-message-form__button--widget"
+            >
+              <Icon data={Circles3Plus} size={16} />
             </Button>
 
             {/* Show reasoning button only for YandexGPT */}

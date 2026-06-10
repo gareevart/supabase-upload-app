@@ -9,6 +9,24 @@ import profileViewEn from '@/app/auth/profile/components/ProfileView.i18n/en.jso
 import profileViewRu from '@/app/auth/profile/components/ProfileView.i18n/ru.json';
 import broadcastFormEn from '@/widgets/broadcast-form/ui/BroadcastFormWidget.i18n/en.json';
 import broadcastFormRu from '@/widgets/broadcast-form/ui/BroadcastFormWidget.i18n/ru.json';
+import navigationEn from '@/app/components/Navigation/Navigation.i18n/en.json';
+import navigationRu from '@/app/components/Navigation/Navigation.i18n/ru.json';
+import chatMessageFormEn from '@/app/components/chat/ChatMessageForm.i18n/en.json';
+import chatMessageFormRu from '@/app/components/chat/ChatMessageForm.i18n/ru.json';
+import widgetCameraDialogEn from '@/features/widget-runtime/ui/WidgetCameraDialog.i18n/en.json';
+import widgetCameraDialogRu from '@/features/widget-runtime/ui/WidgetCameraDialog.i18n/ru.json';
+import widgetPermissionsDialogEn from '@/features/widget-runtime/ui/WidgetPermissionsDialog.i18n/en.json';
+import widgetPermissionsDialogRu from '@/features/widget-runtime/ui/WidgetPermissionsDialog.i18n/ru.json';
+import userWidgetPanelEn from '@/features/widget-runtime/ui/UserWidgetPanel.i18n/en.json';
+import userWidgetPanelRu from '@/features/widget-runtime/ui/UserWidgetPanel.i18n/ru.json';
+import widgetPreviewCardEn from '@/features/widget-generation/ui/WidgetPreviewCard.i18n/en.json';
+import widgetPreviewCardRu from '@/features/widget-generation/ui/WidgetPreviewCard.i18n/ru.json';
+import widgetGridEn from '@/features/widget-list/ui/WidgetGrid.i18n/en.json';
+import widgetGridRu from '@/features/widget-list/ui/WidgetGrid.i18n/ru.json';
+import widgetGalleryEn from '@/widgets/widget-gallery/ui/WidgetGalleryWidget.i18n/en.json';
+import widgetGalleryRu from '@/widgets/widget-gallery/ui/WidgetGalleryWidget.i18n/ru.json';
+import widgetViewEn from '@/widgets/widget-view/ui/WidgetViewWidget.i18n/en.json';
+import widgetViewRu from '@/widgets/widget-view/ui/WidgetViewWidget.i18n/ru.json';
 
 export type AppLanguage = 'en' | 'ru';
 
@@ -20,6 +38,15 @@ const enTranslations: TranslationDict = {
   ...languageToggleEn,
   ...profileViewEn,
   ...broadcastFormEn,
+  ...navigationEn,
+  ...chatMessageFormEn,
+  ...widgetCameraDialogEn,
+  ...widgetPermissionsDialogEn,
+  ...userWidgetPanelEn,
+  ...widgetPreviewCardEn,
+  ...widgetGridEn,
+  ...widgetGalleryEn,
+  ...widgetViewEn,
 };
 
 const ruTranslations: TranslationDict = {
@@ -27,6 +54,15 @@ const ruTranslations: TranslationDict = {
   ...languageToggleRu,
   ...profileViewRu,
   ...broadcastFormRu,
+  ...navigationRu,
+  ...chatMessageFormRu,
+  ...widgetCameraDialogRu,
+  ...widgetPermissionsDialogRu,
+  ...userWidgetPanelRu,
+  ...widgetPreviewCardRu,
+  ...widgetGridRu,
+  ...widgetGalleryRu,
+  ...widgetViewRu,
 };
 
 const translations: Record<AppLanguage, TranslationDict> = {

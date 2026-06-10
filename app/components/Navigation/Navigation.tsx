@@ -2,13 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 
 import { useRouter, usePathname } from 'next/navigation';
 import { Icon, Button, Popover, Text } from '@gravity-ui/uikit';
-import { House, Circles4Square, Person, Magnifier, BookOpen, Bars, Xmark, Circles3Plus, Calculator, Camera } from '@gravity-ui/icons';
+import { House, Circles4Square, Person, Magnifier, BookOpen, Bars, Xmark, Circles3Plus, Calculator, Camera, Gear } from '@gravity-ui/icons';
 import Image from 'next/image';
 import UserAvatar from '../UserAvatar';
 import NavigationItem from './NavigationItem';
 import { DrawerMenu } from '@/shared/ui/DrawerMenu';
 import { CalculatorPanel } from '@/features/calculator/ui';
 import { CameraPanel } from '@/features/camera/ui';
+import { UserWidgetPanel } from '@/features/widget-runtime/ui/UserWidgetPanel';
+import { useEnabledWidgets } from '@/features/widget-list/model/useEnabledWidgets';
+import {
+  BUILTIN_WIDGETS_EVENT,
+  BuiltinWidgetsState,
+  getBuiltinWidgetsState,
+} from '@/features/widget-list/lib/builtinWidgets';
+import { useI18n } from '@/app/contexts/I18nContext';
 import Link from 'next/link'
 import './Navigation.css';
 import { NAVIGATION_POSITION_EVENT, NAVIGATION_POSITION_STORAGE_KEY, NavigationPosition } from './navigationPosition';
@@ -19,6 +27,7 @@ type WidgetAnimationState = 'closed' | 'entering' | 'open' | 'exiting';
 const Navigation: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useI18n();
   const widgetsTriggerRef = useRef<HTMLDivElement>(null);
   const [activeItem, setActiveItem] = useState('home');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -30,6 +39,13 @@ const Navigation: React.FC = () => {
     camera: 71,
   });
   const widgetLayerCounterRef = useRef(71);
+  const { widgets: userWidgets } = useEnabledWidgets();
+  const [builtinWidgets, setBuiltinWidgets] = useState<BuiltinWidgetsState>({
+    calculator: true,
+    camera: true,
+  });
+  const [userWidgetWindows, setUserWidgetWindows] = useState<Record<string, WidgetAnimationState>>({});
+  const [userWidgetLayers, setUserWidgetLayers] = useState<Record<string, number>>({});
   const [widgetsPanelStyle, setWidgetsPanelStyle] = useState<React.CSSProperties>({});
   const [navigationPosition, setNavigationPosition] = useState<NavigationPosition>('left');
   const [isMobileViewport, setIsMobileViewport] = useState(false);
@@ -45,6 +61,7 @@ const Navigation: React.FC = () => {
     if (pathname.startsWith('/search')) return 'search';
     if (pathname.startsWith('/broadcasts')) return 'broadcasts';
     if (pathname.startsWith('/subscribers')) return 'subscribers';
+    if (pathname.startsWith('/widgets')) return ''; // No active item for widgets page
     if (pathname.startsWith('/auth/profile')) return ''; // No active item for profile page
     return 'home'; // default fallback
   };
@@ -169,6 +186,46 @@ const Navigation: React.FC = () => {
       return 'open';
     });
     setIsWidgetsPanelOpen(false);
+  };
+
+  useEffect(() => {
+    setBuiltinWidgets(getBuiltinWidgetsState());
+    const handleBuiltinChange = () => setBuiltinWidgets(getBuiltinWidgetsState());
+    window.addEventListener(BUILTIN_WIDGETS_EVENT, handleBuiltinChange);
+    return () => window.removeEventListener(BUILTIN_WIDGETS_EVENT, handleBuiltinChange);
+  }, []);
+
+  const bringUserWidgetToFront = (widgetId: string) => {
+    widgetLayerCounterRef.current += 1;
+    const nextLayer = widgetLayerCounterRef.current;
+    setUserWidgetLayers((prev) => ({ ...prev, [widgetId]: nextLayer }));
+  };
+
+  const openUserWidget = (widgetId: string) => {
+    bringUserWidgetToFront(widgetId);
+    setUserWidgetWindows((prev) => {
+      const current = prev[widgetId] ?? 'closed';
+      if (current === 'closed' || current === 'exiting') {
+        requestAnimationFrame(() =>
+          setUserWidgetWindows((next) => ({ ...next, [widgetId]: 'open' }))
+        );
+        return { ...prev, [widgetId]: 'entering' };
+      }
+      return { ...prev, [widgetId]: 'open' };
+    });
+    setIsWidgetsPanelOpen(false);
+  };
+
+  const closeUserWidget = (widgetId: string) => {
+    setUserWidgetWindows((prev) => ({ ...prev, [widgetId]: 'exiting' }));
+    window.setTimeout(() => {
+      setUserWidgetWindows((prev) => {
+        if (prev[widgetId] !== 'exiting') return prev;
+        const next = { ...prev };
+        delete next[widgetId];
+        return next;
+      });
+    }, 250);
   };
 
   useEffect(() => {
@@ -345,21 +402,48 @@ const Navigation: React.FC = () => {
           <Text variant="subheader-2">Widgets</Text>
         </div>
         <div className="widgets-panel__divider" />
+        {builtinWidgets.calculator && (
+          <button
+            type="button"
+            className="widgets-panel__item"
+            onClick={openCalculatorWidget}
+          >
+            <Icon data={Calculator} size={18} />
+            <Text variant="body-1">Calculator</Text>
+          </button>
+        )}
+        {builtinWidgets.camera && (
+          <button
+            type="button"
+            className="widgets-panel__item"
+            onClick={openCameraWidget}
+          >
+            <Icon data={Camera} size={18} />
+            <Text variant="body-1">Camera</Text>
+          </button>
+        )}
+        {userWidgets.map((widget) => (
+          <button
+            key={widget.id}
+            type="button"
+            className="widgets-panel__item"
+            onClick={() => openUserWidget(widget.id)}
+          >
+            <Icon data={Circles3Plus} size={18} />
+            <Text variant="body-1" ellipsis>{widget.title}</Text>
+          </button>
+        ))}
+        <div className="widgets-panel__divider" />
         <button
           type="button"
           className="widgets-panel__item"
-          onClick={openCalculatorWidget}
+          onClick={() => {
+            setIsWidgetsPanelOpen(false);
+            router.push('/widgets');
+          }}
         >
-          <Icon data={Calculator} size={18} />
-          <Text variant="body-1">Calculator</Text>
-        </button>
-        <button
-          type="button"
-          className="widgets-panel__item"
-          onClick={openCameraWidget}
-        >
-          <Icon data={Camera} size={18} />
-          <Text variant="body-1">Camera</Text>
+          <Icon data={Gear} size={18} />
+          <Text variant="body-1">{t('navigation.allWidgets')}</Text>
         </button>
       </div>
       <button
@@ -419,6 +503,28 @@ const Navigation: React.FC = () => {
           }
         />
       )}
+      {userWidgets
+        .filter((widget) => (userWidgetWindows[widget.id] ?? 'closed') !== 'closed')
+        .map((widget) => {
+          const windowState = userWidgetWindows[widget.id];
+          return (
+            <UserWidgetPanel
+              key={widget.id}
+              widget={widget}
+              draggable
+              zIndex={userWidgetLayers[widget.id]}
+              onActivate={() => bringUserWidgetToFront(widget.id)}
+              onClose={() => closeUserWidget(widget.id)}
+              className={
+                windowState === 'entering'
+                  ? 'user-widget-panel--entering'
+                  : windowState === 'exiting'
+                    ? 'user-widget-panel--exiting'
+                    : 'user-widget-panel--open'
+              }
+            />
+          );
+        })}
     </>
   );
 };

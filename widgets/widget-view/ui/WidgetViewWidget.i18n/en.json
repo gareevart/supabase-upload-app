@@ -1,0 +1,11 @@
+{
+  "widgetView.notFound": "Widget not found",
+  "widgetView.backToList": "Back to widgets",
+  "widgetView.public": "Public",
+  "widgetView.private": "Private",
+  "widgetView.author": "Author",
+  "widgetView.makePublic": "Publish",
+  "widgetView.makePrivate": "Make private",
+  "widgetView.delete": "Delete",
+  "widgetView.actionError": "Action failed"
+}
