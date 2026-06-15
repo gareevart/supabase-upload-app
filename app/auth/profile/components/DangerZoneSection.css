@@ -12,12 +12,10 @@
     color: var(--g-color-text-danger);
 }
 
-.danger-zone__block {
+.danger-zone__actions {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: var(--g-spacing-3);
-    align-items: flex-start;
-    width: 100%;
 }
 
 .danger-zone__field {
@@ -25,13 +23,6 @@
     flex-direction: column;
     gap: var(--g-spacing-1);
     width: 100%;
-    max-width: 360px;
-}
-
-.danger-zone__divider {
-    height: 1px;
-    width: 100%;
-    background-color: var(--g-color-line-generic);
 }
 
 .danger-zone__dialog {

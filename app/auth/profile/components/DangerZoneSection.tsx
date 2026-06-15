@@ -38,6 +38,7 @@ export const DangerZoneSection = ({ email, role }: DangerZoneSectionProps) => {
     const [showNew, setShowNew] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [passwordError, setPasswordError] = useState<string | null>(null);
+    const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
 
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [deleteConfirmation, setDeleteConfirmation] = useState('');
@@ -55,8 +56,18 @@ export const DangerZoneSection = ({ email, role }: DangerZoneSectionProps) => {
         </Button>
     );
 
-    const handleChangePassword = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const closePasswordDialog = () => {
+        setIsPasswordDialogOpen(false);
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setShowCurrent(false);
+        setShowNew(false);
+        setShowConfirm(false);
+        setPasswordError(null);
+    };
+
+    const handleApplyPassword = async () => {
         setPasswordError(null);
 
         if (newPassword.length < MIN_PASSWORD_LENGTH) {
@@ -71,9 +82,7 @@ export const DangerZoneSection = ({ email, role }: DangerZoneSectionProps) => {
 
         const success = await changePassword(currentPassword, newPassword);
         if (success) {
-            setCurrentPassword('');
-            setNewPassword('');
-            setConfirmPassword('');
+            closePasswordDialog();
         }
     };
 
@@ -95,90 +104,101 @@ export const DangerZoneSection = ({ email, role }: DangerZoneSectionProps) => {
                 </Text>
             </div>
 
-            <form className="danger-zone__block" onSubmit={handleChangePassword}>
-                <Text variant="subheader-2">{t('dangerZone.changePassword.title')}</Text>
-                <Text variant="body-2" color="secondary">
-                    {t('dangerZone.changePassword.description')}
-                </Text>
-
-                <div className="danger-zone__field">
-                    <Text variant="body-2">{t('dangerZone.changePassword.current')}</Text>
-                    <TextInput
-                        size="l"
-                        type={showCurrent ? 'text' : 'password'}
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        endContent={renderVisibilityToggle(showCurrent, () =>
-                            setShowCurrent(!showCurrent),
-                        )}
-                        disabled={isChangingPassword}
-                    />
-                </div>
-
-                <div className="danger-zone__field">
-                    <Text variant="body-2">{t('dangerZone.changePassword.new')}</Text>
-                    <TextInput
-                        size="l"
-                        type={showNew ? 'text' : 'password'}
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        endContent={renderVisibilityToggle(showNew, () => setShowNew(!showNew))}
-                        disabled={isChangingPassword}
-                    />
-                </div>
-
-                <div className="danger-zone__field">
-                    <Text variant="body-2">{t('dangerZone.changePassword.confirm')}</Text>
-                    <TextInput
-                        size="l"
-                        type={showConfirm ? 'text' : 'password'}
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        endContent={renderVisibilityToggle(showConfirm, () =>
-                            setShowConfirm(!showConfirm),
-                        )}
-                        disabled={isChangingPassword}
-                    />
-                </div>
-
-                {passwordError && (
-                    <Text color="danger" variant="body-2">
-                        {passwordError}
-                    </Text>
-                )}
-
+            <div className="danger-zone__actions">
                 <Button
                     size="l"
-                    view="action"
-                    type="submit"
-                    loading={isChangingPassword}
-                    disabled={!currentPassword || !newPassword || !confirmPassword}
+                    view="normal"
+                    onClick={() => setIsPasswordDialogOpen(true)}
                 >
-                    {t('dangerZone.changePassword.submit')}
+                    {t('dangerZone.changePassword.title')}
                 </Button>
-            </form>
 
-            {!isAdmin && (
-                <>
-                    <div className="danger-zone__divider" />
+                {!isAdmin && (
+                    <Button
+                        size="l"
+                        view="outlined-danger"
+                        onClick={() => setIsDeleteDialogOpen(true)}
+                    >
+                        {t('dangerZone.delete.button')}
+                    </Button>
+                )}
+            </div>
 
-                    <div className="danger-zone__block">
-                        <Text variant="subheader-2" color="danger">
-                            {t('dangerZone.delete.title')}
-                        </Text>
+            <Dialog
+                open={isPasswordDialogOpen}
+                onClose={closePasswordDialog}
+                aria-labelledby="change-password-dialog-title"
+            >
+                <Dialog.Header
+                    caption={t('dangerZone.changePassword.title')}
+                    id="change-password-dialog-title"
+                />
+                <Dialog.Body>
+                    <div className="danger-zone__dialog">
                         <Text variant="body-2" color="secondary">
-                            {t('dangerZone.delete.description')}
+                            {t('dangerZone.changePassword.description')}
                         </Text>
-                        <Button
-                            size="l"
-                            view="outlined-danger"
-                            onClick={() => setIsDeleteDialogOpen(true)}
-                        >
-                            {t('dangerZone.delete.button')}
-                        </Button>
+
+                        <div className="danger-zone__field">
+                            <Text variant="body-2">{t('dangerZone.changePassword.current')}</Text>
+                            <TextInput
+                                size="l"
+                                type={showCurrent ? 'text' : 'password'}
+                                value={currentPassword}
+                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                endContent={renderVisibilityToggle(showCurrent, () =>
+                                    setShowCurrent(!showCurrent),
+                                )}
+                                disabled={isChangingPassword}
+                            />
+                        </div>
+
+                        <div className="danger-zone__field">
+                            <Text variant="body-2">{t('dangerZone.changePassword.new')}</Text>
+                            <TextInput
+                                size="l"
+                                type={showNew ? 'text' : 'password'}
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                endContent={renderVisibilityToggle(showNew, () =>
+                                    setShowNew(!showNew),
+                                )}
+                                disabled={isChangingPassword}
+                            />
+                        </div>
+
+                        <div className="danger-zone__field">
+                            <Text variant="body-2">{t('dangerZone.changePassword.confirm')}</Text>
+                            <TextInput
+                                size="l"
+                                type={showConfirm ? 'text' : 'password'}
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                endContent={renderVisibilityToggle(showConfirm, () =>
+                                    setShowConfirm(!showConfirm),
+                                )}
+                                disabled={isChangingPassword}
+                            />
+                        </div>
+
+                        {passwordError && (
+                            <Text color="danger" variant="body-2">
+                                {passwordError}
+                            </Text>
+                        )}
                     </div>
-                </>
-            )}
+                </Dialog.Body>
+                <Dialog.Footer
+                    onClickButtonCancel={closePasswordDialog}
+                    onClickButtonApply={handleApplyPassword}
+                    textButtonApply={t('dangerZone.changePassword.submit')}
+                    textButtonCancel={t('dangerZone.delete.cancelButton')}
+                    propsButtonApply={{
+                        loading: isChangingPassword,
+                        disabled: !currentPassword || !newPassword || !confirmPassword,
+                    }}
+                />
+            </Dialog>
 
             <Dialog
                 open={isDeleteDialogOpen}
