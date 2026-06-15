@@ -7,6 +7,8 @@ import languageToggleEn from '@/app/components/Navigation/LanguageToggle.i18n/en
 import languageToggleRu from '@/app/components/Navigation/LanguageToggle.i18n/ru.json';
 import profileViewEn from '@/app/auth/profile/components/ProfileView.i18n/en.json';
 import profileViewRu from '@/app/auth/profile/components/ProfileView.i18n/ru.json';
+import dangerZoneEn from '@/app/auth/profile/components/DangerZoneSection.i18n/en.json';
+import dangerZoneRu from '@/app/auth/profile/components/DangerZoneSection.i18n/ru.json';
 import broadcastFormEn from '@/widgets/broadcast-form/ui/BroadcastFormWidget.i18n/en.json';
 import broadcastFormRu from '@/widgets/broadcast-form/ui/BroadcastFormWidget.i18n/ru.json';
 import navigationEn from '@/app/components/Navigation/Navigation.i18n/en.json';
@@ -37,6 +39,7 @@ const enTranslations: TranslationDict = {
   ...homeEn,
   ...languageToggleEn,
   ...profileViewEn,
+  ...dangerZoneEn,
   ...broadcastFormEn,
   ...navigationEn,
   ...chatMessageFormEn,
@@ -53,6 +56,7 @@ const ruTranslations: TranslationDict = {
   ...homeRu,
   ...languageToggleRu,
   ...profileViewRu,
+  ...dangerZoneRu,
   ...broadcastFormRu,
   ...navigationRu,
   ...chatMessageFormRu,

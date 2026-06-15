@@ -8,7 +8,6 @@ import {
     Theme,
     useToaster,
 } from '@gravity-ui/uikit';
-import { useRouter } from 'next/navigation';
 import YandexFileUploader from '../../components/YandexFileUploader';
 import { Profile } from '../types';
 
@@ -29,7 +28,6 @@ export const ProfileEditForm = ({
 }: ProfileEditFormProps) => {
     const { add } = useToaster();
     const { user } = useAuth();
-    const router = useRouter();
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
@@ -123,15 +121,6 @@ export const ProfileEditForm = ({
                     onChange={(e) => setProfile({ ...profile, website: e.target.value })}
                 />
             </div>
-
-            <Button
-                size="l"
-                view="normal"
-                onClick={() => router.push('/auth/update-password')}
-                style={{ alignSelf: 'flex-start' }}
-            >
-                Update password
-            </Button>
 
             <div className="profile-actions" style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                 <Button
