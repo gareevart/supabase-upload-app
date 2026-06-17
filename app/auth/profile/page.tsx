@@ -16,6 +16,7 @@ import { ProfileView } from './components/ProfileView';
 import { SubscriptionSection } from './components/SubscriptionSection';
 import { QuotaSection } from './components/QuotaSection';
 import { ApiKeysManager } from '@/app/components/profile/ApiKeysManager';
+import { DangerZoneSection } from './components/DangerZoneSection';
 
 const Profile = () => {
     const { user, signOut } = useAuth();
@@ -82,6 +83,8 @@ const Profile = () => {
 
             <QuotaSection dailyQuota={dailyQuota} />
             <ApiKeysManager />
+
+            <DangerZoneSection email={user.email} role={profile.role} />
         </div>
     );
 };
