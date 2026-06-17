@@ -185,7 +185,7 @@ a {
 
 .home-page {
   gap: clamp(32px, 5vw, 72px);
-  padding: clamp(16px, 3vw, 40px) 0 24px;
+  padding: clamp(16px, 3vw, 40px) 20px 24px;
 }
 
 .content-container {
@@ -229,32 +229,45 @@ a {
   gap: var(--g-spacing-5);
 }
 
-.home-terminal {
+.home-hero-min {
   font-family: var(--font-jetbrains-mono, 'JetBrains Mono'), ui-monospace, monospace;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  align-items: flex-start;
+  gap: 24px;
   padding: clamp(16px, 3vw, 32px) 0;
 }
 
-.home-terminal__prompt {
+.home-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: var(--g-color-text-hint);
-  font-size: 14px;
-  font-family: var(--font-jetbrains-mono, 'JetBrains Mono'), ui-monospace, monospace;
+  gap: 12px;
+  margin-bottom: 40px;
 }
 
-.home-terminal__prompt-symbol {
-  color: var(--g-color-text-positive);
-  font-weight: 700;
+.home-brand__logo {
+  display: block;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.home-terminal__content {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+.home-brand__name {
+  font-weight: 500;
+  font-size: clamp(1.125rem, 1rem + 0.4vw, 1.5rem);
+  line-height: 1.2;
+  color: var(--g-color-text-primary);
+}
+
+.home-bio-lead,
+.home-bio-body {
+  margin: 0;
+  max-width: 38em;
+  font-weight: 400;
+  font-size: clamp(1.125rem, 0.95rem + 0.6vw, 1.625rem);
+  line-height: 1.25;
+  color: var(--g-color-text-primary);
 }
 
 .home-eyebrow,
