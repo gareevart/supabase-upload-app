@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Icon, Button, Popover, Text } from '@gravity-ui/uikit';
 import { House, Circles4Square, Person, Magnifier, BookOpen, Bars, Xmark, Circles3Plus, Calculator, Camera, Gear } from '@gravity-ui/icons';
-import Image from 'next/image';
 import UserAvatar from '../UserAvatar';
 import NavigationItem from './NavigationItem';
 import { DrawerMenu } from '@/shared/ui/DrawerMenu';
@@ -288,20 +287,6 @@ const Navigation: React.FC = () => {
     <>
       <nav className={`navigation navigation--${navigationPosition} ${isChatRoute ? 'navigation--chat-route' : ''}`}>
         <div className="nav-container">
-          <div className="logo-area">
-            <div className="logo-wrapper">
-              <Link href="/">
-                <Image
-                  src={'/g-logo.svg'}
-                  alt="Logo"
-                  width={32}
-                  height={32}
-                  priority
-                />
-              </Link>
-            </div>
-          </div>
-
           <div className="nav-items">
             {mainNavItems.map((item) => (
               <Popover
