@@ -37,6 +37,8 @@ import blogPostViewEn from '@/app/blog/[slug]/BlogPostClient.i18n/en.json';
 import blogPostViewRu from '@/app/blog/[slug]/BlogPostClient.i18n/ru.json';
 import blogEditorEn from '@/app/components/blog/BlogEditor.i18n/en.json';
 import blogEditorRu from '@/app/components/blog/BlogEditor.i18n/ru.json';
+import broadcastDetailEn from '@/widgets/broadcast-detail/ui/BroadcastDetailWidget.i18n/en.json';
+import broadcastDetailRu from '@/widgets/broadcast-detail/ui/BroadcastDetailWidget.i18n/ru.json';
 
 export type AppLanguage = 'en' | 'ru';
 
@@ -62,6 +64,7 @@ const enTranslations: TranslationDict = {
   ...blogPostCardEn,
   ...blogPostViewEn,
   ...blogEditorEn,
+  ...broadcastDetailEn,
 };
 
 const ruTranslations: TranslationDict = {
@@ -83,6 +86,7 @@ const ruTranslations: TranslationDict = {
   ...blogPostCardRu,
   ...blogPostViewRu,
   ...blogEditorRu,
+  ...broadcastDetailRu,
 };
 
 const translations: Record<AppLanguage, TranslationDict> = {

@@ -209,9 +209,9 @@ const BroadcastListWidget: React.FC = () => {
             : 0;
 
           return (
-            <div className="text-xs">
-              <div>Открыто: {item.opened_count ?? 0} ({openRate}%)</div>
-              <div>Клики: {item.clicked_count ?? 0} ({clickRate}%)</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--g-spacing-1)' }}>
+              <Text variant="caption-2">Открыто: {item.opened_count ?? 0} ({openRate}%)</Text>
+              <Text variant="caption-2">Клики: {item.clicked_count ?? 0} ({clickRate}%)</Text>
             </div>
           );
         }
@@ -238,9 +238,9 @@ const BroadcastListWidget: React.FC = () => {
         }
 
         return (
-          <div className="text-xs">
-            <div className="text-gray-500">{label}</div>
-            <div>{dateToShow}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--g-spacing-1)' }}>
+            <Text variant="caption-2" color="secondary">{label}</Text>
+            <Text variant="caption-2">{dateToShow}</Text>
           </div>
         );
       },
@@ -310,7 +310,7 @@ const BroadcastListWidget: React.FC = () => {
         </div>
       ) : error ? (
         <div className="text-center py-8">
-          <Text variant="body-1" className="text-red-500 mb-4">{error}</Text>
+          <Text variant="body-1" color="danger" className="mb-4">{error}</Text>
           <Button
             view="normal"
             size="l"
