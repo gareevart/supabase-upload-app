@@ -8,11 +8,10 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { MarkdownRenderer } from "@/features/blog-editor/ui/MarkdownRenderer"
 import { useState, useEffect } from "react"
-import { Button, Icon, Text, Dialog } from "@gravity-ui/uikit"
+import { Button, Icon, Text, Dialog, DropdownMenu } from "@gravity-ui/uikit"
 import { Breadcrumbs as LegacyBreadcrumbs } from "@gravity-ui/uikit/legacy"
 import { ActionBar } from "@gravity-ui/navigation"
 import { useToast } from "@/hooks/use-toast"
-import React from "react"
 import { TableOfContents } from "@/shared/ui/TableOfContents"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useI18n } from "@/app/contexts/I18nContext"
@@ -115,64 +114,58 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
   const canEditPost = userRole === 'admin' || userRole === 'editor';
 
   return (
-    <React.Fragment>
+    <div className="blog-page blog-post-page">
       <div className="blog-post-actionbar">
-        <div className="blog-post-container blog-post-content">
-          <ActionBar aria-label={t('blogView.postActions')}>
-            <ActionBar.Section style={{ columnGap: 20, gap: 20 }}>
-              <ActionBar.Group stretchContainer style={{ minWidth: 0 }}>
-                <ActionBar.Item style={{ minWidth: 0, width: '100%' }}>
-                  <LegacyBreadcrumbs
-                    className="blog-post-breadcrumbs"
-                    lastDisplayedItemsCount={1}
-                    firstDisplayedItemsCount={1}
+        <ActionBar aria-label={t('blogView.postActions')}>
+          <ActionBar.Section style={{ columnGap: 20, gap: 20 }}>
+            <ActionBar.Group stretchContainer style={{ minWidth: 0 }}>
+              <ActionBar.Item style={{ minWidth: 0, width: '100%' }}>
+                <LegacyBreadcrumbs
+                  className="blog-post-breadcrumbs"
+                  lastDisplayedItemsCount={1}
+                  firstDisplayedItemsCount={1}
+                  items={[
+                    {
+                      text: t('blogView.breadcrumbBlog'),
+                      action: () => router.push("/blog")
+                    },
+                    { text: post.title, href: post.slug ? `/blog/${post.slug}` : "/blog" }
+                  ]}
+                />
+              </ActionBar.Item>
+            </ActionBar.Group>
+
+            {canEditPost && (
+              <ActionBar.Group pull="right">
+                <ActionBar.Item>
+                  <Link href={`/blog/edit/${post.id}`} passHref>
+                    <Button view="flat">
+                      <Icon data={Pencil} size={16} />
+                      {t('blogView.edit')}
+                    </Button>
+                  </Link>
+                </ActionBar.Item>
+                <ActionBar.Item>
+                  <DropdownMenu
                     items={[
                       {
-                        text: t('blogView.breadcrumbBlog'),
-                        action: () => router.push("/blog")
+                        text: t('blogView.delete'),
+                        theme: 'danger',
+                        iconStart: <Icon data={TrashBin} size={16} />,
+                        action: () => setShowDeleteConfirm(true),
                       },
-                      { text: post.title, href: post.slug ? `/blog/${post.slug}` : "/blog" }
                     ]}
                   />
                 </ActionBar.Item>
               </ActionBar.Group>
-
-              {canEditPost && (
-                <ActionBar.Group pull="right">
-                  <ActionBar.Item>
-                    <Link href={`/blog/edit/${post.id}`} passHref>
-                      <Button view="normal">
-                        <Icon data={Pencil} size={16} />
-                        {t('blogView.edit')}
-                      </Button>
-                    </Link>
-                  </ActionBar.Item>
-                  <ActionBar.Item>
-                    <Button
-                      view="outlined-danger"
-                      onClick={() => setShowDeleteConfirm(true)}
-                      loading={isDeleting}
-                      disabled={isDeleting}
-                    >
-                      <Icon data={TrashBin} size={16} />
-                    </Button>
-                  </ActionBar.Item>
-                </ActionBar.Group>
-              )}
-            </ActionBar.Section>
-          </ActionBar>
-        </div>
+            )}
+          </ActionBar.Section>
+        </ActionBar>
       </div>
 
-      <div className="blog-post-container blog-post-container_padded">
-        <div style={{
-          display: 'flex',
-          gap: '24px',
-          flexDirection: isMobile ? 'column' : 'row',
-          alignItems: 'flex-start'
-        }}>
-          {/* Main content */}
-          <div style={{ flex: '1', minWidth: 0, maxWidth: isMobile ? '100%' : 'calc(100% - 300px)' }}>
+      <div className="blog-post-body-shell blog-post-container_padded">
+        <div className="blog-post-body">
+          <div className="blog-post-article">
             <Text variant="display-2" className="blog-post-title">{post.title}</Text>
 
             <div className="blog-post-meta">
@@ -217,12 +210,7 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
 
           {/* Table of Contents — desktop only, on the right */}
           {!isMobile && (
-            <aside style={{
-              width: '280px',
-              position: 'sticky',
-              top: '72px',
-              alignSelf: 'flex-start'
-            }}>
+            <aside className="blog-post-toc">
               <TableOfContents content={post.content} />
             </aside>
           )}
@@ -246,6 +234,6 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
           propsButtonApply={{ view: 'outlined-danger' }}
         />
       </Dialog>
-    </React.Fragment>
+    </div>
   );
 }

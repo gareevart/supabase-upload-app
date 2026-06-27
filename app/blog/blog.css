@@ -161,28 +161,93 @@
   margin: 2rem 0;
 }
 
+.blog-post-page {
+  min-height: 100%;
+}
+
 .blog-post-actionbar {
   position: -webkit-sticky;
   position: sticky;
   top: 0;
   z-index: 10;
-  margin-top: -1.5rem;
   background-color: var(--g-color-base-background);
   width: 100%;
-  left: 0;
-  right: 0;
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 
-/* Centered, max-width content wrapper shared by the action bar and the post body. */
-.blog-post-container {
+.blog-post-actionbar [class*='gn-action-bar-section_type_primary'] {
+  flex: 1 1 auto;
   width: 100%;
-  max-width: 1400px;
+  padding-inline: var(--g-spacing-5);
+}
+
+@media (min-width: 768px) {
+  .main-content:has(.blog-post-page) {
+    padding-top: 0;
+  }
+
+  .blog-post-actionbar {
+    border-top-left-radius: var(--g-border-radius-xl);
+    border-top-right-radius: var(--g-border-radius-xl);
+  }
+}
+
+/* Match blog list content width (see .blog-page__main). */
+:root {
+  --blog-content-max-width: 896px;
+  --blog-post-toc-width: 280px;
+}
+
+/* Centered content wrapper — same width as /blog. */
+.blog-post-body-shell {
+  width: 100%;
+  max-width: var(--blog-content-max-width);
   margin-inline: auto;
   padding-inline: var(--g-spacing-4);
 }
 
 .blog-post-container_padded {
   padding-block: var(--g-spacing-8);
+}
+
+.blog-post-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-6);
+  align-items: flex-start;
+}
+
+.blog-post-article {
+  flex: 1 1 0%;
+  min-width: 0;
+  width: 100%;
+  max-width: var(--blog-content-max-width);
+}
+
+.blog-post-toc {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .blog-post-body-shell {
+    max-width: calc(
+      var(--blog-content-max-width) + var(--blog-post-toc-width) + var(--g-spacing-6)
+    );
+  }
+
+  .blog-post-body {
+    flex-direction: row;
+  }
+
+  .blog-post-toc {
+    width: var(--blog-post-toc-width);
+    flex-shrink: 0;
+    position: sticky;
+    top: 72px;
+    align-self: flex-start;
+  }
 }
 
 .blog-post-meta {
@@ -238,7 +303,7 @@
 }
 
 @media (min-width: 768px) {
-  .blog-post-container {
+  .blog-post-body-shell {
     padding-inline: var(--g-spacing-6);
   }
 
@@ -278,8 +343,8 @@
 }
 
 @media (max-width: 767px) {
-  .blog-post-content {
-    padding-top: 28px;
+  .blog-post-body-shell.blog-post-container_padded {
+    padding-top: calc(40px + var(--g-spacing-8));
   }
 }
 

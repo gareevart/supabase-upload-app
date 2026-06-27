@@ -2,6 +2,7 @@
   "blogView.breadcrumbBlog": "Блог",
   "blogView.postActions": "Действия с постом",
   "blogView.edit": "Редактировать",
+  "blogView.delete": "Удалить",
   "blogView.anonymous": "Аноним",
   "blogView.noDate": "Дата не указана",
   "blogView.deleteTitle": "Удалить пост?",

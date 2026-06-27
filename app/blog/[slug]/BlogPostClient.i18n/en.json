@@ -2,6 +2,7 @@
   "blogView.breadcrumbBlog": "Blog",
   "blogView.postActions": "Post actions",
   "blogView.edit": "Edit",
+  "blogView.delete": "Delete",
   "blogView.anonymous": "Anonymous",
   "blogView.noDate": "Without date",
   "blogView.deleteTitle": "Delete post?",

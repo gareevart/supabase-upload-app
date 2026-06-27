@@ -153,7 +153,6 @@ a {
     height: auto;
     grid-area: main;
     width: 100%;
-    max-width: 1200px;
     margin: var(--g-spacing-3) auto;
     box-sizing: border-box;
     background-color: var(--g-color-base-background);
