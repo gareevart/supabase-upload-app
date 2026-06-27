@@ -44,10 +44,14 @@ const themeBootstrapScript = `
   root.classList.add(resolvedTheme === 'dark' ? 'g-root_theme_dark' : 'g-root_theme_light');
   root.style.colorScheme = resolvedTheme;
 
-  // Paint the browser chrome (Safari address bar, etc.) with the side-navigation
-  // background before first paint. These mirror --g-color-base-float-announcement;
-  // the effect in the layout refines them to the exact resolved token afterwards.
-  var navColor = resolvedTheme === 'dark' ? 'rgb(67, 63, 67)' : 'rgb(240, 243, 245)';
+  // Paint the browser chrome (Safari address bar, etc.) before first paint.
+  // Desktop shows the left sidebar (--g-color-base-float-announcement); mobile has no
+  // sidebar, so match the chrome to the normal page background instead. The effect in
+  // the layout refines this to the exact resolved token afterwards.
+  var isDesktop = window.matchMedia('(min-width: 768px)').matches;
+  var navColor = isDesktop
+    ? (resolvedTheme === 'dark' ? 'rgb(67, 63, 67)' : 'rgb(240, 243, 245)')
+    : (resolvedTheme === 'dark' ? 'rgb(16, 16, 16)' : 'rgb(255, 255, 255)');
   var meta = document.querySelector('meta[name="theme-color"]');
   if (!meta) {
     meta = document.createElement('meta');
@@ -197,42 +201,56 @@ export default function RootLayout({
     root.style.colorScheme = theme;
   }, [theme]);
 
-  // Sync the theme-color meta with the actual resolved side-navigation background
-  // so the browser chrome matches the sidebar — including when the in-app theme is
-  // toggled (which is independent of prefers-color-scheme). Runs after the theme
-  // class effect above, so the token resolves for the active theme. The meta is
-  // updated imperatively (rather than via React) because dynamic <meta> updates in
-  // the App Router head are unreliable and Safari reads the live attribute.
+  // Sync the theme-color meta with the page color at the top of the viewport so the
+  // browser chrome matches it — including when the in-app theme is toggled (which is
+  // independent of prefers-color-scheme). On desktop that's the side-navigation color
+  // (--g-color-base-float-announcement); on mobile there's no sidebar, so it's the
+  // normal page background. The meta is updated imperatively (rather than via React)
+  // because dynamic <meta> updates in the App Router head are unreliable and Safari
+  // reads the live attribute. Runs after the theme class effect above so tokens
+  // resolve for the active theme.
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
     }
 
-    // Hardcoded fallbacks mirror --g-color-base-float-announcement's solid value.
-    let navColor = theme === 'dark' ? 'rgb(67, 63, 67)' : 'rgb(240, 243, 245)';
+    const desktopQuery = window.matchMedia('(min-width: 768px)');
 
-    // A probe element is used because getComputedStyle on a custom property may
-    // return the unresolved var() chain, whereas a standard property
-    // (background-color) always yields a concrete rgb() value. It is positioned
-    // off-screen (not display:none) so the color actually resolves.
-    const probe = document.createElement('div');
-    probe.style.cssText =
-      'position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;background-color:var(--g-color-base-float-announcement);';
-    document.body.appendChild(probe);
-    const resolved = window.getComputedStyle(probe).backgroundColor;
-    probe.remove();
+    const applyThemeColor = () => {
+      const isDesktop = desktopQuery.matches;
+      const token = isDesktop ? '--g-color-base-float-announcement' : '--g-color-base-background';
+      // Hardcoded fallbacks mirror the resolved token values per theme.
+      let navColor = isDesktop
+        ? (theme === 'dark' ? 'rgb(67, 63, 67)' : 'rgb(240, 243, 245)')
+        : (theme === 'dark' ? 'rgb(16, 16, 16)' : 'rgb(255, 255, 255)');
 
-    if (resolved && resolved !== 'rgba(0, 0, 0, 0)' && resolved !== 'transparent') {
-      navColor = resolved;
-    }
+      // A probe element is used because getComputedStyle on a custom property may
+      // return the unresolved var() chain, whereas a standard property
+      // (background-color) always yields a concrete rgb() value. It is positioned
+      // off-screen (not display:none) so the color actually resolves.
+      const probe = document.createElement('div');
+      probe.style.cssText =
+        `position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;background-color:var(${token});`;
+      document.body.appendChild(probe);
+      const resolved = window.getComputedStyle(probe).backgroundColor;
+      probe.remove();
 
-    let meta = document.querySelector('meta[name="theme-color"]');
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.setAttribute('name', 'theme-color');
-      document.head.appendChild(meta);
-    }
-    meta.setAttribute('content', navColor);
+      if (resolved && resolved !== 'rgba(0, 0, 0, 0)' && resolved !== 'transparent') {
+        navColor = resolved;
+      }
+
+      let meta = document.querySelector('meta[name="theme-color"]');
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('name', 'theme-color');
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', navColor);
+    };
+
+    applyThemeColor();
+    desktopQuery.addEventListener('change', applyThemeColor);
+    return () => desktopQuery.removeEventListener('change', applyThemeColor);
   }, [theme]);
 
   return (
