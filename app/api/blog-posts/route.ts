@@ -260,6 +260,9 @@ export const POST = withAuth(async (request: NextRequest, user: { id: string }) 
     const featured_image = body.featured_image || url.searchParams.get('featured_image');
     const published = body.published !== undefined ? body.published :
       (url.searchParams.get('published') === 'true');
+    const show_featured_image = body.show_featured_image !== undefined
+      ? body.show_featured_image
+      : (url.searchParams.get('show_featured_image') !== 'false');
     // Validate required fields
     if (!title?.trim()) {
       return NextResponse.json(
@@ -374,6 +377,7 @@ export const POST = withAuth(async (request: NextRequest, user: { id: string }) 
         slug: finalSlug,
         excerpt,
         featured_image: normalizedFeaturedImage ?? null,
+        show_featured_image,
         published,
         author_id: user.id,
         created_at: new Date().toISOString(),
