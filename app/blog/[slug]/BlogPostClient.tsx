@@ -3,13 +3,13 @@
 import "../blog.css"
 import { supabase } from "@/lib/supabase"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card"
-import { ArrowLeft, Calendar, Person, Pencil, TrashBin } from "@gravity-ui/icons"
+import { Calendar, Person, Pencil, TrashBin } from "@gravity-ui/icons"
 import Image from "next/image"
 import Link from "next/link"
-import { notFound, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { MarkdownRenderer } from "@/features/blog-editor/ui/MarkdownRenderer"
 import { useState, useEffect } from "react"
-import { Button, Icon, Skeleton, Card as GravityCard } from "@gravity-ui/uikit"
+import { Button, Icon } from "@gravity-ui/uikit"
 import { Breadcrumbs as LegacyBreadcrumbs } from "@gravity-ui/uikit/legacy"
 import { ActionBar } from "@gravity-ui/navigation"
 import { useToast } from "@/hooks/use-toast"
@@ -37,29 +37,18 @@ interface BlogPost {
   }
 }
 
-export default function BlogPostClient({ params }: { params: { slug: string } }) {
-  const [post, setPost] = useState<BlogPost | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+export default function BlogPostClient({ post }: { post: BlogPost }) {
   const [userRole, setUserRole] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
   const isMobile = useIsMobile()
-  const slug = params.slug
 
   useEffect(() => {
-    const fetchPostAndUserRole = async () => {
+    // The post itself is server-rendered and passed as a prop; only the
+    // per-user role check needs to run client-side (it cannot be cached).
+    const fetchUserRole = async () => {
       try {
-        // Get the post via public API to include author with service role
-        const res = await fetch(`/api/public/blog-posts/${slug}`);
-        if (!res.ok) {
-          router.push("/blog");
-          return;
-        }
-        const postJson = await res.json();
-        setPost(postJson);
-
-        // Check user role
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           const { data: profile } = await supabase
@@ -71,14 +60,12 @@ export default function BlogPostClient({ params }: { params: { slug: string } })
           setUserRole(profile?.role || null);
         }
       } catch (error) {
-        console.error("Error fetching post:", error);
-      } finally {
-        setIsLoading(false);
+        console.error("Error fetching user role:", error);
       }
     };
 
-    fetchPostAndUserRole();
-  }, [slug, router]);
+    fetchUserRole();
+  }, []);
 
   const handleDelete = async () => {
     if (!post) return;
@@ -89,13 +76,13 @@ export default function BlogPostClient({ params }: { params: { slug: string } })
 
     setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from("blog_posts")
-        .delete()
-        .eq("id", post.id);
+      // Delete via the API route so the server can revalidate the cached
+      // blog list and post pages (revalidatePath).
+      const res = await fetch(`/api/blog-posts/${post.id}`, { method: "DELETE" });
 
-      if (error) {
-        throw error;
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || "Failed to delete blog post");
       }
 
       toast({
@@ -125,66 +112,6 @@ export default function BlogPostClient({ params }: { params: { slug: string } })
       day: "numeric"
     });
   };
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 md:px-6" style={{ maxWidth: '1400px' }}>
-        <div style={{
-          display: 'flex',
-          gap: '24px',
-          flexDirection: isMobile ? 'column' : 'row',
-          alignItems: 'flex-start'
-        }}>
-          {/* Основной контент - скелетон */}
-          <div style={{ flex: '1', minWidth: 0, maxWidth: isMobile ? '100%' : 'calc(100% - 300px)' }}>
-            <Skeleton className="h-10 w-3/4 mb-4" />
-            <Skeleton className="h-4 w-1/2 mb-6" />
-            <Skeleton className="h-[300px] rounded mb-6" />
-            <div className="space-y-3">
-              <Skeleton className="h-4" />
-              <Skeleton className="h-4" />
-              <Skeleton className="h-4" />
-              <Skeleton className="h-4 w-3/4" />
-            </div>
-          </div>
-
-          {/* ToC скелетон - только на десктопе справа */}
-          {!isMobile && (
-            <aside style={{
-              width: '280px',
-              position: 'sticky',
-              top: '24px',
-              alignSelf: 'flex-start'
-            }}>
-              <GravityCard size="l">
-                <div style={{ padding: '16px' }}>
-                  <Skeleton style={{ height: '24px', width: '128px', marginBottom: '16px' }} />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <Skeleton style={{ height: '16px', width: '100%' }} />
-                    <div style={{ paddingLeft: '16px' }}>
-                      <Skeleton style={{ height: '16px', width: '100%' }} />
-                    </div>
-                    <div style={{ paddingLeft: '16px' }}>
-                      <Skeleton style={{ height: '16px', width: '100%' }} />
-                    </div>
-                    <Skeleton style={{ height: '16px', width: '100%' }} />
-                    <div style={{ paddingLeft: '16px' }}>
-                      <Skeleton style={{ height: '16px', width: '100%' }} />
-                    </div>
-                    <Skeleton style={{ height: '16px', width: '100%' }} />
-                  </div>
-                </div>
-              </GravityCard>
-            </aside>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  if (!post) {
-    return notFound();
-  }
 
   const canEditPost = userRole === 'admin' || userRole === 'editor';
 
