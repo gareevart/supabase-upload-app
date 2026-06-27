@@ -294,7 +294,7 @@ export const PUT = withAuth(async (request: NextRequest, user: { id: string }) =
         });
 
     // Parse the request body
-    const { title, content, excerpt, slug, featured_image, published } = await request.json();
+    const { title, content, excerpt, slug, featured_image, published, show_featured_image } = await request.json();
 
     // Validate required fields
     if (!title?.trim()) {
@@ -376,6 +376,7 @@ export const PUT = withAuth(async (request: NextRequest, user: { id: string }) =
     // Only include optional fields if they are provided
     if (excerpt !== undefined) updateData.excerpt = excerpt;
     if (featured_image !== undefined) updateData.featured_image = normalizedFeatured ?? null;
+    if (show_featured_image !== undefined) updateData.show_featured_image = show_featured_image;
     if (published !== undefined) updateData.published = published;
 
     const { data, error } = await updateClient
