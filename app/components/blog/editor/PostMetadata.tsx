@@ -1,6 +1,8 @@
+"use client";
 
 import React from "react";
 import { Text, TextInput, TextArea, Checkbox } from '@gravity-ui/uikit';
+import { useI18n } from "@/app/contexts/I18nContext";
 import FeaturedImageSection from "./FeaturedImageSection";
 
 interface PostMetadataProps {
@@ -54,27 +56,27 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
   showGenerationDialog,
   setShowGenerationDialog
 }) => {
+  const { t } = useI18n();
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-2">
-        <div><Text color="secondary" variant="subheader-1">Заголовок</Text></div>
+    <div className="post-metadata">
+      <div className="post-metadata__field">
+        <Text color="secondary" variant="subheader-1">{t('blogEditor.titleLabel')}</Text>
         <TextInput
           size="l"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Заголовок поста"
-          className="text-3xl font-bold"
+          placeholder={t('blogEditor.titlePlaceholder')}
         />
       </div>
 
-      <div className="flex flex-col gap-2">
-        <div className="min-w-[180px]"><Text color="secondary" variant="subheader-1">URL</Text></div>
+      <div className="post-metadata__field">
+        <Text color="secondary" variant="subheader-1">{t('blogEditor.urlLabel')}</Text>
         <TextInput
           size="l"
           value={slug}
           onChange={(e) => setSlug(e.target.value)}
-          placeholder="slug-url"
-          className="text-sm font-mono"
+          placeholder={t('blogEditor.urlPlaceholder')}
         />
       </div>
 
@@ -95,26 +97,25 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
         showGenerationDialog={showGenerationDialog}
         setShowGenerationDialog={setShowGenerationDialog}
       />
-      
+
       {featuredImageUrl && (
-        <div className="flex flex-col gap-2">
+        <div className="post-metadata__field">
           <Checkbox
             checked={showFeaturedImage}
             onUpdate={setShowFeaturedImage}
             size="l"
           >
-            <Text variant="subheader-1">Отображать обложку на странице поста</Text>
+            <Text variant="subheader-1">{t('blogEditor.showCover')}</Text>
           </Checkbox>
         </div>
       )}
-      <div className="flex flex-col gap-2">
-        <div className="min-w-[180px]"><Text color="secondary" variant="subheader-1">Описание</Text></div>
+      <div className="post-metadata__field">
+        <Text color="secondary" variant="subheader-1">{t('blogEditor.descriptionLabel')}</Text>
         <TextArea
           size="l"
           value={excerpt}
           onChange={(e) => setExcerpt(e.target.value)}
-          placeholder="Краткое описание поста"
-          className="resize-none"
+          placeholder={t('blogEditor.descriptionPlaceholder')}
           rows={2}
         />
       </div>

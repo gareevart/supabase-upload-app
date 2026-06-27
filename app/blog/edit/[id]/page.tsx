@@ -2,12 +2,13 @@
 
 import { useParams } from "next/navigation"
 import PostEditor from "@/app/components/blog/PostEditor"
-import { CardContent, CardHeader, CardTitle } from "@/app/components/ui/card"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import { Card, Skeleton } from "@gravity-ui/uikit"
+import { Card, Skeleton, Text, Button } from "@gravity-ui/uikit"
+import { useI18n } from "@/app/contexts/I18nContext"
+import "@/app/components/blog/BlogEditor.css"
 
 export default function EditBlogPost() {
   const params = useParams<{ id: string }>()
@@ -15,6 +16,7 @@ export default function EditBlogPost() {
   const [post, setPost] = useState<any>(null);
   const router = useRouter()
   const { toast } = useToast()
+  const { t } = useI18n()
   const postId = params?.id // Use optional chaining to avoid errors
 
   useEffect(() => {
@@ -48,15 +50,15 @@ export default function EditBlogPost() {
         // Check if user is author, admin, or editor
         const isAuthor = data.author_id === session.user.id
         const isAdminOrEditor = profile?.role === 'admin' || profile?.role === 'editor'
-        
+
         setIsAuthorized(isAuthor || isAdminOrEditor)
         setPost(data);
       } catch (error) {
         console.error("Error checking authorization or fetching post:", JSON.stringify(error, null, 2))
         setIsAuthorized(false)
         toast({
-          title: "Error",
-          description: "Failed to verify authorization or fetch post",
+          title: t('blogEditor.fetchErrorTitle'),
+          description: t('blogEditor.fetchErrorText'),
           variant: "destructive"
         })
       }
@@ -65,45 +67,42 @@ export default function EditBlogPost() {
     if (postId) {
       checkAuthorizationAndFetchPost()
     }
-  }, [postId, toast])
+  }, [postId, toast, t])
 
   if (isAuthorized === null || post === null) {
     return (
-      <div className="container max-w-4xl mx-auto p-4">
-             <Skeleton  className="h-96 w-full"/>
+      <div className="blog-editor-state">
+        <Skeleton style={{ height: 384, width: '100%' }} />
       </div>
     )
   }
 
   if (isAuthorized === false) {
     return (
-      <div className="container max-w-4xl mx-auto p-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Unauthorized</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>You are not authorized to edit this blog post.</p>
-            <button 
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-              onClick={() => router.push("/blog")}
-            >
-              Back to Blog
-            </button>
-          </CardContent>
+      <div className="blog-editor-state">
+        <Card className="blog-editor-state__card">
+          <Text variant="header-2">{t('blogEditor.unauthorizedTitle')}</Text>
+          <Text variant="body-1">{t('blogEditor.unauthorizedText')}</Text>
+          <Button
+            size="l"
+            view="action"
+            onClick={() => router.push("/blog")}
+          >
+            {t('blogEditor.backToBlog')}
+          </Button>
         </Card>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen py-8">
+    <div className="blog-editor-page">
       <PostEditor initialPost={post} onSave={(published, savedPost) => {
         if (published) {
-          // Если пост опубликован, перенаправляем на страницу поста
+          // Published posts redirect to the post page
           router.push(`/blog/${savedPost.slug}`);
         } else {
-          // Если пост сохранен как черновик, перенаправляем на страницу блога
+          // Drafts redirect to the blog list
           router.push("/blog");
         }
       }} />

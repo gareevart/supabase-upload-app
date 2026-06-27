@@ -3,8 +3,10 @@
 import React from "react";
 import { Button } from '@gravity-ui/uikit';
 import { useBlogEditorContent } from "@/features/blog-editor/model/useBlogEditorContent";
+import { useI18n } from "@/app/contexts/I18nContext";
 import PostMetadata from "./editor/PostMetadata";
 import { MarkdownEditor } from "@/features/blog-editor/ui/MarkdownEditor";
+import "./BlogEditor.css";
 
 type PostEditorProps = {
   initialPost?: any;
@@ -12,6 +14,7 @@ type PostEditorProps = {
 };
 
 const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
+  const { t } = useI18n();
   const {
     title, setTitle,
     slug, setSlug,
@@ -35,7 +38,7 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
   } = useBlogEditorContent(initialPost, onSave);
 
   return (
-    <div className="container max-w-4xl mx-auto p-4 space-y-6">
+    <div className="post-editor">
       <PostMetadata
         title={title}
         setTitle={setTitle}
@@ -64,17 +67,17 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
       <MarkdownEditor
         content={markdownContent}
         onChange={handleContentChange}
-        placeholder="Type your post content here..."
+        placeholder={t('blogEditor.contentPlaceholder')}
       />
 
-      <div className="flex justify-start gap-4">
+      <div className="post-editor__actions">
         <Button
           size="l"
           view="action"
           onClick={() => savePost(true)}
           disabled={isLoading}
         >
-          Publish
+          {t('blogEditor.publish')}
         </Button>
         <Button
           size="l"
@@ -82,7 +85,7 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
           onClick={() => savePost(false)}
           disabled={isLoading}
         >
-          Save as draft
+          {t('blogEditor.saveDraft')}
         </Button>
       </div>
     </div>

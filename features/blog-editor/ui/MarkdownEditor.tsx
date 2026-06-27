@@ -10,6 +10,7 @@ import {
 import { useToaster } from '@gravity-ui/uikit';
 import '@gravity-ui/markdown-editor/styles/styles.css';
 import { uploadImage } from '@/shared/lib/blog/uploadImage';
+import { useI18n } from '@/app/contexts/I18nContext';
 import './MarkdownEditor.css';
 
 interface MarkdownEditorProps {
@@ -35,6 +36,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const { add: addToast } = useToaster();
+  const { t } = useI18n();
 
   const editor = useMarkdownEditor({
     initial: { markup: content },
@@ -48,8 +50,8 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
           addToast({
             theme: 'danger',
             name: 'image-upload-error',
-            title: 'Ошибка загрузки',
-            content: err instanceof Error ? err.message : 'Не удалось загрузить файл',
+            title: t('blogEditor.uploadErrorTitle'),
+            content: err instanceof Error ? err.message : t('blogEditor.uploadErrorText'),
             autoHiding: 5000,
           });
           throw err;

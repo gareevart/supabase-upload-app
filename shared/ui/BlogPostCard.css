@@ -1,0 +1,101 @@
+.blog-card {
+  width: 100%;
+  min-width: 280px;
+  overflow: hidden;
+}
+
+.blog-card__media {
+  padding: var(--g-spacing-2);
+}
+
+.blog-card__image,
+.blog-card__placeholder {
+  position: relative;
+  display: block;
+  height: 192px;
+  width: 100%;
+  border-radius: var(--g-border-radius-l);
+  overflow: hidden;
+}
+
+.blog-card__placeholder {
+  background: var(--g-color-base-generic-accent);
+}
+
+.blog-card__img {
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+a.blog-card__image:hover .blog-card__img {
+  transform: scale(1.05);
+}
+
+.blog-card__body {
+  padding: var(--g-spacing-4);
+}
+
+.blog-card__header {
+  margin-bottom: var(--g-spacing-2);
+}
+
+.blog-card__title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.blog-card__title-link:hover {
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.blog-card__excerpt {
+  margin-top: var(--g-spacing-2);
+}
+
+.blog-card__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--g-spacing-2);
+}
+
+.blog-card__date {
+  display: flex;
+  align-items: center;
+  gap: var(--g-spacing-1);
+  color: var(--g-color-text-secondary);
+}
+
+.blog-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--g-spacing-2);
+}
+
+/* List view */
+.blog-card__row {
+  display: flex;
+  flex-direction: row;
+}
+
+.blog-card__media-left {
+  width: 30%;
+  min-width: 200px;
+  flex-shrink: 0;
+}
+
+.blog-card__media-left .blog-card__image,
+.blog-card__media-left .blog-card__placeholder {
+  height: 100%;
+  min-height: 200px;
+  border-radius: 0;
+}
+
+.blog-card__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--g-spacing-4);
+}

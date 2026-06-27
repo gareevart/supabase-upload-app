@@ -29,6 +29,14 @@ import widgetGalleryEn from '@/widgets/widget-gallery/ui/WidgetGalleryWidget.i18
 import widgetGalleryRu from '@/widgets/widget-gallery/ui/WidgetGalleryWidget.i18n/ru.json';
 import widgetViewEn from '@/widgets/widget-view/ui/WidgetViewWidget.i18n/en.json';
 import widgetViewRu from '@/widgets/widget-view/ui/WidgetViewWidget.i18n/ru.json';
+import blogPageEn from '@/app/blog/BlogPage.i18n/en.json';
+import blogPageRu from '@/app/blog/BlogPage.i18n/ru.json';
+import blogPostCardEn from '@/shared/ui/BlogPostCard.i18n/en.json';
+import blogPostCardRu from '@/shared/ui/BlogPostCard.i18n/ru.json';
+import blogPostViewEn from '@/app/blog/[slug]/BlogPostClient.i18n/en.json';
+import blogPostViewRu from '@/app/blog/[slug]/BlogPostClient.i18n/ru.json';
+import blogEditorEn from '@/app/components/blog/BlogEditor.i18n/en.json';
+import blogEditorRu from '@/app/components/blog/BlogEditor.i18n/ru.json';
 
 export type AppLanguage = 'en' | 'ru';
 
@@ -50,6 +58,10 @@ const enTranslations: TranslationDict = {
   ...widgetGridEn,
   ...widgetGalleryEn,
   ...widgetViewEn,
+  ...blogPageEn,
+  ...blogPostCardEn,
+  ...blogPostViewEn,
+  ...blogEditorEn,
 };
 
 const ruTranslations: TranslationDict = {
@@ -67,6 +79,10 @@ const ruTranslations: TranslationDict = {
   ...widgetGridRu,
   ...widgetGalleryRu,
   ...widgetViewRu,
+  ...blogPageRu,
+  ...blogPostCardRu,
+  ...blogPostViewRu,
+  ...blogEditorRu,
 };
 
 const translations: Record<AppLanguage, TranslationDict> = {

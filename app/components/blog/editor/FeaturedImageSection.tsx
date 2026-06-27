@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { Button, Text, TextArea, Dialog, SegmentedRadioGroup } from '@gravity-ui/uikit';
-import StoredImageGallery from "../StoredImageGallery";
-import { useToast } from "@/hooks/use-toast";
-import { Flex } from '@gravity-ui/uikit';
-import NextImage from "next/image";
+"use client";
 
+import React, { useState, useEffect } from "react";
+import { Button, Text, TextArea, Dialog, SegmentedRadioGroup, Flex } from '@gravity-ui/uikit';
+import StoredImageGallery from "../StoredImageGallery";
+import { useI18n } from "@/app/contexts/I18nContext";
+import NextImage from "next/image";
 
 interface FeaturedImageSectionProps {
   featuredImageUrl: string | null;
@@ -41,31 +41,22 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
   showGenerationDialog,
   setShowGenerationDialog
 }) => {
+  const { t } = useI18n();
   // Maintain local state for the featured image URL
   const [localFeaturedImageUrl, setLocalFeaturedImageUrl] = useState<string | null>(propFeaturedImageUrl);
-  
+
   // Direct handler for selecting a gallery image
   const handleSelectGalleryImage = (imageUrl: string) => {
-    console.log("FeaturedImageSection: handleSelectGalleryImage called with URL:", imageUrl);
-    
-    // Update local state immediately
     setLocalFeaturedImageUrl(imageUrl);
-    console.log("FeaturedImageSection: local state updated with URL:", imageUrl);
-    
-    // Call the parent handler
-    console.log("FeaturedImageSection: calling onSelectGalleryImage with URL:", imageUrl);
     onSelectGalleryImage(imageUrl);
-    
-    // Close the dialog immediately
     setShowGenerationDialog(false);
-    console.log("FeaturedImageSection: dialog closed, image selection completed");
   };
-  
+
   // Update local state when prop changes
   useEffect(() => {
     setLocalFeaturedImageUrl(propFeaturedImageUrl);
   }, [propFeaturedImageUrl]);
-  
+
   // Local handler for deleting the image
   const handleDeleteImage = async () => {
     setLocalFeaturedImageUrl(null);
@@ -73,39 +64,39 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="min-w-[180px]"><Text color="secondary" variant="subheader-1">Обложка</Text></div>
+    <div className="featured-image">
+      <Text color="secondary" variant="subheader-1">{t('blogEditor.coverLabel')}</Text>
       {localFeaturedImageUrl ? (
-        <div className="relative featured-image-container flex flex-col items-start">
+        <div className="featured-image__preview">
           <NextImage
             src={localFeaturedImageUrl}
-            alt="Featured"
+            alt={t('blogEditor.coverLabel')}
             width={0}
             height={0}
             sizes="100vw"
             style={{ width: 'auto', height: 'auto', maxHeight: '15rem' }}
-            className="max-h-60 rounded-lg object-contain mb-2"
-            onError={(e) => console.error("Image failed to load:", localFeaturedImageUrl)}
+            className="featured-image__img"
+            onError={() => console.error("Image failed to load:", localFeaturedImageUrl)}
           />
-          <div className="flex gap-2">
+          <div className="featured-image__actions">
             <Button
               size="l"
               view="outlined"
               onClick={() => setShowGenerationDialog(true)}
             >
-              Generate
+              {t('blogEditor.generate')}
             </Button>
             <Button
               size="l"
               view="outlined-danger"
               onClick={handleDeleteImage}
             >
-              Delete
+              {t('blogEditor.delete')}
             </Button>
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-2">
+        <div className="featured-image__actions">
           <Button
             size="l"
             view="normal"
@@ -122,14 +113,14 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
               input.click();
             }}
           >
-            Upload
+            {t('blogEditor.upload')}
           </Button>
           <Button
             size="l"
             view="outlined"
             onClick={() => setShowGenerationDialog(true)}
           >
-            Generate
+            {t('blogEditor.generate')}
           </Button>
         </div>
       )}
@@ -187,8 +178,8 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
   onApplyGeneratedImage,
   onSelectGalleryImage
 }) => {
-  const { toast } = useToast();
-  
+  const { t } = useI18n();
+
   const handleTabChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setActiveTab(event.target.value);
   };
@@ -199,115 +190,99 @@ const ImageGenerationDialog: React.FC<ImageGenerationDialogProps> = ({
       open={showDialog}
       onClose={() => setShowDialog(false)}
       aria-labelledby="featured-image-dialog-title"
-      className="editor-dialog"
     >
-      <Dialog.Header caption="Image for the cover" id="featured-image-dialog-title" />
+      <Dialog.Header caption={t('blogEditor.imageDialogTitle')} id="featured-image-dialog-title" />
       <Dialog.Body>
-        <div className="modal-content">
-          <div className="mb-6">
-            <SegmentedRadioGroup
-              size="l"
-              value={activeTab}
-              onChange={handleTabChange}
-              options={[
-                { value: 'prompt', content: 'Generate image' },
-                { value: 'gallery', content: 'Gallery' },
-              ]}
-              style={{ width: '100%' }}
-            />
-          </div>
+        <div className="image-dialog__tabs">
+          <SegmentedRadioGroup
+            size="l"
+            value={activeTab}
+            onChange={handleTabChange}
+            options={[
+              { value: 'prompt', content: t('blogEditor.tabGenerate') },
+              { value: 'gallery', content: t('blogEditor.tabGallery') },
+            ]}
+            width="max"
+          />
+        </div>
 
-          {activeTab === 'prompt' && (
-            <div className="space-y-4 mt-4">
-              <div>
-                <Text variant="body-1" className="block mb-2">
-                  Describe the desired image
-                </Text>
-                <TextArea
-                  value={imagePrompt}
-                  onChange={(e) => setImagePrompt(e.target.value)}
-                  placeholder="For example: pattern of colorful pastel succulents of different varieties, hd full wallpaper, clear focus, many complex details, depth of field, top view"
-                  rows={5}
-                />
-              </div>
-
-              {generatedImagePreview && (
-                <div className="mt-4">
-                  <Text variant="body-1" className="block mb-2">Preview:</Text>
-                  <div className="relative">
-                    <NextImage
-                      src={generatedImagePreview}
-                      alt="Generated preview"
-                      width={0}
-                      height={0}
-                      sizes="100vw"
-                      style={{ width: '100%', height: 'auto' }}
-                      className="w-full h-auto rounded-lg"
-                    />
-                    <Button
-                      view="normal-contrast"
-                      size="m"
-                      className="absolute top-2 right-2 bg-background/70 hover:bg-background"
-                      onClick={onGenerateImage}
-                    >
-                      Generate again
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              <Flex direction="row" justifyContent="flex-end" gap={2} style={{ marginTop: '24px' }}>
-                <Button view="outlined" size="l" onClick={() => setShowDialog(false)}>
-                  Cancel
-                </Button>
-                {generatedImagePreview ? (
-                  <Button view="action" size="l" onClick={onApplyGeneratedImage}>
-                    Apply
-                  </Button>
-                ) : (
-                  <Button
-                    view="action"
-                    size="l"
-                    onClick={onGenerateImage}
-                    disabled={isGenerating || isUploading || !imagePrompt.trim()}
-                    loading={isGenerating}
-                  >
-                    {(isGenerating || isUploading) ? (
-                      <>
-                        <span className="w-4 h-4 mr-2 rounded-full border-2 border-t-transparent border-white animate-spin"></span>
-                        {isGenerating ? "Generating..." : "Saving..."}
-                      </>
-                    ) : "Generate"}
-                  </Button>
-                )}
-              </Flex>
+        {activeTab === 'prompt' && (
+          <div className="image-dialog__section">
+            <div>
+              <Text variant="body-1" className="image-dialog__label">
+                {t('blogEditor.describeImage')}
+              </Text>
+              <TextArea
+                value={imagePrompt}
+                onChange={(e) => setImagePrompt(e.target.value)}
+                placeholder={t('blogEditor.imagePromptPlaceholder')}
+                rows={5}
+              />
             </div>
-          )}
 
-          {activeTab === 'gallery' && (
-            <div className="mt-4">
-              <Text variant="body-1" className="block mb-4">Select an image from the gallery:</Text>
-              <div className="gallery-container" style={{ minHeight: "300px" }}>
-                <StoredImageGallery
-                  onImageSelect={onSelectGalleryImage}
+            {generatedImagePreview && (
+              <div className="image-dialog__preview">
+                <Text variant="body-1" className="image-dialog__label">{t('blogEditor.preview')}</Text>
+                <NextImage
+                  src={generatedImagePreview}
+                  alt={t('blogEditor.preview')}
+                  width={0}
+                  height={0}
+                  sizes="100vw"
+                  style={{ width: '100%', height: 'auto' }}
+                  className="image-dialog__preview-img"
                 />
+                <Button
+                  view="normal-contrast"
+                  size="m"
+                  className="image-dialog__regenerate"
+                  onClick={onGenerateImage}
+                  loading={isGenerating}
+                >
+                  {t('blogEditor.generateAgain')}
+                </Button>
               </div>
-              <Flex direction="row" justifyContent="flex-end" style={{ marginTop: '24px' }}>
+            )}
+
+            <Flex direction="row" justifyContent="flex-end" gap={2} className="image-dialog__footer">
+              <Button view="outlined" size="l" onClick={() => setShowDialog(false)}>
+                {t('blogEditor.cancel')}
+              </Button>
+              {generatedImagePreview ? (
+                <Button view="action" size="l" onClick={onApplyGeneratedImage}>
+                  {t('blogEditor.apply')}
+                </Button>
+              ) : (
                 <Button
                   view="action"
                   size="l"
-                  onClick={() => setShowDialog(false)}
+                  onClick={onGenerateImage}
+                  disabled={isGenerating || isUploading || !imagePrompt.trim()}
+                  loading={isGenerating || isUploading}
                 >
-                  Close
+                  {t('blogEditor.generate')}
                 </Button>
-              </Flex>
+              )}
+            </Flex>
+          </div>
+        )}
+
+        {activeTab === 'gallery' && (
+          <div className="image-dialog__section">
+            <Text variant="body-1" className="image-dialog__label">{t('blogEditor.selectFromGallery')}</Text>
+            <div className="image-dialog__gallery">
+              <StoredImageGallery onImageSelect={onSelectGalleryImage} />
             </div>
-          )}
-        </div>
+            <Flex direction="row" justifyContent="flex-end" className="image-dialog__footer">
+              <Button view="action" size="l" onClick={() => setShowDialog(false)}>
+                {t('blogEditor.close')}
+              </Button>
+            </Flex>
+          </div>
+        )}
       </Dialog.Body>
     </Dialog>
   );
 };
 
 export default FeaturedImageSection;
-

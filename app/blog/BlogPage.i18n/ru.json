@@ -1,0 +1,23 @@
+{
+  "blogPage.title": "Блог",
+  "blogPage.createPost": "Создать пост",
+  "blogPage.searchPlaceholder": "Поиск по блогу",
+  "blogPage.readButton": "Читать",
+  "blogPage.filterAll": "Все посты",
+  "blogPage.filterPublished": "Опубликованные",
+  "blogPage.filterDrafts": "Черновики",
+  "blogPage.viewList": "Список",
+  "blogPage.viewGrid": "Плитка",
+  "blogPage.emptyDrafts": "У вас пока нет сохранённых черновиков",
+  "blogPage.emptyPublished": "У вас пока нет опубликованных постов",
+  "blogPage.emptyAll": "Здесь пока нет опубликованных постов",
+  "blogPage.createPostShort": "Создать пост",
+  "blogPage.deleteDraftTitle": "Удалить черновик?",
+  "blogPage.deleteDraftText": "Это действие нельзя отменить.",
+  "blogPage.deleteConfirm": "Удалить",
+  "blogPage.cancel": "Отмена",
+  "blogPage.draftDeletedTitle": "Черновик удалён",
+  "blogPage.draftDeletedText": "Черновик успешно удалён",
+  "blogPage.deleteErrorTitle": "Ошибка удаления",
+  "blogPage.deleteErrorText": "Не удалось удалить черновик"
+}

@@ -2,20 +2,20 @@
 
 import "../blog.css"
 import { supabase } from "@/lib/supabase"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card"
 import { Calendar, Person, Pencil, TrashBin } from "@gravity-ui/icons"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { MarkdownRenderer } from "@/features/blog-editor/ui/MarkdownRenderer"
 import { useState, useEffect } from "react"
-import { Button, Icon } from "@gravity-ui/uikit"
+import { Button, Icon, Text, Dialog } from "@gravity-ui/uikit"
 import { Breadcrumbs as LegacyBreadcrumbs } from "@gravity-ui/uikit/legacy"
 import { ActionBar } from "@gravity-ui/navigation"
 import { useToast } from "@/hooks/use-toast"
 import React from "react"
 import { TableOfContents } from "@/shared/ui/TableOfContents"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { useI18n } from "@/app/contexts/I18nContext"
 import Subscribe from "@/app/components/Subscribe/Subscribe"
 
 interface BlogPost {
@@ -40,9 +40,11 @@ interface BlogPost {
 export default function BlogPostClient({ post }: { post: BlogPost }) {
   const [userRole, setUserRole] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
   const isMobile = useIsMobile()
+  const { t, language } = useI18n()
 
   useEffect(() => {
     // The post itself is server-rendered and passed as a prop; only the
@@ -70,10 +72,7 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
   const handleDelete = async () => {
     if (!post) return;
 
-    if (!confirm("Вы уверены, что хотите удалить этот пост?")) {
-      return;
-    }
-
+    setShowDeleteConfirm(false);
     setIsDeleting(true);
     try {
       // Delete via the API route so the server can revalidate the cached
@@ -86,8 +85,8 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
       }
 
       toast({
-        title: "Успех",
-        description: "Пост успешно удален",
+        title: t('blogView.deleteSuccessTitle'),
+        description: t('blogView.deleteSuccessText'),
         variant: "default"
       });
 
@@ -95,8 +94,8 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
     } catch (error) {
       console.error("Error deleting post:", error);
       toast({
-        title: "Ошибка",
-        description: "Не удалось удалить пост",
+        title: t('blogView.deleteErrorTitle'),
+        description: t('blogView.deleteErrorText'),
         variant: "destructive"
       });
     } finally {
@@ -106,7 +105,7 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("ru-RU", {
+    return date.toLocaleDateString(language === 'ru' ? "ru-RU" : "en-US", {
       year: "numeric",
       month: "long",
       day: "numeric"
@@ -118,8 +117,8 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
   return (
     <React.Fragment>
       <div className="blog-post-actionbar">
-      <div className="container mx-auto md:px-6 blog-post-content" style={{ maxWidth: '1400px' }}>
-          <ActionBar aria-label="Post actions">
+        <div className="blog-post-container blog-post-content">
+          <ActionBar aria-label={t('blogView.postActions')}>
             <ActionBar.Section style={{ columnGap: 20, gap: 20 }}>
               <ActionBar.Group stretchContainer style={{ minWidth: 0 }}>
                 <ActionBar.Item style={{ minWidth: 0, width: '100%' }}>
@@ -129,7 +128,7 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
                     firstDisplayedItemsCount={1}
                     items={[
                       {
-                        text: "Blog",
+                        text: t('blogView.breadcrumbBlog'),
                         action: () => router.push("/blog")
                       },
                       { text: post.title, href: post.slug ? `/blog/${post.slug}` : "/blog" }
@@ -144,14 +143,14 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
                     <Link href={`/blog/edit/${post.id}`} passHref>
                       <Button view="normal">
                         <Icon data={Pencil} size={16} />
-                        Edit
+                        {t('blogView.edit')}
                       </Button>
                     </Link>
                   </ActionBar.Item>
                   <ActionBar.Item>
                     <Button
                       view="outlined-danger"
-                      onClick={handleDelete}
+                      onClick={() => setShowDeleteConfirm(true)}
                       loading={isDeleting}
                       disabled={isDeleting}
                     >
@@ -165,54 +164,58 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
         </div>
       </div>
 
-      <div className="container mx-auto p-4 md:px-6 py-8" style={{ maxWidth: '1400px' }}>
+      <div className="blog-post-container blog-post-container_padded">
         <div style={{
-        display: 'flex',
-        gap: '24px',
-        flexDirection: isMobile ? 'column' : 'row',
-        alignItems: 'flex-start'
+          display: 'flex',
+          gap: '24px',
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: 'flex-start'
         }}>
           {/* Main content */}
           <div style={{ flex: '1', minWidth: 0, maxWidth: isMobile ? '100%' : 'calc(100% - 300px)' }}>
-            <CardTitle className="text-3xl font-bold mb-4 blog-post-title">{post.title}</CardTitle>
+            <Text variant="display-2" className="blog-post-title">{post.title}</Text>
 
-            <div className="flex flex-wrap items-center gap-4 mb-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
-                <span>{post.created_at ? formatDate(post.created_at) : 'Дата не указана'}</span>
+            <div className="blog-post-meta">
+              <div className="blog-post-meta__item">
+                <Icon data={Calendar} size={16} />
+                <Text variant="body-2" color="secondary">
+                  {post.created_at ? formatDate(post.created_at) : t('blogView.noDate')}
+                </Text>
               </div>
-              <div className="flex items-center gap-1">
-                <Person className="w-4 h-4" />
-                <span>{post.author?.name || post.author?.username || "Anonymous"}</span>
+              <div className="blog-post-meta__item">
+                <Icon data={Person} size={16} />
+                <Text variant="body-2" color="secondary">
+                  {post.author?.name || post.author?.username || t('blogView.anonymous')}
+                </Text>
               </div>
             </div>
 
-            {/* ToC для мобильных устройств - показывать над контентом */}
+            {/* ToC for mobile — shown above the content */}
             {isMobile && (
-              <div className="py-4">
+              <div className="blog-post-toc-mobile">
                 <TableOfContents content={post.content} />
               </div>
             )}
 
             {post.featured_image && post.show_featured_image !== false && (
-              <div className="w-full h-[300px] md:h-[400px] rounded-lg overflow-hidden relative">
+              <div className="blog-post-cover">
                 <Image
                   src={post.featured_image}
                   alt={post.title}
                   fill
-                  className="object-cover"
+                  className="blog-post-cover__img"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
               </div>
             )}
 
-            <CardContent className="prose prose-lg max-w-none">
+            <div className="blog-post-content-body">
               <MarkdownRenderer content={post.content} />
-            </CardContent>
+            </div>
             <Subscribe />
           </div>
 
-          {/* Table of Contents - только на десктопе справа */}
+          {/* Table of Contents — desktop only, on the right */}
           {!isMobile && (
             <aside style={{
               width: '280px',
@@ -225,6 +228,24 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
           )}
         </div>
       </div>
+
+      <Dialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        size="s"
+      >
+        <Dialog.Header caption={t('blogView.deleteTitle')} />
+        <Dialog.Body>
+          <Text variant="body-1">{t('blogView.deleteText')}</Text>
+        </Dialog.Body>
+        <Dialog.Footer
+          onClickButtonCancel={() => setShowDeleteConfirm(false)}
+          onClickButtonApply={handleDelete}
+          textButtonApply={t('blogView.deleteConfirm')}
+          textButtonCancel={t('blogView.cancel')}
+          propsButtonApply={{ view: 'outlined-danger' }}
+        />
+      </Dialog>
     </React.Fragment>
   );
 }

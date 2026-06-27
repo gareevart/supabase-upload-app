@@ -2,18 +2,20 @@
 
 import { useState, useEffect } from "react"
 import PostList from "./PostList"
-import { Button, Text, Icon, SegmentedRadioGroup, Select, Loader } from "@gravity-ui/uikit"
+import { Button, Text, Icon, SegmentedRadioGroup, Select } from "@gravity-ui/uikit"
 import { LayoutCellsLarge, ListUl } from '@gravity-ui/icons';
 import { useRouter, useSearchParams } from "next/navigation"
 import SearchComponent from "../components/SearchComponent"
 import type { SearchResult } from "../components/SearchComponent"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useAuth, useUserDrafts } from "@/shared/lib/hooks/useBlogPosts"
+import { useI18n } from "@/app/contexts/I18nContext"
+import "./BlogPage.css"
 
 type PostFilter = 'all' | 'published' | 'drafts';
 
 function BlogPageContent() {
-  const [activeTab, setActiveTab] = useState<string>("posts")
+  const { t } = useI18n()
   const [searchActive, setSearchActive] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
   const [controlsHidden, setControlsHidden] = useState(false)
@@ -61,16 +63,16 @@ function BlogPageContent() {
 
   const handleSearchFocus = (focused: boolean) => {
     if (focused) {
-      // Сначала скрываем контролы
+      // Hide controls first
       setControlsHidden(true)
-      // Затем через 300ms (после анимации скрытия) расширяем поле
+      // Then, after the hide animation (300ms), expand the field
       setTimeout(() => {
         setSearchFocused(true)
       }, 300)
     } else {
-      // При потере фокуса сначала сужаем поле
+      // On blur, shrink the field first
       setSearchFocused(false)
-      // Затем показываем контролы только если нет текста в поиске
+      // Then show controls only if the search has no text
       setTimeout(() => {
         if (!searchActive) {
           setControlsHidden(false)
@@ -79,7 +81,7 @@ function BlogPageContent() {
     }
   }
 
-  // Функция для обновления URL параметров
+  // Update URL parameters
   const updateURLParams = (filter: PostFilter, view: boolean) => {
     const params = new URLSearchParams()
     if (filter !== 'all') {
@@ -95,9 +97,9 @@ function BlogPageContent() {
   }
 
   const filterOptions = [
-    { value: 'all', content: 'All posts' },
-    { value: 'published', content: 'Published' },
-    { value: 'drafts', content: 'Drafts' }
+    { value: 'all', content: t('blogPage.filterAll') },
+    { value: 'published', content: t('blogPage.filterPublished') },
+    { value: 'drafts', content: t('blogPage.filterDrafts') }
   ];
 
   // Handle filter change
@@ -129,34 +131,36 @@ function BlogPageContent() {
     }
   };
 
+  const toolbarCollapsed = controlsHidden || ((!isAuthenticated || !hasDrafts) && isMobile);
+
   return (
-    <div className="min-h-screen">
-      <main className="container mx-auto px-4 max-w-4xl">
-        <div className="flex justify-between items-center mb-6">
-          <Text variant="display-1">Blog</Text>
+    <div className="blog-page">
+      <main className="blog-page__main">
+        <div className="blog-page__header">
+          <Text variant="display-1">{t('blogPage.title')}</Text>
           {isAuthenticated && (
             <Button
               view="action"
               size="l"
               onClick={() => router.push("/blog/new")}
             >
-              Create New Post
+              {t('blogPage.createPost')}
             </Button>
           )}
         </div>
-        <div className={`relative flex justify-between items-top pb-4 ${controlsHidden || (!isAuthenticated || !hasDrafts) && isMobile ? 'gap-0' : 'gap-4'}`}>
+        <div className={`blog-page__toolbar ${toolbarCollapsed ? 'blog-page__toolbar_collapsed' : ''}`}>
           <SearchComponent
             title=""
-            placeholder="Search anything"
-            readButtonText="Read"
+            placeholder={t('blogPage.searchPlaceholder')}
+            readButtonText={t('blogPage.readButton')}
             onResultClick={handleSearchResultClick}
             onUpdate={handleSearchQueryChange}
             onFocusChange={handleSearchFocus}
-            className="flex-1"
+            className="blog-page__search"
             expandOnFocus={true}
           />
           <div
-            className="flex gap-2 items-center transition-all duration-300"
+            className="blog-page__controls"
             style={{
               opacity: controlsHidden ? 0 : 1,
               pointerEvents: controlsHidden ? 'none' : 'auto',
@@ -181,10 +185,10 @@ function BlogPageContent() {
                 defaultValue="grid"
                 value={gridView ? 'grid' : 'list'}
                 onUpdate={(value) => handleViewChange(value === 'grid')}>
-                <SegmentedRadioGroup.Option value="list">
+                <SegmentedRadioGroup.Option value="list" title={t('blogPage.viewList')}>
                   <Icon data={ListUl} size={18} />
                 </SegmentedRadioGroup.Option>
-                <SegmentedRadioGroup.Option value="grid">
+                <SegmentedRadioGroup.Option value="grid" title={t('blogPage.viewGrid')}>
                   <Icon data={LayoutCellsLarge} size={18} />
                 </SegmentedRadioGroup.Option>
               </SegmentedRadioGroup>
@@ -193,7 +197,7 @@ function BlogPageContent() {
         </div>
 
         {!searchActive && (
-          <div className="mt-2">
+          <div className="blog-page__list">
             <PostList {...getPostListProps()} key={`${postFilter}-${gridView}`} />
           </div>
         )}

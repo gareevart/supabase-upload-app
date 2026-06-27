@@ -1,11 +1,14 @@
 import { useState } from "react";
-import { Card, Skeleton, Pagination, Button } from '@gravity-ui/uikit';
+import { useRouter } from "next/navigation";
+import { Card, Skeleton, Pagination, Button, Text, Dialog } from '@gravity-ui/uikit';
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useI18n } from "@/app/contexts/I18nContext";
 import { useBlogPosts, useAuth } from "@/shared/lib/hooks/useBlogPosts";
 import { deleteBlogPost } from "@/shared/api/blog";
 import { BlogPostCard } from "@/shared/ui/BlogPostCard";
 import type { BlogPost } from "@/shared/ui/BlogPostCard";
+import "./PostList.css";
 
 interface PostListProps {
   onlyMyPosts?: boolean;
@@ -22,8 +25,11 @@ export const PostList = ({
 }: PostListProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const { toast: showToast } = useToast();
   const isMobile = useIsMobile();
+  const router = useRouter();
+  const { t } = useI18n();
   const { userId } = useAuth();
 
   const POSTS_PER_PAGE = 10;
@@ -38,29 +44,29 @@ export const PostList = ({
     pageSize: POSTS_PER_PAGE,
   });
 
-  const handleDeletePost = async (postId: string) => {
-    if (!confirm("Are you sure you want to delete this draft? This action cannot be undone.")) {
-      return;
-    }
+  const confirmDelete = async () => {
+    if (!confirmDeleteId) return;
+    const postId = confirmDeleteId;
 
+    setConfirmDeleteId(null);
     setDeletingPostId(postId);
-    
+
     try {
       await deleteBlogPost(postId);
-      
+
       // Update cache after deletion
       mutate();
-      
+
       showToast({
-        title: "Draft deleted",
-        description: "Draft was successfully deleted",
+        title: t('blogPage.draftDeletedTitle'),
+        description: t('blogPage.draftDeletedText'),
         variant: "default"
       });
     } catch (error) {
       console.error('Error deleting post:', error);
       showToast({
-        title: "Ошибка удаления",
-        description: error instanceof Error ? error.message : "Не удалось удалить черновик",
+        title: t('blogPage.deleteErrorTitle'),
+        description: error instanceof Error ? error.message : t('blogPage.deleteErrorText'),
         variant: "destructive"
       });
     } finally {
@@ -69,26 +75,24 @@ export const PostList = ({
   };
 
   const handleEditPost = (postId: string) => {
-    window.location.href = `/blog/edit/${postId}`;
+    router.push(`/blog/edit/${postId}`);
   };
 
   if (isLoading) {
     return (
-      <div className="container max-w-4xl w-full mx-auto">
-        <div className={`${!isMobile ? 'grid grid-cols-2 gap-4' : 'space-y-4'}`}>
+      <div className="post-list">
+        <div className={!isMobile ? 'post-list__grid' : 'post-list__stack'}>
           {[1, 2, 3, 4, 5, 6].map((index) => (
-            <Card size="l" key={index} className="w-full min-w-[280px] overflow-hidden">
-              <div className="p-2">
-                <div className="h-48 w-full rounded-lg pb-2">
-                  <Skeleton className="h-full w-full" />
+            <Card size="l" key={index} className="post-list__skeleton-card">
+              <div className="post-list__skeleton-media">
+                <div className="post-list__skeleton-image">
+                  <Skeleton style={{ height: '100%', width: '100%' }} />
                 </div>
               </div>
-              <div className="p-4">
-                <Skeleton className="h-6 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-1/2" />
-              </div>
-              <div className="p-4">
-                <Skeleton className="h-4 w-24" />
+              <div className="post-list__skeleton-body">
+                <Skeleton style={{ height: 24, width: '75%' }} />
+                <Skeleton style={{ height: 16, width: '50%' }} />
+                <Skeleton style={{ height: 16, width: 96 }} />
               </div>
             </Card>
           ))}
@@ -99,18 +103,18 @@ export const PostList = ({
 
   if (posts.length === 0) {
     return (
-      <div className="container max-w-4xl w-full">
-        <Card className="w-full min-w-[280px] text-center p-8">
-          <p className="mb-4 text-lg">
+      <div className="post-list">
+        <Card size="l" className="post-list__empty">
+          <Text variant="body-2">
             {draftsOnly
-              ? "У вас пока нет сохраненных черновиков"
+              ? t('blogPage.emptyDrafts')
               : publishedOnly
-                ? "У вас пока нет опубликованных постов"
-                : "Здесь пока нет опубликованных постов"}
-          </p>
+                ? t('blogPage.emptyPublished')
+                : t('blogPage.emptyAll')}
+          </Text>
           {onlyMyPosts && (
-            <Button onClick={() => window.location.href = "/blog/new"}>
-              Create Post
+            <Button view="action" size="l" onClick={() => router.push("/blog/new")}>
+              {t('blogPage.createPostShort')}
             </Button>
           )}
         </Card>
@@ -119,13 +123,13 @@ export const PostList = ({
   }
 
   return (
-    <div className="container max-w-4xl w-full mx-auto">
-      <div className={`${!isMobile && gridView ? 'grid grid-cols-2 gap-4' : 'space-y-6'}`}>
+    <div className="post-list">
+      <div className={!isMobile && gridView ? 'post-list__grid' : 'post-list__stack'}>
         {posts.map((post, index) => {
-          // Приоритетная загрузка для первых изображений (above the fold)
-          // В grid view - первые 4 изображения, в list view - первые 2
+          // Prioritize loading the first above-the-fold images.
+          // Grid view: first 4 images; list view: first 2.
           const isPriority = gridView ? index < 4 : index < 2;
-          
+
           return (
             <BlogPostCard
               key={post.id}
@@ -134,16 +138,16 @@ export const PostList = ({
               isPriority={isPriority}
               isDraft={draftsOnly}
               onEdit={handleEditPost}
-              onDelete={handleDeletePost}
+              onDelete={(postId) => setConfirmDeleteId(postId)}
               isDeleting={deletingPostId === post.id}
             />
           );
         })}
       </div>
-      
-      {/* Пагинация - показывать только если постов больше 10 */}
+
+      {/* Pagination — only shown when there are more posts than one page */}
       {totalCount > POSTS_PER_PAGE && (
-        <div className="flex justify-center mt-8">
+        <div className="post-list__pagination">
           <Pagination
             page={currentPage}
             pageSize={POSTS_PER_PAGE}
@@ -153,6 +157,24 @@ export const PostList = ({
           />
         </div>
       )}
+
+      <Dialog
+        open={confirmDeleteId !== null}
+        onClose={() => setConfirmDeleteId(null)}
+        size="s"
+      >
+        <Dialog.Header caption={t('blogPage.deleteDraftTitle')} />
+        <Dialog.Body>
+          <Text variant="body-1">{t('blogPage.deleteDraftText')}</Text>
+        </Dialog.Body>
+        <Dialog.Footer
+          onClickButtonCancel={() => setConfirmDeleteId(null)}
+          onClickButtonApply={confirmDelete}
+          textButtonApply={t('blogPage.deleteConfirm')}
+          textButtonCancel={t('blogPage.cancel')}
+          propsButtonApply={{ view: 'outlined-danger' }}
+        />
+      </Dialog>
     </div>
   );
 };
