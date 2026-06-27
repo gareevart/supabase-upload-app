@@ -43,6 +43,18 @@ const themeBootstrapScript = `
   root.classList.remove('g-root_theme_light', 'g-root_theme_dark');
   root.classList.add(resolvedTheme === 'dark' ? 'g-root_theme_dark' : 'g-root_theme_light');
   root.style.colorScheme = resolvedTheme;
+
+  // Paint the browser chrome (Safari address bar, etc.) with the side-navigation
+  // background before first paint. These mirror --g-color-base-float-announcement;
+  // the effect in the layout refines them to the exact resolved token afterwards.
+  var navColor = resolvedTheme === 'dark' ? 'rgb(67, 63, 67)' : 'rgb(240, 243, 245)';
+  var meta = document.querySelector('meta[name="theme-color"]');
+  if (!meta) {
+    meta = document.createElement('meta');
+    meta.setAttribute('name', 'theme-color');
+    document.head.appendChild(meta);
+  }
+  meta.setAttribute('content', navColor);
 })();
 `;
 
@@ -185,7 +197,43 @@ export default function RootLayout({
     root.style.colorScheme = theme;
   }, [theme]);
 
-  const themeColor = theme === 'dark' ? '#101010' : '#1D4634';
+  // Sync the theme-color meta with the actual resolved side-navigation background
+  // so the browser chrome matches the sidebar — including when the in-app theme is
+  // toggled (which is independent of prefers-color-scheme). Runs after the theme
+  // class effect above, so the token resolves for the active theme. The meta is
+  // updated imperatively (rather than via React) because dynamic <meta> updates in
+  // the App Router head are unreliable and Safari reads the live attribute.
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    // Hardcoded fallbacks mirror --g-color-base-float-announcement's solid value.
+    let navColor = theme === 'dark' ? 'rgb(67, 63, 67)' : 'rgb(240, 243, 245)';
+
+    // A probe element is used because getComputedStyle on a custom property may
+    // return the unresolved var() chain, whereas a standard property
+    // (background-color) always yields a concrete rgb() value. It is positioned
+    // off-screen (not display:none) so the color actually resolves.
+    const probe = document.createElement('div');
+    probe.style.cssText =
+      'position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;background-color:var(--g-color-base-float-announcement);';
+    document.body.appendChild(probe);
+    const resolved = window.getComputedStyle(probe).backgroundColor;
+    probe.remove();
+
+    if (resolved && resolved !== 'rgba(0, 0, 0, 0)' && resolved !== 'transparent') {
+      navColor = resolved;
+    }
+
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'theme-color');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', navColor);
+  }, [theme]);
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -200,7 +248,6 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png" />
-        <meta name="theme-color" content={themeColor} />
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>
       <body

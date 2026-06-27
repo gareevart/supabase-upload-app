@@ -26,12 +26,27 @@
   }
 }
 
-html,
-body {
-  background-color: var(--g-color-base-background);
+html {
+  /* The root background tints the Safari browser chrome (address bar / toolbar
+     area) and the overscroll / safe-area, so it carries the side-navigation color. */
+  background-color: var(--g-color-base-float-announcement);
+}
+
+/* Gravity's ThemeProvider applies `.g-root` (background: --g-color-base-background)
+   to the element that wraps the whole app, which is the visible page canvas and
+   covers the html background above. We tag that element via ThemeProvider's
+   rootClassName="app-canvas" and repaint it with the side-navigation color, so the
+   canvas around the content matches the sidebar (and the browser chrome that
+   follows the page background). Specificity (0,2,0) beats Gravity's `.g-root`, and
+   portal/popup roots are unaffected because they don't carry `app-canvas`. */
+.g-root.app-canvas {
+  background-color: var(--g-color-base-float-announcement);
 }
 
 body {
+  /* Cover the viewport so the canvas color fills the screen behind content. */
+  min-height: 100vh;
+  min-height: 100dvh;
   font-family: var(--font-jetbrains-mono, 'JetBrains Mono'), ui-monospace, monospace;
   margin: 0;
   -webkit-text-size-adjust: 100%;
