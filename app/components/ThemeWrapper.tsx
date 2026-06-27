@@ -30,7 +30,7 @@ export default function ThemeWrapper({ children, theme }: ThemeWrapperProps) {
   }, []);
   
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={theme} rootClassName="app-canvas">
       <ToasterProvider toaster={toaster}>
         <ToasterComponent className="optional additional classes" />
         {mounted ? children : null}

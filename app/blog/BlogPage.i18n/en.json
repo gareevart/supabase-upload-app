@@ -1,0 +1,23 @@
+{
+  "blogPage.title": "Blog",
+  "blogPage.createPost": "Create New Post",
+  "blogPage.searchPlaceholder": "Search anything",
+  "blogPage.readButton": "Read",
+  "blogPage.filterAll": "All posts",
+  "blogPage.filterPublished": "Published",
+  "blogPage.filterDrafts": "Drafts",
+  "blogPage.viewList": "List view",
+  "blogPage.viewGrid": "Grid view",
+  "blogPage.emptyDrafts": "You don't have any saved drafts yet",
+  "blogPage.emptyPublished": "You don't have any published posts yet",
+  "blogPage.emptyAll": "There are no published posts yet",
+  "blogPage.createPostShort": "Create Post",
+  "blogPage.deleteDraftTitle": "Delete draft?",
+  "blogPage.deleteDraftText": "This action cannot be undone.",
+  "blogPage.deleteConfirm": "Delete",
+  "blogPage.cancel": "Cancel",
+  "blogPage.draftDeletedTitle": "Draft deleted",
+  "blogPage.draftDeletedText": "Draft was successfully deleted",
+  "blogPage.deleteErrorTitle": "Delete error",
+  "blogPage.deleteErrorText": "Failed to delete draft"
+}

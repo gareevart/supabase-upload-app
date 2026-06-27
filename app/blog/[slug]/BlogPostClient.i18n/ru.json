@@ -1,0 +1,15 @@
+{
+  "blogView.breadcrumbBlog": "Блог",
+  "blogView.postActions": "Действия с постом",
+  "blogView.edit": "Редактировать",
+  "blogView.anonymous": "Аноним",
+  "blogView.noDate": "Дата не указана",
+  "blogView.deleteTitle": "Удалить пост?",
+  "blogView.deleteText": "Это действие нельзя отменить.",
+  "blogView.deleteConfirm": "Удалить",
+  "blogView.cancel": "Отмена",
+  "blogView.deleteSuccessTitle": "Успех",
+  "blogView.deleteSuccessText": "Пост успешно удалён",
+  "blogView.deleteErrorTitle": "Ошибка",
+  "blogView.deleteErrorText": "Не удалось удалить пост"
+}

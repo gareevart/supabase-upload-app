@@ -2,47 +2,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Text, TextInput, Card, Skeleton, Icon } from '@gravity-ui/uikit';
 import { Magnifier } from '@gravity-ui/icons';
-import { supabase } from '@/lib/supabase';
-function extractPlainText(content: any): string {
-  if (!content) return '';
-  if (typeof content === 'string') {
-    return content
-      .replace(/^#{1,6}\s+/gm, '')
-      .replace(/!\[.*?\]\(.*?\)/g, '')
-      .replace(/\[(.+?)\]\(.*?\)/g, '$1')
-      .replace(/[*_`~]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-  return '';
-}
-
-function escapeRegExp(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function extractSearchContext(
-  text: string,
-  searchTerm: string,
-  wordsBefore = 3,
-  wordsAfter = 5
-): { context: string; highlightedContext: string } | null {
-  if (!text || !searchTerm) return null;
-  const lowerText = text.toLowerCase();
-  const lowerTerm = searchTerm.toLowerCase();
-  if (lowerText.indexOf(lowerTerm) === -1) return null;
-  const words = text.split(/\s+/);
-  const matchWordIndex = words.findIndex(w => w.toLowerCase().includes(lowerTerm));
-  if (matchWordIndex === -1) return null;
-  const start = Math.max(0, matchWordIndex - wordsBefore);
-  const end = Math.min(words.length, matchWordIndex + wordsAfter + 1);
-  const context = words.slice(start, end).join(' ');
-  const highlightedContext = context.replace(
-    new RegExp(`(${escapeRegExp(searchTerm)})`, 'gi'),
-    '<mark class="search-highlight">$1</mark>'
-  );
-  return { context, highlightedContext };
-}
 import { BlogPostCard } from '@/shared/ui/BlogPostCard';
 import { useIsMobile } from '@/hooks/use-mobile';
 import './components.css';
@@ -116,128 +75,12 @@ export default function SearchComponent({
     setHasSearched(true);
 
     try {
-      const searchTerm = query.toLowerCase();
-
-      // Сначала поиск по заголовку и описанию в базе данных
-      const { data: titleExcerptResults, error: titleError } = await supabase
-        .from('blog_posts')
-        .select(`
-          id, 
-          title, 
-          excerpt, 
-          slug, 
-          featured_image,
-          created_at,
-          author_id
-        `)
-        .eq('published', true)
-        .or(`title.ilike.%${query}%,excerpt.ilike.%${query}%`)
-        .order('created_at', { ascending: false });
-
-      if (titleError) throw titleError;
-
-      // Затем получаем все опубликованные посты для поиска по содержимому
-      const { data: allPosts, error: contentError } = await supabase
-        .from('blog_posts')
-        .select(`
-          id, 
-          title, 
-          excerpt, 
-          content,
-          slug, 
-          featured_image,
-          created_at,
-          author_id
-        `)
-        .eq('published', true)
-        .order('created_at', { ascending: false });
-
-      if (contentError) throw contentError;
-
-      // Поиск по содержимому на клиенте с извлечением контекста
-      const contentResults: Array<{
-        id: string;
-        title: string;
-        excerpt: string | null;
-        slug: string | null;
-        featured_image: string | null;
-        created_at: string | null;
-        author_id: string;
-        searchContext: { context: string; highlightedContext: string } | null;
-      }> = [];
-
-      for (const post of allPosts || []) {
-        // Пропускаем посты, которые уже найдены по заголовку/описанию
-        const alreadyFound = (titleExcerptResults || []).some(found => found.id === post.id);
-        if (alreadyFound) continue;
-
-        // Извлекаем текст из содержимого и ищем в нем
-        try {
-          const plainText = extractPlainText(post.content);
-          if (plainText.toLowerCase().includes(searchTerm)) {
-            // Извлекаем контекст вокруг найденного термина
-            const searchContext = extractSearchContext(plainText, query, 3, 5);
-
-            contentResults.push({
-              id: post.id,
-              title: post.title,
-              excerpt: post.excerpt,
-              slug: post.slug,
-              featured_image: post.featured_image,
-              created_at: post.created_at,
-              author_id: post.author_id,
-              searchContext
-            });
-          }
-        } catch (error) {
-          console.error('Error extracting text from content:', error);
-        }
-      }
-
-      // Объединяем результаты (сначала по заголовку/описанию, затем по содержимому)
-      const combinedResults = [
-        ...(titleExcerptResults || []).map(post => ({
-          ...post,
-          searchContext: null
-        })),
-        ...contentResults
-      ];
-
-      // Ограничиваем количество результатов
-      const limitedResults = combinedResults.slice(0, 20);
-
-      // Получаем информацию об авторах
-      if (limitedResults.length > 0) {
-        const authorIds = [...new Set(limitedResults.map(post => post.author_id))];
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, name, username, avatar_url')
-          .in('id', authorIds);
-
-        if (profilesError) {
-          console.error('Error fetching profiles:', profilesError);
-        }
-
-        // Создаем карту профилей
-        const profilesMap = (profilesData || []).reduce((acc, profile) => {
-          acc[profile.id] = profile;
-          return acc;
-        }, {} as Record<string, any>);
-
-        // Объединяем посты с информацией об авторах
-        const resultsWithAuthors = limitedResults.map(post => ({
-          ...post,
-          author: profilesMap[post.author_id] || {
-            name: null,
-            username: null,
-            avatar_url: null
-          }
-        }));
-
-        setSearchResults(resultsWithAuthors);
-      } else {
-        setSearchResults([]);
-      }
+      // Search runs entirely server-side now (title/excerpt + content scan +
+      // author join). Only the matched results cross the wire.
+      const res = await fetch(`/api/blog-posts/search?q=${encodeURIComponent(query)}`);
+      if (!res.ok) throw new Error('Search request failed');
+      const json = await res.json();
+      setSearchResults(json.results || []);
     } catch (error) {
       console.error('Search error:', error);
       setSearchResults([]);

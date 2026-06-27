@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/types';
@@ -394,6 +395,12 @@ export const POST = withAuth(async (request: NextRequest, user: { id: string }) 
       import('@/lib/blog-sync').then(({ syncBlogPostEmbeddings }) => {
         syncBlogPostEmbeddings(data.id);
       }).catch(err => console.error('Failed to trigger sync:', err));
+    }
+
+    // Refresh the statically cached blog list and the new post page.
+    revalidatePath('/blog');
+    if (data.slug) {
+      revalidatePath(`/blog/${data.slug}`);
     }
 
     return NextResponse.json(data, { status: 201 });

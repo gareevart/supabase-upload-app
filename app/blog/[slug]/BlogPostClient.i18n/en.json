@@ -1,0 +1,15 @@
+{
+  "blogView.breadcrumbBlog": "Blog",
+  "blogView.postActions": "Post actions",
+  "blogView.edit": "Edit",
+  "blogView.anonymous": "Anonymous",
+  "blogView.noDate": "Without date",
+  "blogView.deleteTitle": "Delete post?",
+  "blogView.deleteText": "This action cannot be undone.",
+  "blogView.deleteConfirm": "Delete",
+  "blogView.cancel": "Cancel",
+  "blogView.deleteSuccessTitle": "Success",
+  "blogView.deleteSuccessText": "Post deleted successfully",
+  "blogView.deleteErrorTitle": "Error",
+  "blogView.deleteErrorText": "Failed to delete post"
+}

@@ -26,16 +26,38 @@
   }
 }
 
-html,
-body {
+html {
   background-color: var(--g-color-base-background);
 }
 
 body {
+  /* Cover the viewport so the page background fills the screen behind content. */
+  min-height: 100vh;
+  min-height: 100dvh;
   font-family: var(--font-jetbrains-mono, 'JetBrains Mono'), ui-monospace, monospace;
   margin: 0;
   -webkit-text-size-adjust: 100%;
   touch-action: manipulation;
+}
+
+/* The side navigation only exists on desktop (the left sidebar uses
+   --g-color-base-float-announcement). There, paint the page canvas and the html
+   root (which the Safari chrome / overscroll follows) with that same color so the
+   gutters around the content card blend with the sidebar. On mobile the nav is a
+   floating bottom bar, so the page keeps the normal base background.
+
+   Gravity's ThemeProvider applies `.g-root` (background: --g-color-base-background)
+   to the app's root element; we tag it via rootClassName="app-canvas" and override
+   it here. Specificity (0,2,0) beats Gravity's `.g-root`, and portal/popup roots are
+   unaffected because they don't carry `app-canvas`. */
+@media (min-width: 768px) {
+  html {
+    background-color: var(--g-color-base-float-announcement);
+  }
+
+  .g-root.app-canvas {
+    background-color: var(--g-color-base-float-announcement);
+  }
 }
 
 * {

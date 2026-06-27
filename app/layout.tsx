@@ -43,6 +43,22 @@ const themeBootstrapScript = `
   root.classList.remove('g-root_theme_light', 'g-root_theme_dark');
   root.classList.add(resolvedTheme === 'dark' ? 'g-root_theme_dark' : 'g-root_theme_light');
   root.style.colorScheme = resolvedTheme;
+
+  // Paint the browser chrome (Safari address bar, etc.) before first paint.
+  // Desktop shows the left sidebar (--g-color-base-float-announcement); mobile has no
+  // sidebar, so match the chrome to the normal page background instead. The effect in
+  // the layout refines this to the exact resolved token afterwards.
+  var isDesktop = window.matchMedia('(min-width: 768px)').matches;
+  var navColor = isDesktop
+    ? (resolvedTheme === 'dark' ? 'rgb(67, 63, 67)' : 'rgb(240, 243, 245)')
+    : (resolvedTheme === 'dark' ? 'rgb(16, 16, 16)' : 'rgb(255, 255, 255)');
+  var meta = document.querySelector('meta[name="theme-color"]');
+  if (!meta) {
+    meta = document.createElement('meta');
+    meta.setAttribute('name', 'theme-color');
+    document.head.appendChild(meta);
+  }
+  meta.setAttribute('content', navColor);
 })();
 `;
 
@@ -185,7 +201,57 @@ export default function RootLayout({
     root.style.colorScheme = theme;
   }, [theme]);
 
-  const themeColor = theme === 'dark' ? '#101010' : '#1D4634';
+  // Sync the theme-color meta with the page color at the top of the viewport so the
+  // browser chrome matches it — including when the in-app theme is toggled (which is
+  // independent of prefers-color-scheme). On desktop that's the side-navigation color
+  // (--g-color-base-float-announcement); on mobile there's no sidebar, so it's the
+  // normal page background. The meta is updated imperatively (rather than via React)
+  // because dynamic <meta> updates in the App Router head are unreliable and Safari
+  // reads the live attribute. Runs after the theme class effect above so tokens
+  // resolve for the active theme.
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const desktopQuery = window.matchMedia('(min-width: 768px)');
+
+    const applyThemeColor = () => {
+      const isDesktop = desktopQuery.matches;
+      const token = isDesktop ? '--g-color-base-float-announcement' : '--g-color-base-background';
+      // Hardcoded fallbacks mirror the resolved token values per theme.
+      let navColor = isDesktop
+        ? (theme === 'dark' ? 'rgb(67, 63, 67)' : 'rgb(240, 243, 245)')
+        : (theme === 'dark' ? 'rgb(16, 16, 16)' : 'rgb(255, 255, 255)');
+
+      // A probe element is used because getComputedStyle on a custom property may
+      // return the unresolved var() chain, whereas a standard property
+      // (background-color) always yields a concrete rgb() value. It is positioned
+      // off-screen (not display:none) so the color actually resolves.
+      const probe = document.createElement('div');
+      probe.style.cssText =
+        `position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;background-color:var(${token});`;
+      document.body.appendChild(probe);
+      const resolved = window.getComputedStyle(probe).backgroundColor;
+      probe.remove();
+
+      if (resolved && resolved !== 'rgba(0, 0, 0, 0)' && resolved !== 'transparent') {
+        navColor = resolved;
+      }
+
+      let meta = document.querySelector('meta[name="theme-color"]');
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('name', 'theme-color');
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', navColor);
+    };
+
+    applyThemeColor();
+    desktopQuery.addEventListener('change', applyThemeColor);
+    return () => desktopQuery.removeEventListener('change', applyThemeColor);
+  }, [theme]);
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -200,7 +266,6 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png" />
-        <meta name="theme-color" content={themeColor} />
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>
       <body

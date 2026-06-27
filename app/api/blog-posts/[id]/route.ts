@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
@@ -394,6 +395,16 @@ export const PUT = withAuth(async (request: NextRequest, user: { id: string }) =
       syncBlogPostEmbeddings(data.id);
     }).catch(err => console.error('Failed to trigger sync:', err));
 
+    // Refresh the statically cached blog list and post pages. Revalidate both
+    // the new slug and the previous one in case the slug changed.
+    revalidatePath('/blog');
+    if (data.slug) {
+      revalidatePath(`/blog/${data.slug}`);
+    }
+    if (previousSlug && previousSlug !== data.slug) {
+      revalidatePath(`/blog/${previousSlug}`);
+    }
+
     return NextResponse.json(data);
   } catch (err) {
     const error = err as { code?: string, message?: string };
@@ -491,6 +502,12 @@ export const DELETE = withAuth(async (request: NextRequest, user: { id: string }
 
     if (error) {
       throw error;
+    }
+
+    // Refresh the statically cached blog list and the removed post page.
+    revalidatePath('/blog');
+    if (existingPost.slug) {
+      revalidatePath(`/blog/${existingPost.slug}`);
     }
 
     return NextResponse.json(

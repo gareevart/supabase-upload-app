@@ -22,28 +22,8 @@ export async function fetchBlogPosts(
   } = filters;
 
   try {
-    // Получаем общее количество постов
-    let countQuery = supabase
-      .from("blog_posts")
-      .select("*", { count: "exact", head: true });
-
-    // Применяем фильтры для подсчета
-    if (publishedOnly) {
-      countQuery = countQuery.eq("published", true);
-    } else if (draftsOnly) {
-      countQuery = countQuery.eq("published", false);
-    } else if (!draftsOnly && !publishedOnly) {
-      countQuery = countQuery.eq("published", true);
-    }
-
-    if (onlyMyPosts && authorId) {
-      countQuery = countQuery.eq("author_id", authorId);
-    }
-
-    const { count, error: countError } = await countQuery;
-    if (countError) throw countError;
-
-    // Получаем посты с пагинацией
+    // Один запрос возвращает и страницу постов, и общее количество
+    // ({ count: 'exact' } без head: true) — раньше тут было два отдельных запроса.
     let query = supabase
       .from("blog_posts")
       .select(
@@ -56,12 +36,13 @@ export async function fetchBlogPosts(
         created_at,
         author_id,
         published
-      `
+      `,
+        { count: "exact" }
       )
       .order("created_at", { ascending: false })
       .range((page - 1) * pageSize, page * pageSize - 1);
 
-    // Применяем те же фильтры
+    // Применяем фильтры
     if (publishedOnly) {
       query = query.eq("published", true);
     } else if (draftsOnly) {
@@ -74,7 +55,7 @@ export async function fetchBlogPosts(
       query = query.eq("author_id", authorId);
     }
 
-    const { data, error } = await query;
+    const { data, count, error } = await query;
     if (error) throw error;
 
     // Получаем информацию об авторах
