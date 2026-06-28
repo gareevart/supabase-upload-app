@@ -578,16 +578,19 @@ export interface Database {
           id: number
           name: string
           time: number
+          created_at: string
         }
         Insert: {
           id?: number
           name: string
           time: number
+          created_at?: string
         }
         Update: {
           id?: number
           name?: string
           time?: number
+          created_at?: string
         }
         Relationships: []
       }

@@ -1,16 +1,41 @@
 "use client"
-import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
-import { Button, Card, Text, TextInput} from '@gravity-ui/uikit';
-import './MemoryGame.css'; // Add styles for the game
+import React, { useState, useEffect, useCallback } from 'react';
+import { Button, Card, Text, TextInput, Icon } from '@gravity-ui/uikit';
+import {
+  Star,
+  Heart,
+  Rocket,
+  Sun,
+  Moon,
+  Globe,
+  Camera,
+  Gift,
+  CircleQuestion,
+} from '@gravity-ui/icons';
+import { supabase } from '@/lib/supabase';
+import { getCurrentMonthBounds } from '@/shared/lib/memory-game/monthBounds';
+import './MemoryGame.css';
 
-const emojis = ['🍎', '🍌', '🍇', '🍓', '🍒', '🍍', '🥝', '🍉'];
+const GAME_ICONS = [
+  { id: 'star', Icon: Star },
+  { id: 'heart', Icon: Heart },
+  { id: 'rocket', Icon: Rocket },
+  { id: 'sun', Icon: Sun },
+  { id: 'moon', Icon: Moon },
+  { id: 'globe', Icon: Globe },
+  { id: 'camera', Icon: Camera },
+  { id: 'gift', Icon: Gift },
+] as const;
+
+const ICON_BY_ID = Object.fromEntries(GAME_ICONS.map((item) => [item.id, item.Icon]));
 
 type Card = {
   id: number;
-  emoji: string;
+  iconId: string;
   flipped: boolean;
 };
+
+type LeaderboardEntry = { name: string; time: number };
 
 const MemoryGame = () => {
   const [gameStarted, setGameStarted] = useState<boolean>(false);
@@ -22,24 +47,40 @@ const MemoryGame = () => {
   const [userName, setUserName] = useState<string>('');
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [resultSaved, setResultSaved] = useState<boolean>(false);
-  const [supabase, setSupabase] = useState<any>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [leaderboardMonth, setLeaderboardMonth] = useState<string>('');
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  // Initialize Supabase client on client side only
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      
-      if (supabaseUrl && supabaseAnonKey) {
-        setSupabase(createClient(supabaseUrl, supabaseAnonKey));
-      }
+  const fetchLeaderboard = useCallback(async () => {
+    const { start, end, label } = getCurrentMonthBounds();
+
+    const { data, error } = await supabase
+      .from('memory_game_results')
+      .select('name, time')
+      .gte('created_at', start)
+      .lt('created_at', end)
+      .order('time', { ascending: true })
+      .limit(10);
+
+    if (error) {
+      console.error('Error fetching leaderboard:', error);
+      return;
     }
+
+    setLeaderboardMonth(label);
+    setLeaderboard(data ?? []);
   }, []);
 
+  useEffect(() => {
+    if (gameOver) {
+      fetchLeaderboard();
+    }
+  }, [gameOver, fetchLeaderboard]);
+
   const startGame = () => {
-    const shuffledCards = [...emojis, ...emojis]
-        .sort(() => Math.random() - 0.5)
-        .map((emoji, index) => ({ id: index, emoji, flipped: false }));
+    const shuffledCards = [...GAME_ICONS, ...GAME_ICONS]
+      .sort(() => Math.random() - 0.5)
+      .map((item, index) => ({ id: index, iconId: item.id, flipped: false }));
     setCards(shuffledCards);
     setFlippedCards([]);
     setMatchedCards([]);
@@ -59,7 +100,7 @@ const MemoryGame = () => {
 
     if (newFlippedCards.length === 2) {
       const [first, second] = newFlippedCards;
-      if (cards[first]?.emoji === cards[second]?.emoji) {
+      if (cards[first]?.iconId === cards[second]?.iconId) {
         setMatchedCards((prev) => [...prev, first, second]);
         setFlippedCards([]);
         if (matchedCards.length + 2 === cards.length) {
@@ -72,37 +113,33 @@ const MemoryGame = () => {
     }
   };
 
-  const [leaderboard, setLeaderboard] = useState<{ name: string; time: number }[]>([]);
-
   const handleSaveResult = async () => {
-    if (!userName) return alert('Please enter your name');
+    if (!userName.trim()) return alert('Please enter your name');
     if (resultSaved) return alert('Result already saved!');
-    if (!supabase) return alert('Database not available');
-    
-    const timeTaken = (endTime && startTime) ? (endTime - startTime) / 1000 : 0;
-    const { error } = await supabase.from('memory_game_results').insert([
-      { name: userName, time: timeTaken },
-    ]);
-    if (error) {
-      console.error('Error saving result:', error);
-    } else {
-      alert('Result saved successfully!');
-      setResultSaved(true);
-      
-      const fetchLeaderboard = async () => {
-        const { data, error } = await supabase
-          .from('memory_game_results')
-          .select('name, time')
-          .order('time', { ascending: true })
-          .limit(10);
-        if (error) {
-          console.error('Error fetching leaderboard:', error);
-        } else {
-          setLeaderboard(data || []);
-        }
-      };
+    if (isSaving) return;
 
-      fetchLeaderboard();
+    const timeTaken = (endTime && startTime) ? (endTime - startTime) / 1000 : 0;
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from('memory_game_results').insert({
+        name: userName.trim(),
+        time: timeTaken,
+      });
+
+      if (error) {
+        console.error('Error saving result:', error);
+        alert(error.message || 'Failed to save result');
+        return;
+      }
+
+      setResultSaved(true);
+      await fetchLeaderboard();
+    } catch (error) {
+      console.error('Error saving result:', error);
+      alert('Failed to save result');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -115,41 +152,54 @@ const MemoryGame = () => {
       )}
       {gameStarted && !gameOver && (
         <Card view="outlined" type="container" size="m" className="cards-grid">
-          {cards.map((card) => (
-            <div
-              key={card.id}
-              className={`card ${flippedCards.includes(card.id) || matchedCards.includes(card.id) ? 'flipped' : ''}`}
-              onClick={() => handleCardClick(card.id)}
-            >
-              {flippedCards.includes(card.id) || matchedCards.includes(card.id) ? card.emoji : '❓'}
-            </div>
-          ))}
+          {cards.map((card) => {
+            const isRevealed = flippedCards.includes(card.id) || matchedCards.includes(card.id);
+            const iconData = ICON_BY_ID[card.iconId];
+
+            return (
+              <div
+                key={card.id}
+                className={`card ${isRevealed ? 'flipped' : ''}`}
+                onClick={() => handleCardClick(card.id)}
+              >
+                {isRevealed && iconData ? (
+                  <Icon data={iconData} className="memory-game__card-icon" />
+                ) : (
+                  <Icon
+                    data={CircleQuestion}
+                    className="memory-game__card-icon memory-game__card-icon_back"
+                  />
+                )}
+              </div>
+            );
+          })}
         </Card>
       )}
-        {gameOver && (
-          <div className="game-over">
-            <Card size='l' className="final-card" view="outlined"> 
+      {gameOver && (
+        <div className="game-over">
+          <Card size="l" className="final-card" view="outlined">
             <Text variant="display-1">Game Over!</Text>
             <Text variant="body-2">Your time: {(endTime && startTime) ? ((endTime - startTime) / 1000) : 0} seconds</Text>
             <div style={{ margin: '10px 0', width: '100%' }}>
-              <TextInput 
-                placeholder="Your name" 
-                value={userName} 
+              <TextInput
+                placeholder="Your name"
+                value={userName}
                 onChange={(e) => setUserName(e.target.value)}
                 style={{ width: '100%', marginBottom: '10px' }}
               />
             </div>
-            <Button 
-              size='l' 
-              view={resultSaved ? 'outlined' : 'action'} 
+            <Button
+              size="l"
+              view={resultSaved ? 'outlined' : 'action'}
               onClick={handleSaveResult}
-              disabled={resultSaved}
+              disabled={resultSaved || isSaving}
+              loading={isSaving}
             >
               {resultSaved ? 'Result Saved' : 'Save Result'}
             </Button>
-            <Button 
-              size='l' 
-              view='normal' 
+            <Button
+              size="l"
+              view="normal"
               onClick={startGame}
               style={{ marginTop: '10px' }}
             >
@@ -158,7 +208,9 @@ const MemoryGame = () => {
 
             {leaderboard.length > 0 && (
               <div className="leaderboard">
-                <Text className="leaderboard-title" variant="header-1">Top 10 Results</Text>
+                <Text className="leaderboard-title" variant="header-1">
+                  Top 10 — {leaderboardMonth}
+                </Text>
                 <ul>
                   {leaderboard.map((entry, index) => (
                     <li key={index}>
@@ -168,9 +220,9 @@ const MemoryGame = () => {
                 </ul>
               </div>
             )}
-            </Card> 
-          </div>
-        )}
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
