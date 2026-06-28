@@ -169,6 +169,16 @@ a {
     background-color: var(--g-color-base-background);
     border-radius: var(--g-border-radius-xl);
   }
+
+  body.navigation-position-left .main-content:has(.storybook-frame),
+  body.navigation-position-bottom .main-content:has(.storybook-frame) {
+    margin: 0;
+    padding: 0;
+    max-width: none;
+    border-radius: 0;
+    overflow: hidden;
+    height: 100dvh;
+  }
 }
 
 /* Mobile styles - account for bottom navigation */
@@ -188,6 +198,13 @@ a {
   .main-content:has(.chat-layout) {
     margin-bottom: 0;
     overflow: hidden !important;
+  }
+
+  .main-content:has(.storybook-frame) {
+    margin: 0;
+    padding: 0;
+    max-width: none;
+    overflow: hidden;
   }
 }
 
