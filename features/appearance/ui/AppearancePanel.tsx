@@ -67,7 +67,7 @@ export function AppearancePanel({
               onThemeChange(value);
             }
           }}
-          size="m"
+          size="l"
           width="max"
         >
           <SegmentedRadioGroup.Option value="light">
@@ -91,7 +91,7 @@ export function AppearancePanel({
               onLanguageChange(value);
             }
           }}
-          size="m"
+          size="l"
           width="max"
         >
           <SegmentedRadioGroup.Option value="en">
@@ -112,7 +112,7 @@ export function AppearancePanel({
               onNavigationChange(value);
             }
           }}
-          size="m"
+          size="l"
           width="max"
         >
           <SegmentedRadioGroup.Option value="left">

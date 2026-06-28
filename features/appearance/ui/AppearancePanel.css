@@ -6,7 +6,7 @@
   max-width: 600px;
   padding: var(--g-spacing-7);
   border: 1px solid var(--g-color-line-generic);
-  border-radius: var(--g-border-radius-m);
+  border-radius: var(--g-border-radius-2xl);
   background: var(--g-color-base-background);
   box-sizing: border-box;
 }

@@ -1,6 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
 
+/* Extended tokens used by app widgets; uikit ships xs–xl only. */
+:root,
+.g-root {
+  --g-border-radius-2xl: 16px;
+}
+
 .g-root_theme_light {
 
 	--g-font-family-sans: 'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
