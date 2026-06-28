@@ -1,0 +1,13 @@
+{
+  "appearancePanel.title": "Appearance",
+  "appearancePanel.theme": "Theme",
+  "appearancePanel.theme.light": "Light",
+  "appearancePanel.theme.dark": "Dark",
+  "appearancePanel.theme.system": "System",
+  "appearancePanel.language": "Language",
+  "appearancePanel.language.en": "English",
+  "appearancePanel.language.ru": "Russian",
+  "appearancePanel.navigation": "Navigation",
+  "appearancePanel.navigation.left": "Left",
+  "appearancePanel.navigation.bottom": "Bottom"
+}

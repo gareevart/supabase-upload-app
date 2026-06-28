@@ -7,11 +7,8 @@ import {
     Text,
 } from '@gravity-ui/uikit';
 import { Profile } from '@/app/auth/profile/types';
-import { ThemeToggle } from '@/app/components/Navigation/ThemeToggle';
-import { LanguageToggle } from '@/app/components/Navigation/LanguageToggle';
-import { NavigationPositionToggle } from '@/app/components/Navigation/NavigationPositionToggle';
-import { useI18n } from '@/app/contexts/I18nContext';
 import { ProfileEditForm } from './ProfileEditForm';
+import { AppearancePanelConnected } from '@/features/appearance';
 
 interface ProfileViewProps {
     profile: Profile;
@@ -36,8 +33,6 @@ export const ProfileView = ({
     onCancel,
     onLogout
 }: ProfileViewProps) => {
-    const { t } = useI18n();
-
     return (
         <>
             <Card theme="normal" size="l" className="responsive-card">
@@ -112,16 +107,7 @@ export const ProfileView = ({
                     </div>
                 )}
             </Card>
-            <Card theme="normal" size="l" className="responsive-card">
-                <div className="profile-view pb2">
-                    <Text variant='subheader-3'>{t('profile.appearance')}</Text>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <ThemeToggle />
-                    <LanguageToggle />
-                    <NavigationPositionToggle />
-                </div>
-            </Card>
+            <AppearancePanelConnected fullWidth />
         </>
     );
 };

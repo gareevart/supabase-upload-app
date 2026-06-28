@@ -3,10 +3,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import homeEn from '@/app/HomeClient.i18n/en.json';
 import homeRu from '@/app/HomeClient.i18n/ru.json';
-import languageToggleEn from '@/app/components/Navigation/LanguageToggle.i18n/en.json';
-import languageToggleRu from '@/app/components/Navigation/LanguageToggle.i18n/ru.json';
-import profileViewEn from '@/app/auth/profile/components/ProfileView.i18n/en.json';
-import profileViewRu from '@/app/auth/profile/components/ProfileView.i18n/ru.json';
+import appearancePanelEn from '@/features/appearance/ui/AppearancePanel.i18n/en.json';
+import appearancePanelRu from '@/features/appearance/ui/AppearancePanel.i18n/ru.json';
 import dangerZoneEn from '@/app/auth/profile/components/DangerZoneSection.i18n/en.json';
 import dangerZoneRu from '@/app/auth/profile/components/DangerZoneSection.i18n/ru.json';
 import broadcastFormEn from '@/widgets/broadcast-form/ui/BroadcastFormWidget.i18n/en.json';
@@ -47,8 +45,7 @@ type TranslationDict = Record<string, TranslationValue>;
 
 const enTranslations: TranslationDict = {
   ...homeEn,
-  ...languageToggleEn,
-  ...profileViewEn,
+  ...appearancePanelEn,
   ...dangerZoneEn,
   ...broadcastFormEn,
   ...navigationEn,
@@ -69,8 +66,7 @@ const enTranslations: TranslationDict = {
 
 const ruTranslations: TranslationDict = {
   ...homeRu,
-  ...languageToggleRu,
-  ...profileViewRu,
+  ...appearancePanelRu,
   ...dangerZoneRu,
   ...broadcastFormRu,
   ...navigationRu,

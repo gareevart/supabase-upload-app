@@ -1,0 +1,10 @@
+html,
+body {
+  margin: 0;
+  font-family: var(--g-font-family-sans, 'Inter', sans-serif);
+}
+
+.app-canvas {
+  background: var(--g-color-base-background);
+  color: var(--g-color-text-primary);
+}

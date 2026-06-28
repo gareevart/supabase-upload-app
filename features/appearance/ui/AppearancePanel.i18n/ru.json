@@ -1,0 +1,13 @@
+{
+  "appearancePanel.title": "Внешний вид",
+  "appearancePanel.theme": "Тема",
+  "appearancePanel.theme.light": "Светлая",
+  "appearancePanel.theme.dark": "Тёмная",
+  "appearancePanel.theme.system": "Системная",
+  "appearancePanel.language": "Язык",
+  "appearancePanel.language.en": "English",
+  "appearancePanel.language.ru": "Русский",
+  "appearancePanel.navigation": "Навигация",
+  "appearancePanel.navigation.left": "Слева",
+  "appearancePanel.navigation.bottom": "Снизу"
+}
