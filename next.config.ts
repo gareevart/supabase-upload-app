@@ -1,4 +1,8 @@
 import type { NextConfig } from "next";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
   // The hand-written Supabase `Database` type is accurate (verified in isolation),
@@ -55,6 +59,8 @@ const nextConfig: NextConfig = {
 
   // Turbopack browser fallbacks for Node.js-only modules used by aikit peer deps
   turbopack: {
+    // Avoid picking up ~/package-lock.json as monorepo root (breaks module resolution).
+    root: projectRoot,
     resolveAlias: {
       fs: './lib/browser-shims/fs.js',
       // @diplodoc/tabs-extension does deep CJS require() into markdown-it,

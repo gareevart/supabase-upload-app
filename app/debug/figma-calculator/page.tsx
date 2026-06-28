@@ -2,6 +2,8 @@ import { Text } from "@gravity-ui/uikit";
 import { CalculatorPanel } from "@/features/calculator/ui";
 import "./page.css";
 
+export const dynamic = "force-dynamic";
+
 export default function FigmaCalculatorPage() {
   return (
     <div className="figma-calculator-page">
