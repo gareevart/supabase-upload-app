@@ -39,7 +39,6 @@ export const ModelSelectionProvider = ({ children }: ModelSelectionProviderProps
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem("selectedModel", selectedModel);
-      console.log('ModelSelectionContext: Model changed to:', selectedModel);
     }
   }, [selectedModel]);
 
@@ -47,14 +46,12 @@ export const ModelSelectionProvider = ({ children }: ModelSelectionProviderProps
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem("reasoningMode", reasoningMode.toString());
-      console.log('ModelSelectionContext: Reasoning mode changed to:', reasoningMode);
     }
   }, [reasoningMode]);
 
   // Автоматически отключаем режим рассуждений при переключении с YandexGPT
   useEffect(() => {
     if (selectedModel !== 'yandexgpt' && reasoningMode) {
-      console.log('ModelSelectionContext: Auto-disabling reasoning mode for non-YandexGPT model');
       setReasoningMode(false);
     }
   }, [selectedModel, reasoningMode]);
