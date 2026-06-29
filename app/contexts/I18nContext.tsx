@@ -100,6 +100,8 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 
 const STORAGE_KEY = 'app-language';
 
+export const APP_LANGUAGE_STORAGE_KEY = STORAGE_KEY;
+
 export const I18nProvider = ({ children }: { children: React.ReactNode }) => {
   const [language, setLanguageState] = useState<AppLanguage>('en');
 
@@ -135,7 +137,13 @@ export const I18nProvider = ({ children }: { children: React.ReactNode }) => {
 
   const setLanguage = useCallback((nextLanguage: AppLanguage) => {
     setLanguageState(nextLanguage);
-    localStorage.setItem(STORAGE_KEY, nextLanguage);
+
+    try {
+      localStorage.setItem(STORAGE_KEY, nextLanguage);
+    } catch (error) {
+      console.error('Failed to persist language preference:', error);
+    }
+
     document.documentElement.lang = nextLanguage;
   }, []);
 

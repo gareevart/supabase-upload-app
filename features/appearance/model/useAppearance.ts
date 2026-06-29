@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { AppLanguage } from '@/app/contexts/I18nContext';
-import { useI18n } from '@/app/contexts/I18nContext';
+import { APP_LANGUAGE_STORAGE_KEY, useI18n } from '@/app/contexts/I18nContext';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import {
@@ -17,6 +17,9 @@ const isThemeOption = (value: string | null): value is ThemeOption =>
 
 const isNavigationPosition = (value: string | null): value is NavigationPosition =>
   value === 'left' || value === 'bottom';
+
+const isAppLanguage = (value: string | null): value is AppLanguage =>
+  value === 'en' || value === 'ru';
 
 const dispatchThemeEvents = (theme: ThemeOption) => {
   localStorage.setItem(THEME_STORAGE_KEY, theme);
@@ -56,8 +59,9 @@ const dispatchNavigationEvents = (position: NavigationPosition) => {
 
 export const useAppearance = () => {
   const { user } = useAuth();
-  const { language, setLanguage } = useI18n();
+  const { setLanguage: setI18nLanguage } = useI18n();
   const [theme, setTheme] = useState<ThemeOption>('system');
+  const [language, setLanguage] = useState<AppLanguage>('en');
   const [navigation, setNavigation] = useState<NavigationPosition>('left');
 
   useEffect(() => {
@@ -100,6 +104,21 @@ export const useAppearance = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem(APP_LANGUAGE_STORAGE_KEY);
+
+    if (isAppLanguage(savedLanguage)) {
+      setLanguage(savedLanguage);
+      setI18nLanguage(savedLanguage);
+      return;
+    }
+
+    const browserLanguage = navigator.language.toLowerCase();
+    const detectedLanguage: AppLanguage = browserLanguage.startsWith('ru') ? 'ru' : 'en';
+    setLanguage(detectedLanguage);
+    setI18nLanguage(detectedLanguage);
+  }, [setI18nLanguage]);
+
   const handleThemeChange = useCallback(
     async (nextTheme: ThemeOption) => {
       setTheme(nextTheme);
@@ -121,8 +140,9 @@ export const useAppearance = () => {
   const handleLanguageChange = useCallback(
     (nextLanguage: AppLanguage) => {
       setLanguage(nextLanguage);
+      setI18nLanguage(nextLanguage);
     },
-    [setLanguage],
+    [setI18nLanguage],
   );
 
   const handleNavigationChange = useCallback((nextPosition: NavigationPosition) => {

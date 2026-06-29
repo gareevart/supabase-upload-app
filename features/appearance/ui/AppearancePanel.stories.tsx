@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useState } from 'react';
+import type { AppLanguage } from '@/app/contexts/I18nContext';
 import { useI18n } from '@/app/contexts/I18nContext';
 import { AuthProvider } from '@/app/contexts/AuthContext';
 import { AppearancePanel, AppearancePanelConnected } from './AppearancePanel';
@@ -39,20 +40,21 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 function InteractiveAppearancePanel(args: AppearancePanelProps) {
-  const { language, setLanguage } = useI18n();
+  const { setLanguage: setI18nLanguage } = useI18n();
   const [theme, setTheme] = useState(args.theme);
+  const [language, setLanguage] = useState(args.language);
   const [navigation, setNavigation] = useState(args.navigation);
 
   useEffect(() => {
     setTheme(args.theme);
+    setLanguage(args.language);
     setNavigation(args.navigation);
-  }, [args.theme, args.navigation]);
+  }, [args.theme, args.language, args.navigation]);
 
-  useEffect(() => {
-    if (args.language !== language) {
-      setLanguage(args.language);
-    }
-  }, [args.language, language, setLanguage]);
+  const handleLanguageChange = (nextLanguage: AppLanguage) => {
+    setLanguage(nextLanguage);
+    setI18nLanguage(nextLanguage);
+  };
 
   return (
     <AppearancePanel
@@ -61,7 +63,7 @@ function InteractiveAppearancePanel(args: AppearancePanelProps) {
       language={language}
       navigation={navigation}
       onThemeChange={setTheme}
-      onLanguageChange={setLanguage}
+      onLanguageChange={handleLanguageChange}
       onNavigationChange={setNavigation}
     />
   );

@@ -36,7 +36,7 @@ function AppearanceRow({ label, children }: AppearanceRowProps) {
 
 export function AppearancePanel({
   theme,
-  language: _language,
+  language,
   navigation,
   onThemeChange,
   onLanguageChange,
@@ -44,7 +44,7 @@ export function AppearancePanel({
   className,
   fullWidth = false,
 }: AppearancePanelProps) {
-  const { t, language, setLanguage } = useI18n();
+  const { t } = useI18n();
 
   const panelClassName = [
     'appearance-panel',
@@ -88,7 +88,6 @@ export function AppearancePanel({
           value={language}
           onUpdate={(value) => {
             if (value === 'en' || value === 'ru') {
-              setLanguage(value);
               onLanguageChange(value);
             }
           }}
