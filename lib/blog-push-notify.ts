@@ -37,9 +37,10 @@ export async function notifyBlogPostPublished(post: BlogPostNotificationInput): 
 
   try {
     await publishBlogPushNotification({
-      title: 'New blog post',
+      title: post.title,
       body: post.excerpt?.trim() || post.title,
       url,
+      icon: `${origin}/g-logo.svg`,
     });
     console.info('[blog-push] Published push notification for blog post', { id: post.id, slug: post.slug });
   } catch (err) {

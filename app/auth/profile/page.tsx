@@ -13,9 +13,9 @@ import { useQuotaInfo } from './hooks/useQuota';
 
 // Import components
 import { ProfileView } from './components/ProfileView';
-import { SubscriptionSection } from './components/SubscriptionSection';
+import { SubscriptionsPanel } from '@/features/subscriptions/ui';
 import { QuotaSection } from './components/QuotaSection';
-import { ApiKeysManager } from '@/app/components/profile/ApiKeysManager';
+import { ApiKeysPanelConnected } from '@/features/api-keys/ui';
 import { DangerZoneSection } from './components/DangerZoneSection';
 
 const Profile = () => {
@@ -26,7 +26,7 @@ const Profile = () => {
 
     // Use custom hooks
     const { profile, setProfile, loading, saveProfile } = useUserProfile(user?.id, mounted);
-    const { subscription, isSubscriptionLoading, handleSubscriptionToggle } = useSubscription(user?.id, user?.email, mounted);
+    const { subscription, isSubscriptionLoading, setEmailNewsletterEnabled } = useSubscription(user?.id, user?.email, mounted);
     const dailyQuota = useQuotaInfo(user?.id, mounted);
 
     const handleSaveProfile = async () => {
@@ -75,14 +75,15 @@ const Profile = () => {
                 onLogout={handleLogout}
             />
 
-            <SubscriptionSection
-                subscription={subscription}
-                isLoading={isSubscriptionLoading}
-                onToggle={handleSubscriptionToggle}
+            <SubscriptionsPanel
+                emailSubscribed={Boolean(subscription?.subscribe_status)}
+                emailLoading={isSubscriptionLoading}
+                onEmailSubscriptionChange={setEmailNewsletterEnabled}
+                fullWidth
             />
 
             <QuotaSection dailyQuota={dailyQuota} />
-            <ApiKeysManager />
+            <ApiKeysPanelConnected fullWidth />
 
             <DangerZoneSection email={user.email} role={profile.role} />
         </div>

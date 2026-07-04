@@ -1,0 +1,129 @@
+.api-keys-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-4);
+  width: 100%;
+  max-width: 600px;
+  padding: var(--g-spacing-7);
+  border: 1px solid var(--g-color-line-generic);
+  border-radius: var(--g-border-radius-2xl);
+  background: var(--g-color-base-background);
+  box-sizing: border-box;
+}
+
+.api-keys-panel--full-width {
+  max-width: 100%;
+}
+
+.api-keys-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--g-spacing-3);
+}
+
+.api-keys-panel__title-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-1);
+  min-width: 0;
+}
+
+.api-keys-panel__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--g-spacing-1);
+}
+
+.api-keys-panel__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-4);
+}
+
+.api-keys-panel__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--g-spacing-4);
+  padding: var(--g-spacing-8);
+  text-align: center;
+}
+
+.api-keys-panel__empty-icon {
+  display: block;
+  margin: 0 auto var(--g-spacing-4);
+}
+
+.api-keys-panel__skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-3);
+}
+
+.api-keys-panel__skeleton-row {
+  width: 100%;
+  height: 24px;
+}
+
+.api-keys-panel__skeleton-button {
+  margin-top: var(--g-spacing-4);
+  width: 128px;
+  height: 32px;
+}
+
+.api-keys-panel__create-button {
+  align-self: flex-start;
+}
+
+.api-keys-panel__key-prefix {
+  font-family: var(--g-font-family-monospace, monospace);
+}
+
+.api-keys-panel__modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-2);
+}
+
+.api-keys-panel__modal-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-4);
+}
+
+.api-keys-panel__modal-alert {
+  margin-top: var(--g-spacing-4);
+}
+
+.api-keys-panel__key-display {
+  display: flex;
+  align-items: center;
+  gap: var(--g-spacing-2);
+  padding: var(--g-spacing-3);
+  border: 1px solid var(--g-color-line-generic);
+  border-radius: var(--g-border-radius-m);
+}
+
+.api-keys-panel__key-value {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--g-font-family-monospace, monospace);
+  word-break: break-all;
+}
+
+.api-keys-panel__modal-footer {
+  display: flex;
+  gap: var(--g-spacing-2);
+}
+
+@media (max-width: 480px) {
+  .api-keys-panel {
+    padding: var(--g-spacing-4);
+  }
+
+  .api-keys-panel__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

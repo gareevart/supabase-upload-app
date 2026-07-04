@@ -1,0 +1,12 @@
+{
+  "subscriptionsPanel.title": "Подписки",
+  "subscriptionsPanel.emailNewsletter": "Email-рассылка",
+  "subscriptionsPanel.emailSubscribed": "Подписан",
+  "subscriptionsPanel.emailNotSubscribed": "Не подписан",
+  "subscriptionsPanel.blogPush": "Уведомления о новых постах",
+  "subscriptionsPanel.pushReceiving": "Получаю",
+  "subscriptionsPanel.pushNotReceiving": "Не получаю",
+  "subscriptionsPanel.pushUnsupported": "Push-уведомления не поддерживаются в этом браузере.",
+  "subscriptionsPanel.pushDenied": "Уведомления заблокированы в настройках браузера.",
+  "subscriptionsPanel.pushUnavailable": "Push-уведомления временно недоступны."
+}

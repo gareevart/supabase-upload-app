@@ -58,23 +58,20 @@ export const useSubscription = (userId: string | undefined, userEmail: string | 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mounted, userId, userEmail]);
 
-    const handleSubscriptionToggle = async () => {
+    const setEmailNewsletterEnabled = async (enabled: boolean) => {
         if (!userId || !userEmail || !subscription) return;
+        if (subscription.subscribe_status === enabled) return;
 
         setIsSubscriptionLoading(true);
         try {
-            const newStatus = !subscription.subscribe_status;
-
             let error: any = null;
             let updatedSubscription = null;
 
             if (subscription.id) {
-                // Update existing subscription
                 const { data, error: updateError } = await supabase
                     .from('subscribe')
                     .update({
-                        subscribe_status: newStatus,
-                        // Always save the date, even when unsubscribing
+                        subscribe_status: enabled,
                         subscribe_started_date:
                             subscription.subscribe_started_date || new Date().toISOString(),
                     })
@@ -85,15 +82,14 @@ export const useSubscription = (userId: string | undefined, userEmail: string | 
                 error = updateError;
                 updatedSubscription = data;
             } else {
-                // Create new subscription
                 const { data, error: insertError } = await supabase
                     .from('subscribe')
                     .insert([
                         {
                             mail: userEmail,
                             user_id: userId,
-                            subscribe_status: newStatus,
-                            subscribe_started_date: new Date().toISOString(), // Always set the date
+                            subscribe_status: enabled,
+                            subscribe_started_date: new Date().toISOString(),
                         },
                     ])
                     .select()
@@ -117,7 +113,7 @@ export const useSubscription = (userId: string | undefined, userEmail: string | 
             add({
                 name: 'subscription-success',
                 title: 'Успех',
-                content: newStatus
+                content: enabled
                     ? 'Вы успешно подписались на рассылку'
                     : 'Вы успешно отписались от рассылки',
                 theme: 'success',
@@ -137,5 +133,5 @@ export const useSubscription = (userId: string | undefined, userEmail: string | 
         }
     };
 
-    return { subscription, isSubscriptionLoading, handleSubscriptionToggle };
+    return { subscription, isSubscriptionLoading, setEmailNewsletterEnabled };
 };

@@ -1,0 +1,10 @@
+.subscriptions-panel__hint {
+  margin-top: calc(-1 * var(--g-spacing-1));
+  padding-left: calc(120px + var(--g-spacing-3));
+}
+
+@media (max-width: 480px) {
+  .subscriptions-panel__hint {
+    padding-left: 0;
+  }
+}

@@ -37,8 +37,10 @@ import blogEditorEn from '@/app/components/blog/BlogEditor.i18n/en.json';
 import blogEditorRu from '@/app/components/blog/BlogEditor.i18n/ru.json';
 import broadcastDetailEn from '@/widgets/broadcast-detail/ui/BroadcastDetailWidget.i18n/en.json';
 import broadcastDetailRu from '@/widgets/broadcast-detail/ui/BroadcastDetailWidget.i18n/ru.json';
-import blogPushEn from '@/features/blog-push-notifications/ui/BlogPushSubscribePanel.i18n/en.json';
-import blogPushRu from '@/features/blog-push-notifications/ui/BlogPushSubscribePanel.i18n/ru.json';
+import subscriptionsPanelEn from '@/features/subscriptions/ui/SubscriptionsPanel.i18n/en.json';
+import subscriptionsPanelRu from '@/features/subscriptions/ui/SubscriptionsPanel.i18n/ru.json';
+import apiKeysPanelEn from '@/features/api-keys/ui/ApiKeysPanel.i18n/en.json';
+import apiKeysPanelRu from '@/features/api-keys/ui/ApiKeysPanel.i18n/ru.json';
 
 export type AppLanguage = 'en' | 'ru';
 
@@ -64,7 +66,8 @@ const enTranslations: TranslationDict = {
   ...blogPostViewEn,
   ...blogEditorEn,
   ...broadcastDetailEn,
-  ...blogPushEn,
+  ...subscriptionsPanelEn,
+  ...apiKeysPanelEn,
 };
 
 const ruTranslations: TranslationDict = {
@@ -86,7 +89,8 @@ const ruTranslations: TranslationDict = {
   ...blogPostViewRu,
   ...blogEditorRu,
   ...broadcastDetailRu,
-  ...blogPushRu,
+  ...subscriptionsPanelRu,
+  ...apiKeysPanelRu,
 };
 
 const translations: Record<AppLanguage, TranslationDict> = {

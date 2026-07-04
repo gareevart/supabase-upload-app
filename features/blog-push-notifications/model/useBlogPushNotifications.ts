@@ -25,17 +25,24 @@ type UseBlogPushNotificationsResult = {
 
 const SERVICE_WORKER_PATH = '/push-sw.js';
 
-function getInitialStatus(): BlogPushStatus {
+async function resolveSubscriptionStatus(): Promise<BlogPushStatus> {
   if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) {
     return 'unsupported';
   }
 
-  if (Notification.permission === 'granted') {
+  if (Notification.permission === 'denied') {
+    return 'denied';
+  }
+
+  const registration = await navigator.serviceWorker.getRegistration(SERVICE_WORKER_PATH);
+  const subscription = await registration?.pushManager.getSubscription();
+
+  if (subscription && Notification.permission === 'granted') {
     return 'subscribed';
   }
 
-  if (Notification.permission === 'denied') {
-    return 'denied';
+  if (Notification.permission === 'granted') {
+    return 'granted';
   }
 
   return 'default';
@@ -47,7 +54,7 @@ export function useBlogPushNotifications(): UseBlogPushNotificationsResult {
   const isSupported = status !== 'unsupported';
 
   useEffect(() => {
-    setStatus(getInitialStatus());
+    void resolveSubscriptionStatus().then(setStatus);
   }, []);
 
   const subscribe = useCallback(async () => {
@@ -73,12 +80,16 @@ export function useBlogPushNotifications(): UseBlogPushNotificationsResult {
 
       const { vapidPublicKey } = await vapidResponse.json() as { vapidPublicKey: string };
       const registration = await navigator.serviceWorker.register(SERVICE_WORKER_PATH);
+      await registration.update();
       await navigator.serviceWorker.ready;
 
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-      });
+      let subscription = await registration.pushManager.getSubscription();
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        });
+      }
 
       const subscribeResponse = await fetch('/api/push/subscribe', {
         method: 'POST',
@@ -101,7 +112,7 @@ export function useBlogPushNotifications(): UseBlogPushNotificationsResult {
     } catch (subscribeError) {
       console.error('[blog-push] subscribe failed:', subscribeError);
       setError(subscribeError instanceof Error ? subscribeError.message : 'Failed to subscribe');
-      setStatus(Notification.permission === 'granted' ? 'granted' : 'default');
+      setStatus(await resolveSubscriptionStatus());
     }
   }, []);
 
@@ -126,7 +137,7 @@ export function useBlogPushNotifications(): UseBlogPushNotificationsResult {
       await subscription?.unsubscribe();
       await registration?.unregister();
 
-      setStatus(Notification.permission === 'denied' ? 'denied' : 'default');
+      setStatus(await resolveSubscriptionStatus());
     } catch (unsubscribeError) {
       console.error('[blog-push] unsubscribe failed:', unsubscribeError);
       setError(unsubscribeError instanceof Error ? unsubscribeError.message : 'Failed to unsubscribe');

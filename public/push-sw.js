@@ -1,48 +1,113 @@
-self.addEventListener('push', (event) => {
+/* Blog push service worker v2 */
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+function absoluteUrl(path) {
+  if (!path) {
+    return `${self.location.origin}/blog`;
+  }
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  return `${self.location.origin}${path.startsWith('/') ? path : `/${path}`}`;
+}
+
+function parsePushPayload(event) {
+  let title = 'New blog post';
+  let body = 'A new post was published';
+  let url = '/blog';
+
   if (!event.data) {
-    return;
+    return { title, body, url: absoluteUrl(url) };
   }
 
   let payload = {};
   try {
     payload = event.data.json();
   } catch {
-    payload = { body: event.data.text() };
+    const text = event.data.text();
+    return {
+      title,
+      body: text || body,
+      url: absoluteUrl(url),
+    };
   }
 
-  let webPayload = payload;
   if (typeof payload.WEB === 'string') {
     try {
-      webPayload = JSON.parse(payload.WEB);
+      const web = JSON.parse(payload.WEB);
+      if (web.notification) {
+        title = web.notification.title || title;
+        body = web.notification.body || body;
+      } else {
+        title = web.title || title;
+        body = web.body || body;
+      }
+      url = web.data?.url || web.url || url;
     } catch {
-      webPayload = payload;
+      body = payload.WEB;
     }
   }
 
-  const notification = webPayload.notification || {};
-  const data = webPayload.data || {};
-  const title = notification.title || payload.title || 'New blog post';
-  const options = {
-    body: notification.body || payload.body || payload.default || '',
-    icon: notification.icon || '/g-logo.svg',
-    badge: '/g-logo.svg',
-    data: {
-      url: data.url || '/blog',
-    },
-  };
+  if (payload.notification) {
+    title = payload.notification.title || title;
+    body = payload.notification.body || body;
+  }
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  if (payload.data?.url) {
+    url = payload.data.url;
+  }
+
+  if (payload.title) {
+    title = payload.title;
+  }
+
+  if (payload.body || payload.default) {
+    body = payload.body || payload.default || body;
+  }
+
+  return {
+    title,
+    body,
+    url: absoluteUrl(url),
+  };
+}
+
+self.addEventListener('push', (event) => {
+  event.waitUntil(
+    (async () => {
+      const { title, body, url } = parsePushPayload(event);
+      const icon = absoluteUrl('/g-logo.svg');
+
+      await self.registration.showNotification(title, {
+        body,
+        icon,
+        badge: icon,
+        data: { url },
+      });
+    })().catch((error) => {
+      console.error('[push-sw] Failed to show notification:', error);
+    }),
+  );
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const targetUrl = event.notification.data?.url || absoluteUrl('/blog');
 
-  const targetUrl = event.notification.data?.url || '/blog';
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       for (const client of windowClients) {
         if ('focus' in client) {
-          client.navigate(targetUrl);
+          if ('navigate' in client) {
+            return client.navigate(targetUrl).then(() => client.focus());
+          }
           return client.focus();
         }
       }

@@ -161,20 +161,25 @@ export type BlogPushPayload = {
 };
 
 function buildWebMessage(payload: BlogPushPayload): string {
-  const webPayload = {
+  const structuredWeb = {
+    title: payload.title,
+    body: payload.body,
+    url: payload.url,
     notification: {
       title: payload.title,
       body: payload.body,
-      icon: payload.icon ?? '/g-logo.svg',
+      icon: payload.icon,
     },
     data: {
       url: payload.url,
     },
   };
 
+  const plainText = `${payload.title}: ${payload.body}`;
+
   return JSON.stringify({
-    default: payload.body,
-    WEB: JSON.stringify(webPayload),
+    default: plainText,
+    WEB: JSON.stringify(structuredWeb),
   });
 }
 

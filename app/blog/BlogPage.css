@@ -47,7 +47,3 @@
 .blog-page__list {
   margin-top: var(--g-spacing-2);
 }
-
-.blog-page__push {
-  margin-top: var(--g-spacing-6);
-}
