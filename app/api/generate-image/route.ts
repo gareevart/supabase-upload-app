@@ -1,5 +1,15 @@
 import { NextResponse } from 'next/server';
 
+const DEFAULT_ART_MODEL = 'aliceai-image-art-3.0/latest';
+
+function getImageMimeFromBase64(b64: string): string {
+  if (b64.startsWith('/9j/')) return 'image/jpeg';
+  if (b64.startsWith('iVBORw0KGgo')) return 'image/png';
+  if (b64.startsWith('R0lGOD')) return 'image/gif';
+  if (b64.startsWith('UklGR')) return 'image/webp';
+  return 'image/jpeg';
+}
+
 export async function POST(request: Request) {
   try {
     const { prompt } = await request.json();
@@ -10,10 +20,10 @@ export async function POST(request: Request) {
 
     const apiKey = process.env.YANDEX_API_KEY || process.env.YANDEX_CLOUD_API_KEY;
     const folderId = process.env.YANDEX_FOLDER_ID || process.env.YANDEX_CLOUD_FOLDER;
-    const modelName = process.env.ALICEAI_AI_ART_MODEL;
+    const modelName = process.env.ALICEAI_AI_ART_MODEL || DEFAULT_ART_MODEL;
 
-    if (!apiKey || !folderId || !modelName) {
-      console.error('Missing env vars: YANDEX_API_KEY (or YANDEX_CLOUD_API_KEY), YANDEX_FOLDER_ID (or YANDEX_CLOUD_FOLDER), ALICEAI_AI_ART_MODEL');
+    if (!apiKey || !folderId) {
+      console.error('Missing env vars: YANDEX_API_KEY (or YANDEX_CLOUD_API_KEY), YANDEX_FOLDER_ID (or YANDEX_CLOUD_FOLDER)');
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
@@ -46,7 +56,8 @@ export async function POST(request: Request) {
       throw new Error('No image data in response');
     }
 
-    return NextResponse.json({ imageData: `data:image/png;base64,${b64}` });
+    const mimeType = getImageMimeFromBase64(b64);
+    return NextResponse.json({ imageData: `data:${mimeType};base64,${b64}` });
   } catch (error) {
     console.error('Error in generate-image:', error);
     return NextResponse.json(

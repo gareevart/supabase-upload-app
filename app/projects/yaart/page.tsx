@@ -1,12 +1,12 @@
 "use client"
-import React from 'react';
-import Image from 'next/image';
+import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Flex, Text, Button, Alert, Spin, Label, TextArea, useToaster, Skeleton, Icon } from '@gravity-ui/uikit';
 import {Sparkles} from '@gravity-ui/icons';
 import { supabase } from '@/lib/supabase';
 import CustomBreadcrumbs from '@/app/components/Breadcrumbs/Breadcrumbs';
 import { uploadFile } from '@/lib/yandexStorage';
+import './YaartPage.css';
 
 type ProfileWithQuota = {
   id: string;
@@ -14,7 +14,7 @@ type ProfileWithQuota = {
   quota_last_updated: string;
 };
 
-const Yaart = () => {
+const YaartContent = () => {
   const segmentLabels = {
     'projects': 'Projects',
     'yaart': 'Image Generator'
@@ -141,7 +141,10 @@ const Yaart = () => {
         body: JSON.stringify({ prompt })
       });
 
-      if (!response.ok) throw new Error(`Error: ${response.status}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || `Error: ${response.status}`);
+      }
 
       const data = await response.json();
       if (data.imageData) {
@@ -368,13 +371,12 @@ const Yaart = () => {
             {generatedImage && !loading && (
               <Flex direction="column" gap={2}>
                 <Text variant="body-1" color="secondary">Generated Image:</Text>
-                <div style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '16px', position: 'relative', width: '100%', minHeight: '400px' }}>
-                  <Image
+                <div className="yaart-page__image-frame">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                     src={generatedImage}
                     alt="Generated from prompt"
-                    fill
-                    style={{ objectFit: 'contain' }}
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
+                    className="yaart-page__image"
                   />
                 </div>
                 <Flex justifyContent="flex-end" gap={2}>
@@ -428,4 +430,20 @@ const Yaart = () => {
   );
 };
 
-export default Yaart;
+const YaartPage = () => (
+  <Suspense
+    fallback={
+      <div className="min-h-screen">
+        <main className="container mx-auto px-4 md:px-6 max-w-4xl">
+          <Flex justifyContent="center" alignItems="center" style={{ padding: '80px' }}>
+            <Spin size="xl" />
+          </Flex>
+        </main>
+      </div>
+    }
+  >
+    <YaartContent />
+  </Suspense>
+);
+
+export default YaartPage;
