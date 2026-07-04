@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { deletePushEndpoint, isCnsConfigured } from '@/lib/yandex-cns';
+import { deletePushEndpoint, isCnsConfigured, unsubscribeFromTopic } from '@/lib/yandex-cns';
 
 const supabaseServer = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     const { data: existing, error: fetchError } = await supabaseServer
       .from('push_subscriptions')
-      .select('id')
+      .select('id, topic_subscription_arn')
       .eq('endpoint_arn', endpointArn)
       .maybeSingle();
 
@@ -43,6 +43,14 @@ export async function POST(request: NextRequest) {
       if (updateError) {
         console.error('[push/unsubscribe] Failed to deactivate subscription:', updateError);
         return NextResponse.json({ error: 'Failed to unsubscribe' }, { status: 500 });
+      }
+    }
+
+    if (existing?.topic_subscription_arn) {
+      try {
+        await unsubscribeFromTopic(existing.topic_subscription_arn);
+      } catch (topicError) {
+        console.warn('[push/unsubscribe] Failed to unsubscribe from topic:', topicError);
       }
     }
 

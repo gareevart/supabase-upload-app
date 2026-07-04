@@ -66,7 +66,9 @@ export function SubscriptionsPanel({
       : isPushUnavailable
         ? t('subscriptionsPanel.pushUnavailable')
         : pushError && !isPushUnavailable
-          ? pushError
+          ? (pushError.includes('Failed to enable push notifications')
+            ? t('subscriptionsPanel.pushSubscribeFailed')
+            : pushError)
           : undefined;
 
   const handlePushChange = (enabled: boolean) => {

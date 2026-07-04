@@ -8,5 +8,6 @@
   "subscriptionsPanel.pushNotReceiving": "Не получаю",
   "subscriptionsPanel.pushUnsupported": "Push-уведомления не поддерживаются в этом браузере.",
   "subscriptionsPanel.pushDenied": "Уведомления заблокированы в настройках браузера.",
-  "subscriptionsPanel.pushUnavailable": "Push-уведомления временно недоступны."
+  "subscriptionsPanel.pushUnavailable": "Push-уведомления временно недоступны.",
+  "subscriptionsPanel.pushSubscribeFailed": "Не удалось включить push-уведомления. Попробуйте ещё раз."
 }

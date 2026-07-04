@@ -83,13 +83,15 @@ export function useBlogPushNotifications(): UseBlogPushNotificationsResult {
       await registration.update();
       await navigator.serviceWorker.ready;
 
-      let subscription = await registration.pushManager.getSubscription();
-      if (!subscription) {
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-        });
+      const existingSubscription = await registration.pushManager.getSubscription();
+      if (existingSubscription) {
+        await existingSubscription.unsubscribe();
       }
+
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+      });
 
       const subscribeResponse = await fetch('/api/push/subscribe', {
         method: 'POST',

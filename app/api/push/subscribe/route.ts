@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  createPushEndpoint,
   isCnsConfigured,
-  subscribeEndpointToTopic,
+  registerPushEndpointWithTopic,
+  unsubscribeFromTopic,
+  deletePushEndpoint,
   type PushSubscriptionJson,
 } from '@/lib/yandex-cns';
 import { storePushSubscription } from '@/lib/push-subscriptions-db';
@@ -35,8 +36,10 @@ export async function POST(request: NextRequest) {
     }
 
     const userAgent = request.headers.get('user-agent') ?? undefined;
-    const endpointArn = await createPushEndpoint(subscription, userAgent);
-    const topicSubscriptionArn = await subscribeEndpointToTopic(endpointArn);
+    const { endpointArn, topicSubscriptionArn } = await registerPushEndpointWithTopic(
+      subscription,
+      userAgent,
+    );
 
     const dbResult = await storePushSubscription({
       endpointArn,
@@ -58,8 +61,11 @@ export async function POST(request: NextRequest) {
         : 'Push subscription is active, but local database sync failed. Notifications will still work via Yandex CNS.',
     });
   } catch (error) {
-    console.error('[push/subscribe] Failed to subscribe:', error);
     const message = error instanceof Error ? error.message : 'Failed to subscribe to push notifications';
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error('[push/subscribe] Failed to subscribe:', message);
+    return NextResponse.json(
+      { error: 'Failed to enable push notifications. Please try again.' },
+      { status: 500 },
+    );
   }
 }

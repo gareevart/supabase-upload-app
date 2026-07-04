@@ -25,6 +25,38 @@ function getTopicArn(): string | null {
   return process.env.YANDEX_CNS_TOPIC_ARN?.trim() || null;
 }
 
+function parseCnsError(text: string): { code?: string; subcode?: string; message?: string } {
+  try {
+    const data = JSON.parse(text) as { ErrorResponse?: { Error?: { Code?: string; Message?: string; Subcode?: string } } };
+    const error = data.ErrorResponse?.Error;
+    return {
+      code: error?.Code,
+      subcode: error?.Subcode,
+      message: error?.Message,
+    };
+  } catch {
+    return {};
+  }
+}
+
+function extractCnsErrorPayload(error: unknown): { code?: string; subcode?: string; message?: string } {
+  if (!(error instanceof Error)) {
+    return {};
+  }
+
+  const jsonStart = error.message.indexOf('{');
+  if (jsonStart === -1) {
+    return {};
+  }
+
+  return parseCnsError(error.message.slice(jsonStart));
+}
+
+function isEndpointNotFoundError(error: unknown): boolean {
+  const parsed = extractCnsErrorPayload(error);
+  return parsed.subcode === 'EndpointNotFound' || parsed.message?.includes("Can't find endpoint") === true;
+}
+
 async function cnsRequest(params: Record<string, string>): Promise<CnsResponse> {
   const iamToken = await getYandexIamToken();
   const body = new URLSearchParams({
@@ -106,6 +138,41 @@ export async function getVapidPublicKey(): Promise<string> {
   return vapidKey;
 }
 
+export async function getEndpointAttributes(
+  endpointArn: string,
+): Promise<Record<string, string> | null> {
+  try {
+    const response = await cnsRequest({
+      Action: 'GetEndpointAttributes',
+      EndpointArn: endpointArn,
+    });
+    const result = unwrapResult<{ Attributes?: Record<string, string> }>(response, 'GetEndpointAttributes');
+    return result.Attributes ?? null;
+  } catch (error) {
+    if (isEndpointNotFoundError(error)) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+async function setEndpointAttributes(
+  endpointArn: string,
+  attributes: Record<string, string>,
+): Promise<void> {
+  const params: Record<string, string> = {
+    Action: 'SetEndpointAttributes',
+    EndpointArn: endpointArn,
+  };
+
+  Object.entries(attributes).forEach(([key, value], index) => {
+    params[`Attributes.entry.${index + 1}.key`] = key;
+    params[`Attributes.entry.${index + 1}.value`] = value;
+  });
+
+  await cnsRequest(params);
+}
+
 export async function createPushEndpoint(
   subscription: PushSubscriptionJson,
   customUserData?: string,
@@ -144,6 +211,52 @@ export async function subscribeEndpointToTopic(endpointArn: string): Promise<str
 
   const result = unwrapResult<{ SubscriptionArn?: string }>(response, 'Subscribe');
   return result.SubscriptionArn ?? null;
+}
+
+export async function unsubscribeFromTopic(subscriptionArn: string): Promise<void> {
+  await cnsRequest({
+    Action: 'Unsubscribe',
+    SubscriptionArn: subscriptionArn,
+  });
+}
+
+export async function registerPushEndpointWithTopic(
+  subscription: PushSubscriptionJson,
+  customUserData?: string,
+): Promise<{ endpointArn: string; topicSubscriptionArn: string | null }> {
+  const createEndpoint = () => createPushEndpoint(subscription, customUserData);
+
+  let endpointArn = await createEndpoint();
+  let attributes = await getEndpointAttributes(endpointArn);
+
+  if (!attributes) {
+    await deletePushEndpoint(endpointArn).catch(() => undefined);
+    endpointArn = await createEndpoint();
+    attributes = await getEndpointAttributes(endpointArn);
+  }
+
+  if (!attributes) {
+    throw new Error('Failed to create a valid push endpoint in Yandex CNS');
+  }
+
+  if (attributes.Enabled === 'false') {
+    await setEndpointAttributes(endpointArn, { Enabled: 'true' });
+  }
+
+  let topicSubscriptionArn: string | null = null;
+  try {
+    topicSubscriptionArn = await subscribeEndpointToTopic(endpointArn);
+  } catch (error) {
+    if (!isEndpointNotFoundError(error)) {
+      throw error;
+    }
+
+    await deletePushEndpoint(endpointArn).catch(() => undefined);
+    endpointArn = await createEndpoint();
+    topicSubscriptionArn = await subscribeEndpointToTopic(endpointArn);
+  }
+
+  return { endpointArn, topicSubscriptionArn };
 }
 
 export async function deletePushEndpoint(endpointArn: string): Promise<void> {
