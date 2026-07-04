@@ -1,0 +1,11 @@
+{
+  "blogPush.title": "Blog notifications",
+  "blogPush.description": "Get a browser notification when a new blog post is published.",
+  "blogPush.enable": "Enable notifications",
+  "blogPush.disable": "Disable notifications",
+  "blogPush.enabled": "Notifications enabled",
+  "blogPush.unsupported": "Push notifications are not supported in this browser.",
+  "blogPush.denied": "Notifications are blocked in browser settings.",
+  "blogPush.unavailable": "Push notifications are temporarily unavailable.",
+  "blogPush.loading": "Updating subscription..."
+}

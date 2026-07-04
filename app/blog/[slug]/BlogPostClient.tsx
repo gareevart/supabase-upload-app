@@ -12,6 +12,7 @@ import { Button, Icon, Text, Dialog, DropdownMenu } from "@gravity-ui/uikit"
 import { Breadcrumbs as LegacyBreadcrumbs } from "@gravity-ui/uikit/legacy"
 import { ActionBar } from "@gravity-ui/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { authFetch } from "@/lib/auth-fetch"
 import { TableOfContents } from "@/shared/ui/TableOfContents"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useI18n } from "@/app/contexts/I18nContext"
@@ -76,7 +77,7 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
     try {
       // Delete via the API route so the server can revalidate the cached
       // blog list and post pages (revalidatePath).
-      const res = await fetch(`/api/blog-posts/${post.id}`, { method: "DELETE" });
+      const res = await authFetch(`/api/blog-posts/${post.id}`, { method: "DELETE" });
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));

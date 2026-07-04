@@ -399,6 +399,19 @@ export const POST = withAuth(async (request: NextRequest, user: { id: string }) 
       import('@/lib/blog-sync').then(({ syncBlogPostEmbeddings }) => {
         syncBlogPostEmbeddings(data.id);
       }).catch(err => console.error('Failed to trigger sync:', err));
+
+      import('@/lib/blog-push-notify').then(({ notifyBlogPostPublished }) => {
+        if (!data.slug) {
+          return;
+        }
+
+        notifyBlogPostPublished({
+          id: data.id,
+          title: data.title,
+          slug: data.slug,
+          excerpt: data.excerpt,
+        });
+      }).catch(err => console.error('Failed to trigger blog push notification:', err));
     }
 
     // Refresh the statically cached blog list and the new post page.

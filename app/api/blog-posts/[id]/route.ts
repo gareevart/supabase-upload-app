@@ -255,7 +255,7 @@ export const PUT = withAuth(async (request: NextRequest, user: { id: string }) =
     // Check if the post exists and if the user is the author
     const { data: existingPost, error: fetchError } = await supabase
       .from('blog_posts')
-      .select('author_id, slug')
+      .select('author_id, slug, published, title, excerpt')
       .eq('id', id)
       .single();
 
@@ -395,6 +395,19 @@ export const PUT = withAuth(async (request: NextRequest, user: { id: string }) =
     import('@/lib/blog-sync').then(({ syncBlogPostEmbeddings }) => {
       syncBlogPostEmbeddings(data.id);
     }).catch(err => console.error('Failed to trigger sync:', err));
+
+    const wasPublished = Boolean(existingPost.published);
+    const isNowPublished = Boolean(data.published);
+    if (isNowPublished && !wasPublished) {
+      import('@/lib/blog-push-notify').then(({ notifyBlogPostPublished }) => {
+        notifyBlogPostPublished({
+          id: data.id,
+          title: data.title,
+          slug: data.slug,
+          excerpt: data.excerpt,
+        });
+      }).catch(err => console.error('Failed to trigger blog push notification:', err));
+    }
 
     // Refresh the statically cached blog list and post pages. Revalidate both
     // the new slug and the previous one in case the slug changed.

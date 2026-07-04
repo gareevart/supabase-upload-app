@@ -43,6 +43,7 @@ export async function authFetch(
     // Выполняем запрос с добавленным токеном
     const response = await fetch(url, {
       ...options,
+      credentials: 'include',
       headers,
     });
 

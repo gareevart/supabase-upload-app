@@ -1,0 +1,11 @@
+{
+  "blogPush.title": "Уведомления о блоге",
+  "blogPush.description": "Получайте push-уведомление в браузере, когда выходит новый пост.",
+  "blogPush.enable": "Включить уведомления",
+  "blogPush.disable": "Отключить уведомления",
+  "blogPush.enabled": "Уведомления включены",
+  "blogPush.unsupported": "Push-уведомления не поддерживаются в этом браузере.",
+  "blogPush.denied": "Уведомления заблокированы в настройках браузера.",
+  "blogPush.unavailable": "Push-уведомления временно недоступны.",
+  "blogPush.loading": "Обновляем подписку..."
+}

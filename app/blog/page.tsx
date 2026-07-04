@@ -10,6 +10,7 @@ import type { SearchResult } from "../components/SearchComponent"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useAuth, useUserDrafts } from "@/shared/lib/hooks/useBlogPosts"
 import { useI18n } from "@/app/contexts/I18nContext"
+import { BlogPushNotificationsWidget } from "@/widgets/blog-push-notifications/ui"
 import "./BlogPage.css"
 
 type PostFilter = 'all' | 'published' | 'drafts';
@@ -199,6 +200,12 @@ function BlogPageContent() {
         {!searchActive && (
           <div className="blog-page__list">
             <PostList {...getPostListProps()} key={`${postFilter}-${gridView}`} />
+          </div>
+        )}
+
+        {!searchActive && postFilter === 'published' && (
+          <div className="blog-page__push">
+            <BlogPushNotificationsWidget />
           </div>
         )}
       </main>

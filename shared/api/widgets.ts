@@ -1,20 +1,30 @@
 import { NewWidget, UserWidget, WidgetError, WidgetGrant, WidgetPermission } from '@/shared/types/widget';
+import { authFetch } from '@/lib/auth-fetch';
 
 const API_BASE = '/api/widgets';
 
 export class WidgetApi {
   private static async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    authenticated = true,
   ): Promise<T> {
-    const response = await fetch(`${API_BASE}${endpoint}`, {
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
-    });
+    const response = authenticated
+      ? await authFetch(`${API_BASE}${endpoint}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+        ...options,
+      })
+      : await fetch(`${API_BASE}${endpoint}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+        ...options,
+      });
 
     if (!response.ok) {
       let errorData: WidgetError;
@@ -37,7 +47,7 @@ export class WidgetApi {
   }
 
   static async getPublicWidgets(): Promise<{ data: UserWidget[] }> {
-    return this.request('/public');
+    return this.request('/public', {}, false);
   }
 
   static async getEnabledWidgets(): Promise<{ data: UserWidget[] }> {
