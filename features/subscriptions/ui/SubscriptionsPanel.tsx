@@ -107,7 +107,8 @@ export function SubscriptionsPanel({
         <Switch
           size="l"
           checked={isPushSubscribed}
-          disabled={isPushLoading || !isPushSupported || isPushDenied || isPushUnavailable}
+          loading={isPushLoading}
+          disabled={!isPushSupported || isPushDenied || isPushUnavailable}
           onUpdate={handlePushChange}
           content={isPushSubscribed
             ? t('subscriptionsPanel.pushReceiving')
