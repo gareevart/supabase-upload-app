@@ -73,8 +73,37 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     };
   }, [editor]);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const root = containerRef.current;
+    if (!root) return;
+
+    const handleMouseDown = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+
+      if (target.closest('.g-md-toolbar, button, a, input, select, [role="button"]')) {
+        return;
+      }
+
+      const editorPane = target.closest(
+        '.g-md-wysiwyg-editor__editor, .g-md-markup-editor__editor',
+      );
+      if (!editorPane) return;
+
+      requestAnimationFrame(() => {
+        if (!editor.hasFocus()) {
+          editor.focus();
+        }
+      });
+    };
+
+    root.addEventListener('mousedown', handleMouseDown);
+    return () => root.removeEventListener('mousedown', handleMouseDown);
+  }, [editor]);
+
   return (
-    <div className="markdown-editor">
+    <div className="markdown-editor" ref={containerRef}>
       <MarkdownEditorView
         editor={editor}
         stickyToolbar

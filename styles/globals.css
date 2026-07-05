@@ -460,6 +460,10 @@ body.navigation-position-left .main-content:has(.aikit-chat-page) {
   max-width: 100%;
 }
 
+.g-md-editor-component__editor {
+ padding: var(--g-spacing-2);
+}
+
 /* Mobile: bottom nav is hidden on chat pages (Navigation.css), so use full height */
 @media (max-width: 767px) {
   .aikit-chat-page {

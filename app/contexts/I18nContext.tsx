@@ -35,6 +35,8 @@ import blogPostViewEn from '@/app/blog/[slug]/BlogPostClient.i18n/en.json';
 import blogPostViewRu from '@/app/blog/[slug]/BlogPostClient.i18n/ru.json';
 import blogEditorEn from '@/app/components/blog/BlogEditor.i18n/en.json';
 import blogEditorRu from '@/app/components/blog/BlogEditor.i18n/ru.json';
+import markdownRendererEn from '@/features/blog-editor/ui/MarkdownRenderer.i18n/en.json';
+import markdownRendererRu from '@/features/blog-editor/ui/MarkdownRenderer.i18n/ru.json';
 import broadcastDetailEn from '@/widgets/broadcast-detail/ui/BroadcastDetailWidget.i18n/en.json';
 import broadcastDetailRu from '@/widgets/broadcast-detail/ui/BroadcastDetailWidget.i18n/ru.json';
 import subscriptionsPanelEn from '@/features/subscriptions/ui/SubscriptionsPanel.i18n/en.json';
@@ -65,6 +67,7 @@ const enTranslations: TranslationDict = {
   ...blogPostCardEn,
   ...blogPostViewEn,
   ...blogEditorEn,
+  ...markdownRendererEn,
   ...broadcastDetailEn,
   ...subscriptionsPanelEn,
   ...apiKeysPanelEn,
@@ -88,6 +91,7 @@ const ruTranslations: TranslationDict = {
   ...blogPostCardRu,
   ...blogPostViewRu,
   ...blogEditorRu,
+  ...markdownRendererRu,
   ...broadcastDetailRu,
   ...subscriptionsPanelRu,
   ...apiKeysPanelRu,

@@ -1,14 +1,69 @@
 .markdown-editor {
   border: 1px solid var(--g-color-line-generic);
   border-radius: var(--g-border-radius-m);
-  overflow: hidden;
   min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  --g-md-toolbar-sticky-offset: 0px;
+}
+
+.markdown-editor > div,
+.markdown-editor .g-md-editor-component,
+.markdown-editor .g-md-editor-component__editor-wrapper,
+.markdown-editor .g-md-editor-component__editor,
+.markdown-editor .g-md-wysiwyg-editor,
+.markdown-editor .g-md-markup-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.markdown-editor .g-md-wysiwyg-editor__toolbar,
+.markdown-editor .g-md-markup-editor__toolbar {
+  position: sticky;
+  top: var(--g-spacing-2);
+  z-index: 50;
+  flex-shrink: 0;
+  background-color: var(--g-color-base-background);
+}
+
+.markdown-editor .g-md-wysiwyg-editor__editor,
+.markdown-editor .g-md-markup-editor__editor {
+  flex: 1;
+  min-height: 0;
+  cursor: text;
   display: flex;
   flex-direction: column;
 }
 
-.markdown-editor > div {
+/* Expand editable surface so clicks anywhere in the pane activate the cursor */
+.markdown-editor .g-md-wysiwyg-editor__editor > .ProseMirror {
   flex: 1;
-  display: flex;
-  flex-direction: column;
+  min-height: 100%;
+  outline: none;
+}
+
+.markdown-editor .g-md-markup-editor__editor .CodeMirror {
+  min-height: 100%;
+}
+
+/* Tailwind preflight removes list markers — restore them in the WYSIWYG editor */
+.markdown-editor .ProseMirror ul,
+.markdown-editor .ProseMirror ol {
+  padding-left: 1.5em;
+  margin: 0.75em 0;
+}
+
+.markdown-editor .ProseMirror ul {
+  list-style-type: disc;
+}
+
+.markdown-editor .ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.markdown-editor .ProseMirror li {
+  display: list-item;
+  margin: 0.25em 0;
 }

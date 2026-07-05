@@ -102,7 +102,7 @@
   margin: 0 auto;
   background-color: var(--g-color-base-float);
   border: 1px solid var(--g-color-line-generic);
-  border-radius: var(--g-border-radius-xl);
+  border-radius: var(--g-border-radius-2xl);
 }
 
 .navigation--bottom .nav-container {

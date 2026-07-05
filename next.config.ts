@@ -91,7 +91,7 @@ const nextConfig: NextConfig = {
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
-        fs: false,
+        fs: path.join(projectRoot, 'lib/browser-shims/fs.js'),
         path: false,
       };
     }
