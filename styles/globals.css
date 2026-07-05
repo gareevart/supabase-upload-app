@@ -162,7 +162,6 @@ a {
   body.navigation-position-bottom .main-content {
     height: auto;
     width: 100%;
-    max-width: 1200px;
     margin: var(--g-spacing-3) auto;
     margin-bottom: calc(65px + 32px);
     box-sizing: border-box;
@@ -215,7 +214,6 @@ a {
   align-items: center;
   gap: 16px;
   width: 100%;
-  max-width: 1200px;
   margin: 0 auto;
   box-sizing: border-box;
   border-radius: var(--g-border-radius-2xl);
