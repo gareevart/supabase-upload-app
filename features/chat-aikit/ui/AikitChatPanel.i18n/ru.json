@@ -1,0 +1,15 @@
+{
+  "chatView.breadcrumbHome": "Главная",
+  "chatView.breadcrumbChat": "Чаты",
+  "chatView.breadcrumbNewChat": "Новый чат",
+  "chatView.breadcrumbHistory": "История",
+  "chatView.chatActions": "Навигация по чату",
+  "chatView.newChatTooltip": "Новый чат",
+  "chatView.chatHistory": "История чатов",
+  "chatView.deleteChat": "Удалить чат",
+  "chatView.deleteTitle": "Удалить чат?",
+  "chatView.deleteText": "Это действие нельзя отменить.",
+  "chatView.deleteConfirm": "Удалить",
+  "chatView.cancel": "Отмена",
+  "chatView.historyTitle": "История чатов"
+}

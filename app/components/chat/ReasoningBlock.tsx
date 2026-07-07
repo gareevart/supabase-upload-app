@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button, Icon, Text } from "@gravity-ui/uikit";
 import { ChevronDown, ChevronUp, GearBranches } from "@gravity-ui/icons";
+import "./ReasoningBlock.css";
 
 interface ReasoningBlockProps {
   content: string;
@@ -13,11 +14,11 @@ export const ReasoningBlock = ({ content, isStreaming = false }: ReasoningBlockP
   if (!content && !isStreaming) return null;
 
   return (
-    <div className="mb-3 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-      <div className="flex items-center justify-between p-3 border-b border-blue-200 dark:border-blue-800">
-        <div className="flex items-center gap-2">
-          <Icon data={GearBranches} size={16} className="text-blue-600 dark:text-blue-400" />
-          <Text variant="body-2" className="text-blue-800 dark:text-blue-200 font-medium">
+    <div className="reasoning-block">
+      <div className="reasoning-block__header">
+        <div className="reasoning-block__title-row">
+          <Icon data={GearBranches} size={16} className="reasoning-block__icon" />
+          <Text variant="body-2" className="reasoning-block__title">
             {isStreaming ? "Думаю..." : "Ход мыслей"}
           </Text>
         </div>
@@ -25,19 +26,17 @@ export const ReasoningBlock = ({ content, isStreaming = false }: ReasoningBlockP
           view="flat"
           size="s"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-blue-600 dark:text-blue-400"
+          className="reasoning-block__toggle"
         >
           <Icon data={isExpanded ? ChevronUp : ChevronDown} size={16} />
         </Button>
       </div>
-      
+
       {isExpanded && (
-        <div className="p-3">
-          <div className="text-sm text-blue-800 dark:text-blue-200 whitespace-pre-wrap">
+        <div className="reasoning-block__body">
+          <div className="reasoning-block__content">
             {content || (isStreaming && "Анализирую вопрос...")}
-            {isStreaming && (
-              <span className="inline-block w-2 h-4 ml-1 bg-blue-600 animate-pulse" />
-            )}
+            {isStreaming && <span className="reasoning-block__cursor" />}
           </div>
         </div>
       )}

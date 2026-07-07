@@ -1,14 +1,191 @@
 .aikit-chat-panel {
-  height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  min-height: 100dvh;
+  --blog-content-max-width: 896px;
 }
 
-/* Make the ChatContainer fill the wrapper */
-.aikit-chat-panel > .g-aikit-chat-container {
+.aikit-chat-panel__actionbar {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  flex: 0 0 auto;
+  z-index: 10;
+  margin: 0;
+  padding: 0;
+  background-color: var(--g-color-base-background);
+  width: 100%;
+}
+
+.aikit-chat-panel__actionbar [class*='gn-action-bar-section_type_primary'] {
+  flex: 1 1 auto;
+  width: 100%;
+  padding-inline: var(--g-spacing-5);
+  align-items: center;
+  min-height: 40px;
+}
+
+.aikit-chat-panel > .g-aikit-chat-container > .g-aikit-chat-container__header {
+  display: none;
+}
+
+.aikit-chat-panel__breadcrumbs {
+  width: 100%;
+  min-width: 0;
+}
+
+.aikit-chat-panel__breadcrumbs.g-breadcrumbs {
+  min-width: 0;
+}
+
+.aikit-chat-panel__breadcrumbs .g-breadcrumbs__item:first-child {
+  flex: 0 0 auto;
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.aikit-chat-panel__breadcrumbs .g-breadcrumbs__item:last-child {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.aikit-chat-panel__breadcrumbs .g-breadcrumbs__item_current .g-breadcrumbs__link {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Centered content wrapper — same as .blog-post-body-shell / .blog-page__main */
+.aikit-chat-panel__body-shell {
+  width: 100%;
+  max-width: var(--blog-content-max-width);
+  margin-inline: auto;
+  padding-inline: var(--g-spacing-4);
   flex: 1;
-  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 40px);
+}
+
+.aikit-chat-panel__body-shell > .g-aikit-chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* Page scroll for messages — no nested scrollbar */
+.aikit-chat-panel__body-shell .g-aikit-chat-container__content,
+.aikit-chat-panel__body-shell .g-aikit-chat-content,
+.aikit-chat-panel__body-shell .g-aikit-chat-content__message-list-container,
+.aikit-chat-panel__body-shell .g-aikit-message-list,
+.aikit-chat-panel__body-shell .g-aikit-empty-container {
+  height: auto;
+  overflow: visible;
+}
+
+.aikit-chat-panel__body-shell .g-aikit-chat-container__content,
+.aikit-chat-panel__body-shell .g-aikit-chat-content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.aikit-chat-panel__body-shell .g-aikit-chat-content__message-list-container,
+.aikit-chat-panel__body-shell .g-aikit-message-list {
+  flex: 1 1 auto;
+}
+
+.aikit-chat-panel__body-shell .g-aikit-chat-container__content,
+.aikit-chat-panel__body-shell .g-aikit-chat-container__footer {
+  padding-inline: 0;
+}
+
+.aikit-chat-panel__body-shell .g-aikit-chat-container__footer {
+  flex: 0 0 auto;
+  margin-top: auto;
+  position: -webkit-sticky;
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  width: 100%;
+  background: var(--g-color-base-background);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+body.navigation-position-bottom .aikit-chat-panel__body-shell .g-aikit-chat-container__footer {
+  bottom: var(--app-bottom-navigation-offset);
+  margin-bottom: 0;
+}
+
+body.navigation-position-bottom .aikit-chat-panel {
+  padding-bottom: var(--app-bottom-navigation-offset);
+}
+
+@media (max-width: 767px) {
+  .aikit-chat-panel {
+    --aikit-chat-mobile-footer-offset: 148px;
+  }
+
+  .aikit-chat-panel__actionbar {
+    position: fixed;
+    top: env(safe-area-inset-top, 0px);
+    left: 0;
+    right: 0;
+    z-index: 20;
+  }
+
+  .aikit-chat-panel__body-shell {
+    min-height: auto;
+    padding-top: calc(40px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(
+      var(--aikit-chat-mobile-footer-offset) + env(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  body.navigation-position-bottom .aikit-chat-panel {
+    padding-bottom: 0;
+  }
+
+  body.navigation-position-bottom .aikit-chat-panel__body-shell {
+    padding-bottom: calc(
+      var(--aikit-chat-mobile-footer-offset) + var(--app-bottom-navigation-offset) +
+        env(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  .aikit-chat-panel__body-shell .g-aikit-chat-container__footer {
+    position: fixed;
+    bottom: env(safe-area-inset-bottom, 0px);
+    left: 0;
+    right: 0;
+    z-index: 20;
+    max-width: var(--blog-content-max-width);
+    margin: 0 auto;
+    margin-top: 0;
+    padding-inline: var(--g-spacing-4);
+    padding-bottom: 0;
+    border-top: 1px solid var(--g-color-line-generic);
+  }
+
+  body.navigation-position-bottom .aikit-chat-panel__body-shell .g-aikit-chat-container__footer {
+    bottom: calc(var(--app-bottom-navigation-offset) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (min-width: 768px) {
+  .aikit-chat-panel__actionbar {
+    border-top-left-radius: var(--g-border-radius-xl);
+    border-top-right-radius: var(--g-border-radius-xl);
+  }
 }
 
 .aikit-chat-panel__tools {

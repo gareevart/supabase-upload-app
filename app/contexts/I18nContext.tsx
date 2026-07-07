@@ -35,6 +35,8 @@ import blogPostViewEn from '@/app/blog/[slug]/BlogPostClient.i18n/en.json';
 import blogPostViewRu from '@/app/blog/[slug]/BlogPostClient.i18n/ru.json';
 import blogEditorEn from '@/app/components/blog/BlogEditor.i18n/en.json';
 import blogEditorRu from '@/app/components/blog/BlogEditor.i18n/ru.json';
+import tableOfContentsEn from '@/shared/ui/TableOfContents.i18n/en.json';
+import tableOfContentsRu from '@/shared/ui/TableOfContents.i18n/ru.json';
 import markdownRendererEn from '@/features/blog-editor/ui/MarkdownRenderer.i18n/en.json';
 import markdownRendererRu from '@/features/blog-editor/ui/MarkdownRenderer.i18n/ru.json';
 import broadcastDetailEn from '@/widgets/broadcast-detail/ui/BroadcastDetailWidget.i18n/en.json';
@@ -43,6 +45,10 @@ import subscriptionsPanelEn from '@/features/subscriptions/ui/SubscriptionsPanel
 import subscriptionsPanelRu from '@/features/subscriptions/ui/SubscriptionsPanel.i18n/ru.json';
 import apiKeysPanelEn from '@/features/api-keys/ui/ApiKeysPanel.i18n/en.json';
 import apiKeysPanelRu from '@/features/api-keys/ui/ApiKeysPanel.i18n/ru.json';
+import galleryEn from '@/app/projects/uploader/Gallery.i18n/en.json';
+import galleryRu from '@/app/projects/uploader/Gallery.i18n/ru.json';
+import chatViewEn from '@/features/chat-aikit/ui/AikitChatPanel.i18n/en.json';
+import chatViewRu from '@/features/chat-aikit/ui/AikitChatPanel.i18n/ru.json';
 
 export type AppLanguage = 'en' | 'ru';
 
@@ -67,10 +73,13 @@ const enTranslations: TranslationDict = {
   ...blogPostCardEn,
   ...blogPostViewEn,
   ...blogEditorEn,
+  ...tableOfContentsEn,
   ...markdownRendererEn,
   ...broadcastDetailEn,
   ...subscriptionsPanelEn,
   ...apiKeysPanelEn,
+  ...galleryEn,
+  ...chatViewEn,
 };
 
 const ruTranslations: TranslationDict = {
@@ -91,10 +100,13 @@ const ruTranslations: TranslationDict = {
   ...blogPostCardRu,
   ...blogPostViewRu,
   ...blogEditorRu,
+  ...tableOfContentsRu,
   ...markdownRendererRu,
   ...broadcastDetailRu,
   ...subscriptionsPanelRu,
   ...apiKeysPanelRu,
+  ...galleryRu,
+  ...chatViewRu,
 };
 
 const translations: Record<AppLanguage, TranslationDict> = {

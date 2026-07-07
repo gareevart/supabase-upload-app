@@ -1,8 +1,9 @@
 "use client";
 import { useParams, redirect } from "next/navigation";
-import { Spin } from "@gravity-ui/uikit";
+import { Spin, Text } from "@gravity-ui/uikit";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { AikitChatPanel } from "@/features/chat-aikit/ui";
+import "../chat-page.css";
 
 const ChatPage = () => {
   const params = useParams<{ slug: string }>();
@@ -11,7 +12,7 @@ const ChatPage = () => {
 
   if (isAuthLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="chat-page-loading">
         <Spin size="m" />
       </div>
     );
@@ -24,8 +25,8 @@ const ChatPage = () => {
 
   if (!chatId) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <p>Чат не найден</p>
+      <div className="chat-page-not-found">
+        <Text variant="body-1">Чат не найден</Text>
       </div>
     );
   }

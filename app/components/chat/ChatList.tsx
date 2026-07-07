@@ -1,5 +1,4 @@
-import { useState } from "react";
-import Link from "next/link";
+import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useChats, Chat } from "@/hooks/useChats";
 import { useCreateChat } from "@/hooks/useCreateChat";
@@ -11,9 +10,15 @@ import { DrawerMenu } from "@/shared/ui/DrawerMenu";
 
 interface ChatListProps {
   onChatSelect?: () => void;
+  showTitle?: boolean;
+  showCreateButton?: boolean;
 }
 
-export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
+export const ChatList = ({
+  onChatSelect,
+  showTitle = true,
+  showCreateButton = true,
+}: ChatListProps = {}) => {
   const isMobile = useIsMobile();
   const router = useRouter();
   const {
@@ -24,13 +29,25 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
     deleteChat,
   } = useChats();
   const pathname = usePathname();
-  // Debug active state removed
   const { handleCreateChat, createChat } = useCreateChat();
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [chatToDelete, setChatToDelete] = useState<string | null>(null);
-  /* pathname already declared above */
+
+  const selectedItemIndex = useMemo(() => {
+    const index = chats.findIndex((chat) => pathname?.includes(chat.id));
+    return index >= 0 ? index : undefined;
+  }, [chats, pathname]);
+
+  const listItems = useMemo(
+    () =>
+      chats.map((chat) => ({
+        ...chat,
+        disabled: editingChatId === chat.id,
+      })),
+    [chats, editingChatId],
+  );
 
   const startEditing = (chatId: string, currentTitle: string) => {
     setEditingChatId(chatId);
@@ -72,15 +89,35 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
     }
   };
 
+  const handleItemClick = (chat: Chat) => {
+    if (editingChatId === chat.id) {
+      return;
+    }
+
+    router.push(`/chat/${chat.id}`);
+    onChatSelect?.();
+  };
+
+  const stopItemClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+  };
+
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        <div className="flex justify-between items-center mb-4">
-          <Text variant="header-1">Чаты</Text>
-          <Skeleton className="h-9 w-9" />
-        </div>
+      <div className="chat-list__loading">
+        {(showTitle || showCreateButton) && (
+          <div
+            className={[
+              "chat-list__header",
+              !showTitle && showCreateButton ? "chat-list__header_actions-only" : "",
+            ].filter(Boolean).join(" ")}
+          >
+            {showTitle ? <Text variant="header-1">Чаты</Text> : <span />}
+            {showCreateButton ? <Skeleton className="chat-list__skeleton-button" /> : null}
+          </div>
+        )}
         {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full" />
+          <Skeleton key={i} className="chat-list__skeleton-item" />
         ))}
       </div>
     );
@@ -88,29 +125,35 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
 
   if (error) {
     return (
-      <div className="text-red-500">
+      <Text variant="body-1" color="danger" className="chat-list__error">
         Ошибка при загрузке чатов. Пожалуйста, попробуйте позже.
-      </div>
+      </Text>
     );
   }
 
   return (
-    <div className="chat-list-mobile">
-      <div className="flex justify-between items-center mb-4">
-        <Text variant="header-1">Чаты</Text>
-        <Button
-          size="m"
-          onClick={handleCreateChat}
-          loading={createChat.isPending}
-          title="Создать новый чат"
-        >
-          <Icon data={Plus} size={16} />
-        </Button>
-      </div>
+    <div className="chat-list">
+      {(showTitle || showCreateButton) && (
+        <div className="chat-list__header">
+          {showTitle ? <Text variant="header-1">Чаты</Text> : <span />}
+          {showCreateButton ? (
+            <Button
+              size="m"
+              onClick={handleCreateChat}
+              loading={createChat.isPending}
+              title="Создать новый чат"
+            >
+              <Icon data={Plus} size={16} />
+            </Button>
+          ) : null}
+        </div>
+      )}
 
       {chats.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground mb-4">У вас пока нет чатов</p>
+        <div className="chat-list__empty">
+          <Text variant="body-1" color="secondary" className="chat-list__empty-text">
+            У вас пока нет чатов
+          </Text>
           <Button onClick={handleCreateChat} loading={createChat.isPending}>
             <Icon data={Plus} size={16} />
             Создать чат
@@ -118,22 +161,28 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
         </div>
       ) : (
         <List
-          className="chat-list-gravity"
-          items={chats}
+          className="chat-list__gravity-list"
+          items={listItems}
           filterable={false}
           virtualized={false}
+          size="l"
+          selectedItemIndex={selectedItemIndex}
+          onItemClick={(chat) => handleItemClick(chat)}
           renderItem={(chat: Chat) => {
             const isEditing = editingChatId === chat.id;
-            const isActive = pathname?.includes(chat.id);
 
             if (isEditing) {
               return (
-                <div className={`flex items-center gap-2 p-2 border rounded-md list-item-editing ${isActive ? "active" : ""}`}>
+                <div
+                  className="chat-list__item-editing"
+                  onClick={stopItemClick}
+                  onMouseDown={stopItemClick}
+                >
                   <TextArea
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
                     placeholder="Название чата"
-                    className="flex-1"
+                    className="chat-list__item-editing-field"
                     autoFocus
                   />
                   <Button
@@ -152,27 +201,15 @@ export const ChatList = ({ onChatSelect }: ChatListProps = {}) => {
             }
 
             return (
-              <div
-                className={`p-3 rounded-md list-item relative ${isActive ? "active" : ""}`}
-                style={{
-                  overflow: 'hidden',
-                }}
-              >
-                {/* Navigation Overlay - Z-index 10 */}
+              <div className="chat-list__item-row">
+                <Text variant="body-1" className="chat-list__item-title">
+                  {chat.title}
+                </Text>
                 <div
-                  className="absolute inset-0 z-10 cursor-pointer"
-                  onClick={() => {
-                    router.push(`/chat/${chat.id}`);
-                    onChatSelect?.();
-                  }}
-                />
-
-                <div className="flex-1 min-w-0 mr-2 z-0" style={{ flex: '1 1 0%', minWidth: 0 }}>
-                  <div className="font-medium truncate text-left w-full">{chat.title}</div>
-                </div>
-
-                {/* Dropdown Wrapper - Z-index 20 (Higher than Overlay) */}
-                <div className="shrink-0 relative z-20" onClick={(e) => e.stopPropagation()}>
+                  className="chat-list__item-menu"
+                  onClick={stopItemClick}
+                  onMouseDown={stopItemClick}
+                >
                   <DropdownMenu
                     size="s"
                     items={[

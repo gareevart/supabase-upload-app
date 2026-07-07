@@ -1,0 +1,15 @@
+{
+  "chatView.breadcrumbHome": "Home",
+  "chatView.breadcrumbChat": "Chats",
+  "chatView.breadcrumbNewChat": "New chat",
+  "chatView.breadcrumbHistory": "History",
+  "chatView.chatActions": "Chat navigation",
+  "chatView.newChatTooltip": "New chat",
+  "chatView.chatHistory": "Chat history",
+  "chatView.deleteChat": "Delete chat",
+  "chatView.deleteTitle": "Delete chat?",
+  "chatView.deleteText": "This action cannot be undone.",
+  "chatView.deleteConfirm": "Delete",
+  "chatView.cancel": "Cancel",
+  "chatView.historyTitle": "Chat history"
+}

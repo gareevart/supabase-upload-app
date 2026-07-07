@@ -1,141 +1,62 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Text, List, Link } from '@gravity-ui/uikit';
-
-interface TocItem {
-  id: string;
-  level: number;
-  text: string;
-}
+import { useI18n } from '@/app/contexts/I18nContext';
+import { extractHeadings } from '@/shared/lib/blog/headingAnchors';
+import './TableOfContents.css';
 
 interface TableOfContentsProps {
-  content: any;
+  content: unknown;
   className?: string;
 }
 
-/**
- * Компонент Table of Contents для отображения структуры статьи
- * Извлекает заголовки из TipTap контента и создает навигацию
- */
+const SCROLL_OFFSET = 100;
+
 export const TableOfContents: React.FC<TableOfContentsProps> = ({ content, className = '' }) => {
-  const [headings, setHeadings] = useState<TocItem[]>([]);
+  const { t } = useI18n();
+  const headings = useMemo(() => extractHeadings(content), [content]);
   const [activeId, setActiveId] = useState<string>('');
 
   useEffect(() => {
-    const extractHeadings = (contentData: any): TocItem[] => {
-      const items: TocItem[] = [];
-
-      try {
-        if (typeof contentData !== 'string' || !contentData) return items;
-
-        // Try TipTap JSON first
-        let parsed: any = null;
-        try { parsed = JSON.parse(contentData); } catch { /* not JSON */ }
-
-        if (parsed?.type === 'doc' && Array.isArray(parsed.content)) {
-          parsed.content.forEach((node: any, index: number) => {
-            if (node.type === 'heading' && node.content) {
-              const text = node.content.map((n: any) => n.text || '').join('');
-              if (text) {
-                const level = node.attrs?.level || 1;
-                const id = `heading-${index}-${text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-')}`;
-                items.push({ id, level, text });
-              }
-            }
-          });
-          return items;
-        }
-
-        // Markdown: extract headings with regex
-        const lines = contentData.split('\n');
-        lines.forEach((line: string, index: number) => {
-          const match = line.match(/^(#{1,6})\s+(.+)/);
-          if (match) {
-            const level = match[1].length;
-            const text = match[2]
-              .replace(/\*\*(.+?)\*\*/g, '$1')
-              .replace(/\*(.+?)\*/g, '$1')
-              .replace(/__(.+?)__/g, '$1')
-              .replace(/_(.+?)_/g, '$1')
-              .replace(/`(.+?)`/g, '$1')
-              .trim();
-            const id = `heading-${index}-${text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-')}`;
-            items.push({ id, level, text });
-          }
-        });
-      } catch (error) {
-        console.error('Error extracting headings:', error);
-      }
-
-      return items;
-    };
-
-    const extracted = extractHeadings(content);
-    setHeadings(extracted);
-
-    // Добавляем ID к заголовкам на странице для навигации
-    const addIdsToHeadings = () => {
-      extracted.forEach((heading) => {
-        const elements = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
-        elements.forEach((element) => {
-          if (element.textContent?.trim() === heading.text && !element.id) {
-            element.id = heading.id;
-          }
-        });
-      });
-    };
-
-    // Небольшая задержка чтобы убедиться, что контент отрендерен
-    const timeoutId = setTimeout(addIdsToHeadings, 100);
-
-    return () => clearTimeout(timeoutId);
-  }, [content]);
-
-  // Отдельный useEffect для отслеживания скролла
-  useEffect(() => {
-    if (headings.length === 0) return;
+    if (headings.length === 0) {
+      return;
+    }
 
     const handleScroll = () => {
-      const scrollPosition = window.scrollY + 100;
-      
-      for (let i = headings.length - 1; i >= 0; i--) {
-        const heading = headings[i];
+      let currentId = '';
+
+      for (const heading of headings) {
         const element = document.getElementById(heading.id);
-        
-        if (element && element.offsetTop <= scrollPosition) {
-          setActiveId(heading.id);
-          break;
+        if (element && element.getBoundingClientRect().top <= SCROLL_OFFSET) {
+          currentId = heading.id;
         }
       }
+
+      setActiveId(currentId);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    handleScroll(); // Вызываем сразу для установки начального состояния
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, [headings]);
 
   const handleClick = (id: string) => {
     const element = document.getElementById(id);
-    if (element) {
-      const offset = 80; // Отступ сверху
-      const elementPosition = element.offsetTop - offset;
-      window.scrollTo({
-        top: elementPosition,
-        behavior: 'smooth'
-      });
-    }
+    element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   if (headings.length === 0) {
     return null;
   }
 
+  const rootClassName = ['table-of-contents', className].filter(Boolean).join(' ');
+
   return (
-    <Card className="grid p-4" size="l">
-      <Text variant="subheader-3" className='pb-4'>
-        Content
+    <Card className={rootClassName} size="l">
+      <Text variant="subheader-3" className="table-of-contents__title">
+        {t('tableOfContents.title')}
       </Text>
       <List
         filterable={false}
@@ -144,29 +65,26 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ content, class
         items={headings}
         renderItem={(heading) => {
           const isActive = activeId === heading.id;
-          const paddingLeft = (heading.level - 1) * 16;
-          
+          const levelClass = Math.min(heading.level, 6);
+
           return (
             <div
-              style={{
-                paddingLeft: `${paddingLeft}px`,
-                borderLeft: isActive ? '4px solid var(--g-color-base-brand)' : '4px solid transparent',
-                borderRadius: '0px 8px 8px 0px',
-                transition: 'all 0.2s ease',
-              }}
+              className={[
+                'table-of-contents__item',
+                `table-of-contents__item_level-${levelClass}`,
+                isActive ? 'table-of-contents__item_active' : '',
+              ].filter(Boolean).join(' ')}
             >
               <Link
                 href={`#${heading.id}`}
                 view={isActive ? 'primary' : 'secondary'}
+                className={[
+                  'table-of-contents__link',
+                  `table-of-contents__link_level-${levelClass}`,
+                ].join(' ')}
                 onClick={(e) => {
                   e.preventDefault();
                   handleClick(heading.id);
-                }}
-                style={{
-                  display: 'block',
-                  padding: '8px',
-                  fontSize: heading.level === 1 ? '14px' : heading.level === 2 ? '13px' : '12px',
-                  fontWeight: heading.level === 1 ? 600 : heading.level === 2 ? 500 : 400,
                 }}
               >
                 {heading.text}
@@ -180,4 +98,3 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ content, class
 };
 
 export default TableOfContents;
-

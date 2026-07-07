@@ -15,6 +15,24 @@
   padding: 20px;
 }
 
+.tag-selector__skeleton-title {
+  width: 140px;
+  height: 20px;
+  margin-bottom: var(--g-spacing-3);
+}
+
+.tag-selector__skeleton-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--g-spacing-2);
+}
+
+.tag-selector__skeleton-tag {
+  width: 72px;
+  height: 28px;
+  border-radius: var(--g-border-radius-xl);
+}
+
 /* Выбранные теги */
 .selected-tags {
   margin-bottom: 16px;

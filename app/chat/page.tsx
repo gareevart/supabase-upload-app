@@ -4,6 +4,7 @@ import { redirect, useRouter } from "next/navigation";
 import { useChats } from "@/hooks/useChats";
 import { Spin } from "@gravity-ui/uikit";
 import { useEffect, useRef } from "react";
+import "./chat-page.css";
 
 const ChatPage = () => {
   const { user, loading: isAuthLoading } = useAuth();
@@ -39,7 +40,7 @@ const ChatPage = () => {
 
   if (isAuthLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="chat-page-loading">
         <Spin size="m" />
       </div>
     );
@@ -54,7 +55,7 @@ const ChatPage = () => {
   }
 
   return (
-    <div className="flex items-center justify-center h-screen">
+    <div className="chat-page-loading">
       <Spin size="m" />
     </div>
   );

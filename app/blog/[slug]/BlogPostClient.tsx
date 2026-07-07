@@ -8,8 +8,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { MarkdownRenderer } from "@/features/blog-editor/ui/MarkdownRenderer"
 import { useState, useEffect } from "react"
-import { Button, Icon, Text, Dialog, DropdownMenu } from "@gravity-ui/uikit"
-import { Breadcrumbs as LegacyBreadcrumbs } from "@gravity-ui/uikit/legacy"
+import { Button, Icon, Text, Dialog, DropdownMenu, Breadcrumbs } from "@gravity-ui/uikit"
 import { ActionBar } from "@gravity-ui/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { authFetch } from "@/lib/auth-fetch"
@@ -121,30 +120,31 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
           <ActionBar.Section style={{ columnGap: 20, gap: 20 }}>
             <ActionBar.Group stretchContainer style={{ minWidth: 0 }}>
               <ActionBar.Item style={{ minWidth: 0, width: '100%' }}>
-                <LegacyBreadcrumbs
+                <Breadcrumbs
                   className="blog-post-breadcrumbs"
-                  lastDisplayedItemsCount={1}
-                  firstDisplayedItemsCount={1}
-                  items={[
-                    {
-                      text: t('blogView.breadcrumbBlog'),
-                      action: () => router.push("/blog")
-                    },
-                    { text: post.title, href: post.slug ? `/blog/${post.slug}` : "/blog" }
-                  ]}
-                />
+                  maxItems={2}
+                >
+                  <Breadcrumbs.Item href="/blog">
+                    {t('blogView.breadcrumbBlog')}
+                  </Breadcrumbs.Item>
+                  <Breadcrumbs.Item href={post.slug ? `/blog/${post.slug}` : "/blog"}>
+                    {post.title}
+                  </Breadcrumbs.Item>
+                </Breadcrumbs>
               </ActionBar.Item>
             </ActionBar.Group>
 
             {canEditPost && (
               <ActionBar.Group pull="right">
                 <ActionBar.Item>
-                  <Link href={`/blog/edit/${post.id}`} passHref>
-                    <Button view="flat">
-                      <Icon data={Pencil} size={16} />
-                      {t('blogView.edit')}
-                    </Button>
-                  </Link>
+                  <Button
+                    view="flat"
+                    component={Link}
+                    href={`/blog/edit/${post.id}`}
+                  >
+                    <Icon data={Pencil} size={16} />
+                    {t('blogView.edit')}
+                  </Button>
                 </ActionBar.Item>
                 <ActionBar.Item>
                   <DropdownMenu

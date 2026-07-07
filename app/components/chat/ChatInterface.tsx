@@ -121,7 +121,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="chat-loading">
         <Spin size="xs" />
       </div>
     );
@@ -160,10 +160,10 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
   }
 
   const settingsContent = (
-    <div className="space-y-4">
-      <div className="space-y-2">
+    <div className="chat-interface__settings">
+      <div className="chat-interface__settings-section">
         <Text variant="body-1">Модель ИИ</Text>
-        <Text variant="body-1" color="secondary" className="flex gap-1">Будет применена только для этого чата</Text>
+        <Text variant="body-1" color="secondary">Будет применена только для этого чата</Text>
         <Select
           value={[selectedModel]}
           options={[
@@ -183,15 +183,15 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
           placeholder="Выберите модель"
         />
       </div>
-      <div className="space-y-2">
+      <div className="chat-interface__settings-section">
         <Text variant="body-1">Системный промпт (роль ассистента)</Text>
-        <Text variant="body-1" color="secondary" className="flex gap-1">Определяет роль и поведение ассистента в этом чате</Text>
+        <Text variant="body-1" color="secondary">Определяет роль и поведение ассистента в этом чате</Text>
         <TextArea
           placeholder="Опишите, как должен вести себя ассистент, например: Ты полезный ассистент. Отвечай на вопросы пользователя чётко и лаконично."
           value={systemPrompt}
           onChange={(e) => setSystemPrompt(e.target.value)}
           rows={5}
-          className="resize-none"
+          className="chat-interface__settings-textarea"
         />
       </div>
     </div>
@@ -219,7 +219,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
               size="m"
               onClick={toggleSidebar}
               title="Открыть меню чатов"
-              className={isMobileSidebarOpen ? 'opacity-0 pointer-events-none' : ''}
+              className={isMobileSidebarOpen ? 'chat-interface__burger-btn_hidden' : ''}
             >
               <Icon data={Bars} size={18} />
             </Button>
@@ -274,7 +274,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
             </div>
           </div>
         ) : (
-          <div className="space-y-4 chat-messages-container">
+          <div className="chat-messages-container">
             {messages.map((message) => (
               <ChatMessage
                 key={message.id}
@@ -289,8 +289,8 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
               />
             )}
             {isAssistantTyping && (
-              <div className="flex items-center gap-2 py-2 px-4 bg-muted rounded-lg w-fit">
-                <div className="text-sm">Чат отвечает...</div>
+              <div className="chat-interface__typing">
+                <Text variant="body-2">Чат отвечает...</Text>
                 <Spin size="xs" />
               </div>
             )}
@@ -378,20 +378,14 @@ const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
   };
 
   return (
-    <div
-      className={`flex ${isUser ? "justify-end" : "justify-start"
-        }`}
-    >
-      <div className="chat-message-wrapper group">
+    <div className={`chat-message-row ${isUser ? "chat-message-row_user" : "chat-message-row_assistant"}`}>
+      <div className="chat-message-wrapper">
         <div
-          className={`rounded-lg p-2 chat-message-bubble ${isUser
-            ? "chat-bubble bg-primary text-primary-foreground"
-            : "bg-muted text-foreground bg-primary"
-            }`}
+          className={`chat-message-bubble ${isUser ? "chat-message-bubble_user" : "chat-message-bubble_assistant"}`}
         >
           {/* Show attachments if present */}
           {message.attachments && message.attachments.length > 0 && (
-            <div className="chat-message-attachments mb-3">
+            <div className="chat-message-attachments">
               {message.attachments.map((file, index) => (
                 <a
                   key={index}
@@ -448,12 +442,12 @@ const ChatMessage = ({ message, onCopy }: ChatMessageProps) => {
 
           {/* Show blog sources if present */}
           {hasSources && (
-            <div className="flex flex-col gap-2 mt-2">
+            <div className="chat-message-sources">
               {hasMultipleSources ? (
                 <DropdownMenu
                   renderSwitcher={(props) => (
                     <span {...props}>
-                      <Label theme="clear" size="m" className="cursor-pointer">
+                      <Label theme="clear" size="m" className="chat-message-sources__label">
                         Sources +{sources.length}
                       </Label>
                     </span>

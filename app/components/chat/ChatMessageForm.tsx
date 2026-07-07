@@ -66,7 +66,7 @@ export const ChatMessageForm = ({
     >
       {/* Show attached files list if any */}
       {attachedFiles.length > 0 && (
-        <div className="chat-message-form__files-list mb-2">
+        <div className="chat-message-form__files-list">
           <FileUploader
             files={attachedFiles}
             onFilesChange={setAttachedFiles}

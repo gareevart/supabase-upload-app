@@ -4,8 +4,9 @@ import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChatContainer, ActionButton } from "@gravity-ui/aikit";
 import type { ChatType, TChatMessage, TSubmitData } from "@gravity-ui/aikit";
-import { Button, Dialog, Icon, Select, Text, TextArea } from "@gravity-ui/uikit";
-import { Bulb, Circles3Plus, Magnifier, Sliders } from "@gravity-ui/icons";
+import { Button, Breadcrumbs, Dialog, DropdownMenu, Icon, Select, Text, TextArea } from "@gravity-ui/uikit";
+import { ActionBar } from "@gravity-ui/navigation";
+import { Bulb, Circles3Plus, ClockArrowRotateLeft, Ellipsis, Magnifier, Plus, Sliders, TrashBin } from "@gravity-ui/icons";
 import { useChat } from "@/hooks/useChat";
 import { useChats } from "@/hooks/useChats";
 import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
@@ -38,6 +39,7 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
   const [useWebSearch, setUseWebSearch] = useState(false);
   const [useWidgetMode, setUseWidgetMode] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState("");
 
   useEffect(() => {
@@ -47,8 +49,9 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
   const aikitMessages = toAikitMessages(messages);
   const aikitChats = toAikitChats(chats);
   const activeChat = chat
-    ? { id: chat.id, name: chat.title || "Новый чат", createTime: chat.created_at }
+    ? { id: chat.id, name: chat.title || t('chatView.breadcrumbNewChat'), createTime: chat.created_at }
     : null;
+  const chatTitle = activeChat?.name || t('chatView.breadcrumbNewChat');
   const status = toChatStatus(isMessageSending, isAssistantTyping, !!error);
 
   const handleSendMessage = useCallback(
@@ -80,6 +83,16 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
     },
     [deleteChat],
   );
+
+  const handleDeleteCurrentChat = async () => {
+    try {
+      await deleteChat.mutateAsync(chatId);
+      setDeleteDialogOpen(false);
+      router.push("/chat/history");
+    } catch {
+      // Error toast is handled in useChats
+    }
+  };
 
   const handleSaveSettings = async () => {
     await updateSystemPrompt.mutateAsync(systemPrompt);
@@ -170,6 +183,67 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
 
   return (
     <div className="aikit-chat-panel">
+      <div className="aikit-chat-panel__actionbar">
+        <ActionBar aria-label={t('chatView.chatActions')}>
+          <ActionBar.Section style={{ columnGap: 20, gap: 20 }}>
+            <ActionBar.Group stretchContainer style={{ minWidth: 0 }}>
+              <ActionBar.Item style={{ minWidth: 0, width: '100%' }}>
+                <Breadcrumbs
+                  className="aikit-chat-panel__breadcrumbs"
+                  maxItems={3}
+                >
+                  <Breadcrumbs.Item href="/">
+                    {t('chatView.breadcrumbHome')}
+                  </Breadcrumbs.Item>
+                  <Breadcrumbs.Item href="/chat/history">
+                    {t('chatView.breadcrumbChat')}
+                  </Breadcrumbs.Item>
+                  <Breadcrumbs.Item href={`/chat/${chatId}`}>
+                    {chatTitle}
+                  </Breadcrumbs.Item>
+                </Breadcrumbs>
+              </ActionBar.Item>
+            </ActionBar.Group>
+
+            <ActionBar.Group pull="right">
+              <ActionBar.Item>
+                <Button
+                  view="flat"
+                  onClick={handleCreateChat}
+                  loading={createChat.isPending}
+                  title={t('chatView.newChatTooltip')}
+                >
+                  <Icon data={Plus} size={16} />
+                </Button>
+              </ActionBar.Item>
+              <ActionBar.Item>
+                <DropdownMenu
+                  items={[
+                    {
+                      text: t('chatView.chatHistory'),
+                      iconStart: <Icon data={ClockArrowRotateLeft} size={16} />,
+                      action: () => router.push('/chat/history'),
+                    },
+                    {
+                      text: t('chatView.deleteChat'),
+                      theme: 'danger',
+                      iconStart: <Icon data={TrashBin} size={16} />,
+                      action: () => setDeleteDialogOpen(true),
+                    },
+                  ]}
+                  switcher={
+                    <Button view="flat" size="s" title={t('chatView.chatActions')}>
+                      <Icon data={Ellipsis} size={16} />
+                    </Button>
+                  }
+                />
+              </ActionBar.Item>
+            </ActionBar.Group>
+          </ActionBar.Section>
+        </ActionBar>
+      </div>
+
+      <div className="aikit-chat-panel__body-shell">
       <ChatContainer
         chats={aikitChats}
         activeChat={activeChat}
@@ -181,6 +255,9 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
         onSelectChat={handleSelectChat}
         onCreateChat={handleCreateChat}
         onDeleteChat={handleDeleteChat}
+        showNewChat={false}
+        showHistory={false}
+        headerProps={{ showTitle: false }}
         shouldParseIncompleteMarkdown
         showActionsOnHover
         messageListConfig={{ messageRendererRegistry: widgetMessageRegistry }}
@@ -223,6 +300,44 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
           },
         }}
       />
+      </div>
+
+      {isMobile ? (
+        <DrawerMenu
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          title={t('chatView.deleteTitle')}
+          footer={
+            <>
+              <Button view="outlined" size="l" onClick={() => setDeleteDialogOpen(false)}>
+                {t('chatView.cancel')}
+              </Button>
+              <Button
+                view="outlined-danger"
+                size="l"
+                onClick={handleDeleteCurrentChat}
+                loading={deleteChat.isPending}
+              >
+                {t('chatView.deleteConfirm')}
+              </Button>
+            </>
+          }
+        >
+          <Text variant="body-1">{t('chatView.deleteText')}</Text>
+        </DrawerMenu>
+      ) : (
+        <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+          <Dialog.Header caption={t('chatView.deleteTitle')} />
+          <Dialog.Body>{t('chatView.deleteText')}</Dialog.Body>
+          <Dialog.Footer
+            onClickButtonCancel={() => setDeleteDialogOpen(false)}
+            onClickButtonApply={handleDeleteCurrentChat}
+            textButtonApply={t('chatView.deleteConfirm')}
+            textButtonCancel={t('chatView.cancel')}
+            propsButtonApply={{ view: 'outlined-danger', loading: deleteChat.isPending }}
+          />
+        </Dialog>
+      )}
 
       {isMobile ? (
         <DrawerMenu

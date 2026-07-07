@@ -230,6 +230,10 @@
     display: none;
   }
 
+  body.navigation-position-bottom .navigation--chat-route {
+    display: block;
+  }
+
   .navigation {
     position: fixed;
     bottom: 16px;

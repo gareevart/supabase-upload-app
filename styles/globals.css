@@ -133,6 +133,15 @@ a {
   }
 }
 
+/* Bottom navigation layout tokens (navigation-position-bottom) */
+body.navigation-position-bottom {
+  --app-bottom-navigation-height: 65px;
+  --app-bottom-navigation-inset: 16px;
+  --app-bottom-navigation-offset: calc(
+    var(--app-bottom-navigation-height) + var(--app-bottom-navigation-inset)
+  );
+}
+
 /* Desktop layout with grid */
 @media (min-width: 768px) {
   body.navigation-position-left {
@@ -433,23 +442,20 @@ a {
 }
 /* ── Chat page layout ── */
 
-/* Desktop: top nav (~60px), remove main padding and constraints */
 .aikit-chat-page {
-  height: calc(100dvh - 60px);
-  overflow: hidden;
+  min-height: 100%;
 }
 
 .main-content:has(.aikit-chat-page) {
   padding-top: 0;
   padding-bottom: 0;
-  overflow: hidden;
   max-width: 100%;
   margin: 0;
 }
 
-/* Left sidebar nav: chat fills full viewport height */
+/* Left sidebar nav: chat uses full main column height */
 body.navigation-position-left .aikit-chat-page {
-  height: 100dvh;
+  min-height: 100%;
 }
 
 body.navigation-position-left .main-content:has(.aikit-chat-page) {
@@ -462,13 +468,26 @@ body.navigation-position-left .main-content:has(.aikit-chat-page) {
  padding: var(--g-spacing-2);
 }
 
-/* Mobile: bottom nav is hidden on chat pages (Navigation.css), so use full height */
+/* Mobile: bottom nav is hidden on chat pages unless navigation is bottom-positioned */
 @media (max-width: 767px) {
-  .aikit-chat-page {
-    height: 100dvh;
-  }
-
   .main-content:has(.aikit-chat-page) {
     margin-bottom: 0;
+    overflow: visible;
+  }
+
+  body.navigation-position-bottom .main-content:has(.aikit-chat-page) {
+    margin-bottom: var(--app-bottom-navigation-offset);
+  }
+}
+
+/* Chat history — breadcrumb bar flush to the content card top (same as blog post). */
+.main-content:has(.chat-history-page) {
+  padding-top: 0;
+}
+
+@media (min-width: 768px) {
+  .chat-history-page__actionbar {
+    border-top-left-radius: var(--g-border-radius-xl);
+    border-top-right-radius: var(--g-border-radius-xl);
   }
 }

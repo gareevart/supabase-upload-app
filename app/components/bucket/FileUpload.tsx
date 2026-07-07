@@ -6,6 +6,7 @@ import { uploadFile, getPublicUrl } from '@/lib/yandexStorage';
 import { supabase } from '@/lib/supabase';
 import { Button, Card, Text, useToaster, Hotkey} from '@gravity-ui/uikit';
 import TagSelector from './TagSelector';
+import { useI18n } from '@/app/contexts/I18nContext';
 
 interface Tag {
   id: string;
@@ -20,13 +21,14 @@ export default function FileUpload() {
   const [error, setError] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const toaster = useToaster();
+  const { t } = useI18n();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFile = e.target.files[0];
       // Проверяем, что файл является изображением
       if (!selectedFile.type.startsWith('image/')) {
-        setError('Пожалуйста, выберите изображение (JPEG, PNG, GIF и т.д.)');
+        setError(t('gallery.upload.error.notImage'));
         setFile(null);
         return;
       }
@@ -38,12 +40,12 @@ export default function FileUpload() {
   const handleUpload = async () => {
     const userId = localStorage.getItem('user_id');
     if (!userId) {
-      setError('Для загрузки файлов необходимо авторизоваться');
+      setError(t('gallery.upload.error.authRequired'));
       return;
     }
 
     if (!file) {
-      setError('Пожалуйста, выберите изображение для загрузки');
+      setError(t('gallery.upload.error.noFile'));
       return;
     }
 
@@ -116,10 +118,10 @@ export default function FileUpload() {
           // Показываем тост с сообщением об успешной загрузке
           toaster.add({
             name: 'upload-success',
-            title: 'Успешно!',
-            content: selectedTags.length > 0 
-              ? `Изображение загружено с ${selectedTags.length} тегами`
-              : 'Изображение загружено',
+            title: t('gallery.toast.success'),
+            content: selectedTags.length > 0
+              ? t('gallery.upload.successWithTags').replace('{count}', String(selectedTags.length))
+              : t('gallery.upload.success'),
             theme: 'success',
             autoHiding: 5000
           });
@@ -128,19 +130,19 @@ export default function FileUpload() {
           const fileUploadedEvent = new CustomEvent('fileUploaded');
           window.dispatchEvent(fileUploadedEvent);
         } catch (error) {
-          setError('Не удалось получить URL для превью');
+          setError(t('gallery.upload.error.previewUrl'));
         }
       }
     } catch (error: any) {
       // Информативное сообщение об ошибке
-      const errorMessage = error.message || 'Произошла ошибка при загрузке изображения';
+      const errorMessage = error.message || t('gallery.upload.error.generic');
       
       setError(errorMessage);
       
       // Показываем тост с сообщением об ошибке
       toaster.add({
         name: 'upload-error',
-        title: 'Ошибка!',
+        title: t('gallery.toast.error'),
         content: errorMessage,
         theme: 'danger',
         autoHiding: 10000
@@ -153,7 +155,7 @@ export default function FileUpload() {
   return (
     <div>
       <Card view="filled" className='responsive-card'>
-        <Text variant="body-short">Загрузка изображений</Text>
+        <Text variant="body-short">{t('gallery.upload.title')}</Text>
         <div className="file-upload-field">
         <input
             type="file"
@@ -175,7 +177,7 @@ export default function FileUpload() {
         
         <Button size='l' view="action" onClick={handleUpload}
           disabled={uploading || !file}>
-          {uploading ? 'Загрузка...' : 'Загрузить изображение'}
+          {uploading ? t('gallery.upload.uploading') : t('gallery.upload.button')}
           <Hotkey view="light" value="mod+enter" />
         </Button>
 
@@ -183,7 +185,7 @@ export default function FileUpload() {
 
         {uploadedFilePath && (
           <div className="file-upload-success">
-            <Text variant="body-1">Изображение загружено</Text>
+            <Text variant="body-1">{t('gallery.upload.success')}</Text>
           </div>
         )}
       </Card>

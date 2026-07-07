@@ -1,17 +1,17 @@
 'use client';
 import '../../components/components.css';
-import {Button, Breadcrumbs, Card, Text, Label, Skeleton} from '@gravity-ui/uikit';
+import { Card, Text } from '@gravity-ui/uikit';
 import Link from 'next/link';
-import { useRef, useEffect } from 'react';
-import { gsap } from 'gsap';
+import { useI18n } from '@/app/contexts/I18nContext';
 
 const MyProjects = () => {
+  const { t } = useI18n();
 
   return (
     <div className="group-container">
     <Link href="/projects/uploader" rel="noopener noreferrer">
         <Card type="container" size="l" className='project-card'>
-          <Text color="primary" variant="header-1">Image Syncer</Text>
+          <Text color="primary" variant="header-1">{t('gallery.projectCardTitle')}</Text>
         </Card>
     </Link>
     <Link href="/projects/yaart" rel="noopener noreferrer">

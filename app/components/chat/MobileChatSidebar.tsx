@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { ChatList } from "./ChatList";
-import { Button, Icon } from "@gravity-ui/uikit";
+import { Button, Icon, Text } from "@gravity-ui/uikit";
 import { Bars, Xmark } from "@gravity-ui/icons";
 import { useIsMobile } from "@/hooks/use-mobile";
 import "./MobileChatSidebar.css";
@@ -16,7 +16,6 @@ interface MobileChatSidebarProps {
 export const MobileChatSidebar = ({ isOpen, onToggle, onClose }: MobileChatSidebarProps) => {
   const isMobile = useIsMobile();
 
-  // Close sidebar when switching to desktop
   useEffect(() => {
     if (!isMobile && isOpen) {
       onClose();
@@ -29,20 +28,16 @@ export const MobileChatSidebar = ({ isOpen, onToggle, onClose }: MobileChatSideb
 
   return (
     <>
-      {/* Mobile sidebar overlay */}
       {isOpen && (
-        <div 
-          className="mobile-sidebar-overlay fixed inset-0 bg-black/50 z-40 md:hidden"
+        <div
+          className="mobile-sidebar-overlay"
           onClick={onClose}
         />
       )}
 
-      {/* Mobile sidebar */}
-      <div className={`mobile-sidebar fixed top-0 left-0 h-full w-80 bg-background border-r z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="mobile-sidebar-header flex items-center justify-between p-4">
-          <h2 className="text-lg font-semibold">Чаты</h2>
+      <div className={`mobile-sidebar ${isOpen ? "mobile-sidebar_open" : ""}`}>
+        <div className="mobile-sidebar-header">
+          <Text variant="subheader-2">Чаты</Text>
           <Button
             size="m"
             view="flat"
@@ -80,9 +75,7 @@ export const BurgerMenuButton = ({ onClick, isMenuOpen }: BurgerMenuButtonProps)
 
   return (
     <Button
-      className={`mobile-burger-btn fixed top-4 left-4 z-60 md:hidden transition-opacity duration-300 ${
-        isMenuOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-      }`}
+      className={`mobile-burger-btn ${isMenuOpen ? "mobile-burger-btn_hidden" : ""}`}
       size="l"
       view="outlined"
       onClick={handleClick}

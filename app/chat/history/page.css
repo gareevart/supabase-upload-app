@@ -1,0 +1,115 @@
+.chat-history-page {
+  width: 100%;
+  min-height: 100%;
+}
+
+.chat-history-page__actionbar {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin: 0;
+  padding: 0;
+  background-color: var(--g-color-base-background);
+  width: 100%;
+}
+
+.chat-history-page__actionbar [class*='gn-action-bar-section_type_primary'] {
+  flex: 1 1 auto;
+  width: 100%;
+  padding-inline: var(--g-spacing-5);
+  align-items: center;
+  min-height: 40px;
+}
+
+.chat-history-page__breadcrumbs {
+  width: 100%;
+  min-width: 0;
+}
+
+.chat-history-page__breadcrumbs.g-breadcrumbs {
+  min-width: 0;
+}
+
+.chat-history-page__breadcrumbs .g-breadcrumbs__item:first-child {
+  flex: 0 0 auto;
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.chat-history-page__breadcrumbs .g-breadcrumbs__item:last-child {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.chat-history-page__breadcrumbs .g-breadcrumbs__item_current .g-breadcrumbs__link {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-history-page__main {
+  width: 100%;
+  max-width: 640px;
+  margin-inline: auto;
+  padding: var(--g-spacing-5);
+}
+
+.chat-history-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--g-spacing-3);
+  margin-bottom: var(--g-spacing-4);
+}
+
+.chat-history-page__title {
+  margin: 0;
+  min-width: 0;
+}
+
+.chat-history-page__skeleton-breadcrumbs {
+  width: 220px;
+  height: 20px;
+}
+
+.chat-history-page__skeleton-title {
+  width: 200px;
+  height: 32px;
+}
+
+.chat-history-page__skeleton-create-button {
+  width: 120px;
+  height: 36px;
+  border-radius: var(--g-border-radius-m);
+  flex-shrink: 0;
+}
+
+.chat-history-page__skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-2);
+}
+
+.chat-history-page__skeleton-list-item {
+  width: 100%;
+  height: 48px;
+  border-radius: var(--g-border-radius-m);
+}
+
+@media (max-width: 767px) {
+  .chat-history-page__actionbar {
+    position: fixed;
+    top: env(safe-area-inset-top, 0px);
+    left: 0;
+    right: 0;
+    z-index: 20;
+  }
+
+  .chat-history-page__main {
+    padding-top: calc(40px + var(--g-spacing-5));
+  }
+}

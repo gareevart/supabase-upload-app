@@ -1,50 +1,96 @@
-.list-item {
-    background-color: var(--g-color-branding-base-background);
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
+.chat-list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
-.list-item:hover {
-    background-color: var(--g-color-base-simple-hover);
-    cursor: pointer;
+.chat-list__loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-2);
 }
 
-.list-item.active {
-    background-color: var(--g-color-base-selection) !important;
+.chat-list__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--g-spacing-4);
 }
 
-/* Mobile chat list improvements */
+.chat-list__header_actions-only {
+  justify-content: flex-end;
+}
+
+.chat-list__skeleton-button {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--g-border-radius-m);
+}
+
+.chat-list__skeleton-item {
+  width: 100%;
+  height: 48px;
+  border-radius: var(--g-border-radius-m);
+}
+
+.chat-list__error {
+  color: var(--g-color-text-danger);
+}
+
+.chat-list__empty {
+  text-align: center;
+  padding: var(--g-spacing-8) 0;
+}
+
+.chat-list__empty-text {
+  margin-bottom: var(--g-spacing-4);
+}
+
+.chat-list__gravity-list {
+  --g-list-item-padding: var(--g-spacing-3);
+}
+
+.chat-list__item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--g-spacing-2);
+  width: 100%;
+  min-width: 0;
+}
+
+.chat-list__item-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-list__item-menu {
+  flex: 0 0 auto;
+}
+
+.chat-list__item-editing {
+  display: flex;
+  align-items: center;
+  gap: var(--g-spacing-2);
+  width: 100%;
+  padding: var(--g-spacing-1);
+  border: 1px solid var(--g-color-line-generic);
+  border-radius: var(--g-border-radius-m);
+}
+
+.chat-list__item-editing-field {
+  flex: 1;
+  min-width: 0;
+}
+
 @media (max-width: 767px) {
-    .chat-list-mobile {
-        height: 100%;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        /* Smooth scrolling on iOS */
-    }
-
-    .list-item {
-        margin-bottom: 0.5rem;
-    }
-}
-
-/* Force Gravity UI List items to take full width and handle flex children correctly */
-.chat-list-gravity .g-list__item,
-.chat-list-gravity .yc-list__item,
-.chat-list-gravity [role="option"],
-.chat-list-gravity li {
-    width: 100% !important;
-    max-width: 100% !important;
-    display: block !important;
-    padding: 0 !important;
-    box-sizing: border-box !important;
-}
-
-.chat-list-gravity .g-list__item-content,
-.chat-list-gravity .yc-list__item-content {
-    width: 100% !important;
-    display: block !important;
-    padding: 0 !important;
+  .chat-list {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }

@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { Suspense, useState, useEffect } from "react"
 import PostList from "./PostList"
-import { Button, Text, Icon, SegmentedRadioGroup, Select } from "@gravity-ui/uikit"
+import { Button, Text, Icon, SegmentedRadioGroup, Select, Skeleton } from "@gravity-ui/uikit"
 import { LayoutCellsLarge, ListUl } from '@gravity-ui/icons';
 import { useRouter, useSearchParams } from "next/navigation"
 import SearchComponent from "../components/SearchComponent"
@@ -13,6 +13,17 @@ import { useI18n } from "@/app/contexts/I18nContext"
 import "./BlogPage.css"
 
 type PostFilter = 'all' | 'published' | 'drafts';
+
+function BlogPageFallback() {
+  return (
+    <div className="blog-page">
+      <main className="blog-page__main">
+        <Skeleton style={{ height: 40, width: 120, marginBottom: 24 }} />
+        <Skeleton style={{ height: 48, width: '100%' }} />
+      </main>
+    </div>
+  );
+}
 
 function BlogPageContent() {
   const { t } = useI18n()
@@ -132,6 +143,10 @@ function BlogPageContent() {
   };
 
   const toolbarCollapsed = controlsHidden || ((!isAuthenticated || !hasDrafts) && isMobile);
+  const controlsClassName = [
+    'blog-page__controls',
+    controlsHidden ? 'blog-page__controls_hidden' : '',
+  ].filter(Boolean).join(' ');
 
   return (
     <div className="blog-page">
@@ -159,16 +174,7 @@ function BlogPageContent() {
             className="blog-page__search"
             expandOnFocus={true}
           />
-          <div
-            className="blog-page__controls"
-            style={{
-              opacity: controlsHidden ? 0 : 1,
-              pointerEvents: controlsHidden ? 'none' : 'auto',
-              transform: controlsHidden ? 'translateX(20px)' : 'translateX(0)',
-              width: controlsHidden ? 0 : 'auto',
-              overflow: 'hidden',
-            }}
-          >
+          <div className={controlsClassName}>
             {isAuthenticated && hasDrafts && (
               <Select
                 size="l"
@@ -182,7 +188,6 @@ function BlogPageContent() {
               <SegmentedRadioGroup
                 size="l"
                 name="view"
-                defaultValue="grid"
                 value={gridView ? 'grid' : 'list'}
                 onUpdate={(value) => handleViewChange(value === 'grid')}>
                 <SegmentedRadioGroup.Option value="list" title={t('blogPage.viewList')}>
@@ -206,4 +211,10 @@ function BlogPageContent() {
   );
 }
 
-export default BlogPageContent;
+export default function BlogPage() {
+  return (
+    <Suspense fallback={<BlogPageFallback />}>
+      <BlogPageContent />
+    </Suspense>
+  );
+}

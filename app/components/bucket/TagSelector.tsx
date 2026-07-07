@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Button, TextInput, Card, Text, useToaster, Loader, Icon } from '@gravity-ui/uikit';
+import { Button, TextInput, Card, Text, useToaster, Skeleton, Icon } from '@gravity-ui/uikit';
 import { Plus, Xmark } from '@gravity-ui/icons';
 import './TagSelector.css';
+import { useI18n } from '@/app/contexts/I18nContext';
 
 interface Tag {
   id: string;
@@ -25,6 +26,7 @@ export default function TagSelector({ selectedTags, onTagsChange, disabled = fal
   const [creatingTag, setCreatingTag] = useState(false);
   const [showNewTagInput, setShowNewTagInput] = useState(false);
   const toaster = useToaster();
+  const { t } = useI18n();
 
   // Загрузка доступных тегов
   const fetchTags = useCallback(async () => {
@@ -41,15 +43,15 @@ export default function TagSelector({ selectedTags, onTagsChange, disabled = fal
       console.error('Ошибка загрузки тегов:', error);
       toaster.add({
         name: 'tags-error',
-        title: 'Ошибка',
-        content: 'Не удалось загрузить теги',
+        title: t('gallery.tags.toast.error'),
+        content: t('gallery.tags.error.load'),
         theme: 'danger',
         autoHiding: 3000
       });
     } finally {
       setLoading(false);
     }
-  }, [toaster]);
+  }, [toaster, t]);
 
   useEffect(() => {
     fetchTags();
@@ -88,8 +90,8 @@ export default function TagSelector({ selectedTags, onTagsChange, disabled = fal
       
       toaster.add({
         name: 'tag-created',
-        title: 'Успешно',
-        content: `Тег "${data.name}" создан`,
+        title: t('gallery.tags.toast.success'),
+        content: t('gallery.tags.toast.created').replace('{name}', data.name),
         theme: 'success',
         autoHiding: 3000
       });
@@ -97,15 +99,15 @@ export default function TagSelector({ selectedTags, onTagsChange, disabled = fal
       console.error('Ошибка создания тега:', error);
       toaster.add({
         name: 'tag-create-error',
-        title: 'Ошибка',
-        content: error.message || 'Не удалось создать тег',
+        title: t('gallery.tags.toast.error'),
+        content: error.message || t('gallery.tags.error.create'),
         theme: 'danger',
         autoHiding: 3000
       });
     } finally {
       setCreatingTag(false);
     }
-  }, [newTagName, selectedTags, onTagsChange, toaster]);
+  }, [newTagName, selectedTags, onTagsChange, toaster, t]);
 
   // Переключение выбора тега
   const toggleTag = useCallback((tag: Tag) => {
@@ -125,9 +127,11 @@ export default function TagSelector({ selectedTags, onTagsChange, disabled = fal
   if (loading) {
     return (
       <Card view="outlined" className="tag-selector">
-        <div className="tag-selector-loading">
-          <Loader size="s" />
-          <Text variant="body-2">Загрузка тегов...</Text>
+        <Skeleton className="tag-selector__skeleton-title" />
+        <div className="tag-selector__skeleton-tags">
+          {Array.from({ length: 5 }, (_, index) => (
+            <Skeleton key={index} className="tag-selector__skeleton-tag" />
+          ))}
         </div>
       </Card>
     );
@@ -136,14 +140,14 @@ export default function TagSelector({ selectedTags, onTagsChange, disabled = fal
   return (
     <Card view="outlined" className="tag-selector">
       <Text variant="subheader-1" className="tag-selector-title">
-        Теги изображения
+        {t('gallery.tags.title')}
       </Text>
 
       {/* Выбранные теги */}
       {selectedTags.length > 0 && (
         <div className="selected-tags">
           <Text variant="body-2" className="selected-tags-label">
-            Выбранные теги:
+            {t('gallery.tags.selected')}
           </Text>
           <div className="selected-tags-list">
             {selectedTags.map(tag => (
@@ -157,7 +161,7 @@ export default function TagSelector({ selectedTags, onTagsChange, disabled = fal
                   <button
                     className="selected-tag-remove"
                     onClick={() => removeSelectedTag(tag.id)}
-                    title="Удалить тег"
+                    title={t('gallery.tags.remove')}
                   >
                     <Icon data={Xmark} size={12} />
                   </button>
@@ -172,7 +176,7 @@ export default function TagSelector({ selectedTags, onTagsChange, disabled = fal
       {!disabled && (
         <div className="available-tags">
           <Text variant="body-2" className="available-tags-label">
-            Доступные теги:
+            {t('gallery.tags.available')}
           </Text>
           <div className="available-tags-list">
             {availableTags.map(tag => {
@@ -207,12 +211,12 @@ export default function TagSelector({ selectedTags, onTagsChange, disabled = fal
               onClick={() => setShowNewTagInput(true)}
             >
               <Icon data={Plus} size={16} />
-              Создать новый тег
+              {t('gallery.tags.createNew')}
             </Button>
           ) : (
             <div className="new-tag-input">
               <TextInput
-                placeholder="Название тега"
+                placeholder={t('gallery.tags.placeholder')}
                 value={newTagName}
                 onUpdate={setNewTagName}
                 onKeyDown={(e) => {
@@ -234,7 +238,7 @@ export default function TagSelector({ selectedTags, onTagsChange, disabled = fal
                   loading={creatingTag}
                   disabled={!newTagName.trim() || creatingTag}
                 >
-                  Создать
+                  {t('gallery.tags.create')}
                 </Button>
                 <Button
                   view="flat"
@@ -245,7 +249,7 @@ export default function TagSelector({ selectedTags, onTagsChange, disabled = fal
                   }}
                   disabled={creatingTag}
                 >
-                  Отмена
+                  {t('gallery.tags.cancel')}
                 </Button>
               </div>
             </div>

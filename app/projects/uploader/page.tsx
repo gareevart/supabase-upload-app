@@ -1,39 +1,35 @@
 "use client"
 
-import { Text, Spin } from "@gravity-ui/uikit";
+import { useEffect } from "react";
+import { Text } from "@gravity-ui/uikit";
 import { useAuth } from "@/app/contexts/AuthContext";
-import { redirect } from "next/navigation";
+import { useI18n } from "@/app/contexts/I18nContext";
+import { useRouter } from "next/navigation";
 import FileUpload from "@/app/components/bucket/FileUpload";
 import FileView from "@/app/components/bucket/FileView";
 import CustomBreadcrumbs from "../../components/Breadcrumbs/Breadcrumbs";
+import { GalleryPageSkeleton } from "./GalleryPageSkeleton";
 import "../../auth/Auth.css";
 import "./page.css";
 
 export default function Uploader() {
   const { user, loading: isAuthLoading } = useAuth();
+  const { t } = useI18n();
+  const router = useRouter();
   const segmentLabels = {
-    projects: "Projects",
-    uploader: "Image Syncer",
+    projects: t('gallery.breadcrumb.projects'),
+    uploader: t('gallery.breadcrumb.gallery'),
   };
 
-  if (isAuthLoading) {
-    return (
-      <div className="uploader-page__loading">
-        <div className="uploader-page__loading-content">
-          <Spin size="m" />
-          <div className="uploader-page__loading-text">Loading...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    // Сохраняем текущий путь для возврата после авторизации
-    if (typeof window !== 'undefined') {
+  useEffect(() => {
+    if (!isAuthLoading && !user) {
       sessionStorage.setItem('returnUrl', '/projects/uploader');
+      router.push('/auth');
     }
-    redirect("/auth");
-    return null;
+  }, [isAuthLoading, user, router]);
+
+  if (isAuthLoading || !user) {
+    return <GalleryPageSkeleton />;
   }
 
   return (
@@ -41,7 +37,7 @@ export default function Uploader() {
       <main className="uploader-page__main">
         <div className="uploader-page__content">
           <CustomBreadcrumbs segmentLabels={segmentLabels} />
-          <Text variant="header-1">Image Syncer</Text>
+          <Text variant="header-1">{t('gallery.title')}</Text>
           <FileUpload />
           <FileView />
         </div>

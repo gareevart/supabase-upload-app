@@ -1,11 +1,29 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import '../components.css';
-import { listFiles, deleteFile, getPublicUrl, FileObject } from '@/lib/yandexStorage';
+import { listFiles, deleteFile, FileObject } from '@/lib/yandexStorage';
 import { supabase } from '@/lib/supabase';
 import { TrashBin, Copy } from '@gravity-ui/icons';
-import { Button, Icon, Card, Text, Skeleton, useToaster } from '@gravity-ui/uikit';
+import {
+  Button,
+  Icon,
+  Card,
+  Text,
+  Skeleton,
+  useToaster,
+  usePortalContainer,
+  Pagination,
+  Select,
+} from '@gravity-ui/uikit';
+import {
+  Gallery,
+  GalleryItem,
+  getGalleryItemImage,
+  getGalleryItemCopyLinkAction,
+} from '@gravity-ui/components';
+import { useI18n } from '@/app/contexts/I18nContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Tag {
   id: string;
@@ -28,9 +46,29 @@ interface FileViewState {
 
 const PUBLIC_BUCKET_NAME = 'public-gareevde';
 const STORAGE_BASE_URL = 'https://storage.yandexcloud.net';
+const PAGINATION_THRESHOLD = 30;
+const PAGE_SIZE_OPTIONS = [30, 50, 100] as const;
+
+type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 
 const buildPublicImageUrl = (userId: string, fileName: string) =>
   `${STORAGE_BASE_URL}/${PUBLIC_BUCKET_NAME}/profiles/${userId}/${fileName}`;
+
+function getGridColumnCount(windowWidth: number): number {
+  if (windowWidth >= 1024) {
+    return 6;
+  }
+
+  if (windowWidth >= 768) {
+    return 4;
+  }
+
+  if (windowWidth >= 640) {
+    return 3;
+  }
+
+  return 2;
+}
 
 export default function FileView() {
   const [state, setState] = useState<FileViewState>({
@@ -40,8 +78,43 @@ export default function FileView() {
     imageUrls: {},
     userRole: null,
   });
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState<PageSize>(30);
+  const [focusedGridIndex, setFocusedGridIndex] = useState(0);
+  const gridCellRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const toaster = useToaster();
+  const container = usePortalContainer();
+  const { t } = useI18n();
+  const isMobile = useIsMobile();
+
+  const totalImages = state.images.length;
+  const showPagination = totalImages > PAGINATION_THRESHOLD;
+  const totalPages = Math.max(1, Math.ceil(totalImages / pageSize));
+
+  const paginatedImages = useMemo(() => {
+    if (!showPagination) {
+      return state.images;
+    }
+
+    const start = (currentPage - 1) * pageSize;
+    return state.images.slice(start, start + pageSize);
+  }, [state.images, currentPage, pageSize, showPagination]);
+
+  const pageOffset = showPagination ? (currentPage - 1) * pageSize : 0;
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  useEffect(() => {
+    setFocusedGridIndex(0);
+    gridCellRefs.current = [];
+  }, [currentPage, pageSize, paginatedImages.length]);
 
   // Получаем userId безопасно
   const [userId, setUserId] = useState<string | null>(null);
@@ -116,11 +189,11 @@ export default function FileView() {
 
       // Обрабатываем результат получения файлов
       if (filesResult.status === 'rejected') {
-        throw new Error(filesResult.reason?.message || 'Ошибка при загрузке файлов');
+        throw new Error(filesResult.reason?.message || t('gallery.fileView.error.loadFiles'));
       }
 
       const { data: files, error: filesError } = filesResult.value;
-      if (filesError) throw new Error(typeof filesError === 'string' ? filesError : 'Ошибка при загрузке файлов');
+      if (filesError) throw new Error(typeof filesError === 'string' ? filesError : t('gallery.fileView.error.loadFiles'));
 
       // Обрабатываем результат получения данных из БД
       const dbImages = dbImagesResult.status === 'fulfilled' 
@@ -161,19 +234,19 @@ export default function FileView() {
       console.error('Error fetching images:', err);
       updateState({
         loading: false,
-        error: err.message || 'Ошибка при загрузке списка изображений'
+        error: err.message || t('gallery.fileView.error.loadList')
       });
     }
-  }, [userId, updateState]);
+  }, [userId, updateState, t]);
 
   const handleDelete = useCallback(async (fileName: string) => {
     if (!userId) {
-      updateState({ error: 'Необходимо авторизоваться для удаления изображений' });
+      updateState({ error: t('gallery.fileView.error.authRequiredDelete') });
       return;
     }
     
     if (fileName.startsWith('public/')) {
-      updateState({ error: 'Нельзя удалять публичные изображения' });
+      updateState({ error: t('gallery.fileView.error.publicDelete') });
       return;
     }
 
@@ -192,33 +265,42 @@ export default function FileView() {
 
       // Затем удаляем файл из хранилища
       const { error } = await deleteFile(`profiles/${userId}/${fileName}`, userId);
-      if (error) throw new Error(typeof error === 'string' ? error : 'Ошибка при удалении файла');
+      if (error) throw new Error(typeof error === 'string' ? error : t('gallery.fileView.error.deleteFile'));
       
-      showToast('success', 'Успешно!', 'Изображение удалено');
+      showToast('success', t('gallery.toast.success'), t('gallery.toast.imageDeleted'));
       await fetchImages(); // Обновляем список после удаления
     } catch (err: any) {
       console.error('Error deleting file:', err);
-      const errorMessage = err.message || 'Ошибка при удалении изображения';
+      const errorMessage = err.message || t('gallery.fileView.error.deleteImage');
       updateState({ error: errorMessage });
-      showToast('error', 'Ошибка!', errorMessage);
+      showToast('error', t('gallery.toast.error'), errorMessage);
     }
-  }, [userId, updateState, showToast, fetchImages]);
+  }, [userId, updateState, showToast, fetchImages, t]);
 
   const handleCopyUrl = useCallback(async (fileName: string) => {
     const url = state.imageUrls[fileName];
     if (!url) {
-      showToast('error', 'Ошибка!', 'URL изображения не найден');
+      showToast('error', t('gallery.toast.error'), t('gallery.fileView.error.urlNotFound'));
       return;
     }
 
     try {
       await navigator.clipboard.writeText(url);
-      showToast('success', 'Успешно!', 'Ссылка скопирована в буфер обмена');
+      showToast('success', t('gallery.toast.success'), t('gallery.toast.linkCopied'));
     } catch (err) {
       console.error('Error copying to clipboard:', err);
-      showToast('error', 'Ошибка!', 'Не удалось скопировать ссылку');
+      showToast('error', t('gallery.toast.error'), t('gallery.fileView.error.copyFailed'));
     }
-  }, [state.imageUrls, showToast]);
+  }, [state.imageUrls, showToast, t]);
+
+  const handleOpenGallery = useCallback((index: number) => {
+    setGalleryIndex(index);
+    setGalleryOpen(true);
+  }, []);
+
+  const handleGalleryOpenChange = useCallback((open: boolean) => {
+    setGalleryOpen(open);
+  }, []);
 
   const handleFileUploaded = useCallback(() => {
     if (userId) {
@@ -280,44 +362,132 @@ export default function FileView() {
       {Array.from({ length: 8 }, (_, index) => (
         <div key={`skeleton-${index}`} className="file-view-item">
           <div className="file-view-image-container">
-            <Skeleton style={{ width: '100%', height: '100%', borderRadius: '8px' }} />
+            <Skeleton className="file-view-skeleton" />
           </div>
         </div>
       ))}
     </div>
   );
 
+  const handlePageSizeChange = useCallback((value: string[]) => {
+    const nextPageSize = Number(value[0]);
+
+    if (!PAGE_SIZE_OPTIONS.includes(nextPageSize as PageSize)) {
+      return;
+    }
+
+    setPageSize(nextPageSize as PageSize);
+    setCurrentPage(1);
+  }, []);
+
+  const focusGridCell = useCallback((index: number) => {
+    setFocusedGridIndex(index);
+    gridCellRefs.current[index]?.focus();
+  }, []);
+
+  const handleGridKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    const itemCount = paginatedImages.length;
+
+    if (itemCount === 0) {
+      return;
+    }
+
+    const columns = typeof window !== 'undefined'
+      ? getGridColumnCount(window.innerWidth)
+      : 2;
+
+    let nextIndex = focusedGridIndex;
+
+    switch (event.key) {
+      case 'ArrowRight':
+        nextIndex = Math.min(focusedGridIndex + 1, itemCount - 1);
+        break;
+      case 'ArrowLeft':
+        nextIndex = Math.max(focusedGridIndex - 1, 0);
+        break;
+      case 'ArrowDown':
+        nextIndex = Math.min(focusedGridIndex + columns, itemCount - 1);
+        break;
+      case 'ArrowUp':
+        nextIndex = Math.max(focusedGridIndex - columns, 0);
+        break;
+      case 'Home':
+        nextIndex = 0;
+        break;
+      case 'End':
+        nextIndex = itemCount - 1;
+        break;
+      default:
+        return;
+    }
+
+    if (nextIndex === focusedGridIndex) {
+      return;
+    }
+
+    event.preventDefault();
+    focusGridCell(nextIndex);
+  }, [focusedGridIndex, paginatedImages.length, focusGridCell]);
+
   const renderImageGrid = () => (
-    <div className="file-view-grid">
-      {state.images.map((image) => (
-        <div key={image.name} className="file-view-item">
-          <div className="file-view-image-container">
-            <Image
-              src={state.imageUrls[image.name] || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNlZWVlZWUiLz48dGV4dCB4PSI1MCIgeT0iNTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk5OSI+SW1hZ2Ugbm90IGZvdW5kPC90ZXh0Pjwvc3ZnPg=='}
-              alt={image.name}
-              fill
-              sizes="100px"
-              className="file-view-image"
-              style={{ objectFit: 'cover' }}
-              priority={false}
-              loading="lazy"
-              quality={75}
-              placeholder="blur"
-              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-              onError={(e) => {
-                const img = e.currentTarget as HTMLImageElement;
-                img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNlZWVlZWUiLz48dGV4dCB4PSI1MCIgeT0iNTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk5OSI+SW1hZ2Ugbm90IGZvdW5kPC90ZXh0Pjwvc3ZnPg==';
-              }}
-            />
-          </div>
-          
+    <div
+      className="file-view-grid"
+      role="grid"
+      aria-label={t('gallery.fileView.gridLabel')}
+      onKeyDown={handleGridKeyDown}
+    >
+      {paginatedImages.map((image, index) => (
+        <div key={image.name} className="file-view-item" role="row">
+          <button
+            type="button"
+            className="file-view-item__open"
+            role="gridcell"
+            tabIndex={0}
+            ref={(element) => {
+              gridCellRefs.current[index] = element;
+            }}
+            onFocus={() => setFocusedGridIndex(index)}
+            onClick={() => handleOpenGallery(pageOffset + index)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                handleOpenGallery(pageOffset + index);
+              }
+            }}
+            aria-label={t('gallery.fileView.openImage').replace('{name}', image.name)}
+          >
+            <div className="file-view-image-container">
+              <Image
+                src={state.imageUrls[image.name] || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNlZWVlZWUiLz48dGV4dCB4PSI1MCIgeT0iNTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk5OSI+SW1hZ2Ugbm90IGZvdW5kPC90ZXh0Pjwvc3ZnPg=='}
+                alt=""
+                fill
+                sizes="100px"
+                className="file-view-image"
+                style={{ objectFit: 'cover' }}
+                priority={false}
+                loading="lazy"
+                quality={75}
+                placeholder="blur"
+                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                onError={(e) => {
+                  const img = e.currentTarget as HTMLImageElement;
+                  img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNlZWVlZWUiLz48dGV4dCB4PSI1MCIgeT0iNTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk5OSI+SW1hZ2Ugbm90IGZvdW5kPC90ZXh0Pjwvc3ZnPg==';
+                }}
+              />
+            </div>
+          </button>
+
           <div className="file-view-overlay">
             <div className="file-view-buttons">
               <Button
                 size="m"
                 view="normal-contrast"
-                title="Скопировать URL изображения"
-                onClick={() => handleCopyUrl(image.name)}
+                title={t('gallery.fileView.copyUrlTitle')}
+                tabIndex={-1}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleCopyUrl(image.name);
+                }}
                 style={{ marginRight: '8px' }}
               >
                 <Icon data={Copy} size={18} />
@@ -326,8 +496,12 @@ export default function FileView() {
                 <Button
                   size="m"
                   view="normal-contrast"
-                  title="Удалить изображение"
-                  onClick={() => handleDelete(image.name)}
+                  title={t('gallery.fileView.deleteTitle')}
+                  tabIndex={-1}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleDelete(image.name);
+                  }}
                 >
                   <Icon data={TrashBin} size={18} />
                 </Button>
@@ -357,7 +531,7 @@ export default function FileView() {
   return (
     <Card type="container" className='responsive-card'>
       <div className="file-view-header">
-        <Text variant="header-1">Галерея изображений</Text>
+        <Text variant="header-1">{t('gallery.fileView.title')}</Text>
         <Button 
           size="l" 
           view="normal" 
@@ -365,7 +539,7 @@ export default function FileView() {
           loading={state.loading}
           disabled={state.loading}
         >
-          {state.loading ? 'Загрузка...' : 'Обновить'}
+          {state.loading ? t('gallery.fileView.loading') : t('gallery.fileView.refresh')}
         </Button>
       </div>
       
@@ -380,12 +554,73 @@ export default function FileView() {
       ) : state.images.length === 0 ? (
         <div className="file-view-empty">
           {userId 
-            ? 'Нет изображений в вашей галерее'
-            : 'Необходимо авторизоваться для просмотра галереи'
+            ? t('gallery.fileView.empty')
+            : t('gallery.fileView.emptyUnauthorized')
           }
         </div>
       ) : (
-        renderImageGrid()
+        <>
+          {renderImageGrid()}
+          {showPagination && (
+            <div className="file-view-pagination">
+              <div className="file-view-pagination__size">
+                <Text variant="body-2" color="secondary">
+                  {t('gallery.fileView.pageSize')}
+                </Text>
+                <Select
+                  size="m"
+                  value={[String(pageSize)]}
+                  onUpdate={handlePageSizeChange}
+                  options={PAGE_SIZE_OPTIONS.map((size) => ({
+                    value: String(size),
+                    content: String(size),
+                  }))}
+                  width={88}
+                />
+              </div>
+              <div className="file-view-pagination__controls">
+                <Pagination
+                  page={currentPage}
+                  pageSize={pageSize}
+                  total={totalImages}
+                  onUpdate={setCurrentPage}
+                  compact={isMobile}
+                />
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {galleryOpen && (
+        <Gallery
+          key={galleryIndex}
+          open={galleryOpen}
+          onOpenChange={handleGalleryOpenChange}
+          initialItemIndex={galleryIndex}
+          container={container || undefined}
+          emptyMessage={t('gallery.fileView.modalEmpty')}
+        >
+          {state.images.map((image) => {
+            const imageUrl = state.imageUrls[image.name];
+
+            return (
+              <GalleryItem
+                key={image.name}
+                {...getGalleryItemImage({
+                  src: imageUrl,
+                  name: image.name,
+                })}
+                actions={imageUrl ? [
+                  getGalleryItemCopyLinkAction({
+                    copyUrl: imageUrl,
+                    onCopy: () => showToast('success', t('gallery.toast.success'), t('gallery.toast.linkCopied')),
+                  }),
+                ] : undefined}
+              />
+            );
+          })}
+        </Gallery>
       )}
     </Card>
   );

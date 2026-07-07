@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import { useI18n } from '@/app/contexts/I18nContext';
 import { YfmCodeBlock } from '@/features/blog-editor/ui/YfmCodeBlock';
-import { renderYfmHtml } from '@/shared/lib/blog/renderYfmHtml';
+import { prepareBlogHtml } from '@/shared/lib/blog/headingAnchors';
 import { splitYfmHtml } from '@/shared/lib/blog/splitYfmHtml';
 import './MarkdownRenderer.css';
 
@@ -14,10 +14,10 @@ interface MarkdownRendererProps {
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className }) => {
   const { t } = useI18n();
-  const segments = useMemo(
-    () => splitYfmHtml(renderYfmHtml(content)),
-    [content],
-  );
+  const segments = useMemo(() => {
+    const { html } = prepareBlogHtml(content);
+    return splitYfmHtml(html);
+  }, [content]);
   const copyLabel = t('markdownRenderer.copyCode');
   const copiedLabel = t('markdownRenderer.copiedCode');
 

@@ -39,14 +39,8 @@
 }
 
 .post-list__empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--g-spacing-4);
   width: 100%;
   min-width: 280px;
-  padding: var(--g-spacing-8);
-  text-align: center;
 }
 
 .post-list__pagination {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, Skeleton, Pagination, Button, Text, Dialog } from '@gravity-ui/uikit';
+import { Card, Skeleton, Pagination, Dialog, PlaceholderContainer, Text } from '@gravity-ui/uikit';
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useI18n } from "@/app/contexts/I18nContext";
@@ -102,22 +102,26 @@ export const PostList = ({
   }
 
   if (posts.length === 0) {
+    const emptyDescription = draftsOnly
+      ? t('blogPage.emptyDrafts')
+      : publishedOnly
+        ? t('blogPage.emptyPublished')
+        : t('blogPage.emptyAll');
+
     return (
       <div className="post-list">
-        <Card size="l" className="post-list__empty">
-          <Text variant="body-2">
-            {draftsOnly
-              ? t('blogPage.emptyDrafts')
-              : publishedOnly
-                ? t('blogPage.emptyPublished')
-                : t('blogPage.emptyAll')}
-          </Text>
-          {onlyMyPosts && (
-            <Button view="action" size="l" onClick={() => router.push("/blog/new")}>
-              {t('blogPage.createPostShort')}
-            </Button>
-          )}
-        </Card>
+        <PlaceholderContainer
+          className="post-list__empty"
+          size="l"
+          title={emptyDescription}
+          image={{ src: '/file.svg', alt: '' }}
+          actions={onlyMyPosts ? [{
+            text: t('blogPage.createPostShort'),
+            view: 'action',
+            size: 'l',
+            onClick: () => router.push('/blog/new'),
+          }] : undefined}
+        />
       </div>
     );
   }

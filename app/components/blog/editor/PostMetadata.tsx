@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Text, TextInput, TextArea, Checkbox } from '@gravity-ui/uikit';
+import { FormRow } from '@gravity-ui/components';
 import { useI18n } from "@/app/contexts/I18nContext";
 import FeaturedImageSection from "./FeaturedImageSection";
 
@@ -60,25 +61,34 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
 
   return (
     <div className="post-metadata">
-      <div className="post-metadata__field">
-        <Text color="secondary" variant="subheader-1">{t('blogEditor.titleLabel')}</Text>
+      <FormRow
+        label={t('blogEditor.titleLabel')}
+        fieldId="post-title"
+        required
+        direction="column"
+      >
         <TextInput
+          id="post-title"
           size="l"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={t('blogEditor.titlePlaceholder')}
         />
-      </div>
+      </FormRow>
 
-      <div className="post-metadata__field">
-        <Text color="secondary" variant="subheader-1">{t('blogEditor.urlLabel')}</Text>
+      <FormRow
+        label={t('blogEditor.urlLabel')}
+        fieldId="post-slug"
+        direction="column"
+      >
         <TextInput
+          id="post-slug"
           size="l"
           value={slug}
           onChange={(e) => setSlug(e.target.value)}
           placeholder={t('blogEditor.urlPlaceholder')}
         />
-      </div>
+      </FormRow>
 
       <FeaturedImageSection
         featuredImageUrl={featuredImageUrl}
@@ -109,16 +119,21 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
           </Checkbox>
         </div>
       )}
-      <div className="post-metadata__field">
-        <Text color="secondary" variant="subheader-1">{t('blogEditor.descriptionLabel')}</Text>
+
+      <FormRow
+        label={t('blogEditor.descriptionLabel')}
+        fieldId="post-excerpt"
+        direction="column"
+      >
         <TextArea
+          id="post-excerpt"
           size="l"
           value={excerpt}
           onChange={(e) => setExcerpt(e.target.value)}
           placeholder={t('blogEditor.descriptionPlaceholder')}
           rows={2}
         />
-      </div>
+      </FormRow>
     </div>
   );
 };
