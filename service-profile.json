@@ -1,0 +1,192 @@
+{
+  "$schema": "https://gravity-ui.com/ai/service-profile/schema/service-profile.schema.json",
+  "schemaVersion": "1",
+  "name": "service-gareevde",
+  "tenant": "gravity-ui",
+  "service": {
+    "title": "gareev.de",
+    "domain": "Персональный портфолио-сайт и набор AI/продуктовых инструментов (блог, чат, рассылки, галерея, виджеты)",
+    "audience": "Посетители портфолио, авторизованные пользователи (блог, чат, рассылки, загрузка файлов)",
+    "description": "Публичный продукт с «лицом дизайнера»: mint-бренд, просторные формы и читаемая типографика; внутри — рабочие инструменты (чат, broadcast, редактор) на Gravity UI и FSD."
+  },
+  "theme": {
+    "base": "light",
+    "allowSwitch": true,
+    "brandTokens": {
+      "light": {
+        "--g-color-base-brand": "#1bf9ab",
+        "--g-color-text-link": "rgb(27, 249, 171)"
+      },
+      "dark": {
+        "--g-color-base-brand": "#1bf9ab",
+        "--g-color-text-link": "#1bf9ab"
+      }
+    },
+    "note": "Полная палитра light/dark — styles/styles.css (.g-root_theme_light/dark). Переключатель: AppearancePanel (light / dark / system), rootClassName app-canvas. TODO: оформить Themer themeConfig вместо ручных overrides."
+  },
+  "density": {
+    "default": "normal",
+    "note": "Базовый size=m в таблицах и карточках; формы и primary CTA — size=l; навигация — size=xl. Не compact ops-инструмент."
+  },
+  "contentLayout": {
+    "width": "fluid-capped",
+    "maxWidth": "1040px",
+    "align": "center",
+    "adaptive": {
+      "policy": "desktop-first",
+      "breakpoints": "Desktop shell: grid 100px + 1fr от 768px; mobile — bottom nav, full-width. Чат — full-viewport (AikitChatPanel). Читающая колонка блога — 896px."
+    },
+    "note": "Контейнеры: .content-container 1040px, blog/chat reading 896px, appearance panel 600px. Legacy Tailwind max-w-4xl только в старых страницах — новый код через локальный CSS."
+  },
+  "formPolicy": {
+    "fieldWidth": "uniform",
+    "formMaxWidth": "640px",
+    "labelPlacement": "form-row-top",
+    "descriptionDefault": "field-description",
+    "requiredMarking": "per-field",
+    "footerActions": "right",
+    "note": "Канон — PostMetadata (FormRow direction=column). Auth — placeholder без label; chat settings — HelpMark. Новые формы — FormRow + column labels."
+  },
+  "navigation": {
+    "homeScreen": true,
+    "navPattern": "aside-header",
+    "breadcrumbs": "detail-only",
+    "breadcrumbsPlacement": "standalone",
+    "pageFooter": false,
+    "backAffordance": "Icon Button view=outlined с ArrowUturnCwLeft / ChevronLeft в ActionBar или над контентом",
+    "note": "AsideHeader не используется: кастомный sidebar (left) или bottom bar через Navigation.tsx + Popover tooltips. ActionBar — на chat/history. Глобального page footer нет."
+  },
+  "interactionPolicy": {
+    "unsavedGuard": false,
+    "saveModel": "explicit",
+    "updates": "pessimistic",
+    "note": "Явные кнопки Save / Publish / Send now; Dialog перед delete. Unsaved navigation guard не реализован."
+  },
+  "feedbackPolicy": {
+    "depth": "standard",
+    "note": "Toaster (useToaster, ~5s), Spin l/m/xl, Skeleton в списках, Alert inline (yaart, api-keys), PlaceholderContainer для empty."
+  },
+  "componentStyling": {
+    "buttonContent": "text-icon",
+    "viewPolicy": "primary=action, secondary=outlined, destructive=outlined-danger/flat-danger, toolbar=flat",
+    "tooltips": "Popover на icon-only nav; HelpMark в формах чата",
+    "note": "Icon как child внутри Button (size 16–20), не startIcon. Card: view=outlined type=container size=l."
+  },
+  "approvedComponents": {
+    "policy": "open",
+    "preferred": {
+      "Rich text / blog editing": "@gravity-ui/markdown-editor",
+      "AI chat surface": "@gravity-ui/aikit (ChatContainer, ActionButton) + @gravity-ui/navigation (ActionBar)",
+      "Structured metadata forms": "FormRow from @gravity-ui/components",
+      "Data tables in admin flows": "Table from @gravity-ui/uikit"
+    },
+    "note": "page-constructor не используется. Legacy @gravity-ui/components (FileView bucket) — постепенно выводить."
+  },
+  "archetypes": [
+    {
+      "name": "Портфолио / home",
+      "when": "Лендинг и точка входа",
+      "structure": "Hero + bio + CTA; content-container 1040px; Card sections; i18n en/ru.",
+      "ref": "recipe-landing"
+    },
+    {
+      "name": "Feature panel (settings/tool)",
+      "when": "Настройки профиля, appearance, API keys, calculator",
+      "structure": "features/*/ui/*Panel.tsx + model hook; локальный *.css с BEM; SegmentedRadioGroup / FormRow; max-width полосы 600–640px.",
+      "ref": "recipe-settings-form"
+    },
+    {
+      "name": "Widget page section",
+      "when": "Составные блоки на маршрутах (broadcast, subscribers, gallery)",
+      "structure": "widgets/*/ui/*Widget.tsx composes features; page.tsx thin.",
+      "ref": "recipe-list-detail"
+    },
+    {
+      "name": "Full-viewport chat",
+      "when": "AI-чат и история",
+      "structure": "ActionBar + Breadcrumbs + AikitChatPanel; min-height 100dvh; без content max-width.",
+      "ref": "recipe-workspace"
+    },
+    {
+      "name": "Blog editor",
+      "when": "Создание/редактирование поста",
+      "structure": "MarkdownEditor + PostMetadata FormRow + FeaturedImageSection Dialog; explicit Publish / Save draft.",
+      "ref": "recipe-settings-form"
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Broadcast",
+      "meaning": "Email-рассылка подписчикам",
+      "preferredLabel": "Broadcast"
+    },
+    {
+      "term": "Widget",
+      "meaning": "Встраиваемый UI-блок пользователя",
+      "preferredLabel": "Widget"
+    },
+    {
+      "term": "Gallery",
+      "meaning": "Личное хранилище загруженных файлов",
+      "preferredLabel": "Gallery"
+    },
+    {
+      "term": "Chat",
+      "meaning": "Диалог с Yandex GPT",
+      "preferredLabel": "Chat"
+    },
+    {
+      "term": "API key",
+      "meaning": "Ключ доступа к API / MCP",
+      "preferredLabel": "API key"
+    }
+  ],
+  "referenceScreens": [
+    {
+      "name": "AI Chat (эталон FSD feature)",
+      "ref": "features/chat-aikit/ui/AikitChatPanel.tsx",
+      "note": "ActionBar, aikit, i18n, full-viewport layout."
+    },
+    {
+      "name": "API Keys panel",
+      "ref": "features/api-keys/ui/ApiKeysPanel.tsx",
+      "note": "Table, modals, Alert, Skeleton, size=l forms."
+    },
+    {
+      "name": "Appearance settings",
+      "ref": "features/appearance/ui/AppearancePanel.tsx",
+      "note": "SegmentedRadioGroup, theme/nav/language."
+    },
+    {
+      "name": "Blog metadata form",
+      "ref": "app/components/blog/editor/PostMetadata.tsx",
+      "note": "FormRow column + required per-field."
+    },
+    {
+      "name": "App navigation shell",
+      "ref": "app/components/Navigation/Navigation.tsx",
+      "note": "Sidebar/bottom nav, mint action selected state."
+    },
+    {
+      "name": "Blog list",
+      "ref": "app/blog/page.tsx",
+      "note": "Gravity-only CSS, Skeleton, PlaceholderContainer."
+    }
+  ],
+  "conventions": [
+    "FSD: app → widgets → features → entities → shared; business logic в features/*/model/use*.ts.",
+    "i18n обязателен en+ru: *.i18n/en.json + ru.json, ключи с префиксом компонента, useI18n().",
+    "Новый UI: только @gravity-ui/uikit + @gravity-ui/icons; без Tailwind в новых pages/widgets/features.",
+    "Стили: локальный Component.css, BEM-префикс; токены из styles/globals.css и styles/styles.css.",
+    "Ошибки AI-сервисов (quota/403): пользователю — короткое извинение без технического JSON (см. yaart / generate-image).",
+    "Desktop canvas: html и .g-root.app-canvas с --g-color-base-float-announcement под sidebar gutter."
+  ],
+  "provenance": {
+    "synthesizedFrom": [
+      "Extraction из кодовой базы supabase-upload-app (app/, features/, widgets/, shared/, styles/) — 2026-08-07",
+      "dimensions.md + service-profile.schema.json"
+    ],
+    "lastUpdated": "2026-08-07",
+    "notes": "Выведено из кода: theme/density/layout/forms/nav/components/archetypes/glossary/feedback. На дефолте registry: AsideHeader заменён кастомной навигацией (зафиксировано в navigation.note); unsavedGuard=false; pageFooter=false. Требует confirm интервью: density normal vs spacious; formPolicy для auth (placeholder-only)."
+  }
+}

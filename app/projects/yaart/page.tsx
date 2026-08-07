@@ -5,6 +5,7 @@ import { Flex, Text, Button, Alert, Spin, Label, TextArea, useToaster, Skeleton,
 import {Sparkles} from '@gravity-ui/icons';
 import { supabase } from '@/lib/supabase';
 import CustomBreadcrumbs from '@/app/components/Breadcrumbs/Breadcrumbs';
+import { useI18n } from '@/app/contexts/I18nContext';
 import { uploadFile } from '@/lib/yandexStorage';
 import './YaartPage.css';
 
@@ -33,6 +34,7 @@ const YaartContent = () => {
   const [saveError, setSaveError] = React.useState('');
   const [saveSuccess, setSaveSuccess] = React.useState(false);
   const toaster = useToaster();
+  const { t } = useI18n();
 
   // Получаем промпт из URL параметров при загрузке компонента
   React.useEffect(() => {
@@ -143,7 +145,12 @@ const YaartContent = () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error || `Error: ${response.status}`);
+
+        if (errorData?.error === 'ai_quota_exhausted') {
+          throw new Error(t('yaart.error.aiQuotaExhausted'));
+        }
+
+        throw new Error(errorData?.message || errorData?.error || `Error: ${response.status}`);
       }
 
       const data = await response.json();
@@ -221,7 +228,7 @@ const YaartContent = () => {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-      setError(`Failed to generate image: ${errorMessage}`);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

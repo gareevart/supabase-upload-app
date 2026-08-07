@@ -49,6 +49,8 @@ import galleryEn from '@/app/projects/uploader/Gallery.i18n/en.json';
 import galleryRu from '@/app/projects/uploader/Gallery.i18n/ru.json';
 import chatViewEn from '@/features/chat-aikit/ui/AikitChatPanel.i18n/en.json';
 import chatViewRu from '@/features/chat-aikit/ui/AikitChatPanel.i18n/ru.json';
+import yaartPageEn from '@/app/projects/yaart/YaartPage.i18n/en.json';
+import yaartPageRu from '@/app/projects/yaart/YaartPage.i18n/ru.json';
 
 export type AppLanguage = 'en' | 'ru';
 
@@ -80,6 +82,7 @@ const enTranslations: TranslationDict = {
   ...apiKeysPanelEn,
   ...galleryEn,
   ...chatViewEn,
+  ...yaartPageEn,
 };
 
 const ruTranslations: TranslationDict = {
@@ -107,6 +110,7 @@ const ruTranslations: TranslationDict = {
   ...apiKeysPanelRu,
   ...galleryRu,
   ...chatViewRu,
+  ...yaartPageRu,
 };
 
 const translations: Record<AppLanguage, TranslationDict> = {

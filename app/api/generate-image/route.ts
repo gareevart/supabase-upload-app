@@ -2,6 +2,19 @@ import { NextResponse } from 'next/server';
 
 const DEFAULT_ART_MODEL = 'aliceai-image-art-3.0/latest';
 
+function isAiQuotaExhaustedError(status: number, errorText: string): boolean {
+  if (status === 403 || status === 429) {
+    return true;
+  }
+
+  const normalized = errorText.toLowerCase();
+  return (
+    normalized.includes('permissiondenied') ||
+    normalized.includes('permission_error') ||
+    normalized.includes('quota')
+  );
+}
+
 function getImageMimeFromBase64(b64: string): string {
   if (b64.startsWith('/9j/')) return 'image/jpeg';
   if (b64.startsWith('iVBORw0KGgo')) return 'image/png';
@@ -45,6 +58,11 @@ export async function POST(request: Request) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Alice AI Art error:', errorText);
+
+      if (isAiQuotaExhaustedError(response.status, errorText)) {
+        return NextResponse.json({ error: 'ai_quota_exhausted' }, { status: 503 });
+      }
+
       throw new Error(`Image generation API error: ${response.status} - ${errorText}`);
     }
 
