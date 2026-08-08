@@ -362,7 +362,6 @@ const YaartContent = () => {
               <Alert
                 theme="danger"
                 message={error}
-                onClose={() => setError('')}
               />
             )}
 

@@ -98,38 +98,22 @@ a {
 
 @media screen and (max-width: 768px) {
   html {
-    -webkit-text-size-adjust: none;
-    text-size-adjust: none;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
-  /* Prevent zoom on input focus on iOS - font-size must be at least 16px */
+  /* iOS Safari: prevent auto-zoom on focus (requires font-size >= 16px) */
   input,
   textarea,
-  select {
-    font-size: 16px !important;
-    line-height: 18px;
-  }
-
-  /* Gravity UI text inputs and textareas */
+  select,
   .g-text-input__control,
-  .g-textarea__control,
-  .g-text-input input,
-  .g-textarea textarea {
-    font-size: 14px !important;
-    line-height: 18px !important;
-  }
-
-  /* Custom UI components */
-  .g-text-input input[type="text"],
-  .g-text-input input[type="email"],
-  .g-text-input input[type="password"],
-  .g-text-input input[type="number"],
-  .g-text-input input[type="search"],
-  .g-text-input input[type="tel"],
-  .g-text-input input[type="url"],
-  .g-select__control {
+  .g-text-area__control,
+  .g-select-control,
+  .g-aikit-prompt-input-body__textarea-control,
+  .markdown-editor .ProseMirror,
+  .markdown-editor .CodeMirror {
     font-size: 16px !important;
-    line-height: 20px !important;
+    line-height: 20px;
   }
 }
 
