@@ -69,4 +69,16 @@
     align-items: center;
     justify-content: center;
   }
+
+  /* Gravity UI Button is inline-flex by default; drawer items must span its content width. */
+  .drawer-body .nav-item {
+    display: flex;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .drawer-body .nav-item-content {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
