@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, KeyboardEvent, ClipboardEvent } from 'react';
-import { Text, Icon } from '@gravity-ui/uikit';
+import { Button, Icon, Text, TextInput } from '@gravity-ui/uikit';
 import { Xmark } from '@gravity-ui/icons';
 import { validateEmail } from '@/lib/resend';
 import { useI18n } from '@/app/contexts/I18nContext';
@@ -118,27 +118,28 @@ const TagInput: React.FC<TagInputProps> = ({
           >
             <span>{tag}</span>
             {!disabled && (
-              <button 
-                type="button" 
+              <Button
+                type="button"
+                view="flat"
+                size="xs"
                 onClick={() => removeTag(index)}
-                className="text-blue-600 hover:text-blue-800"
+                aria-label={`Remove ${tag}`}
               >
                 <Icon data={Xmark} size={12} />
-              </button>
+              </Button>
             )}
           </div>
         ))}
         
-        <input
-          ref={inputRef}
-          type="text"
+        <TextInput
+          controlRef={inputRef}
           value={inputValue}
-          onChange={handleInputChange}
+          onUpdate={(value) => handleInputChange({target: {value}} as React.ChangeEvent<HTMLInputElement>)}
           onKeyDown={handleKeyDown}
-          onPaste={handlePaste}
           placeholder={tags.length === 0 ? placeholder : ''}
           disabled={disabled || tags.length >= maxTags}
-          className="flex-grow min-w-[120px] outline-none bg-transparent"
+          controlProps={{onPaste: handlePaste}}
+          className="flex-grow min-w-[120px]"
         />
       </div>
       

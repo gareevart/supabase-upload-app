@@ -158,13 +158,15 @@ export default function TagSelector({ selectedTags, onTagsChange, disabled = fal
               >
                 <span className="selected-tag-name">{tag.name}</span>
                 {!disabled && (
-                  <button
+                  <Button
                     className="selected-tag-remove"
+                    view="flat"
+                    size="xs"
                     onClick={() => removeSelectedTag(tag.id)}
-                    title={t('gallery.tags.remove')}
+                    aria-label={t('gallery.tags.remove')}
                   >
                     <Icon data={Xmark} size={12} />
-                  </button>
+                  </Button>
                 )}
               </div>
             ))}
@@ -182,19 +184,17 @@ export default function TagSelector({ selectedTags, onTagsChange, disabled = fal
             {availableTags.map(tag => {
               const isSelected = selectedTags.some(t => t.id === tag.id);
               return (
-                <button
+                <Button
                   key={tag.id}
                   className={`available-tag ${isSelected ? 'selected' : ''}`}
-                  style={{ 
-                    backgroundColor: isSelected ? tag.color : 'transparent',
-                    borderColor: tag.color,
-                    color: isSelected ? '#fff' : tag.color
-                  }}
+                  view={isSelected ? 'action' : 'outlined'}
+                  size="s"
+                  style={{ borderColor: tag.color, color: isSelected ? undefined : tag.color }}
                   onClick={() => toggleTag(tag)}
                   disabled={disabled}
                 >
                   {tag.name}
-                </button>
+                </Button>
               );
             })}
           </div>
