@@ -1,8 +1,5 @@
 import * as React from "react";
-import { ChevronLeft, ChevronRight } from "@gravity-ui/icons";
 import { DayPicker } from "react-day-picker";
-import { Button } from "@gravity-ui/uikit";
-
 import { cn } from "@/lib/utils";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
@@ -44,10 +41,6 @@ function Calendar({
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
         ...classNames,
-      }}
-      components={{
-        PreviousMonthButton: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
-        NextMonthButton: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
       }}
       {...props}
     />
