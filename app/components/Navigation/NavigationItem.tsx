@@ -1,4 +1,5 @@
 import React from 'react';
+import {Button} from '@gravity-ui/uikit';
 import './NavigationItem.css';
 
 interface NavigationItemProps {
@@ -17,9 +18,10 @@ const NavigationItem: React.FC<NavigationItemProps> = ({
   showLabel = false,
 }) => {
   return (
-    <button
+    <Button
       className={`nav-item ${isActive ? 'active' : ''} ${showLabel ? 'with-label' : ''}`}
       onClick={onClick}
+      view={isActive ? 'normal' : 'flat'}
       aria-label={label}
       aria-current={isActive ? 'page' : undefined}
     >
@@ -29,7 +31,7 @@ const NavigationItem: React.FC<NavigationItemProps> = ({
         </div>
         {showLabel && <span className="nav-item-label">{label}</span>}
       </div>
-    </button>
+    </Button>
   );
 };
 

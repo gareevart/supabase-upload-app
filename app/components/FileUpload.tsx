@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Image from 'next/image';
 import './components.css';
 import { supabase } from '@/lib/supabase';
@@ -11,6 +11,7 @@ export default function FileUpload() {
   const [uploading, setUploading] = useState(false);
   const [uploadedFilePath, setUploadedFilePath] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const toaster = useToaster();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,15 +100,24 @@ export default function FileUpload() {
   return (
      <Card type="container">
       <Text variant="header-1">Загрузка изображений</Text>
-      <div className="file-upload-field">
-      <input
-          type="file"
-          accept="image/*" // Принимаем только изображения
-          onChange={handleFileChange}
-          className="file-upload-input"
-          disabled={uploading}
-        />
-      </div>
+        <div className="file-upload-field">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="file-upload-input sr-only"
+            disabled={uploading}
+          />
+          <Button
+            view="outlined"
+            size="m"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+          >
+            {file ? file.name : 'Выбрать изображение'}
+          </Button>
+        </div>
       <Button size='l' view="action" onClick={handleUpload}
         disabled={uploading || !file}>
         {uploading ? 'Загрузка...' : 'Загрузить изображение'}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import '../components.css';
 import { uploadFile, getPublicUrl } from '@/lib/yandexStorage';
 import { supabase } from '@/lib/supabase';
@@ -20,6 +20,7 @@ export default function FileUpload() {
   const [uploadedFilePath, setUploadedFilePath] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const toaster = useToaster();
   const { t } = useI18n();
 
@@ -157,13 +158,22 @@ export default function FileUpload() {
       <Card view="filled" className='responsive-card'>
         <Text variant="body-short">{t('gallery.upload.title')}</Text>
         <div className="file-upload-field">
-        <input
+          <input
+            ref={fileInputRef}
             type="file"
-            accept="image/*" // Принимаем только изображения
+            accept="image/*"
             onChange={handleFileChange}
-            className="file-upload-input"
+            className="file-upload-input sr-only"
             disabled={uploading}
           />
+          <Button
+            view="outlined"
+            size="m"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+          >
+            {file ? file.name : 'Выбрать изображение'}
+          </Button>
         </div>
         
         {/* Показываем селектор тегов только если файл выбран */}
