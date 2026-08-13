@@ -23,12 +23,20 @@ export const useBroadcastDetail = (id: string) => {
 
       // Calculate stats if broadcast is sent
       if (broadcastData.status === 'sent') {
-        const total = broadcastData.total_recipients || 0;
-        const opened = broadcastData.opened_count || 0;
-        const clicked = broadcastData.clicked_count || 0;
+        // Use the actual recipient list when the persisted total is missing or stale.
+        const recipientsTotal = Array.isArray(broadcastData.recipients)
+          ? broadcastData.recipients.length
+          : 0;
+        const total = Math.max(
+          Number(broadcastData.total_recipients) || 0,
+          recipientsTotal,
+        );
+        // Resend can retry webhook events, so never show counts or rates above 100%.
+        const opened = Math.min(Math.max(Number(broadcastData.opened_count) || 0, 0), total);
+        const clicked = Math.min(Math.max(Number(broadcastData.clicked_count) || 0, 0), total);
 
-        const openRate = total > 0 ? Math.round((opened / total) * 100) : 0;
-        const clickRate = total > 0 ? Math.round((clicked / total) * 100) : 0;
+        const openRate = total > 0 ? Number(((opened / total) * 100).toFixed(1)) : 0;
+        const clickRate = total > 0 ? Number(((clicked / total) * 100).toFixed(1)) : 0;
 
         setStats({
           total,
