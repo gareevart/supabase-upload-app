@@ -161,6 +161,7 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
                 <ActionBar.Item>
                   <Button
                     view="flat"
+                    selected={isTableOfContentsOpen}
                     onClick={() => setIsTableOfContentsOpen((isOpen) => !isOpen)}
                     aria-label={t('tableOfContents.title')}
                     title={t('tableOfContents.title')}
