@@ -180,6 +180,10 @@ const BroadcastDetailWidget: React.FC<BroadcastDetailWidgetProps> = ({ id }) => 
   }
 
   const recipients = broadcast.recipients ?? [];
+  const normalizedRecipientTotal = Math.max(
+    Number(broadcast.total_recipients) || 0,
+    recipients.length,
+  );
 
   return (
     <div className="broadcast-detail">
@@ -210,7 +214,7 @@ const BroadcastDetailWidget: React.FC<BroadcastDetailWidgetProps> = ({ id }) => 
               {t('broadcastDetail.recipients')}
             </Text>
             <Text variant="body-1">
-              {broadcast.total_recipients || recipients.length || 0}
+              {normalizedRecipientTotal}
             </Text>
           </div>
 
