@@ -2,7 +2,7 @@
 
 import "../blog.css"
 import { supabase } from "@/lib/supabase"
-import { Calendar, Person, Pencil, TrashBin } from "@gravity-ui/icons"
+import { Calendar, LayoutSideContentRight, Person, Pencil, TrashBin } from "@gravity-ui/icons"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -40,6 +40,7 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
   const [userRole, setUserRole] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isTableOfContentsOpen, setIsTableOfContentsOpen] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
   const isMobile = useIsMobile()
@@ -134,9 +135,8 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
               </ActionBar.Item>
             </ActionBar.Group>
 
-            {canEditPost && (
-              <ActionBar.Group pull="right">
-                <ActionBar.Item>
+            <ActionBar.Group pull="right">
+              {canEditPost && <ActionBar.Item>
                   <Button
                     view="flat"
                     component={Link}
@@ -145,8 +145,8 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
                     <Icon data={Pencil} size={16} />
                     {t('blogView.edit')}
                   </Button>
-                </ActionBar.Item>
-                <ActionBar.Item>
+                </ActionBar.Item>}
+                {canEditPost && <ActionBar.Item>
                   <DropdownMenu
                     items={[
                       {
@@ -157,9 +157,18 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
                       },
                     ]}
                   />
+                </ActionBar.Item>}
+                <ActionBar.Item>
+                  <Button
+                    view="flat"
+                    onClick={() => setIsTableOfContentsOpen((isOpen) => !isOpen)}
+                    aria-label={t('tableOfContents.title')}
+                    title={t('tableOfContents.title')}
+                  >
+                    <Icon data={LayoutSideContentRight} size={16} />
+                  </Button>
                 </ActionBar.Item>
               </ActionBar.Group>
-            )}
           </ActionBar.Section>
         </ActionBar>
       </div>
@@ -184,8 +193,8 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
               </div>
             </div>
 
-            {/* ToC for mobile — shown above the content */}
-            {isMobile && (
+            {/* ToC is collapsed by default and opened from the action bar. */}
+            {isMobile && isTableOfContentsOpen && (
               <div className="blog-post-toc-mobile">
                 <TableOfContents content={post.content} />
               </div>
@@ -210,7 +219,7 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
           </div>
 
           {/* Table of Contents — desktop only, on the right */}
-          {!isMobile && (
+          {!isMobile && isTableOfContentsOpen && (
             <aside className="blog-post-toc">
               <TableOfContents content={post.content} />
             </aside>
