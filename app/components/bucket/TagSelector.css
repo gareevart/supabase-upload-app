@@ -30,7 +30,7 @@
 .tag-selector__skeleton-tag {
   width: 72px;
   height: 28px;
-  border-radius: var(--g-border-radius-xl);
+  border-radius: var(--g-border-radius-m);
 }
 
 /* Выбранные теги */
@@ -55,7 +55,7 @@
   gap: 6px;
   padding: 4px 8px;
   border-radius: 12px;
-  color: white;
+  color: var(--g-color-text-light-primary);
   font-size: 12px;
   font-weight: 500;
 }
@@ -67,7 +67,7 @@
 .selected-tag-remove {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.8);
+  color: color-mix(in srgb, var(--g-color-text-light-primary) 80%, transparent);
   cursor: pointer;
   padding: 0;
   display: flex;
@@ -80,8 +80,8 @@
 }
 
 .selected-tag-remove:hover {
-  color: white;
-  background-color: rgba(255, 255, 255, 0.2);
+  color: var(--g-color-text-light-primary);
+  background-color: color-mix(in srgb, var(--g-color-text-light-primary) 20%, transparent);
 }
 
 /* Доступные теги */

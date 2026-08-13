@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Text } from '@gravity-ui/uikit';
-import { DateField } from '@gravity-ui/date-components';
+import { DatePicker, DateField } from '@gravity-ui/date-components';
 import { dateTimeParse } from '@gravity-ui/date-utils';
-import { Calendar } from '@/app/components/ui/calendar';
 import { DateTimePickerProps } from './types';
 import { useI18n } from '@/app/contexts/I18nContext';
 
@@ -93,10 +92,10 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   };
 
   // Calculate disabled dates for calendar
-  const isDateDisabled = (dateToCheck: Date): boolean => {
+  const isDateDisabled = (dateToCheck: { toDate: () => Date }): boolean => {
     if (disabled) return true;
     if (minDate) {
-      const checkDate = new Date(dateToCheck);
+      const checkDate = new Date(dateToCheck.toDate());
       checkDate.setHours(0, 0, 0, 0);
       const minDateStart = new Date(minDate);
       minDateStart.setHours(0, 0, 0, 0);
@@ -111,12 +110,13 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
           <Text variant="body-2" className="mb-2 block">{t('broadcast.dateTimePicker.dateLabel')}</Text>
-          <Calendar
-            mode="single"
-            selected={date || undefined}
-            onSelect={handleDateChange}
-            disabled={isDateDisabled}
-            className="rounded-md border"
+          <DatePicker
+            value={date ? dateTimeParse(date.toISOString()) : null}
+            format="DD.MM.YYYY"
+            placeholder={t('broadcast.dateTimePicker.dateLabel')}
+            onUpdate={(value) => handleDateChange(value ? value.toDate() : undefined)}
+            isDateUnavailable={isDateDisabled}
+            disabled={disabled}
           />
         </div>
         <div className="w-full sm:w-48">
