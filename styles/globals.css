@@ -3,26 +3,21 @@
 
 :root {
   --background: var(--g-color-base-background);
-  --foreground: #171717;
+  --foreground: var(--g-color-text-primary);
   --color-background: var(--g-color-base-background);
-  --color-foreground: var(--foreground);
+  --color-foreground: var(--g-color-text-primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --mouse-x: 50%;
   --mouse-y: 50%;
-  --g-border-radius-xs: 3px;
-  --g-border-radius-s: 5px;
-  --g-border-radius-m: 6px;
-  --g-border-radius-l: 8px;
-  --g-border-radius-xl: 12px;
   --g-border-radius-2xl: 16px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --base-bg: #616161;
+    --background: var(--g-color-base-background);
+    --foreground: var(--g-color-text-primary);
+    --base-bg: var(--g-color-base-float);
   }
 }
 
