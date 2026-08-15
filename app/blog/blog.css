@@ -161,8 +161,26 @@
   margin: 2rem 0;
 }
 
+.main-content:has(.blog-post-page) {
+  min-width: 0;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: clip;
+}
+
 .blog-post-page {
+  width: 100%;
+  max-width: 100%;
   min-height: 100%;
+  overflow-x: clip;
+}
+
+.blog-post-page .main-content,
+.blog-post-body-shell,
+.blog-post-body,
+.blog-post-body > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .blog-post-actionbar {
@@ -250,6 +268,30 @@
   }
 }
 
+/* iPad and compact tablet widths cannot fit the article and side TOC together. */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .blog-post-body-shell {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .blog-post-body {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .blog-post-article,
+  .blog-post-toc {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .blog-post-toc {
+    position: static;
+  }
+}
+
 .blog-post-meta {
   display: flex;
   flex-wrap: wrap;
@@ -266,7 +308,17 @@
 }
 
 .blog-post-toc-mobile {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding-block: var(--g-spacing-4);
+  overflow: hidden;
+}
+
+.blog-post-toc-mobile > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .blog-post-cover {
