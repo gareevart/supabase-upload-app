@@ -18,14 +18,29 @@ interface LinkTarget {
   text: string;
 }
 
+function normalizeExternalHref(value: string): string | null {
+  let href = value.trim();
+  try {
+    href = decodeURIComponent(href);
+  } catch {
+    // Keep the original value when a URL contains a malformed escape sequence.
+  }
+
+  const markdownLink = href.match(/^\[.*?\]\((https?:\/\/[^)]+)\)$/i);
+  if (markdownLink) href = markdownLink[1];
+  if (href.startsWith('//')) href = `https:${href}`;
+  if (href.startsWith('www.')) href = `https://${href}`;
+  return /^https?:\/\//i.test(href) ? href : null;
+}
+
 function splitLinksForPreview(html: string): Array<{ html: string } | { link: LinkTarget }> {
   if (typeof DOMParser === 'undefined') return [{ html }];
 
   const document = new DOMParser().parseFromString(html, 'text/html');
   const links: LinkTarget[] = [];
   document.querySelectorAll('a[href]').forEach((anchor) => {
-    const href = anchor.getAttribute('href') ?? '';
-    if (!/^https?:\/\//i.test(href)) return;
+    const href = normalizeExternalHref(anchor.getAttribute('href') ?? '');
+    if (!href) return;
     const index = links.push({ href, text: anchor.textContent?.trim() || href }) - 1;
     anchor.replaceWith(document.createComment(`blog-link-preview:${index}`));
   });
@@ -33,7 +48,7 @@ function splitLinksForPreview(html: string): Array<{ html: string } | { link: Li
   const serialized = document.body.innerHTML;
   if (!links.length) return [{ html }];
 
-  return serialized.split(/<!-- blog-link-preview:(\d+) -->/).map((part, index) =>
+  return serialized.split(/<!--\s*blog-link-preview:(\d+)\s*-->/).map((part, index) =>
     index % 2 === 0 ? { html: part } : { link: links[Number(part)] },
   );
 }
