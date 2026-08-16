@@ -270,7 +270,7 @@
 .blog-post-cover {
   position: relative;
   width: 100%;
-  height: 300px;
+  aspect-ratio: 16 / 9;
   margin-bottom: var(--g-spacing-4);
   border-radius: var(--g-border-radius-l);
   overflow: hidden;
@@ -323,10 +323,6 @@
 @media (min-width: 768px) {
   .blog-post-body-shell {
     padding-inline: var(--g-spacing-6);
-  }
-
-  .blog-post-cover {
-    height: 400px;
   }
 }
 
