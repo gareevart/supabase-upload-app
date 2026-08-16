@@ -72,7 +72,9 @@ export function LinkPreview({ href, children }: LinkPreviewProps) {
       rel="noreferrer"
       aria-label={preview.title}
     >
-      <img className="markdown-link-preview__image" src={preview.image} alt="" loading="lazy" />
+      <span className="markdown-link-preview__media">
+        <img className="markdown-link-preview__image" src={preview.image} alt="" loading="lazy" />
+      </span>
       <span className="markdown-link-preview__body">
         <strong className="markdown-link-preview__title">{preview.title}</strong>
         {preview.description && <span className="markdown-link-preview__description">{preview.description}</span>}
