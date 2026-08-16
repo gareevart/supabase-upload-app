@@ -279,9 +279,12 @@
 
 @media (max-width: 767px) {
   .markdown-link-preview__image {
+    align-self: stretch;
     flex-basis: 104px;
     width: 104px !important;
-    height: 58.5px !important;
+    height: auto !important;
+    min-height: 100%;
+    aspect-ratio: auto;
   }
 
   .markdown-link-preview__body {
