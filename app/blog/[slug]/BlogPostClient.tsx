@@ -162,6 +162,7 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
                   <Button
                     view="flat"
                     selected={isTableOfContentsOpen}
+                    aria-pressed={isTableOfContentsOpen}
                     onClick={() => setIsTableOfContentsOpen((isOpen) => !isOpen)}
                     aria-label={t('tableOfContents.title')}
                     title={t('tableOfContents.title')}

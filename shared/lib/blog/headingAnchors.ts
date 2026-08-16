@@ -55,10 +55,19 @@ export function prepareBlogHtml(content: string): { html: string; headings: Blog
 }
 
 export function extractHeadings(content: unknown): BlogHeading[] {
-  const source = typeof content === 'string' ? content : '';
+  const source =
+    typeof content === 'string'
+      ? content
+      : content && typeof content === 'object' && 'html' in content && typeof content.html === 'string'
+        ? content.html
+        : '';
+
   if (!source.trim()) {
     return [];
   }
 
-  return prepareBlogHtml(source).headings;
+  // Stored posts can contain either Markdown or an already rendered HTML payload.
+  return /<h[1-6](\s|>)/i.test(source)
+    ? extractHeadingsFromHtml(source)
+    : prepareBlogHtml(source).headings;
 }
