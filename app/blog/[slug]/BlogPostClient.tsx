@@ -8,7 +8,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { MarkdownRenderer } from "@/features/blog-editor/ui/MarkdownRenderer"
 import { useState, useEffect } from "react"
-import { Button, Icon, Text, Dialog, DropdownMenu, Breadcrumbs } from "@gravity-ui/uikit"
+import { Button, Icon, Text, Dialog, DropdownMenu, Breadcrumbs, Skeleton } from "@gravity-ui/uikit"
 import { ActionBar } from "@gravity-ui/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { authFetch } from "@/lib/auth-fetch"
@@ -41,10 +41,17 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isTableOfContentsOpen, setIsTableOfContentsOpen] = useState(false)
+  const [isFeaturedImageLoading, setIsFeaturedImageLoading] = useState(
+    Boolean(post.featured_image && post.show_featured_image !== false)
+  )
   const router = useRouter()
   const { toast } = useToast()
   const isMobile = useIsMobile()
   const { t, language } = useI18n()
+
+  useEffect(() => {
+    setIsFeaturedImageLoading(Boolean(post.featured_image && post.show_featured_image !== false))
+  }, [post.featured_image, post.show_featured_image])
 
   useEffect(() => {
     // The post itself is server-rendered and passed as a prop; only the
@@ -203,13 +210,24 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
             )}
 
             {post.featured_image && post.show_featured_image !== false && (
-              <div className="blog-post-cover">
+              <div
+                className="blog-post-cover"
+                aria-busy={isFeaturedImageLoading}
+              >
+                {isFeaturedImageLoading && (
+                  <Skeleton
+                    className="blog-post-cover__skeleton"
+                    aria-hidden="true"
+                  />
+                )}
                 <Image
                   src={post.featured_image}
                   alt={post.title}
                   fill
-                  className="blog-post-cover__img"
+                  className={`blog-post-cover__img${isFeaturedImageLoading ? " blog-post-cover__img_loading" : ""}`}
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  onLoad={() => setIsFeaturedImageLoading(false)}
+                  onError={() => setIsFeaturedImageLoading(false)}
                 />
               </div>
             )}

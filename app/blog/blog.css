@@ -328,8 +328,22 @@
   overflow: hidden;
 }
 
+.blog-post-cover__skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
 .blog-post-cover__img {
   object-fit: cover;
+  transition: opacity 150ms ease;
+}
+
+.blog-post-cover__img_loading {
+  opacity: 0;
 }
 
 .blog-post-content-body {
