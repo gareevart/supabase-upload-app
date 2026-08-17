@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import crypto from 'crypto';
+import { createClient } from '@supabase/supabase-js';
+import crypto from 'node:crypto';
 import type { Database } from '@/lib/types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 
 export interface ApiKeyUser {
   id: string;
@@ -40,22 +39,24 @@ export const withApiKeyAuth = (handler: (req: NextRequest, user: ApiKeyUser) => 
       // Хешируем ключ для поиска в базе данных
       const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex');
 
-      // Создаем Supabase клиент с service role для доступа к функции validate_api_key
-      const supabase = createServerClient<Database>(
-        supabaseUrl,
-        process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey,
-        {
-          cookies: {
-            get: (name: string) => req.cookies.get(name)?.value,
-            set: (name: string, value: string, options: any) => {
-              req.cookies.set({ name, value, ...options });
-            },
-            remove: (name: string, options: any) => {
-              req.cookies.delete(name);
-            },
-          },
-        }
-      );
+      // API-key validation must run with a server-only credential.  The anon
+      // key is intentionally not a fallback: accepting it here would mask a
+      // deployment misconfiguration and weakens a credential-sensitive path.
+      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (!supabaseUrl || !serviceRoleKey) {
+        console.error('API-key authentication is missing Supabase server configuration');
+        return NextResponse.json(
+          { error: 'API authentication is temporarily unavailable' },
+          { status: 503 }
+        );
+      }
+
+      const supabase = createClient<Database>(supabaseUrl, serviceRoleKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      });
 
       // Валидируем API ключ через функцию базы данных
       const { data: validationResult, error } = await supabase
