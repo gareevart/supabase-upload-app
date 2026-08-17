@@ -11,6 +11,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "diagnose": "tsx scripts/test-broadcasts-access.ts",
+    "publish:blog": "node scripts/publish-blog-post.mjs",
     "sync:embeddings": "tsx scripts/sync-embeddings.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build -o public/storybook",
