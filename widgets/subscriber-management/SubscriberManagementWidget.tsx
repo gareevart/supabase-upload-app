@@ -157,14 +157,7 @@ export const SubscriberManagementWidget: React.FC<{ mode?: 'subscribers' | 'grou
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div className="flex flex-col text-start">
-          <Text variant="display-1" className="mb-2">Управление подписчиками</Text>
-          <Text variant="body-1" color="secondary">
-            Управляйте подписчиками и группами для рассылок
-          </Text>
-        </div>
-        
+      <div className="flex justify-end mb-6">
         <div className="flex gap-3">
           <Button
             view="outlined"
@@ -187,14 +180,12 @@ export const SubscriberManagementWidget: React.FC<{ mode?: 'subscribers' | 'grou
 
       {mode === 'groups' ? (
         <div>
-          <Text variant="header-2" className="mb-4">Группы пользователей</Text>
           {groups.length === 0 ? (
             <div className="text-center py-8"><Text variant="body-1" className="mb-4">Группы не найдены</Text><Button view="action" size="l" onClick={() => setShowAddGroup(true)}>Создать первую группу</Button></div>
           ) : <BroadcastGroupTable groups={groups} onManage={handleManageGroup} onDelete={handleDeleteGroup} />}
         </div>
       ) : (
         <div>
-          <Text variant="header-2" className="mb-4">Подписчики</Text>
           {subscribers.length === 0 ? (
             <div className="text-center py-8"><Text variant="body-1" className="mb-4">Подписчики не найдены</Text><Button view="action" size="l" onClick={() => setShowAddSubscriber(true)}>Добавить первого подписчика</Button></div>
           ) : <SubscriberTable subscribers={subscribers} />}

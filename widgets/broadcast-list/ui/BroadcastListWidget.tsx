@@ -268,14 +268,7 @@ const BroadcastListWidget: React.FC = () => {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div className="flex flex-col text-start">
-          <Text variant="display-1" className="mb-1">Email рассылки</Text>
-          <Text variant="body-1" color="secondary">
-            Создавайте, планируйте и управляйте email рассылками
-          </Text>
-        </div>
-
+      <div className="flex justify-end mb-6">
         <Button
           view="action"
           size="l"
