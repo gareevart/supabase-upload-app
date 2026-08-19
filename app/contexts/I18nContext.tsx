@@ -51,6 +51,8 @@ import chatViewEn from '@/features/chat-aikit/ui/AikitChatPanel.i18n/en.json';
 import chatViewRu from '@/features/chat-aikit/ui/AikitChatPanel.i18n/ru.json';
 import yaartPageEn from '@/app/projects/yaart/YaartPage.i18n/en.json';
 import yaartPageRu from '@/app/projects/yaart/YaartPage.i18n/ru.json';
+import broadcastsPageEn from '@/app/broadcasts/BroadcastsPage.i18n/en.json';
+import broadcastsPageRu from '@/app/broadcasts/BroadcastsPage.i18n/ru.json';
 
 export type AppLanguage = 'en' | 'ru';
 
@@ -83,6 +85,7 @@ const enTranslations: TranslationDict = {
   ...galleryEn,
   ...chatViewEn,
   ...yaartPageEn,
+  ...broadcastsPageEn,
 };
 
 const ruTranslations: TranslationDict = {
@@ -111,6 +114,7 @@ const ruTranslations: TranslationDict = {
   ...galleryRu,
   ...chatViewRu,
   ...yaartPageRu,
+  ...broadcastsPageRu,
 };
 
 const translations: Record<AppLanguage, TranslationDict> = {
