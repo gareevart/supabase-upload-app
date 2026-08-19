@@ -268,7 +268,7 @@ const BroadcastListWidget: React.FC = () => {
 
   return (
     <div>
-      <div className="flex justify-end mb-6">
+      <div className="flex justify-start mb-6">
         <Button
           view="action"
           size="l"
@@ -279,9 +279,9 @@ const BroadcastListWidget: React.FC = () => {
         </Button>
       </div>
 
-      <div className="mb-6 w-full md:w-80">
+      <div className="mb-6">
         <Select
-          size="m"
+          size="l"
           multiple
           hasClear
           placeholder="Все статусы"

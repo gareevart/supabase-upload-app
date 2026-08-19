@@ -157,25 +157,18 @@ export const SubscriberManagementWidget: React.FC<{ mode?: 'subscribers' | 'grou
 
   return (
     <div>
-      <div className="flex justify-end mb-6">
-        <div className="flex gap-3">
-          <Button
-            view="outlined"
-            size="l"
-            onClick={() => setShowAddGroup(true)}
-          >
+      <div className="flex justify-start mb-6">
+        {mode === 'groups' ? (
+          <Button view="action" size="l" onClick={() => setShowAddGroup(true)}>
             <Icon data={Plus} size={16} />
             Новая группа
           </Button>
-          <Button
-            view="action"
-            size="l"
-            onClick={() => setShowAddSubscriber(true)}
-          >
+        ) : (
+          <Button view="action" size="l" onClick={() => setShowAddSubscriber(true)}>
             <Icon data={Plus} size={16} />
             Новый подписчик
           </Button>
-        </div>
+        )}
       </div>
 
       {mode === 'groups' ? (
