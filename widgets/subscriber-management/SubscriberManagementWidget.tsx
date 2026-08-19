@@ -13,7 +13,7 @@ import { AddGroupModal } from '@/features/group-management/ui/AddGroupModal';
 import { GroupSubscriberManager } from '@/features/group-management/ui/GroupSubscriberManager';
 import type { BroadcastGroup } from '@/entities/broadcast-group/model';
 
-export const SubscriberManagementWidget: React.FC = () => {
+export const SubscriberManagementWidget: React.FC<{ mode?: 'subscribers' | 'groups' }> = ({ mode = 'subscribers' }) => {
   const { toast } = useToast();
   
   // State for modals
@@ -185,47 +185,21 @@ export const SubscriberManagementWidget: React.FC = () => {
         </div>
       </div>
 
-      {/* Groups Section */}
-      <div className="mb-8">
-        <Text variant="header-2" className="mb-4">Группы рассылок</Text>
-        {groups.length === 0 ? (
-          <div className="text-center py-8">
-            <Text variant="body-1" className="mb-4">Группы не найдены</Text>
-            <Button
-              view="action"
-              size="l"
-              onClick={() => setShowAddGroup(true)}
-            >
-              Создать первую группу
-            </Button>
-          </div>
-        ) : (
-          <BroadcastGroupTable
-            groups={groups}
-            onManage={handleManageGroup}
-            onDelete={handleDeleteGroup}
-          />
-        )}
-      </div>
-
-      {/* Subscribers Section */}
-      <div>
-        <Text variant="header-2" className="mb-4">Подписчики</Text>
-        {subscribers.length === 0 ? (
-          <div className="text-center py-8">
-            <Text variant="body-1" className="mb-4">Подписчики не найдены</Text>
-            <Button
-              view="action"
-              size="l"
-              onClick={() => setShowAddSubscriber(true)}
-            >
-              Добавить первого подписчика
-            </Button>
-          </div>
-        ) : (
-          <SubscriberTable subscribers={subscribers} />
-        )}
-      </div>
+      {mode === 'groups' ? (
+        <div>
+          <Text variant="header-2" className="mb-4">Группы пользователей</Text>
+          {groups.length === 0 ? (
+            <div className="text-center py-8"><Text variant="body-1" className="mb-4">Группы не найдены</Text><Button view="action" size="l" onClick={() => setShowAddGroup(true)}>Создать первую группу</Button></div>
+          ) : <BroadcastGroupTable groups={groups} onManage={handleManageGroup} onDelete={handleDeleteGroup} />}
+        </div>
+      ) : (
+        <div>
+          <Text variant="header-2" className="mb-4">Подписчики</Text>
+          {subscribers.length === 0 ? (
+            <div className="text-center py-8"><Text variant="body-1" className="mb-4">Подписчики не найдены</Text><Button view="action" size="l" onClick={() => setShowAddSubscriber(true)}>Добавить первого подписчика</Button></div>
+          ) : <SubscriberTable subscribers={subscribers} />}
+        </div>
+      )}
 
       {/* Modals */}
       <AddSubscriberModal
