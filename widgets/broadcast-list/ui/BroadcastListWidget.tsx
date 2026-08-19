@@ -267,7 +267,7 @@ const BroadcastListWidget: React.FC = () => {
   ];
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div>
       <div className="flex justify-end mb-6">
         <Button
           view="action"

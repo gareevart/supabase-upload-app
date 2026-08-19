@@ -156,7 +156,7 @@ export const SubscriberManagementWidget: React.FC<{ mode?: 'subscribers' | 'grou
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div>
       <div className="flex justify-end mb-6">
         <div className="flex gap-3">
           <Button
