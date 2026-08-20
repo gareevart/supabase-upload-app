@@ -1,7 +1,7 @@
 "use client"
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-export type ModelType = "yandexgpt" | "yandexgpt-lite" | "deepseek" | "gpt-oss-20b" | "aliceai-llm" | "ollama";
+export type ModelType = "yandexgpt" | "yandexgpt-lite" | "ollama";
 
 interface ModelSelectionContextType {
   selectedModel: ModelType;
@@ -21,7 +21,8 @@ export const ModelSelectionProvider = ({ children }: ModelSelectionProviderProps
     // Получаем сохраненную модель из localStorage или используем YandexGPT по умолчанию
     if (typeof window !== 'undefined') {
       const savedModel = localStorage.getItem("selectedModel");
-      return (savedModel as ModelType) || "yandexgpt";
+      const validModels: ModelType[] = ["yandexgpt", "yandexgpt-lite", "ollama"];
+      return validModels.includes(savedModel as ModelType) ? (savedModel as ModelType) : "yandexgpt";
     }
     return "yandexgpt";
   });

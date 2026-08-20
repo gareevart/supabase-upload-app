@@ -158,8 +158,7 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
           options={[
             { value: "yandexgpt", content: "YandexGPT" },
             { value: "yandexgpt-lite", content: "YandexGPT Lite" },
-            { value: "deepseek", content: "Deepseek R1" },
-            { value: "aliceai-llm", content: "Alice AI LLM" },
+            { value: "ollama", content: "Ollama Cloud — qwen3:8b" },
           ]}
           onUpdate={(value) => {
             if (value[0]) setSelectedModel(value[0] as Parameters<typeof setSelectedModel>[0]);

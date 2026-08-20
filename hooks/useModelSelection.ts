@@ -1,13 +1,14 @@
 
 import { useState, useEffect } from "react";
 
-export type ModelType = "yandexgpt" | "yandexgpt-lite" | "deepseek" | "gpt-oss-20b" | "aliceai-llm" | "ollama";
+export type ModelType = "yandexgpt" | "yandexgpt-lite" | "ollama";
 
 export const useModelSelection = () => {
   const [selectedModel, setSelectedModel] = useState<ModelType>(() => {
     // Получаем сохраненную модель из localStorage или используем YandexGPT по умолчанию
     const savedModel = localStorage.getItem("selectedModel");
-    return (savedModel as ModelType) || "yandexgpt";
+    const validModels: ModelType[] = ["yandexgpt", "yandexgpt-lite", "ollama"];
+    return validModels.includes(savedModel as ModelType) ? (savedModel as ModelType) : "yandexgpt";
   });
 
   const [reasoningMode, setReasoningMode] = useState<boolean>(() => {
