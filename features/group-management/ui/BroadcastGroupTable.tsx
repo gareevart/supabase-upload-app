@@ -69,7 +69,7 @@ export const BroadcastGroupTable: React.FC<BroadcastGroupTableProps> = ({
       id: 'actions',
       name: 'Действия',
       template: (item) => (
-        <div className="flex gap-2">
+        <div className="flex gap-2" onClick={(event) => event.stopPropagation()}>
           <Button
             view="outlined"
             size="s"
@@ -99,6 +99,8 @@ export const BroadcastGroupTable: React.FC<BroadcastGroupTableProps> = ({
       data={groups}
       columns={columns}
       verticalAlign="top"
+      onRowClick={(group) => onManage?.(group)}
+      className="cursor-pointer"
     />
   );
 };

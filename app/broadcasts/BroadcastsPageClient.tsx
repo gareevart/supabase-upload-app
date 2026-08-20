@@ -88,9 +88,9 @@ export default function BroadcastsPageClient() {
           <Tab value="subscribers">{t('broadcastsPage.subscribersTab')}</Tab>
           <Tab value="groups">{t('broadcastsPage.groupsTab')}</Tab>
         </TabList>
-        <TabPanel value="broadcasts" className="pt-2"><BroadcastListWidget /></TabPanel>
-        <TabPanel value="subscribers" className="pt-2"><SubscriberManagementWidget mode="subscribers" /></TabPanel>
-        <TabPanel value="groups" className="pt-2"><SubscriberManagementWidget mode="groups" /></TabPanel>
+        <TabPanel value="broadcasts"><BroadcastListWidget /></TabPanel>
+        <TabPanel value="subscribers"><SubscriberManagementWidget mode="subscribers" /></TabPanel>
+        <TabPanel value="groups"><SubscriberManagementWidget mode="groups" /></TabPanel>
       </TabProvider>
     </main>
   );
