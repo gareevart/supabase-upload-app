@@ -76,9 +76,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check for API key
+    const ollamaApiKey = process.env.OLLAMA_API_KEY;
+    const isOllama = model === 'ollama';
+    if (isOllama && !ollamaApiKey) {
+      return NextResponse.json(
+        { error: 'Ollama API key not configured' },
+        { status: 500 }
+      );
+    }
+
+    // YandexGPT remains available for embeddings, web summaries, and other models.
     const apiKey = process.env.YANDEX_API_KEY;
-    if (!apiKey) {
+    if (!isOllama && !apiKey) {
       return NextResponse.json(
         { error: 'YandexGPT API key not configured' },
         { status: 500 }
@@ -513,6 +522,79 @@ export async function POST(request: Request) {
 
     console.log('Final messages count:', messages.length, '(non-system:', nonSystemMessagesCount, ')');
 
+    // Build sources before the provider-specific response branch.
+    let combinedSources: any[] = [];
+    try {
+      if (mode === 'WEB') {
+        combinedSources = (webSearchSources || []).map((source) => ({
+          title: source.title,
+          url: source.url,
+          snippet: source.snippet,
+          type: 'web'
+        }));
+      } else if (mode === 'DOCS_STRICT' || mode === 'DOCS_PREFERRED') {
+        combinedSources = (documents || []).map((item: any) => ({
+          title: item.title || item.file_name || 'Документ',
+          url: item.url,
+          snippet: (item.topChunk?.content || item.content || '').slice(0, 200),
+          type: 'doc'
+        }));
+      }
+    } catch (sourceError) {
+      console.error('[v0] Sources build error:', sourceError);
+    }
+
+    if (isOllama) {
+      const ollamaResponse = await fetch('https://ollama.com/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${ollamaApiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'qwen3:8b',
+          messages: messages.map((message: any) => ({
+            role: message.role,
+            content: message.text ?? message.content ?? '',
+          })),
+          stream: false,
+          options: {
+            temperature: effectiveWidgetMode ? 0.3 : (reasoningMode ? 0.1 : ((mode === 'WEB') ? 0.2 : 0.6)),
+            num_predict: effectiveWidgetMode ? 4000 : (reasoningMode ? 1000 : 2000),
+          },
+        }),
+      });
+
+      if (!ollamaResponse.ok) {
+        const errorText = await ollamaResponse.text();
+        throw new Error(`Ollama API error: ${ollamaResponse.status} ${errorText}`);
+      }
+
+      const ollamaResult = await ollamaResponse.json();
+      let generatedText = ollamaResult.message?.content;
+      if (!generatedText) throw new Error('No text found in Ollama response');
+
+      if (mode === 'WEB' && webSearchSources.length > 0) {
+        generatedText = appendSourcesIfMissing(generatedText, webSearchSources);
+      }
+      if (mode === 'WEB' && requiresEntityList && webEntityList) {
+        generatedText = appendEntityListIfMissing(generatedText, webEntityList);
+      }
+
+      return NextResponse.json({
+        text: generatedText,
+        usage: ollamaResult.prompt_eval_count || ollamaResult.eval_count
+          ? {
+              inputTextTokens: ollamaResult.prompt_eval_count,
+              completionTokens: ollamaResult.eval_count,
+              totalTokens: (ollamaResult.prompt_eval_count || 0) + (ollamaResult.eval_count || 0),
+              reasoningTokens: 0,
+            }
+          : undefined,
+        metadata: combinedSources.length > 0 ? { sources: combinedSources } : undefined,
+      });
+    }
+
     // Determine the model URI based on the selected model
     let modelUri: string;
     switch (model) {
@@ -610,7 +692,6 @@ export async function POST(request: Request) {
     } : undefined;
 
     // Build sources per mode: docs-only sources OR web sources OR none
-    let combinedSources: any[] = [];
     try {
       if (mode === 'WEB') {
         combinedSources = (webSearchSources || []).map((source) => ({
