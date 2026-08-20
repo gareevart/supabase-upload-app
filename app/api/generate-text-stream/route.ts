@@ -45,9 +45,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check for API key
+    const ollamaApiKey = process.env.OLLAMA_API_KEY;
+    const isOllama = model === 'ollama';
+    if (isOllama && !ollamaApiKey) {
+      return NextResponse.json({ error: 'Ollama API key not configured' }, { status: 500 });
+    }
+
     const apiKey = process.env.YANDEX_API_KEY;
-    if (!apiKey) {
+    if (!isOllama && !apiKey) {
       return NextResponse.json(
         { error: 'YandexGPT API key not configured' },
         { status: 500 }
@@ -132,6 +137,68 @@ export async function POST(request: Request) {
     // If no context is provided, just add the user prompt
     else if (prompt) {
       messages.push({ role: 'user', text: prompt });
+    }
+
+    if (isOllama) {
+      const ollamaResponse = await fetch('https://ollama.com/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${ollamaApiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'qwen3:8b',
+          messages: messages.map((message: any) => ({
+            role: message.role,
+            content: message.text ?? message.content ?? '',
+          })),
+          stream: true,
+          options: {
+            temperature: reasoningMode ? 0.1 : 0.6,
+            num_predict: reasoningMode ? 1000 : 2000,
+          },
+        }),
+      });
+
+      if (!ollamaResponse.ok || !ollamaResponse.body) {
+        const errorText = await ollamaResponse.text();
+        throw new Error(`Ollama API error: ${ollamaResponse.status} ${errorText}`);
+      }
+
+      const reader = ollamaResponse.body.getReader();
+      const decoder = new TextDecoder();
+      const stream = new ReadableStream({
+        async start(controller) {
+          let buffer = '';
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || '';
+              for (const line of lines) {
+                if (!line.trim()) continue;
+                const chunk = JSON.parse(line);
+                const text = chunk.message?.content;
+                if (text) controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ text })}\n\n`));
+              }
+            }
+            controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
+            controller.close();
+          } catch (error) {
+            controller.error(error);
+          }
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache, no-transform',
+          Connection: 'keep-alive',
+        },
+      });
     }
 
     // Determine the model URI

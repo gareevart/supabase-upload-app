@@ -171,10 +171,11 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
             { value: 'yandexgpt-lite', content: 'YandexGPT Lite' },
             { value: 'deepseek', content: 'Deepseek R1' },
             { value: 'aliceai-llm', content: 'Alice AI LLM' },
+            { value: 'ollama', content: 'Ollama Cloud — qwen3:8b' },
           ]}
           onUpdate={(value) => {
             if (value.length > 0) {
-              const newModel = value[0] as "yandexgpt" | "yandexgpt-lite" | "deepseek" | "gpt-oss-20b" | "aliceai-llm";
+              const newModel = value[0] as "yandexgpt" | "yandexgpt-lite" | "deepseek" | "gpt-oss-20b" | "aliceai-llm" | "ollama";
               setSelectedModel(newModel);
             }
           }}
