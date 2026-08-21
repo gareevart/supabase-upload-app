@@ -181,7 +181,7 @@ export async function POST(request: Request) {
               for (const line of lines) {
                 if (!line.trim()) continue;
                 const chunk = JSON.parse(line);
-                const text = chunk.message?.content;
+                const text = chunk.message?.content || chunk.message?.thinking;
                 if (text) controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ text })}\n\n`));
               }
             }
