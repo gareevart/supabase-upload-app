@@ -77,7 +77,8 @@ export async function POST(request: Request) {
     }
 
     const ollamaApiKey = process.env.OLLAMA_API_KEY;
-    const isOllama = model === 'ollama';
+    const isOllama = typeof model === 'string' && model.length > 0 && !model.startsWith('yandex');
+    const ollamaModel = isOllama && /^[\w./:-]+$/.test(model) ? model : 'gpt-oss:20b';
     if (isOllama && !ollamaApiKey) {
       return NextResponse.json(
         { error: 'Ollama API key not configured' },
@@ -552,7 +553,7 @@ export async function POST(request: Request) {
           Authorization: `Bearer ${ollamaApiKey}`,
         },
         body: JSON.stringify({
-          model: 'qwen3:8b',
+          model: ollamaModel,
           messages: messages.map((message: any) => ({
             role: message.role,
             content: message.text ?? message.content ?? '',

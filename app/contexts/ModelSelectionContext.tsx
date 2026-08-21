@@ -1,11 +1,16 @@
 "use client"
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-export type ModelType = "yandexgpt" | "yandexgpt-lite" | "ollama";
+export type ModelType = string;
+
+const FALLBACK_MODEL = "gpt-oss:20b";
 
 interface ModelSelectionContextType {
   selectedModel: ModelType;
   setSelectedModel: (model: ModelType) => void;
+  availableModels: string[];
+  modelsLoading: boolean;
+  modelsError: string | null;
   reasoningMode: boolean;
   setReasoningMode: (enabled: boolean) => void;
 }
@@ -18,14 +23,36 @@ interface ModelSelectionProviderProps {
 
 export const ModelSelectionProvider = ({ children }: ModelSelectionProviderProps) => {
   const [selectedModel, setSelectedModel] = useState<ModelType>(() => {
-    // Получаем сохраненную модель из localStorage или используем YandexGPT по умолчанию
-    if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined') {
       const savedModel = localStorage.getItem("selectedModel");
-      const validModels: ModelType[] = ["yandexgpt", "yandexgpt-lite", "ollama"];
-      return validModels.includes(savedModel as ModelType) ? (savedModel as ModelType) : "yandexgpt";
+      return savedModel && !savedModel.startsWith("yandex") ? savedModel : FALLBACK_MODEL;
     }
-    return "yandexgpt";
+    return FALLBACK_MODEL;
   });
+
+  const [availableModels, setAvailableModels] = useState<string[]>([FALLBACK_MODEL]);
+  const [modelsLoading, setModelsLoading] = useState(true);
+  const [modelsError, setModelsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/ollama/models")
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Не удалось загрузить модели Ollama");
+        return response.json();
+      })
+      .then(({ models }: { models?: string[] }) => {
+        if (!cancelled && models?.length) {
+          setAvailableModels(models);
+          setSelectedModel((current) => models.includes(current) ? current : models[0]);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) setModelsError(error instanceof Error ? error.message : "Ошибка загрузки моделей");
+      })
+      .finally(() => { if (!cancelled) setModelsLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   const [reasoningMode, setReasoningMode] = useState<boolean>(() => {
     // Получаем сохраненное состояние режима рассуждений из localStorage
@@ -62,6 +89,9 @@ export const ModelSelectionProvider = ({ children }: ModelSelectionProviderProps
       value={{
         selectedModel,
         setSelectedModel,
+        availableModels,
+        modelsLoading,
+        modelsError,
         reasoningMode,
         setReasoningMode,
       }}
