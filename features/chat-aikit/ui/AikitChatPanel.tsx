@@ -158,7 +158,7 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
           options={[
             { value: "yandexgpt", content: "YandexGPT" },
             { value: "yandexgpt-lite", content: "YandexGPT Lite" },
-            { value: "ollama", content: "Ollama Cloud — qwen3:8b" },
+            { value: "ollama", content: "Ollama Cloud — gpt-oss:20b" },
           ]}
           onUpdate={(value) => {
             if (value[0]) setSelectedModel(value[0] as Parameters<typeof setSelectedModel>[0]);
@@ -294,7 +294,7 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
           },
           history: {
             emptyPlaceholder: "Нет чатов",
-            emptyFilteredPlaceholder: "Ничего не найдено",
+            emptyFilteredPlaceholder: "Н��чего не найдено",
             searchPlaceholder: "Поиск чатов...",
           },
         }}

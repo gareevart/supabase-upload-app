@@ -147,7 +147,7 @@ export async function POST(request: Request) {
           Authorization: `Bearer ${ollamaApiKey}`,
         },
         body: JSON.stringify({
-          model: 'qwen3:8b',
+          model: 'gpt-oss:20b',
           messages: messages.map((message: any) => ({
             role: message.role,
             content: message.text ?? message.content ?? '',

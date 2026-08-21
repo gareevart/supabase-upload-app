@@ -169,7 +169,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
           options={[
             { value: 'yandexgpt', content: 'YandexGPT' },
             { value: 'yandexgpt-lite', content: 'YandexGPT Lite' },
-            { value: 'ollama', content: 'Ollama Cloud — qwen3:8b' },
+            { value: 'ollama', content: 'Ollama Cloud — gpt-oss:20b' },
           ]}
           onUpdate={(value) => {
             if (value.length > 0) {
