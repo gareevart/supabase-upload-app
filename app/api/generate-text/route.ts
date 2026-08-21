@@ -572,8 +572,9 @@ export async function POST(request: Request) {
       }
 
       const ollamaResult = await ollamaResponse.json();
-      let generatedText = ollamaResult.message?.content;
-      if (!generatedText) throw new Error('No text found in Ollama response');
+      // Reasoning models may place the answer in `thinking` when the token budget is exhausted.
+      let generatedText = ollamaResult.message?.content || ollamaResult.message?.thinking;
+      if (!generatedText) throw new Error('Ollama returned neither message content nor thinking');
 
       if (mode === 'WEB' && webSearchSources.length > 0) {
         generatedText = appendSourcesIfMissing(generatedText, webSearchSources);
