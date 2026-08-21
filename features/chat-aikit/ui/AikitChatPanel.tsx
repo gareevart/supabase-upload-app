@@ -33,7 +33,7 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
     error,
   } = useChat(chatId);
   const { chats, createChat, deleteChat } = useChats();
-  const { reasoningMode, setReasoningMode, selectedModel, setSelectedModel } = useModelSelection();
+  const { reasoningMode, setReasoningMode, selectedModel, setSelectedModel, availableModels } = useModelSelection();
 
   const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
   const [useWebSearch, setUseWebSearch] = useState(false);
@@ -156,9 +156,7 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
         <Select
           value={[selectedModel]}
           options={[
-            { value: "yandexgpt", content: "YandexGPT" },
-            { value: "yandexgpt-lite", content: "YandexGPT Lite" },
-            { value: "ollama", content: "Ollama Cloud — gpt-oss:20b" },
+            ...availableModels.map((model) => ({ value: model, content: model })),
           ]}
           onUpdate={(value) => {
             if (value[0]) setSelectedModel(value[0] as Parameters<typeof setSelectedModel>[0]);

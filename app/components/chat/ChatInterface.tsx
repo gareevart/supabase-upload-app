@@ -34,7 +34,7 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
 
   // Use the toaster hook
   const toaster = useToaster();
-  const { reasoningMode, selectedModel, setSelectedModel } = useModelSelection();
+  const { reasoningMode, selectedModel, setSelectedModel, availableModels, modelsLoading, modelsError } = useModelSelection();
   const { toggleSidebar, isMobileSidebarOpen } = useChatSidebar();
   const isMobile = useIsMobile();
   const { handleCreateChat, createChat } = useCreateChat();
@@ -167,20 +167,20 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
         <Select
           value={[selectedModel]}
           options={[
-            { value: 'yandexgpt', content: 'YandexGPT' },
-            { value: 'yandexgpt-lite', content: 'YandexGPT Lite' },
-            { value: 'ollama', content: 'Ollama Cloud — gpt-oss:20b' },
+            ...availableModels.map((model) => ({ value: model, content: model })),
           ]}
           onUpdate={(value) => {
             if (value.length > 0) {
-              const newModel = value[0] as "yandexgpt" | "yandexgpt-lite" | "ollama";
+              const newModel = value[0];
               setSelectedModel(newModel);
             }
           }}
           size="m"
           width="max"
-          placeholder="Выберите модель"
+          placeholder={modelsLoading ? "Загрузка моделей…" : "Выберите модель"}
+          disabled={modelsLoading || availableModels.length === 0}
         />
+        {modelsError && <Text variant="caption-1" color="danger">{modelsError}</Text>}
       </div>
       <div className="chat-interface__settings-section">
         <Text variant="body-1">Системный промпт (роль ассистента)</Text>
