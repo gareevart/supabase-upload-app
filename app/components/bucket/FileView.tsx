@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import '../components.css';
-import { listFiles, deleteFile, FileObject } from '@/lib/yandexStorage';
+import { listFiles, deleteFile, getPublicUrl, FileObject } from '@/lib/yandexStorage';
 import { supabase } from '@/lib/supabase';
 import { TrashBin, Copy } from '@gravity-ui/icons';
 import {
@@ -44,15 +44,11 @@ interface FileViewState {
   userRole: string | null;
 }
 
-const PUBLIC_BUCKET_NAME = 'public-gareevde';
-const STORAGE_BASE_URL = 'https://storage.yandexcloud.net';
+const BLOB_STORE_NAME = 'gareev-blob';
 const PAGINATION_THRESHOLD = 30;
 const PAGE_SIZE_OPTIONS = [30, 50, 100] as const;
 
 type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
-
-const buildPublicImageUrl = (userId: string, fileName: string) =>
-  `${STORAGE_BASE_URL}/${PUBLIC_BUCKET_NAME}/profiles/${userId}/${fileName}`;
 
 function getGridColumnCount(windowWidth: number): number {
   if (windowWidth >= 1024) {
@@ -164,7 +160,7 @@ export default function FileView() {
           .select('role')
           .eq('id', userId)
           .single(),
-        listFiles(`profiles/${userId}/`, 'public-gareevde', userId),
+        listFiles(`profiles/${userId}/`, BLOB_STORE_NAME, userId),
         supabase
           .from('images')
           .select(`
@@ -217,10 +213,10 @@ export default function FileView() {
         tags: imageTagsMap[file.name]?.tags || []
       }));
 
-      const imageUrls: Record<string, string> = {};
-      imagesWithTags.forEach((image) => {
-        imageUrls[image.name] = buildPublicImageUrl(userId, image.name);
-      });
+      const imageUrlEntries = await Promise.all(
+        imagesWithTags.map(async (image) => [image.name, await getPublicUrl(image.name)] as const)
+      );
+      const imageUrls = Object.fromEntries(imageUrlEntries);
 
       updateState({
         images: imagesWithTags,

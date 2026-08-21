@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { DeleteObjectsCommand, S3Client } from '@aws-sdk/client-s3';
+import { del } from '@vercel/blob';
 import type { Database } from '@/lib/types';
 import { withApiAuth } from '@/app/auth/withApiAuth';
 
@@ -10,18 +10,6 @@ export const runtime = 'nodejs';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-
-const BUCKET_NAME = 'public-gareevde';
-const ENDPOINT_URL = process.env.ENDPOINT_URL || 'https://storage.yandexcloud.net';
-
-const s3Client = new S3Client({
-  region: 'ru-central1',
-  endpoint: ENDPOINT_URL,
-  credentials: {
-    accessKeyId: process.env.BUCKET_KEY_ID || '',
-    secretAccessKey: process.env.BUCKET_SECRET_KEY || '',
-  },
-});
 
 type Attachment = {
   url?: string;
@@ -34,17 +22,11 @@ const extractFilePath = (rawUrl: string): string | null => {
     const parsedUrl = new URL(rawUrl);
     const cleanPath = parsedUrl.pathname.replace(/^\/+/, '');
 
-    if (cleanPath.startsWith(`${BUCKET_NAME}/`)) {
-      return cleanPath.slice(BUCKET_NAME.length + 1);
-    }
-
     return cleanPath;
   } catch {
     const sanitized = rawUrl.split('?')[0].replace(/^\/+/, '');
     if (!sanitized) return null;
-    return sanitized.startsWith(`${BUCKET_NAME}/`)
-      ? sanitized.slice(BUCKET_NAME.length + 1)
-      : sanitized;
+    return sanitized;
   }
 };
 
@@ -52,19 +34,7 @@ const deleteFilesInBatches = async (filePaths: string[]) => {
   const uniquePaths = Array.from(new Set(filePaths)).filter(Boolean);
   if (uniquePaths.length === 0) return;
 
-  const batchSize = 1000;
-  for (let i = 0; i < uniquePaths.length; i += batchSize) {
-    const batch = uniquePaths.slice(i, i + batchSize);
-    const command = new DeleteObjectsCommand({
-      Bucket: BUCKET_NAME,
-      Delete: {
-        Objects: batch.map((path) => ({ Key: path })),
-        Quiet: false,
-      },
-    });
-
-    await s3Client.send(command);
-  }
+  await del(uniquePaths);
 };
 
 export const DELETE = withApiAuth(async (request: NextRequest, user: { id: string }) => {

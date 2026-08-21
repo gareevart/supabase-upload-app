@@ -1,7 +1,5 @@
 import { supabase } from '@/lib/supabase';
 
-const BUCKET_NAME = 'public-gareevde';
-
 export const uploadImage = async (file: File): Promise<string> => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.user) throw new Error('You must be logged in to upload images');
@@ -25,11 +23,7 @@ export const uploadImage = async (file: File): Promise<string> => {
   const responseData = await response.json();
   if (!responseData.data) throw new Error('Invalid response format from upload API');
 
-  const imageUrl =
-    responseData.data.url ??
-    responseData.data.directUrl ??
-    responseData.data.publicUrl ??
-    `https://${BUCKET_NAME}.storage.yandexcloud.net/${responseData.data.path}`;
+  const imageUrl = responseData.data.url ?? responseData.data.publicUrl;
 
   if (!imageUrl) throw new Error('Upload response missing image URL');
   return imageUrl;
