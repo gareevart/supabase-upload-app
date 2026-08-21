@@ -11,7 +11,11 @@ export const GET = withApiAuth(async (request: NextRequest, _user: { id: string 
     do {
       const page = await list({ prefix: path, cursor, limit: 1000 });
       const blob = page.blobs.find((item) => item.pathname === path);
-      if (blob) return NextResponse.json({ url: blob.url });
+      if (blob) {
+        return NextResponse.json({
+          url: `/api/storage/file?path=${encodeURIComponent(blob.pathname)}`,
+        });
+      }
       cursor = page.hasMore ? page.cursor : undefined;
     } while (cursor);
 

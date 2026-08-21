@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const fileName = `${crypto.randomUUID()}${extension}`;
     const path = `${folder}/${userId}/${fileName}`;
     const blob = await put(path, file, {
-      access: 'public',
+      access: 'private',
       addRandomSuffix: false,
       contentType: file.type || 'application/octet-stream',
       cacheControlMaxAge: 3600,
@@ -32,9 +32,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       data: {
         path: blob.pathname,
-        publicUrl: blob.url,
-        directUrl: blob.url,
-        url: blob.url,
+        publicUrl: `/api/storage/file?path=${encodeURIComponent(blob.pathname)}`,
+        directUrl: `/api/storage/file?path=${encodeURIComponent(blob.pathname)}`,
+        url: `/api/storage/file?path=${encodeURIComponent(blob.pathname)}`,
       },
     });
   } catch (error) {

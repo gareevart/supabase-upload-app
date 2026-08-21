@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
         id: blob.etag,
         metadata: { size: blob.size },
         created_at: blob.uploadedAt.toISOString(),
-        url: blob.url,
+        url: `/api/storage/file?path=${encodeURIComponent(blob.pathname)}`,
       }))
       .filter((file) => file.name && !file.name.endsWith('/'));
 
