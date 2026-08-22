@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
       .filter((blob) => !endDate || new Date(blob.uploadedAt) <= new Date(endDate))
       .map((blob) => ({
         name: blob.pathname.replace(prefix, ''),
+        pathname: blob.pathname,
         id: blob.etag,
         metadata: { size: blob.size },
         created_at: blob.uploadedAt.toISOString(),
