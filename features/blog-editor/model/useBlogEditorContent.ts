@@ -119,8 +119,18 @@ export const useBlogEditorContent = (initialPost?: any, onSave?: (published: boo
   };
 
   const handleFeaturedImageUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Ошибка загрузки обложки', description: 'Выберите файл изображения', variant: 'destructive' });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: 'Ошибка загрузки обложки', description: 'Размер изображения не должен превышать 10 МБ', variant: 'destructive' });
+      return;
+    }
+
     try {
       setIsUploading(true);
+      toast({ title: 'Загрузка обложки', description: 'Подготавливаем изображение к загрузке', timeout: 0 });
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error('You must be logged in to upload images');
 
@@ -138,10 +148,20 @@ export const useBlogEditorContent = (initialPost?: any, onSave?: (published: boo
         const err = await response.json();
         throw new Error(err.error ?? 'Failed to upload image');
       }
-      const { data } = await response.json();
-      setFeaturedImageUrl(data.url ?? data.directUrl ?? data.publicUrl ?? null);
+      const result = await response.json().catch(() => null);
+      const uploadedPath = result?.data?.path ?? result?.data?.pathname ?? result?.data?.url ?? result?.data?.directUrl ?? result?.data?.publicUrl;
+      if (!uploadedPath || typeof uploadedPath !== 'string') {
+        throw new Error('Upload succeeded but the API returned no file path');
+      }
+
+      setFeaturedImageUrl(uploadedPath);
+      toast({ title: 'Обложка загружена', description: 'Изображение успешно загружено', variant: 'success' });
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to upload featured image', variant: 'destructive' });
+      toast({
+        title: 'Ошибка загрузки обложки',
+        description: error instanceof Error ? error.message : 'Не удалось загрузить изображение',
+        variant: 'destructive',
+      });
     } finally {
       setIsUploading(false);
     }
