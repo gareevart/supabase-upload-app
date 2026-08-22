@@ -16,6 +16,7 @@ import { TableOfContents } from "@/shared/ui/TableOfContents"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useI18n } from "@/app/contexts/I18nContext"
 import Subscribe from "@/app/components/Subscribe/Subscribe"
+import { getBlobPreviewUrl } from '@/lib/blobUrl'
 
 interface BlogPost {
   id: string
@@ -205,7 +206,7 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
             {post.featured_image && post.show_featured_image !== false && (
               <div className="blog-post-cover">
                 <Image
-                  src={post.featured_image}
+                  src={getBlobPreviewUrl(post.featured_image) || ''}
                   alt={post.title}
                   fill
                   className="blog-post-cover__img"

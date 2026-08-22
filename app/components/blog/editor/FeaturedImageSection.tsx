@@ -5,6 +5,7 @@ import { Button, Text, TextArea, Dialog, SegmentedRadioGroup, Flex } from '@grav
 import StoredImageGallery from "../StoredImageGallery";
 import { useI18n } from "@/app/contexts/I18nContext";
 import NextImage from "next/image";
+import { getBlobPreviewUrl } from "@/lib/blobUrl";
 
 interface FeaturedImageSectionProps {
   featuredImageUrl: string | null;
@@ -69,7 +70,7 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
       {localFeaturedImageUrl ? (
         <div className="featured-image__preview">
           <NextImage
-            src={localFeaturedImageUrl}
+            src={getBlobPreviewUrl(localFeaturedImageUrl) || ''}
             alt={t('blogEditor.coverLabel')}
             width={0}
             height={0}

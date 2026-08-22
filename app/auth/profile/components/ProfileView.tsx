@@ -9,6 +9,7 @@ import {
 import { Profile } from '@/app/auth/profile/types';
 import { ProfileEditForm } from './ProfileEditForm';
 import { AppearancePanelConnected } from '@/features/appearance';
+import { getBlobPreviewUrl } from '@/lib/blobUrl';
 
 interface ProfileViewProps {
     profile: Profile;
@@ -53,7 +54,7 @@ export const ProfileView = ({
                             {profile.avatar_url && (
                                 <div style={{ position: 'relative', width: '80px', height: '80px' }}>
                                     <Image
-                                        src={profile.avatar_url}
+                                        src={getBlobPreviewUrl(profile.avatar_url) || ''}
                                         alt="Avatar"
                                         fill
                                         className="profile-avatar"

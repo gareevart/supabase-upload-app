@@ -8,6 +8,7 @@ import { Check } from '@gravity-ui/icons';
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/app/contexts/I18nContext";
 import "./BlogEditor.css";
+import { getBlobPreviewUrl } from "@/lib/blobUrl";
 
 interface StoredImageGalleryProps {
   onImageSelect: (imageUrl: string) => void;
@@ -46,14 +47,9 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
       );
 
       const imageUrls = imageFiles.map((file: any) => {
-        // Generate public URL for Yandex Cloud Storage
-        // The API returns file.name as the path after the prefix (e.g., "userId/filename.jpg")
-        // So we need to combine prefix + file.name to get the full path
-        const publicUrl = `https://storage.yandexcloud.net/public-gareevde/featured/${file.name}`;
-
         return {
-          name: file.name.split('/').pop() || file.name, // Extract just the filename for display
-          url: publicUrl
+          name: file.name.split('/').pop() || file.name,
+          url: file.url || getBlobPreviewUrl(file.pathname) || ''
         };
       });
 
@@ -115,7 +111,7 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
             <Card className={`image-gallery__card${isSelected ? ' image-gallery__card_selected' : ''}`}>
               <div className="image-gallery__thumb">
                 <Image
-                  src={image.url}
+                  src={getBlobPreviewUrl(image.url) || ''}
                   alt={image.name}
                   fill
                   style={{ objectFit: 'cover' }}
