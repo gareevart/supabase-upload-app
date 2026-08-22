@@ -209,6 +209,7 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
                   src={getBlobPreviewUrl(post.featured_image) || ''}
                   alt={post.title}
                   fill
+                  unoptimized
                   className="blog-post-cover__img"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />

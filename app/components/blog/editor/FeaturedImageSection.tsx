@@ -74,6 +74,7 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
             alt={t('blogEditor.coverLabel')}
             width={0}
             height={0}
+            unoptimized
             sizes="100vw"
             style={{ width: 'auto', height: 'auto', maxHeight: '15rem' }}
             className="featured-image__img"

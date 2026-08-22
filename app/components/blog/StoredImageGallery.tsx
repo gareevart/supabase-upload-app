@@ -114,6 +114,7 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
                   src={getBlobPreviewUrl(image.url) || ''}
                   alt={image.name}
                   fill
+                  unoptimized
                   style={{ objectFit: 'cover' }}
                   sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 16vw"
                 />

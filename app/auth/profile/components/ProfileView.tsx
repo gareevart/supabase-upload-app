@@ -57,6 +57,7 @@ export const ProfileView = ({
                                         src={getBlobPreviewUrl(profile.avatar_url) || ''}
                                         alt="Avatar"
                                         fill
+                                        unoptimized
                                         className="profile-avatar"
                                         style={{ objectFit: 'cover' }}
                                         sizes="80px" />
