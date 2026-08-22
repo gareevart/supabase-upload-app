@@ -88,6 +88,7 @@ export const BlogPostCard = ({
         src={getBlobPreviewUrl(post.featured_image) || ''}
         alt={post.title}
         fill
+        unoptimized
         sizes={imageSizes}
         className="blog-card__img"
         priority={isPriority}
