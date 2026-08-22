@@ -6,6 +6,7 @@ import StoredImageGallery from "../StoredImageGallery";
 import { useI18n } from "@/app/contexts/I18nContext";
 import NextImage from "next/image";
 import { getBlobPreviewUrl } from "@/lib/blobUrl";
+import { Loader2 } from "lucide-react";
 
 interface FeaturedImageSectionProps {
   featuredImageUrl: string | null;
@@ -67,6 +68,12 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
   return (
     <div className="featured-image">
       <Text color="secondary" variant="subheader-1">{t('blogEditor.coverLabel')}</Text>
+      {isUploading && (
+        <div className="featured-image__uploading" role="status" aria-live="polite">
+          <Loader2 size={18} className="animate-spin" />
+          <Text variant="body-1">Загрузка обложки…</Text>
+        </div>
+      )}
       {localFeaturedImageUrl ? (
         <div className="featured-image__preview">
           <NextImage
@@ -102,8 +109,9 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
           <Button
             size="l"
             view="normal"
-            onClick={() => {
-              const input = document.createElement('input');
+              disabled={isUploading}
+              onClick={() => {
+                const input = document.createElement('input');
               input.type = 'file';
               input.accept = 'image/*';
               input.onchange = (e) => {
