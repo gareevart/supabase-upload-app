@@ -5,6 +5,7 @@ import { Avatar, Skeleton } from '@gravity-ui/uikit';
 import { EyesLookRight, EyesLookLeft } from '@gravity-ui/icons';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/app/contexts/AuthContext';
+import { getBlobPreviewUrl } from '@/lib/blobUrl';
 
 export default function UserAvatar() {
   const { user, loading: authLoading } = useAuth();
@@ -111,7 +112,7 @@ export default function UserAvatar() {
   if (avatarUrl) {
     return (
       <Avatar 
-        imgUrl={avatarUrl} 
+        imgUrl={getBlobPreviewUrl(avatarUrl) || undefined} 
         fallbackImgUrl="https://loremflickr.com/640/480/cats?lock=3552647338524672" 
         size="l" 
       />

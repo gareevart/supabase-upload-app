@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import '../components.css';
 import { listFiles, deleteFile, FileObject } from '@/lib/yandexStorage';
+import { getBlobPreviewUrl } from '@/lib/blobUrl';
 import { supabase } from '@/lib/supabase';
 import { TrashBin, Copy } from '@gravity-ui/icons';
 import {

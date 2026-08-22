@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/app/contexts/I18nContext";
+import { getBlobPreviewUrl } from "@/lib/blobUrl";
 import "./BlogPostCard.css";
 
 export interface BlogPost {
@@ -84,7 +85,7 @@ export const BlogPostCard = ({
 
     const image = (
       <Image
-        src={post.featured_image}
+        src={getBlobPreviewUrl(post.featured_image) || ''}
         alt={post.title}
         fill
         sizes={imageSizes}
