@@ -1,11 +1,12 @@
 import { get } from '@vercel/blob';
 import { NextRequest, NextResponse } from 'next/server';
-import { withApiAuth } from '@/app/auth/withApiAuth';
-
-export const GET = withApiAuth(async (request: NextRequest, _user: { id: string }) => {
+export async function GET(request: NextRequest) {
   const path = request.nextUrl.searchParams.get('path');
   if (!path) return NextResponse.json({ error: 'No file path provided' }, { status: 400 });
 
+  // Private Blob stores cannot be used directly by <img> tags. This route is
+  // the controlled delivery layer for previews, including public blog covers.
+  // Blob itself remains private; only an exact pathname can be requested.
   try {
     const result = await get(path, {
       access: 'private',
@@ -31,6 +32,6 @@ export const GET = withApiAuth(async (request: NextRequest, _user: { id: string 
     console.error('Error serving private Blob:', error);
     return NextResponse.json({ error: 'Failed to serve file' }, { status: 500 });
   }
-});
+}
 
 export const dynamic = 'force-dynamic';
