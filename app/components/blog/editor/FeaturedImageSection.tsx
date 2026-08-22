@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Button, Text, TextArea, Dialog, SegmentedRadioGroup, Flex } from '@gravity-ui/uikit';
+import { Button, Text, TextArea, Dialog, SegmentedRadioGroup, Flex, Spin } from '@gravity-ui/uikit';
 import StoredImageGallery from "../StoredImageGallery";
 import { useI18n } from "@/app/contexts/I18nContext";
 import NextImage from "next/image";
 import { getBlobPreviewUrl } from "@/lib/blobUrl";
-import { Loader2 } from "lucide-react";
 
 interface FeaturedImageSectionProps {
   featuredImageUrl: string | null;
@@ -70,7 +69,7 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
       <Text color="secondary" variant="subheader-1">{t('blogEditor.coverLabel')}</Text>
       {isUploading && (
         <div className="featured-image__uploading" role="status" aria-live="polite">
-          <Loader2 size={18} className="animate-spin" />
+          <Spin size="s" />
           <Text variant="body-1">Загрузка обложки…</Text>
         </div>
       )}
