@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import '../components.css';
-import { listFiles, deleteFile, getPublicUrl, FileObject } from '@/lib/yandexStorage';
+import { listFiles, deleteFile, FileObject } from '@/lib/yandexStorage';
 import { supabase } from '@/lib/supabase';
 import { TrashBin, Copy } from '@gravity-ui/icons';
 import {
@@ -213,9 +213,10 @@ export default function FileView() {
         tags: imageTagsMap[file.name]?.tags || []
       }));
 
-      const imageUrlEntries = await Promise.all(
-        imagesWithTags.map(async (image) => [image.name, await getPublicUrl(image.name)] as const)
-      );
+      const imageUrlEntries = imagesWithTags.map((image) => [
+        image.name,
+        image.url || `/api/storage/file?path=${encodeURIComponent(image.pathname || `profiles/${userId}/${image.name}`)}`,
+      ] as const);
       const imageUrls = Object.fromEntries(imageUrlEntries);
 
       updateState({

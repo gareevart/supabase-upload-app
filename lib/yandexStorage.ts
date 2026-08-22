@@ -4,6 +4,8 @@ export interface FileObject {
   id?: string;
   metadata?: { size?: number };
   created_at?: string;
+  url?: string;
+  pathname?: string;
 }
 
 const FOLDER_PREFIX = 'profiles/';
