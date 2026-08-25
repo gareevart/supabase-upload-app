@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 
 import { useRouter, usePathname } from 'next/navigation';
 import { Icon, Button, Popover, Text } from '@gravity-ui/uikit';
-import { House, Circles4Square, Person, Magnifier, BookOpen, Bars, Xmark, Circles3Plus, Calculator, Camera, Gear } from '@gravity-ui/icons';
+import { House, Circles4Square, Person, Magnifier, BookOpen, Bars, Xmark, Circles3Plus, Calculator, Camera, Gear, ArrowLeft } from '@gravity-ui/icons';
 import UserAvatar from '../UserAvatar';
 import NavigationItem from './NavigationItem';
 import { DrawerMenu } from '@/shared/ui/DrawerMenu';
@@ -22,6 +22,15 @@ import { NAVIGATION_POSITION_EVENT, NAVIGATION_POSITION_STORAGE_KEY, NavigationP
 
 type WidgetId = 'calculator' | 'camera';
 type WidgetAnimationState = 'closed' | 'entering' | 'open' | 'exiting';
+
+type EditorMenuState = {
+  mode: 'blog' | 'broadcast';
+  actionLabel: 'Save' | 'Create';
+  onAction: () => void | Promise<void>;
+  onCancel: () => void;
+};
+
+export const EDITOR_MENU_EVENT = 'editor-menu-change';
 
 const Navigation: React.FC = () => {
   const router = useRouter();
@@ -48,6 +57,7 @@ const Navigation: React.FC = () => {
   const [widgetsPanelStyle, setWidgetsPanelStyle] = useState<React.CSSProperties>({});
   const [navigationPosition, setNavigationPosition] = useState<NavigationPosition>('left');
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [editorMenu, setEditorMenu] = useState<EditorMenuState | null>(null);
   const isLeftAnchoredWidgetsPanel = navigationPosition === 'left' && !isMobileViewport;
   const isBottomAnchoredWidgetsPanel = navigationPosition === 'bottom' || isMobileViewport;
   const isChatRoute = pathname?.startsWith('/chat') ?? false;
@@ -66,6 +76,16 @@ const Navigation: React.FC = () => {
   };
 
   // Update active item when pathname changes
+  useEffect(() => {
+    const handleEditorMenuChange = (event: Event) => {
+      const customEvent = event as CustomEvent<EditorMenuState | null>;
+      setEditorMenu(customEvent.detail ?? null);
+    };
+
+    window.addEventListener(EDITOR_MENU_EVENT, handleEditorMenuChange);
+    return () => window.removeEventListener(EDITOR_MENU_EVENT, handleEditorMenuChange);
+  }, []);
+
   useEffect(() => {
     const activeFromPath = getActiveItemFromPath(pathname || '');
     setActiveItem(activeFromPath);
@@ -288,6 +308,35 @@ const Navigation: React.FC = () => {
       <nav className={`navigation navigation--${navigationPosition} ${isChatRoute ? 'navigation--chat-route' : ''}`}>
         <div className="nav-container">
           <div className="nav-items">
+            {editorMenu ? (
+              <>
+                <Button
+                  view="flat"
+                  size="xl"
+                  onClick={editorMenu.onCancel}
+                  aria-label="Back"
+                >
+                  <Icon data={ArrowLeft} size={20} />
+                </Button>
+                <Button
+                  view="action"
+                  size="xl"
+                  onClick={editorMenu.onAction}
+                  aria-label={editorMenu.actionLabel}
+                >
+                  {editorMenu.actionLabel}
+                </Button>
+                <Button
+                  view="flat"
+                  size="xl"
+                  onClick={editorMenu.onCancel}
+                  aria-label="Cancel"
+                >
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <>
             {mainNavItems.map((item) => (
               <Popover
                 key={item.id}
@@ -358,8 +407,10 @@ const Navigation: React.FC = () => {
                 </Button>
               </Popover>
             )}
+              </>
+            )}
           </div>
-          {!isMobileViewport && navigationPosition !== 'bottom' && (
+          {!editorMenu && !isMobileViewport && navigationPosition !== 'bottom' && (
             <Popover
               content="Profile"
               placement="left"

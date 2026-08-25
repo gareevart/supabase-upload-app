@@ -1,5 +1,8 @@
 "use client";
 
+import { useRouter } from 'next/navigation';
+import { EDITOR_MENU_EVENT } from '@/app/components/Navigation/Navigation';
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Button, Card, Text, TextInput, Icon, Modal } from '@gravity-ui/uikit';
 import { ArrowUturnCwLeft, Pencil, Plus, ChevronDown, Eye, Bug } from '@gravity-ui/icons';
@@ -17,6 +20,8 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
   onSend,
   isSubmitting = false,
 }) => {
+  const router = useRouter();
+
   // Form state
   const [subject, setSubject] = useState<string>(initialData?.subject || '');
   const [content, setContent] = useState<any>(initialData?.content || '');
@@ -154,8 +159,24 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
     }
   };
 
+  useEffect(() => {
+    const onCancel = () => {
+      window.dispatchEvent(new CustomEvent(EDITOR_MENU_EVENT, { detail: null }));
+      router.back();
+    };
+
+    window.dispatchEvent(new CustomEvent(EDITOR_MENU_EVENT, { detail: {
+      mode: 'broadcast',
+      actionLabel: initialData ? 'Save' : 'Create',
+      onAction: handleSaveDraft,
+      onCancel,
+    }}));
+
+    return () => window.dispatchEvent(new CustomEvent(EDITOR_MENU_EVENT, { detail: null }));
+  }, [initialData, handleSaveDraft, router]);
+
   return (
-    <Card className="p-4">
+  <Card className="p-4">
       <div className="space-y-6">
         <div>
           <Text variant="subheader-1" className="mb-4">Создать Email рассылку</Text>

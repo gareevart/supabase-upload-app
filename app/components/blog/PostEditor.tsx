@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
-import { Button } from '@gravity-ui/uikit';
+import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { EDITOR_MENU_EVENT } from "@/app/components/Navigation/Navigation";
 import { useBlogEditorContent } from "@/features/blog-editor/model/useBlogEditorContent";
 import { useI18n } from "@/app/contexts/I18nContext";
 import PostMetadata from "./editor/PostMetadata";
@@ -15,6 +16,7 @@ type PostEditorProps = {
 
 const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
   const { t } = useI18n();
+  const router = useRouter();
   const {
     title, setTitle,
     slug, setSlug,
@@ -36,6 +38,24 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
     handleSelectGalleryImage,
     savePost
   } = useBlogEditorContent(initialPost, onSave);
+
+  useEffect(() => {
+    const onCancel = () => {
+      window.dispatchEvent(new CustomEvent(EDITOR_MENU_EVENT, { detail: null }));
+      router.back();
+    };
+
+    window.dispatchEvent(new CustomEvent(EDITOR_MENU_EVENT, {
+      detail: {
+        mode: 'blog',
+        actionLabel: initialPost ? 'Save' : 'Create',
+        onAction: () => savePost(false),
+        onCancel,
+      },
+    }));
+
+    return () => window.dispatchEvent(new CustomEvent(EDITOR_MENU_EVENT, { detail: null }));
+  }, [initialPost, router, savePost]);
 
   return (
     <div className="post-editor">
@@ -70,24 +90,6 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
         placeholder={t('blogEditor.contentPlaceholder')}
       />
 
-      <div className="post-editor__actions">
-        <Button
-          size="l"
-          view="action"
-          onClick={() => savePost(true)}
-          disabled={isLoading}
-        >
-          {t('blogEditor.publish')}
-        </Button>
-        <Button
-          size="l"
-          view="outlined"
-          onClick={() => savePost(false)}
-          disabled={isLoading}
-        >
-          {t('blogEditor.saveDraft')}
-        </Button>
-      </div>
     </div>
   );
 };
