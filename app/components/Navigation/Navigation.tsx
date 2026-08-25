@@ -305,7 +305,7 @@ const Navigation: React.FC = () => {
 
   return (
     <>
-      <nav className={`navigation navigation--${navigationPosition} ${isChatRoute ? 'navigation--chat-route' : ''}`}>
+      <nav className={`navigation navigation--${navigationPosition} ${editorMenu ? 'navigation--editor' : ''} ${isChatRoute ? 'navigation--chat-route' : ''}`}>
         <div className="nav-container">
           <div className="nav-items">
             {editorMenu ? (
@@ -313,7 +313,10 @@ const Navigation: React.FC = () => {
                 <Button
                   view="flat"
                   size="xl"
-                  onClick={editorMenu.onCancel}
+                  type="button"
+                  onClick={() => {
+                    editorMenu.onCancel();
+                  }}
                   aria-label="Back"
                 >
                   <Icon data={ArrowLeft} size={20} />
