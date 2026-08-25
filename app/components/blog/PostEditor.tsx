@@ -42,7 +42,14 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
   useEffect(() => {
     const onCancel = () => {
       window.dispatchEvent(new CustomEvent(EDITOR_MENU_EVENT, { detail: null }));
-      router.back();
+
+      // When the editor is opened directly, there may be no usable history entry.
+      // Keep browser back behavior when history exists and fall back to the blog list otherwise.
+      if (window.history.length > 1) {
+        router.back();
+      } else {
+        router.push('/blog');
+      }
     };
 
     window.dispatchEvent(new CustomEvent(EDITOR_MENU_EVENT, {
