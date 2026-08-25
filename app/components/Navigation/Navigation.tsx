@@ -96,7 +96,8 @@ const Navigation: React.FC = () => {
 
   useEffect(() => {
     const applyNavigationPosition = (value: string | null) => {
-      const resolvedPosition: NavigationPosition = value === 'bottom' ? 'bottom' : 'left';
+      const isMobile = window.matchMedia('(max-width: 767px)').matches;
+      const resolvedPosition: NavigationPosition = isMobile || value === 'bottom' ? 'bottom' : 'left';
       setNavigationPosition(resolvedPosition);
       document.body.classList.toggle('navigation-position-bottom', resolvedPosition === 'bottom');
       document.body.classList.toggle('navigation-position-left', resolvedPosition === 'left');
