@@ -103,26 +103,6 @@ export function AppearancePanel({
         </SegmentedRadioGroup>
       </AppearanceRow>
 
-      <AppearanceRow label={t('appearancePanel.navigation')}>
-        <SegmentedRadioGroup
-          name="appearance-navigation"
-          value={navigation}
-          onUpdate={(value) => {
-            if (value === 'left' || value === 'bottom') {
-              onNavigationChange(value);
-            }
-          }}
-          size="l"
-          width="max"
-        >
-          <SegmentedRadioGroup.Option value="left">
-            {t('appearancePanel.navigation.left')}
-          </SegmentedRadioGroup.Option>
-          <SegmentedRadioGroup.Option value="bottom">
-            {t('appearancePanel.navigation.bottom')}
-          </SegmentedRadioGroup.Option>
-        </SegmentedRadioGroup>
-      </AppearanceRow>
     </section>
   );
 }
