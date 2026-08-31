@@ -107,7 +107,7 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
         disabled={isMessageSending}
         compact
         buttonView="flat"
-        tooltipTitle="Прикрепить файл"
+        tooltipTitle={t('chatView.attachFile')}
         maxFiles={3}
         maxFileSize={10 * 1024 * 1024}
       />
@@ -115,7 +115,7 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
         size="m"
         view={useWebSearch ? "action" : "flat"}
         onClick={() => setUseWebSearch((v) => !v)}
-        tooltipTitle={useWebSearch ? "Отключить веб-поиск" : "Включить веб-поиск"}
+        tooltipTitle={useWebSearch ? t('chatView.webSearchOff') : t('chatView.webSearchOn')}
       >
         <Icon data={Magnifier} size={16} />
       </ActionButton>
@@ -132,7 +132,7 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
           size="m"
           view={reasoningMode ? "action" : "flat"}
           onClick={() => setReasoningMode(!reasoningMode)}
-          tooltipTitle={reasoningMode ? "Отключить режим рассуждений" : "Включить режим рассуждений"}
+          tooltipTitle={reasoningMode ? t('chatView.reasoningOff') : t('chatView.reasoningOn')}
         >
           <Icon data={Bulb} size={16} />
         </ActionButton>
@@ -141,7 +141,7 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
         size="m"
         view="flat"
         onClick={() => setSettingsOpen(true)}
-        tooltipTitle="Настройки чата"
+        tooltipTitle={t('chatView.settingsTooltip')}
       >
         <Icon data={Sliders} size={16} />
       </ActionButton>
@@ -151,8 +151,8 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
   const settingsContent = (
     <div className="aikit-chat-panel__settings">
       <div>
-        <Text variant="body-1">Модель ИИ</Text>
-        <Text variant="body-2" color="secondary">Будет применена только для этого чата</Text>
+        <Text variant="body-1">{t('chatView.modelLabel')}</Text>
+        <Text variant="body-2" color="secondary">{t('chatView.modelDescription')}</Text>
         <Select
           value={[selectedModel]}
           options={[
@@ -166,13 +166,13 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
         />
       </div>
       <div>
-        <Text variant="body-1">Системный промпт</Text>
-        <Text variant="body-2" color="secondary">Определяет роль и поведение ассистента в этом чате</Text>
+        <Text variant="body-1">{t('chatView.systemPromptLabel')}</Text>
+        <Text variant="body-2" color="secondary">{t('chatView.systemPromptDescription')}</Text>
         <TextArea
           value={systemPrompt}
           onChange={(e) => setSystemPrompt(e.target.value)}
           rows={5}
-          placeholder="Ты полезный ассистент. Отвечай чётко и лаконично."
+          placeholder={t('chatView.systemPromptPlaceholder')}
         />
       </div>
     </div>
@@ -279,21 +279,21 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
             bottomContent: footerTools,
           },
           bodyProps: {
-            placeholder: "Напишите сообщение...",
+            placeholder: t('chatView.messagePlaceholder'),
             minRows: 1,
             maxRows: 8,
           },
         }}
         i18nConfig={{
           header: {
-            defaultTitle: "Чат",
-            newChatTooltip: "Новый чат",
-            historyTooltip: "История чатов",
+            defaultTitle: t('chatView.defaultTitle'),
+            newChatTooltip: t('chatView.newChatTooltip'),
+            historyTooltip: t('chatView.historyTooltip'),
           },
           history: {
-            emptyPlaceholder: "Нет чатов",
-            emptyFilteredPlaceholder: "Н��чего не найдено",
-            searchPlaceholder: "Поиск чатов...",
+            emptyPlaceholder: t('chatView.emptyPlaceholder'),
+            emptyFilteredPlaceholder: t('chatView.emptyFilteredPlaceholder'),
+            searchPlaceholder: t('chatView.searchPlaceholder'),
           },
         }}
       />
@@ -340,14 +340,14 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
         <DrawerMenu
           open={settingsOpen}
           onClose={() => setSettingsOpen(false)}
-          title="Настройки чата"
+          title={t('chatView.settingsTooltip')}
           footer={
             <>
               <Button view="outlined" size="l" onClick={() => setSettingsOpen(false)}>
-                Отмена
+                {t('chatView.cancel')}
               </Button>
               <Button view="action" size="l" onClick={handleSaveSettings}>
-                Сохранить
+                {t('chatView.save')}
               </Button>
             </>
           }
@@ -356,13 +356,13 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
         </DrawerMenu>
       ) : (
         <Dialog open={settingsOpen} onClose={() => setSettingsOpen(false)}>
-          <Dialog.Header caption="Настройки чата" />
+          <Dialog.Header caption={t('chatView.settingsTitle')} />
           <Dialog.Body>{settingsContent}</Dialog.Body>
           <Dialog.Footer
             onClickButtonCancel={() => setSettingsOpen(false)}
             onClickButtonApply={handleSaveSettings}
-            textButtonApply="Сохранить"
-            textButtonCancel="Отмена"
+            textButtonApply={t('chatView.save')}
+            textButtonCancel={t('chatView.cancel')}
           />
         </Dialog>
       )}
