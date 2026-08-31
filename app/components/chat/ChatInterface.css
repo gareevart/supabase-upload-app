@@ -30,7 +30,7 @@
   min-height: 0;
   overflow: hidden;
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   background-color: var(--g-color-base-background);
 }
 
