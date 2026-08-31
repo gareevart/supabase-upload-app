@@ -381,8 +381,8 @@
 /* ---------------- Mobile (max-width: 767px) ---------------- */
 @media (max-width: 767px) {
   .chat-interface {
-    /* Account for fixed bottom navigation (65px) + safe area */
-    padding-bottom: calc(65px + env(safe-area-inset-bottom));
+    /* Navigation is hidden on chat routes, so the chat can use the full viewport. */
+    padding-bottom: 0;
   }
 
   /* Header Typography */
