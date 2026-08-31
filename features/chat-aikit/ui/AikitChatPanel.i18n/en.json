@@ -1,8 +1,13 @@
 {
   "chatView.breadcrumbHome": "Home",
   "chatView.breadcrumbHistory": "Chat history",
+  "chatView.breadcrumbChat": "Chats",
+  "chatView.historyTitle": "Chat history",
+  "chatView.chatHistory": "Chat history",
   "chatView.breadcrumbNewChat": "New chat",
   "chatView.chatActions": "Chat actions",
+  "chatView.deleteChat": "Delete chat",
+  "chatView.deleteTitle": "Delete chat?",
   "chatView.deleteText": "Delete this chat?",
   "chatView.deleteConfirm": "Delete",
   "chatForm.widgetModeOn": "Widget mode enabled — the assistant will generate a widget",
