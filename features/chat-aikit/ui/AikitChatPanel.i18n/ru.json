@@ -1,8 +1,13 @@
 {
   "chatView.breadcrumbHome": "Главная",
   "chatView.breadcrumbHistory": "История чатов",
+  "chatView.breadcrumbChat": "Чаты",
+  "chatView.historyTitle": "История чатов",
+  "chatView.chatHistory": "История чатов",
   "chatView.breadcrumbNewChat": "Новый чат",
   "chatView.chatActions": "Действия чата",
+  "chatView.deleteChat": "Удалить чат",
+  "chatView.deleteTitle": "Удалить чат?",
   "chatView.deleteText": "Удалить этот чат?",
   "chatView.deleteConfirm": "Удалить",
   "chatForm.widgetModeOn": "Режим виджета включён — ассистент сгенерирует виджет",
