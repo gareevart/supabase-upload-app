@@ -25,8 +25,8 @@ type WidgetAnimationState = 'closed' | 'entering' | 'open' | 'exiting';
 
 type EditorMenuState = {
   mode: 'blog' | 'broadcast';
-  actionLabel: 'Save' | 'Create';
-  onAction: () => void | Promise<void>;
+  onSave: () => void | Promise<void>;
+  onDraft: () => void | Promise<void>;
   onCancel: () => void;
 };
 
@@ -329,10 +329,18 @@ const Navigation: React.FC = () => {
                 <Button
                   view="action"
                   size="xl"
-                  onClick={editorMenu.onAction}
-                  aria-label={editorMenu.actionLabel}
+                  onClick={editorMenu.onSave}
+                  aria-label="Save"
                 >
-                  {editorMenu.actionLabel}
+                  Save
+                </Button>
+                <Button
+                  view="outlined"
+                  size="xl"
+                  onClick={editorMenu.onDraft}
+                  aria-label="Draft"
+                >
+                  Draft
                 </Button>
                 <Button
                   view="flat"

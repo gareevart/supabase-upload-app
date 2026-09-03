@@ -55,8 +55,8 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
     window.dispatchEvent(new CustomEvent(EDITOR_MENU_EVENT, {
       detail: {
         mode: 'blog',
-        actionLabel: initialPost ? 'Save' : 'Create',
-        onAction: () => savePost(initialPost ? Boolean(initialPost.published) : false),
+        onSave: () => savePost(true),
+        onDraft: () => savePost(false),
         onCancel,
       },
     }));
