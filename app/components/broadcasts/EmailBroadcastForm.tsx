@@ -167,8 +167,8 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
 
     window.dispatchEvent(new CustomEvent(EDITOR_MENU_EVENT, { detail: {
       mode: 'broadcast',
-      actionLabel: initialData ? 'Save' : 'Create',
-      onAction: handleSaveDraft,
+      onSave: handleSaveDraft,
+      onDraft: handleSaveDraft,
       onCancel,
     }}));
 
