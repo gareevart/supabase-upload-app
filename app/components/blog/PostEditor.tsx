@@ -56,7 +56,7 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
       detail: {
         mode: 'blog',
         actionLabel: initialPost ? 'Save' : 'Create',
-        onAction: () => savePost(false),
+        onAction: () => savePost(initialPost ? Boolean(initialPost.published) : false),
         onCancel,
       },
     }));
