@@ -1,6 +1,8 @@
 {
   "blogEditor.publish": "Опубликовать",
   "blogEditor.saveDraft": "Сохранить черновик",
+  "blogEditor.create": "Создать",
+  "blogEditor.save": "Сохранить",
   "blogEditor.contentPlaceholder": "Введите содержимое поста...",
   "blogEditor.titleLabel": "Заголовок",
   "blogEditor.titlePlaceholder": "Заголовок поста",

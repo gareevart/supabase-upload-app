@@ -1,6 +1,8 @@
 {
   "blogEditor.publish": "Publish",
   "blogEditor.saveDraft": "Save as draft",
+  "blogEditor.create": "Create",
+  "blogEditor.save": "Save",
   "blogEditor.contentPlaceholder": "Type your post content here...",
   "blogEditor.titleLabel": "Title",
   "blogEditor.titlePlaceholder": "Post title",

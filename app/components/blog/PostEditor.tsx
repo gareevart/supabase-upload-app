@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { EDITOR_MENU_EVENT } from "@/app/components/Navigation/Navigation";
+import { Button } from '@gravity-ui/uikit';
 import { useBlogEditorContent } from "@/features/blog-editor/model/useBlogEditorContent";
 import { useI18n } from "@/app/contexts/I18nContext";
 import PostMetadata from "./editor/PostMetadata";
@@ -39,30 +38,17 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
     savePost
   } = useBlogEditorContent(initialPost, onSave);
 
-  useEffect(() => {
-    const onCancel = () => {
-      window.dispatchEvent(new CustomEvent(EDITOR_MENU_EVENT, { detail: null }));
+  const handleSave = () => {
+    void savePost(initialPost ? Boolean(initialPost.published) : false);
+  };
 
-      // When the editor is opened directly, there may be no usable history entry.
-      // Keep browser back behavior when history exists and fall back to the blog list otherwise.
-      if (window.history.length > 1) {
-        router.back();
-      } else {
-        router.push('/blog');
-      }
-    };
-
-    window.dispatchEvent(new CustomEvent(EDITOR_MENU_EVENT, {
-      detail: {
-        mode: 'blog',
-        onSave: () => savePost(true),
-        onDraft: () => savePost(false),
-        onCancel,
-      },
-    }));
-
-    return () => window.dispatchEvent(new CustomEvent(EDITOR_MENU_EVENT, { detail: null }));
-  }, [initialPost, router, savePost]);
+  const handleCancel = () => {
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/blog');
+    }
+  };
 
   return (
     <div className="post-editor">
@@ -97,6 +83,26 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
         placeholder={t('blogEditor.contentPlaceholder')}
       />
 
+      <div className="post-editor__actions">
+        <Button
+          type="button"
+          size="l"
+          view="action"
+          loading={isLoading}
+          onClick={handleSave}
+        >
+          {t(initialPost ? 'blogEditor.save' : 'blogEditor.create')}
+        </Button>
+        <Button
+          type="button"
+          size="l"
+          view="flat"
+          disabled={isLoading}
+          onClick={handleCancel}
+        >
+          {t('blogEditor.cancel')}
+        </Button>
+      </div>
     </div>
   );
 };
