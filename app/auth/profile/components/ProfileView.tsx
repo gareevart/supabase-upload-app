@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import {
     Avatar,
     Button,
@@ -34,6 +35,21 @@ export const ProfileView = ({
     onCancel,
     onLogout
 }: ProfileViewProps) => {
+    const avatarUrl = getBlobPreviewUrl(profile.avatar_url);
+    const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
+
+    useEffect(() => {
+        setAvatarLoadFailed(false);
+    }, [avatarUrl]);
+
+    const avatarLabel = profile.name || profile.username || user.email || 'User';
+    const avatarInitials = avatarLabel
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase())
+        .join('');
+
     return (
         <>
             <Card theme="normal" size="l" className="responsive-card">
@@ -51,17 +67,25 @@ export const ProfileView = ({
                         </div>
                     ) : (
                         <div className="flex-col" style={{ width: '100%' }}>
-                            {profile.avatar_url && (
+                            {avatarUrl && !avatarLoadFailed ? (
                                 <div style={{ position: 'relative', width: '80px', height: '80px' }}>
                                     <Image
-                                        src={getBlobPreviewUrl(profile.avatar_url) || ''}
-                                        alt="Avatar"
+                                        src={avatarUrl}
+                                        alt={`${avatarLabel} avatar`}
                                         fill
                                         unoptimized
                                         className="profile-avatar"
                                         style={{ objectFit: 'cover' }}
-                                        sizes="80px" />
+                                        sizes="80px"
+                                        onError={() => setAvatarLoadFailed(true)}
+                                    />
                                 </div>
+                            ) : (
+                                <Avatar
+                                    size="xl"
+                                    text={avatarInitials}
+                                    aria-label={`${avatarLabel} avatar`}
+                                />
                             )}
                             <div className="responsive-definition-list">
                                 <DefinitionList responsive={true} direction='vertical'>
