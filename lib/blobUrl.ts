@@ -18,6 +18,11 @@ export function isPublicBlogAssetPath(path: string): boolean {
 export function getBlobPreviewUrl(value: string | null | undefined): string | null {
   if (!value) return null;
 
+  // Uploads already return the authenticated application route. Treat it as
+  // a URL, not as a Blob pathname, otherwise it gets double-encoded into the
+  // `path` query parameter and the image request returns 404.
+  if (value.startsWith('/api/storage/file?')) return value;
+
   try {
     const parsed = new URL(value);
     if (parsed.hostname.endsWith(BLOB_HOST_SUFFIX)) {
