@@ -3,7 +3,8 @@
 import React from 'react';
 import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react';
-import { Card, Skeleton, Icon, Text } from '@gravity-ui/uikit';
+import { Button, Card, Skeleton, Icon, Text } from '@gravity-ui/uikit';
+import { deleteFile } from '@/lib/yandexStorage';
 import { Check } from '@gravity-ui/icons';
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/app/contexts/I18nContext";
@@ -15,7 +16,7 @@ interface StoredImageGalleryProps {
 }
 
 const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }) => {
-  const [images, setImages] = useState<Array<{ name: string; url: string }>>([]);
+  const [images, setImages] = useState<Array<{ name: string; url: string; pathname: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const { toast } = useToast();
@@ -49,6 +50,7 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
       const imageUrls = imageFiles.map((file: any) => {
         return {
           name: file.name.split('/').pop() || file.name,
+          pathname: file.pathname || file.name,
           url: file.url || getBlobPreviewUrl(file.pathname) || ''
         };
       });
@@ -125,6 +127,27 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
                 <Icon data={Check} size={16} />
               </div>
             )}
+            <Button
+              size="s"
+              view="outlined-danger"
+              onClick={async (event) => {
+                event.stopPropagation();
+                try {
+                  await deleteFile(image.pathname);
+                  setImages((current) => current.filter((item) => item.pathname !== image.pathname));
+                  if (selectedImageUrl === image.url) setSelectedImageUrl(null);
+                  toast({ title: 'Изображение удалено' });
+                } catch (error) {
+                  toast({
+                    title: 'Не удалось удалить изображение',
+                    description: error instanceof Error ? error.message : 'Попробуйте еще раз',
+                    variant: 'destructive',
+                  });
+                }
+              }}
+            >
+              Удалить
+            </Button>
           </div>
         );
       })}

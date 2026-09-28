@@ -128,12 +128,13 @@ const YandexFileUploader = ({
       setUploading(true);
       setError(null);
       
-      // Extract file path from URL
-      // URL format: https://public-gareevde.storage.yandexcloud.net/profiles/userId/filename.ext
-      // or: https://storage.yandexcloud.net/public-gareevde/profiles/userId/filename.ext
+      // Extract the Blob pathname from the API URL returned by upload.
+      // Keep the legacy Yandex URL formats for files uploaded before Blob storage.
       let filePath = '';
-      
-      if (existingFileUrl.includes('storage.yandexcloud.net/public-gareevde/')) {
+      const apiUrl = existingFileUrl.match(/[?&]path=([^&]+)/)?.[1];
+      if (existingFileUrl.includes('/api/storage/file') && apiUrl) {
+        filePath = decodeURIComponent(apiUrl);
+      } else if (existingFileUrl.includes('storage.yandexcloud.net/public-gareevde/')) {
         // Format: https://storage.yandexcloud.net/public-gareevde/profiles/userId/filename.ext
         const parts = existingFileUrl.split('storage.yandexcloud.net/public-gareevde/');
         if (parts.length > 1) {
