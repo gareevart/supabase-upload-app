@@ -6,7 +6,11 @@ export const DELETE = withApiAuth(async (request: NextRequest, user: { id: strin
   try {
     const path = new URL(request.url).searchParams.get('path');
 
-    if (!path || !path.startsWith(`profiles/${user.id}/`)) {
+    // Uploaded objects are namespaced as <folder>/<userId>/<filename>.
+    // Accept the pathname returned by the upload API, but never allow a user
+    // to delete another user's object or an arbitrary Blob pathname.
+    const pathParts = path?.split('/') ?? [];
+    if (!path || pathParts.length < 3 || pathParts[1] !== user.id) {
       return NextResponse.json({ error: 'Unauthorized to delete this file' }, { status: 403 });
     }
 
