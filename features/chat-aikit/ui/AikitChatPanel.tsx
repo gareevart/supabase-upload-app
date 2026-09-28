@@ -52,6 +52,7 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
     ? { id: chat.id, name: chat.title || t('chatView.breadcrumbNewChat'), createTime: chat.created_at }
     : null;
   const chatTitle = activeChat?.name || t('chatView.breadcrumbNewChat');
+  const breadcrumbChatTitle = chatTitle.length > 100 ? `${chatTitle.slice(0, 97)}...` : chatTitle;
   const status = toChatStatus(isMessageSending, isAssistantTyping, !!error);
 
   const handleSendMessage = useCallback(
@@ -196,7 +197,7 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
                     {t('chatView.breadcrumbChat')}
                   </Breadcrumbs.Item>
                   <Breadcrumbs.Item href={`/chat/${chatId}`}>
-                    {chatTitle}
+                    {breadcrumbChatTitle}
                   </Breadcrumbs.Item>
                 </Breadcrumbs>
               </ActionBar.Item>
