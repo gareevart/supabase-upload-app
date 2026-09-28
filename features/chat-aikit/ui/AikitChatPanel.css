@@ -18,11 +18,29 @@
 }
 
 .aikit-chat-panel__actionbar [class*='gn-action-bar-section_type_primary'] {
+  display: flex;
   flex: 1 1 auto;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding-inline: var(--g-spacing-5);
   align-items: center;
   min-height: 40px;
+  overflow: hidden;
+}
+
+.aikit-chat-panel__actionbar [class*='gn-action-bar-section_type_primary'] > [class*='gn-action-bar-group'] {
+  min-width: 0;
+}
+
+.aikit-chat-panel__actionbar [class*='gn-action-bar-section_type_primary'] > [class*='gn-action-bar-group']:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.aikit-chat-panel__actionbar [class*='gn-action-bar-section_type_primary'] > [class*='gn-action-bar-group']:last-child {
+  flex: 0 0 auto;
 }
 
 .aikit-chat-panel > .g-aikit-chat-container > .g-aikit-chat-container__header {
