@@ -1,305 +1,68 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { Geist, Geist_Mono } from "next/font/google";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Analytics } from '@vercel/analytics/next';
-import { SWRConfig } from 'swr';
-import ThemeWrapper from './components/ThemeWrapper';
-import Navigation from './components/Navigation/Navigation';
-import { AuthProvider } from './contexts/AuthContext';
-import { ModelSelectionProvider } from './contexts/ModelSelectionContext';
-import { I18nProvider } from './contexts/I18nContext';
-import { SpeedInsights } from "@vercel/speed-insights/next"
-import "@/styles/globals.css";
+import type { Metadata, Viewport } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
+import ClientProviders from './components/ClientProviders';
+import '@/styles/globals.css';
 import '@/styles/styles.css';
 import '@gravity-ui/aikit/styles';
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: 'swap', // Ensure text remains visible during font loading
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
+  display: 'swap',
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: 'swap', // Ensure text remains visible during font loading
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+  display: 'swap',
 });
 
-const queryClient = new QueryClient();
+export const metadata: Metadata = {
+  title: 'Gareev',
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
 
 const themeBootstrapScript = `
 (function () {
   var storedTheme = localStorage.getItem('app-theme');
-  var resolvedTheme =
-    storedTheme === 'light' || storedTheme === 'dark'
-      ? storedTheme
-      : window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
-
+  var resolvedTheme = storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   var root = document.documentElement;
   root.classList.remove('g-root_theme_light', 'g-root_theme_dark');
   root.classList.add(resolvedTheme === 'dark' ? 'g-root_theme_dark' : 'g-root_theme_light');
   root.style.colorScheme = resolvedTheme;
-
-  // Paint the browser chrome (Safari address bar, etc.) before first paint.
-  // Desktop shows the left sidebar (--g-color-base-float-announcement); mobile has no
-  // sidebar, so match the chrome to the normal page background instead. The effect in
-  // the layout refines this to the exact resolved token afterwards.
   var isDesktop = window.matchMedia('(min-width: 768px)').matches;
-  var navColor = isDesktop
-    ? (resolvedTheme === 'dark' ? 'rgb(67, 63, 67)' : 'rgb(240, 243, 245)')
-    : (resolvedTheme === 'dark' ? 'rgb(16, 16, 16)' : 'rgb(255, 255, 255)');
+  var navColor = isDesktop ? (resolvedTheme === 'dark' ? 'rgb(67, 63, 67)' : 'rgb(240, 243, 245)') : (resolvedTheme === 'dark' ? 'rgb(16, 16, 16)' : 'rgb(255, 255, 255)');
   var meta = document.querySelector('meta[name="theme-color"]');
-  if (!meta) {
-    meta = document.createElement('meta');
-    meta.setAttribute('name', 'theme-color');
-    document.head.appendChild(meta);
-  }
+  if (!meta) { meta = document.createElement('meta'); meta.setAttribute('name', 'theme-color'); document.head.appendChild(meta); }
   meta.setAttribute('content', navColor);
 })();
 `;
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  // Initialize theme synchronously to avoid light-theme flash before effects run
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    if (typeof window === 'undefined') {
-      return 'light';
-    }
-
-    const savedTheme = window.localStorage.getItem('app-theme');
-
-    if (savedTheme === 'light' || savedTheme === 'dark') {
-      return savedTheme;
-    }
-
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
-
-  // Detect theme preference and listen for changes
-  useEffect(() => {
-    // Check if window is available (client-side)
-    if (typeof window !== 'undefined') {
-      let systemThemeListener: ((e: MediaQueryListEvent) => void) | null = null;
-      let mediaQuery: MediaQueryList | null = null;
-
-      const initializeTheme = () => {
-        // First check if there's a saved theme preference in localStorage
-        const savedTheme = localStorage.getItem('app-theme');
-
-        // Clean up any existing system theme listener
-        if (systemThemeListener && mediaQuery) {
-          mediaQuery.removeEventListener('change', systemThemeListener);
-          systemThemeListener = null;
-          mediaQuery = null;
-        }
-
-        if (savedTheme === 'light' || savedTheme === 'dark') {
-          // Use saved theme preference
-          setTheme(savedTheme);
-        } else if (savedTheme === 'system' || !savedTheme) {
-          // Use system preference if theme is set to 'system' or no theme is saved
-          mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-          setTheme(mediaQuery.matches ? 'dark' : 'light');
-
-          // Add listener for system theme changes
-          systemThemeListener = (e: MediaQueryListEvent) => {
-            setTheme(e.matches ? 'dark' : 'light');
-          };
-
-          mediaQuery.addEventListener('change', systemThemeListener);
-        }
-      };
-
-      // Initialize theme on mount
-      initializeTheme();
-
-      // Listen for storage events (theme changes from other components)
-      const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'app-theme') {
-          // Clean up existing system theme listener
-          if (systemThemeListener && mediaQuery) {
-            mediaQuery.removeEventListener('change', systemThemeListener);
-            systemThemeListener = null;
-            mediaQuery = null;
-          }
-
-          if (e.newValue === 'light' || e.newValue === 'dark') {
-            setTheme(e.newValue);
-          } else if (e.newValue === 'system') {
-            // If theme is set to system, use system preference
-            mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-            setTheme(mediaQuery.matches ? 'dark' : 'light');
-
-            // Add listener for system theme changes
-            systemThemeListener = (event: MediaQueryListEvent) => {
-              setTheme(event.matches ? 'dark' : 'light');
-            };
-
-            mediaQuery.addEventListener('change', systemThemeListener);
-          }
-        }
-      };
-
-      // Add event listener for storage changes
-      window.addEventListener('storage', handleStorageChange);
-
-      // Also listen for custom theme-change events
-      const handleCustomThemeChange = (e: CustomEvent) => {
-        const { theme } = e.detail;
-
-        // Clean up existing system theme listener
-        if (systemThemeListener && mediaQuery) {
-          mediaQuery.removeEventListener('change', systemThemeListener);
-          systemThemeListener = null;
-          mediaQuery = null;
-        }
-
-        if (theme === 'light' || theme === 'dark') {
-          setTheme(theme);
-        } else if (theme === 'system') {
-          // If theme is set to system, use system preference
-          mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-          setTheme(mediaQuery.matches ? 'dark' : 'light');
-
-          // Add listener for system theme changes
-          systemThemeListener = (event: MediaQueryListEvent) => {
-            setTheme(event.matches ? 'dark' : 'light');
-          };
-
-          mediaQuery.addEventListener('change', systemThemeListener);
-        }
-      };
-
-      window.addEventListener('theme-change', handleCustomThemeChange as EventListener);
-
-      // Clean up event listeners on component unmount
-      return () => {
-        window.removeEventListener('storage', handleStorageChange);
-        window.removeEventListener('theme-change', handleCustomThemeChange as EventListener);
-        if (systemThemeListener && mediaQuery) {
-          mediaQuery.removeEventListener('change', systemThemeListener);
-        }
-      };
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const root = document.documentElement;
-    root.classList.remove('g-root_theme_light', 'g-root_theme_dark');
-    root.classList.add(theme === 'dark' ? 'g-root_theme_dark' : 'g-root_theme_light');
-    root.style.colorScheme = theme;
-  }, [theme]);
-
-  // Sync the theme-color meta with the page color at the top of the viewport so the
-  // browser chrome matches it — including when the in-app theme is toggled (which is
-  // independent of prefers-color-scheme). On desktop that's the side-navigation color
-  // (--g-color-base-float-announcement); on mobile there's no sidebar, so it's the
-  // normal page background. The meta is updated imperatively (rather than via React)
-  // because dynamic <meta> updates in the App Router head are unreliable and Safari
-  // reads the live attribute. Runs after the theme class effect above so tokens
-  // resolve for the active theme.
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const desktopQuery = window.matchMedia('(min-width: 768px)');
-
-    const applyThemeColor = () => {
-      const isDesktop = desktopQuery.matches;
-      const token = isDesktop ? '--g-color-base-float-announcement' : '--g-color-base-background';
-      // Hardcoded fallbacks mirror the resolved token values per theme.
-      let navColor = isDesktop
-        ? (theme === 'dark' ? 'rgb(67, 63, 67)' : 'rgb(240, 243, 245)')
-        : (theme === 'dark' ? 'rgb(16, 16, 16)' : 'rgb(255, 255, 255)');
-
-      // A probe element is used because getComputedStyle on a custom property may
-      // return the unresolved var() chain, whereas a standard property
-      // (background-color) always yields a concrete rgb() value. It is positioned
-      // off-screen (not display:none) so the color actually resolves.
-      const probe = document.createElement('div');
-      probe.style.cssText =
-        `position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;background-color:var(${token});`;
-      document.body.appendChild(probe);
-      const resolved = window.getComputedStyle(probe).backgroundColor;
-      probe.remove();
-
-      if (resolved && resolved !== 'rgba(0, 0, 0, 0)' && resolved !== 'transparent') {
-        navColor = resolved;
-      }
-
-      let meta = document.querySelector('meta[name="theme-color"]');
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute('name', 'theme-color');
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute('content', navColor);
-    };
-
-    applyThemeColor();
-    desktopQuery.addEventListener('change', applyThemeColor);
-    return () => desktopQuery.removeEventListener('change', applyThemeColor);
-  }, [theme]);
-
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
-        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-        <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
-        <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png" />
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <QueryClientProvider client={queryClient}>
-          <SWRConfig
-            value={{
-              // Глобальные настройки кэширования для SWR
-              dedupingInterval: 5 * 60 * 1000, // 5 минут дедупликации
-              revalidateOnFocus: false, // Отключаем ревалидацию при фокусе
-              revalidateOnReconnect: false, // Отключаем ревалидацию при восстановлении соединения
-              errorRetryCount: 3, // Количество повторных попыток при ошибке
-              errorRetryInterval: 1000, // Интервал между попытками
-              // Провайдер для кэширования в localStorage (опционально)
-              provider: () => new Map(),
-            }}
-          >
-            <AuthProvider>
-              <ModelSelectionProvider>
-                <I18nProvider>
-                  <ThemeWrapper theme={theme}>
-                  <Navigation />
-                  <main className="main-content py-6">
-                    {children}
-                    <Analytics />
-                    <SpeedInsights />
-                  </main>
-                  </ThemeWrapper>
-                </I18nProvider>
-              </ModelSelectionProvider>
-            </AuthProvider>
-          </SWRConfig>
-        </QueryClientProvider>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ClientProviders>{children}</ClientProviders>
       </body>
     </html>
   );
