@@ -295,7 +295,8 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
                 <div key={image.id} className="file-view-item">
                   <div className="file-view-image-container">
                     <Image
-                      src={image.public_url || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNlZWVlZWUiLz48dGV4dCB4PSI1MCIgeT0iNTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk5OSI+SW1hZ2Ugbm90IGZvdW5kPC90ZXh0Pjwvc3ZnPg=='}
+                      src={`/api/storage/file?path=${encodeURIComponent(image.file_path)}`}
+                      unoptimized
                       alt={image.file_name}
                       fill
                       sizes="100px"
