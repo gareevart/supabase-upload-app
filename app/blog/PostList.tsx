@@ -34,7 +34,7 @@ export const PostList = ({
 
   const POSTS_PER_PAGE = 10;
 
-  // Use hook with caching through SWR
+  // Use hook with caching through React Query
   const { posts, totalCount, isLoading, mutate } = useBlogPosts({
     publishedOnly,
     draftsOnly,

@@ -4,14 +4,11 @@ import { useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import { SWRConfig } from 'swr';
 import ThemeWrapper from './ThemeWrapper';
 import Navigation from './Navigation/Navigation';
 import { AuthProvider } from '../contexts/AuthContext';
 import { ModelSelectionProvider } from '../contexts/ModelSelectionContext';
 import { I18nProvider } from '../contexts/I18nContext';
-
-const queryClient = new QueryClient();
 
 type Theme = 'light' | 'dark';
 
@@ -108,24 +105,24 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
 }
 
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
+  const [queryClient] = useState(() => new QueryClient());
+
   return (
     <QueryClientProvider client={queryClient}>
-      <SWRConfig value={{ dedupingInterval: 5 * 60 * 1000, revalidateOnFocus: false, revalidateOnReconnect: false, errorRetryCount: 3, errorRetryInterval: 1000, provider: () => new Map() }}>
-        <AuthProvider>
-          <ModelSelectionProvider>
-            <I18nProvider>
-              <ThemeManager>
-                <Navigation />
-                <main className="main-content py-6">
-                  {children}
-                  <Analytics />
-                  <SpeedInsights />
-                </main>
-              </ThemeManager>
-            </I18nProvider>
-          </ModelSelectionProvider>
-        </AuthProvider>
-      </SWRConfig>
+      <AuthProvider>
+        <ModelSelectionProvider>
+          <I18nProvider>
+            <ThemeManager>
+              <Navigation />
+              <main className="main-content py-6">
+                {children}
+                <Analytics />
+                <SpeedInsights />
+              </main>
+            </ThemeManager>
+          </I18nProvider>
+        </ModelSelectionProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

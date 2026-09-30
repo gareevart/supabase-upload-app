@@ -1,16 +1,16 @@
 /**
- * Хук для работы с постами блога с кэшированием через SWR
+ * Хук для работы с постами блога с кэшированием через React Query
  * @module shared/lib/hooks
  */
 
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { fetchBlogPosts, checkUserHasDrafts } from "@/shared/api/blog";
 import type { BlogPostFilters, BlogPostsResponse } from "@/shared/api/blog";
 import { useEffect, useState } from "react";
 
 /**
- * Генерация ключа для SWR кэша
+ * Генерация ключа для кэша React Query
  */
 function generateCacheKey(filters: BlogPostFilters): string {
   const { publishedOnly, draftsOnly, onlyMyPosts, authorId, page, pageSize } =
@@ -29,23 +29,17 @@ function generateCacheKey(filters: BlogPostFilters): string {
  * Хук для получения постов блога с автоматическим кэшированием
  */
 export function useBlogPosts(filters: BlogPostFilters = {}) {
-  const cacheKey = `blog-posts-${generateCacheKey(filters)}`;
+  const queryKey = ["blog-posts", generateCacheKey(filters)];
 
-  const { data, error, isLoading, mutate } = useSWR<BlogPostsResponse>(
-    cacheKey,
-    () => fetchBlogPosts(filters),
-    {
-      // Кэшируем на 5 минут
-      dedupingInterval: 5 * 60 * 1000,
-      // Ревалидация при фокусе окна отключена, чтобы избежать лишних запросов
-      revalidateOnFocus: false,
-      // Ревалидация при восстановлении соединения отключена
-      revalidateOnReconnect: false,
-      // Повторные попытки при ошибке
-      errorRetryCount: 3,
-      errorRetryInterval: 1000,
-    }
-  );
+  const { data, error, isLoading, refetch: mutate } = useQuery<BlogPostsResponse>({
+    queryKey,
+    queryFn: () => fetchBlogPosts(filters),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 3,
+    retryDelay: 1000,
+  });
 
   return {
     posts: data?.posts || [],
