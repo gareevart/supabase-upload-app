@@ -41,15 +41,38 @@ async function serveBlob(request: NextRequest, isPublic: boolean) {
 
 const serveAuthenticatedBlob = withApiAuth(async (request: NextRequest) => serveBlob(request, false));
 
+async function serveHead(request: NextRequest, isPublic: boolean) {
+  const path = request.nextUrl.searchParams.get('path');
+  if (!path) return new NextResponse(null, { status: 400 });
+
+  try {
+    const result = await get(path, { access: 'private' });
+    if (!result) return new NextResponse(null, { status: 404 });
+    return new NextResponse(null, {
+      status: 200,
+      headers: {
+        'Content-Type': result.blob.contentType || 'application/octet-stream',
+        ETag: result.blob.etag,
+        'Cache-Control': isPublic ? PUBLIC_CACHE_CONTROL : PRIVATE_CACHE_CONTROL,
+      },
+    });
+  } catch {
+    return new NextResponse(null, { status: 404 });
+  }
+}
+
 export async function GET(request: NextRequest) {
   const path = request.nextUrl.searchParams.get('path');
   if (!path) return NextResponse.json({ error: 'No file path provided' }, { status: 400 });
 
-  if (isPublicBlogAssetPath(path)) {
-    return serveBlob(request, true);
-  }
-
+  if (isPublicBlogAssetPath(path)) return serveBlob(request, true);
   return serveAuthenticatedBlob(request);
+}
+
+export async function HEAD(request: NextRequest) {
+  const path = request.nextUrl.searchParams.get('path');
+  if (path && isPublicBlogAssetPath(path)) return serveHead(request, true);
+  return withApiAuth(async (authenticatedRequest: NextRequest) => serveHead(authenticatedRequest, false))(request);
 }
 
 export const dynamic = 'force-dynamic';

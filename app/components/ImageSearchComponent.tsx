@@ -16,6 +16,7 @@ interface ImageResult {
   id: string;
   file_name: string;
   public_url: string | null;
+  file_path: string;
   created_at: string;
   tags: Tag[];
 }
@@ -74,6 +75,7 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
         .select(`
           id,
           file_name,
+          file_path,
           public_url,
           created_at,
           image_tags (
@@ -97,7 +99,31 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
 
       if (error) throw error;
 
-      let filteredImages = images || [];
+      // Проверяем актуальность записи в Blob Storage, чтобы не показывать
+      // изображения, удаленные из галереи или хранилища.
+      const existingImages = await Promise.all(
+        (images || []).map(async (image: any) => {
+          const filePath = image.file_path || image.public_url;
+          if (!filePath) return null;
+
+          const path = filePath.includes('/api/storage/file?path=')
+            ? new URL(filePath, window.location.origin).searchParams.get('path')
+            : filePath;
+          if (!path) return null;
+
+          try {
+            const response = await fetch(`/api/storage/file?path=${encodeURIComponent(path)}`, {
+              method: 'HEAD',
+              cache: 'no-store',
+            });
+            return response.ok ? image : null;
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      let filteredImages = existingImages.filter(Boolean) as any[];
 
       // Фильтрация по тегам
       if (tagIds.length > 0) {
@@ -111,6 +137,7 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
       const results: ImageResult[] = filteredImages.map(image => ({
         id: image.id,
         file_name: image.file_name,
+        file_path: image.file_path,
         public_url: image.public_url,
         created_at: image.created_at,
         tags: image.image_tags?.map((it: any) => it.tags).filter(Boolean) || []
@@ -252,7 +279,7 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
               Поиск изображений
             </Text>
             <Text variant="body-1" color="secondary">
-              Введите название файла или выберите теги для поиска среди ваших изображений
+              Введите название файла или выберите теги для поиска с��еди ваших изображений
             </Text>
           </Card>
         )}
