@@ -1,10 +1,11 @@
 "use client";
 import { useAuth } from "@/app/contexts/AuthContext";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useChats } from "@/hooks/useChats";
 import { Spin } from "@gravity-ui/uikit";
 import { useEffect, useRef } from "react";
 import "./chat-page.css";
+import { GuestChatPanel } from "@/features/chat-aikit/ui/GuestChatPanel";
 
 const ChatPage = () => {
   const { user, loading: isAuthLoading } = useAuth();
@@ -46,13 +47,7 @@ const ChatPage = () => {
     );
   }
 
-  if (!user) {
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem("returnUrl", "/chat");
-    }
-    redirect("/auth");
-    return null;
-  }
+  if (!user) return <GuestChatPanel />;
 
   return (
     <div className="chat-page-loading">

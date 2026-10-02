@@ -23,7 +23,7 @@ export default function ChatHistoryPage() {
   }
 
   if (!user) {
-    redirect("/auth");
+    redirect("/chat");
     return null;
   }
 

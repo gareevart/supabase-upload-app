@@ -32,5 +32,11 @@
   "chatView.emptyFilteredPlaceholder": "Ничего не найдено",
   "chatView.searchPlaceholder": "Поиск чатов...",
   "chatView.cancel": "Отмена",
-  "chatView.save": "Сохранить"
+  "chatView.save": "Сохранить",
+  "chatView.guestTitle": "Гостевой чат",
+  "chatView.guestRegisterTitle": "Хотите создать ещё один чат?",
+  "chatView.guestRegisterText": "В этом чате можно задавать сколько угодно вопросов. Чтобы создать ещё один чат, зарегистрируйтесь на сайте.",
+  "chatView.guestRegisterAction": "Зарегистрироваться",
+  "chatView.guestError": "Не удалось отправить сообщение. Попробуйте ещё раз.",
+  "chatView.guestTooLong": "Сообщение должно содержать не более 4000 символов."
 }

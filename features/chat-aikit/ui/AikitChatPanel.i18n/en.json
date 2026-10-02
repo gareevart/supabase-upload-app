@@ -32,5 +32,11 @@
   "chatView.emptyFilteredPlaceholder": "Nothing found",
   "chatView.searchPlaceholder": "Search chats...",
   "chatView.cancel": "Cancel",
-  "chatView.save": "Save"
+  "chatView.save": "Save",
+  "chatView.guestTitle": "Guest chat",
+  "chatView.guestRegisterTitle": "Want another chat?",
+  "chatView.guestRegisterText": "You can ask as many questions as you like in this chat. Create an account to start another chat.",
+  "chatView.guestRegisterAction": "Sign up",
+  "chatView.guestError": "Could not send your message. Please try again.",
+  "chatView.guestTooLong": "Messages must be 4,000 characters or shorter."
 }

@@ -17,6 +17,15 @@
   width: 100%;
 }
 
+.aikit-chat-panel__actionbar_guest {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--g-spacing-4);
+  min-height: 40px;
+  padding-inline: var(--g-spacing-5);
+}
+
 .aikit-chat-panel__actionbar [class*='gn-action-bar-section_type_primary'] {
   display: flex;
   flex: 1 1 auto;

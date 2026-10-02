@@ -1,0 +1,76 @@
+import '@testing-library/jest-dom';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { GuestChatPanel } from '../GuestChatPanel';
+
+jest.mock('@/app/contexts/I18nContext', () => ({
+  useI18n: () => ({ t: (key: string) => ({
+    'chatView.breadcrumbNewChat': 'New chat',
+    'chatView.guestRegisterTitle': 'Want another chat?',
+    'chatView.guestRegisterAction': 'Sign up',
+  }[key] || key) }),
+}));
+
+jest.mock('@gravity-ui/aikit', () => ({
+  ChatContainer: ({ onSendMessage, messages }: {
+    onSendMessage: (data: { content: string }) => void;
+    messages: Array<{ content: string }>;
+  }) => (
+    <div>
+      <button onClick={() => onSendMessage({ content: 'First question' })}>Ask first</button>
+      <button onClick={() => onSendMessage({ content: 'Second question' })}>Ask second</button>
+      <span data-testid="message-count">{messages.length}</span>
+    </div>
+  ),
+}));
+
+jest.mock('@gravity-ui/uikit', () => {
+  const Breadcrumbs = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
+  Breadcrumbs.Item = ({ children }: { children: React.ReactNode }) => <span>{children}</span>;
+  const Dialog = ({ open, children }: { open: boolean; children: React.ReactNode }) => open ? <div>{children}</div> : null;
+  Dialog.Header = ({ caption }: { caption: string }) => <h2>{caption}</h2>;
+  Dialog.Body = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
+  Dialog.Footer = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
+  return {
+    Breadcrumbs,
+    Dialog,
+    Button: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => <button onClick={onClick}>{children}</button>,
+    Spin: () => <span>Loading</span>,
+    Text: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+  };
+});
+
+describe('GuestChatPanel', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    Object.defineProperty(globalThis.crypto, 'randomUUID', { configurable: true, value: jest.fn()
+      .mockReturnValueOnce('user-1').mockReturnValueOnce('assistant-1')
+      .mockReturnValueOnce('user-2').mockReturnValueOnce('assistant-2') });
+  });
+
+  it('keeps follow-up questions in one chat and offers sign-up for another', async () => {
+    const fetchMock = jest.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ text: 'First answer' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ text: 'Second answer' }) });
+    global.fetch = fetchMock;
+
+    const view = render(<GuestChatPanel />);
+    fireEvent.click(screen.getByText('Ask first'));
+    await waitFor(() => expect(screen.getByTestId('message-count')).toHaveTextContent('2'));
+
+    fireEvent.click(screen.getByText('Ask second'));
+    await waitFor(() => expect(screen.getByTestId('message-count')).toHaveTextContent('4'));
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).messages).toEqual([
+      { role: 'user', text: 'First question' },
+      { role: 'assistant', text: 'First answer' },
+      { role: 'user', text: 'Second question' },
+    ]);
+
+    fireEvent.click(screen.getByText('New chat'));
+    expect(screen.getByText('Want another chat?')).toBeInTheDocument();
+    expect(screen.getByText('Sign up').closest('a')).toHaveAttribute('href', '/auth/signup');
+
+    view.unmount();
+    render(<GuestChatPanel />);
+    expect(screen.getByTestId('message-count')).toHaveTextContent('4');
+  });
+});
