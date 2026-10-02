@@ -4,8 +4,9 @@
   overflow: hidden;
 }
 
-.blog-card__media {
-  padding: var(--g-spacing-2);
+.blog-card__media,
+.blog-card__media-left {
+  padding: 8px;
 }
 
 .blog-card__image,
@@ -83,13 +84,12 @@ a.blog-card__image:hover .blog-card__img {
   width: 30%;
   min-width: 200px;
   flex-shrink: 0;
+  display: flex;
 }
 
 .blog-card__media-left .blog-card__image,
 .blog-card__media-left .blog-card__placeholder {
-  height: 100%;
-  min-height: 200px;
-  border-radius: 0;
+  height: auto;
 }
 
 .blog-card__content {
