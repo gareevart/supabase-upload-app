@@ -5,9 +5,20 @@ import { GuestChatPanel } from '../GuestChatPanel';
 jest.mock('@/app/contexts/I18nContext', () => ({
   useI18n: () => ({ t: (key: string) => ({
     'chatView.breadcrumbNewChat': 'New chat',
+    'chatView.settingsTooltip': 'Chat settings',
+    'chatView.settingsTitle': 'Chat settings',
     'chatView.guestRegisterTitle': 'Want another chat?',
     'chatView.guestRegisterAction': 'Sign up',
   }[key] || key) }),
+}));
+
+const setSelectedModel = jest.fn();
+jest.mock('@/app/contexts/ModelSelectionContext', () => ({
+  useModelSelection: () => ({
+    selectedModel: 'gpt-oss-20b',
+    setSelectedModel,
+    availableModels: ['nemotron-3-nano', 'gpt-oss-20b', 'gpt-oss-120b'],
+  }),
 }));
 
 jest.mock('@gravity-ui/aikit', () => ({
@@ -29,13 +40,20 @@ jest.mock('@gravity-ui/uikit', () => {
   const Dialog = ({ open, children }: { open: boolean; children: React.ReactNode }) => open ? <div>{children}</div> : null;
   Dialog.Header = ({ caption }: { caption: string }) => <h2>{caption}</h2>;
   Dialog.Body = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
-  Dialog.Footer = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
+  Dialog.Footer = ({ children, textButtonApply, onClickButtonApply }: {
+    children?: React.ReactNode;
+    textButtonApply?: string;
+    onClickButtonApply?: () => void;
+  }) => <div>{children}{textButtonApply && <button onClick={onClickButtonApply}>{textButtonApply}</button>}</div>;
   return {
     Breadcrumbs,
     Dialog,
-    Button: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => <button onClick={onClick}>{children}</button>,
+    Button: ({ children, onClick, title }: { children: React.ReactNode; onClick?: () => void; title?: string }) => <button onClick={onClick} title={title}>{children}</button>,
+    Icon: () => <span>icon</span>,
+    Select: ({ options }: { options: Array<{ value: string }> }) => <div>{options.map((option) => <span key={option.value}>{option.value}</span>)}</div>,
     Spin: () => <span>Loading</span>,
     Text: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+    TextArea: () => <textarea />,
   };
 });
 
@@ -64,6 +82,13 @@ describe('GuestChatPanel', () => {
       { role: 'assistant', text: 'First answer' },
       { role: 'user', text: 'Second question' },
     ]);
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).model).toBe('gpt-oss-20b');
+
+    fireEvent.click(screen.getByTitle('Chat settings'));
+    expect(screen.getByText('Chat settings')).toBeInTheDocument();
+    expect(screen.getByText('nemotron-3-nano')).toBeInTheDocument();
+    expect(screen.getByText('gpt-oss-20b')).toBeInTheDocument();
+    expect(screen.getByText('gpt-oss-120b')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('New chat'));
     expect(screen.getByText('Want another chat?')).toBeInTheDocument();

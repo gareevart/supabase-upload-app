@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { fetchGenerativeSearch, fetchWebPagesContent } from '@/lib/yandexSearch';
 import { WIDGET_GENERATION_SYSTEM_PROMPT, WIDGET_GENERATION_REMINDER } from '@/lib/widgetPrompt';
+import { getProviderModel } from '@/lib/chatModels';
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204 });
@@ -77,9 +78,12 @@ export async function POST(request: Request) {
     }
 
     const ollamaApiKey = process.env.OLLAMA_API_KEY;
-    const isOllama = typeof model === 'string' && model.length > 0 && !model.startsWith('yandex');
-    const ollamaModel = isOllama && /^[\w./:-]+$/.test(model) ? model : 'gpt-oss:20b';
-    if (isOllama && !ollamaApiKey) {
+    const ollamaModel = getProviderModel(model);
+    if (!ollamaModel) {
+      return NextResponse.json({ error: 'Unsupported model' }, { status: 400 });
+    }
+    const isOllama = true;
+    if (!ollamaApiKey) {
       return NextResponse.json(
         { error: 'Ollama API key not configured' },
         { status: 500 }
@@ -88,13 +92,6 @@ export async function POST(request: Request) {
 
     // YandexGPT remains available for embeddings, web summaries, and other models.
     const apiKey = process.env.YANDEX_API_KEY;
-    if (!isOllama && !apiKey) {
-      return NextResponse.json(
-        { error: 'YandexGPT API key not configured' },
-        { status: 500 }
-      );
-    }
-
     const folderId = process.env.YANDEX_FOLDER_ID || process.env.YANDEX_CLOUD_FOLDER || 'b1gb5lrqp1jr1tmamu2t';
     // Auto-mode thresholds
     const THRESH_HIGH = 0.12;

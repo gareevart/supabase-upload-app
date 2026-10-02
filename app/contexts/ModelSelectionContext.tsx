@@ -1,9 +1,12 @@
 "use client"
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+  CHAT_MODEL_IDS,
+  DEFAULT_CHAT_MODEL,
+  normalizeChatModel,
+} from "@/lib/chatModels";
 
 export type ModelType = string;
-
-const FALLBACK_MODEL = "gpt-oss:20b";
 
 interface ModelSelectionContextType {
   selectedModel: ModelType;
@@ -23,36 +26,16 @@ interface ModelSelectionProviderProps {
 
 export const ModelSelectionProvider = ({ children }: ModelSelectionProviderProps) => {
   const [selectedModel, setSelectedModel] = useState<ModelType>(() => {
-      if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
       const savedModel = localStorage.getItem("selectedModel");
-      return savedModel && !savedModel.startsWith("yandex") ? savedModel : FALLBACK_MODEL;
+      return normalizeChatModel(savedModel) || DEFAULT_CHAT_MODEL;
     }
-    return FALLBACK_MODEL;
+    return DEFAULT_CHAT_MODEL;
   });
 
-  const [availableModels, setAvailableModels] = useState<string[]>([FALLBACK_MODEL]);
-  const [modelsLoading, setModelsLoading] = useState(true);
-  const [modelsError, setModelsError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/ollama/models")
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Не удалось загрузить модели Ollama");
-        return response.json();
-      })
-      .then(({ models }: { models?: string[] }) => {
-        if (!cancelled && models?.length) {
-          setAvailableModels(models);
-          setSelectedModel((current) => models.includes(current) ? current : models[0]);
-        }
-      })
-      .catch((error) => {
-        if (!cancelled) setModelsError(error instanceof Error ? error.message : "Ошибка загрузки моделей");
-      })
-      .finally(() => { if (!cancelled) setModelsLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
+  const availableModels: string[] = [...CHAT_MODEL_IDS];
+  const modelsLoading = false;
+  const modelsError: string | null = null;
 
   const [reasoningMode, setReasoningMode] = useState<boolean>(() => {
     // Получаем сохраненное состояние режима рассуждений из localStorage

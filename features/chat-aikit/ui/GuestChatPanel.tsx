@@ -4,12 +4,15 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ChatContainer } from "@gravity-ui/aikit";
 import type { TChatMessage, TSubmitData } from "@gravity-ui/aikit";
-import { Breadcrumbs, Button, Dialog, Spin, Text } from "@gravity-ui/uikit";
+import { Breadcrumbs, Button, Dialog, Icon, Select, Spin, Text, TextArea } from "@gravity-ui/uikit";
+import { Sliders } from "@gravity-ui/icons";
 import { useI18n } from "@/app/contexts/I18nContext";
+import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
 import type { Message } from "@/hooks/useChat";
 import "./AikitChatPanel.css";
 
 const STORAGE_KEY = "guest-chat-v1";
+const SYSTEM_PROMPT_STORAGE_KEY = "guest-chat-system-prompt";
 const GUEST_CHAT_ID = "guest";
 
 function readMessages(): Message[] {
@@ -28,14 +31,18 @@ function readMessages(): Message[] {
 
 export function GuestChatPanel() {
   const { t } = useI18n();
+  const { selectedModel, setSelectedModel, availableModels } = useModelSelection();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [registerOpen, setRegisterOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [systemPrompt, setSystemPrompt] = useState("");
 
   useEffect(() => {
     setMessages(readMessages());
+    setSystemPrompt(localStorage.getItem(SYSTEM_PROMPT_STORAGE_KEY) || "");
     setLoaded(true);
   }, []);
 
@@ -70,6 +77,8 @@ export function GuestChatPanel() {
             role: message.role,
             text: message.content,
           })),
+          model: selectedModel,
+          systemPrompt,
         }),
       });
       const result = await response.json();
@@ -89,7 +98,12 @@ export function GuestChatPanel() {
     } finally {
       setSending(false);
     }
-  }, [messages, sending, t]);
+  }, [messages, selectedModel, sending, systemPrompt, t]);
+
+  const saveSettings = () => {
+    localStorage.setItem(SYSTEM_PROMPT_STORAGE_KEY, systemPrompt);
+    setSettingsOpen(false);
+  };
 
   if (!loaded) return <div className="chat-page-loading"><Spin size="m" /></div>;
 
@@ -102,7 +116,16 @@ export function GuestChatPanel() {
             <Breadcrumbs.Item href="/">{t("chatView.breadcrumbHome")}</Breadcrumbs.Item>
             <Breadcrumbs.Item href="/chat">{chatTitle}</Breadcrumbs.Item>
           </Breadcrumbs>
-          <Button onClick={() => setRegisterOpen(true)}>{t("chatView.breadcrumbNewChat")}</Button>
+          <div className="aikit-chat-panel__guest-actions">
+            <Button
+              view="flat"
+              onClick={() => setSettingsOpen(true)}
+              title={t("chatView.settingsTooltip")}
+            >
+              <Icon data={Sliders} size={16} />
+            </Button>
+            <Button onClick={() => setRegisterOpen(true)}>{t("chatView.breadcrumbNewChat")}</Button>
+          </div>
         </div>
         {error && <Text variant="body-1" color="danger">{error}</Text>}
         <div className="aikit-chat-panel__body-shell">
@@ -133,6 +156,41 @@ export function GuestChatPanel() {
           <Button onClick={() => setRegisterOpen(false)}>{t("chatView.cancel")}</Button>
           <Link href="/auth/signup"><Button view="action">{t("chatView.guestRegisterAction")}</Button></Link>
         </Dialog.Footer>
+      </Dialog>
+      <Dialog open={settingsOpen} onClose={() => setSettingsOpen(false)}>
+        <Dialog.Header caption={t("chatView.settingsTitle")} />
+        <Dialog.Body>
+          <div className="aikit-chat-panel__settings">
+            <div>
+              <Text variant="body-1">{t("chatView.modelLabel")}</Text>
+              <Text variant="body-2" color="secondary">{t("chatView.modelDescription")}</Text>
+              <Select
+                value={[selectedModel]}
+                options={availableModels.map((model) => ({ value: model, content: model }))}
+                onUpdate={(value) => { if (value[0]) setSelectedModel(value[0]); }}
+                size="m"
+                width="max"
+              />
+            </div>
+            <div>
+              <Text variant="body-1">{t("chatView.systemPromptLabel")}</Text>
+              <Text variant="body-2" color="secondary">{t("chatView.systemPromptDescription")}</Text>
+              <TextArea
+                value={systemPrompt}
+                onChange={(event) => setSystemPrompt(event.target.value)}
+                rows={5}
+                controlProps={{ maxLength: 4000 }}
+                placeholder={t("chatView.systemPromptPlaceholder")}
+              />
+            </div>
+          </div>
+        </Dialog.Body>
+        <Dialog.Footer
+          onClickButtonCancel={() => setSettingsOpen(false)}
+          onClickButtonApply={saveSettings}
+          textButtonApply={t("chatView.save")}
+          textButtonCancel={t("chatView.cancel")}
+        />
       </Dialog>
     </div>
   );

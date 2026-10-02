@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getProviderModel } from '@/lib/chatModels';
 
 type GuestMessage = { role: 'user' | 'assistant'; text: string };
 
@@ -43,7 +44,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 
-  const messages = (body as { messages?: unknown })?.messages;
+  const payload = body as { messages?: unknown; model?: unknown; systemPrompt?: unknown };
+  const messages = payload?.messages;
   if (!Array.isArray(messages) || messages.length < 1 || messages.length > MAX_HISTORY ||
       !messages.every((message): message is GuestMessage =>
         message && typeof message === 'object' &&
@@ -54,7 +56,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid messages' }, { status: 400 });
   }
 
-  const apiKey = process.env.YANDEX_API_KEY;
+  const model = getProviderModel(payload.model);
+  if (!model) {
+    return NextResponse.json({ error: 'Invalid model' }, { status: 400 });
+  }
+
+  const systemPrompt = typeof payload.systemPrompt === 'string'
+    ? payload.systemPrompt.trim()
+    : '';
+  if (systemPrompt.length > MAX_MESSAGE_LENGTH) {
+    return NextResponse.json({ error: 'Invalid system prompt' }, { status: 400 });
+  }
+
+  const apiKey = process.env.OLLAMA_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: 'Chat is unavailable' }, { status: 503 });
   }
@@ -63,20 +77,23 @@ export async function POST(request: Request) {
     ? { count: usage.count + 1, resetAt: usage.resetAt }
     : { count: 1, resetAt: now + WINDOW_MS });
 
-  const folderId = process.env.YANDEX_FOLDER_ID || process.env.YANDEX_CLOUD_FOLDER || 'b1gb5lrqp1jr1tmamu2t';
   try {
-    const response = await fetch('https://llm.api.cloud.yandex.net/foundationModels/v1/completion', {
+    const response = await fetch('https://ollama.com/api/chat', {
       method: 'POST',
       cache: 'no-store',
       signal: AbortSignal.timeout(30_000),
-      headers: { 'Content-Type': 'application/json', Authorization: `Api-Key ${apiKey}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
-        modelUri: `gpt://${folderId}/yandexgpt/latest`,
-        completionOptions: { stream: false, temperature: 0.6, maxTokens: '1000' },
+        model,
         messages: [
-          { role: 'system', text: 'Ты полезный ассистент. Отвечай понятно и по делу.' },
-          ...messages,
+          {
+            role: 'system',
+            content: systemPrompt || 'Ты полезный ассистент. Отвечай понятно и по делу.',
+          },
+          ...messages.map((message) => ({ role: message.role, content: message.text })),
         ],
+        stream: false,
+        options: { temperature: 0.6, num_predict: 2000 },
       }),
     });
     if (!response.ok) {
@@ -84,7 +101,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Chat is unavailable' }, { status: 502 });
     }
     const result = await response.json();
-    const text = result?.result?.alternatives?.[0]?.message?.text;
+    const text = result?.message?.content || result?.message?.thinking;
     if (typeof text !== 'string' || !text.trim()) {
       return NextResponse.json({ error: 'Empty model response' }, { status: 502 });
     }
