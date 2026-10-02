@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ChatContainer } from "@gravity-ui/aikit";
+import { ActionButton, ChatContainer } from "@gravity-ui/aikit";
 import type { TChatMessage, TSubmitData } from "@gravity-ui/aikit";
 import { Breadcrumbs, Button, Dialog, Icon, Select, Spin, Text, TextArea } from "@gravity-ui/uikit";
 import { Sliders } from "@gravity-ui/icons";
@@ -108,6 +108,19 @@ export function GuestChatPanel() {
   if (!loaded) return <div className="chat-page-loading"><Spin size="m" /></div>;
 
   const chatTitle = t("chatView.guestTitle");
+  const footerTools = (
+    <div className="aikit-chat-panel__tools">
+      <ActionButton
+        size="m"
+        view="flat"
+        onClick={() => setSettingsOpen(true)}
+        tooltipTitle={t("chatView.settingsTooltip")}
+      >
+        <Icon data={Sliders} size={16} />
+      </ActionButton>
+    </div>
+  );
+
   return (
     <div className="aikit-chat-page">
       <div className="aikit-chat-panel">
@@ -116,16 +129,7 @@ export function GuestChatPanel() {
             <Breadcrumbs.Item href="/">{t("chatView.breadcrumbHome")}</Breadcrumbs.Item>
             <Breadcrumbs.Item href="/chat">{chatTitle}</Breadcrumbs.Item>
           </Breadcrumbs>
-          <div className="aikit-chat-panel__guest-actions">
-            <Button
-              view="flat"
-              onClick={() => setSettingsOpen(true)}
-              title={t("chatView.settingsTooltip")}
-            >
-              <Icon data={Sliders} size={16} />
-            </Button>
-            <Button onClick={() => setRegisterOpen(true)}>{t("chatView.breadcrumbNewChat")}</Button>
-          </div>
+          <Button onClick={() => setRegisterOpen(true)}>{t("chatView.breadcrumbNewChat")}</Button>
         </div>
         {error && <Text variant="body-1" color="danger">{error}</Text>}
         <div className="aikit-chat-panel__body-shell">
@@ -145,7 +149,10 @@ export function GuestChatPanel() {
             showHistory={false}
             headerProps={{ showTitle: false }}
             shouldParseIncompleteMarkdown
-            promptInputProps={{ bodyProps: { placeholder: t("chatView.messagePlaceholder"), minRows: 1, maxRows: 8 } }}
+            promptInputProps={{
+              footerProps: { bottomContent: footerTools },
+              bodyProps: { placeholder: t("chatView.messagePlaceholder"), minRows: 1, maxRows: 8 },
+            }}
           />
         </div>
       </div>

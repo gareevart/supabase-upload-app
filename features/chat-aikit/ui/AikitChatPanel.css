@@ -26,13 +26,6 @@
   padding-inline: var(--g-spacing-5);
 }
 
-.aikit-chat-panel__guest-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--g-spacing-2);
-  flex: 0 0 auto;
-}
-
 .aikit-chat-panel__actionbar [class*='gn-action-bar-section_type_primary'] {
   display: flex;
   flex: 1 1 auto;
