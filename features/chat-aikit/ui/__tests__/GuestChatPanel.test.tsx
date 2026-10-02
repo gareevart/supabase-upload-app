@@ -30,13 +30,15 @@ jest.mock('@gravity-ui/aikit', () => ({
   ChatContainer: ({ onSendMessage, messages, promptInputProps }: {
     onSendMessage: (data: { content: string }) => void;
     messages: Array<{ content: string }>;
-    promptInputProps?: { footerProps?: { bottomContent?: React.ReactNode } };
+    promptInputProps?: { view?: string; footerProps?: { bottomContent?: React.ReactNode } };
   }) => (
     <div>
       <button onClick={() => onSendMessage({ content: 'First question' })}>Ask first</button>
       <button onClick={() => onSendMessage({ content: 'Second question' })}>Ask second</button>
       <span data-testid="message-count">{messages.length}</span>
-      <div data-testid="prompt-footer">{promptInputProps?.footerProps?.bottomContent}</div>
+      <div data-testid="prompt-footer" data-view={promptInputProps?.view}>
+        {promptInputProps?.footerProps?.bottomContent}
+      </div>
     </div>
   ),
 }));
@@ -91,6 +93,7 @@ describe('GuestChatPanel', () => {
     ]);
     expect(JSON.parse(fetchMock.mock.calls[1][1].body).model).toBe('gpt-oss-20b');
 
+    expect(screen.getByTestId('prompt-footer')).toHaveAttribute('data-view', 'full');
     expect(screen.getByTestId('prompt-footer')).toContainElement(screen.getByTitle('Chat settings'));
     fireEvent.click(screen.getByTitle('Chat settings'));
     expect(screen.getByText('Chat settings')).toBeInTheDocument();

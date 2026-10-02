@@ -150,6 +150,7 @@ export function GuestChatPanel() {
             headerProps={{ showTitle: false }}
             shouldParseIncompleteMarkdown
             promptInputProps={{
+              view: "full",
               footerProps: { bottomContent: footerTools },
               bodyProps: { placeholder: t("chatView.messagePlaceholder"), minRows: 1, maxRows: 8 },
             }}
