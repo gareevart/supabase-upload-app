@@ -49,11 +49,12 @@ jest.mock('@gravity-ui/uikit', () => {
   const Dialog = ({ open, children }: { open: boolean; children: React.ReactNode }) => open ? <div>{children}</div> : null;
   Dialog.Header = ({ caption }: { caption: string }) => <h2>{caption}</h2>;
   Dialog.Body = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
-  Dialog.Footer = ({ children, textButtonApply, onClickButtonApply }: {
+  Dialog.Footer = ({ children, textButtonApply, onClickButtonApply, className }: {
     children?: React.ReactNode;
     textButtonApply?: string;
     onClickButtonApply?: () => void;
-  }) => <div>{children}{textButtonApply && <button onClick={onClickButtonApply}>{textButtonApply}</button>}</div>;
+    className?: string;
+  }) => <div className={className}>{children}{textButtonApply && <button onClick={onClickButtonApply}>{textButtonApply}</button>}</div>;
   return {
     Breadcrumbs,
     Dialog,
@@ -104,6 +105,7 @@ describe('GuestChatPanel', () => {
     fireEvent.click(screen.getByText('New chat'));
     expect(screen.getByText('Want another chat?')).toBeInTheDocument();
     expect(screen.getByText('Sign up').closest('a')).toHaveAttribute('href', '/auth/signup');
+    expect(screen.getByText('Sign up').closest('.aikit-chat-panel__guest-register-footer')).not.toBeNull();
 
     view.unmount();
     render(<GuestChatPanel />);

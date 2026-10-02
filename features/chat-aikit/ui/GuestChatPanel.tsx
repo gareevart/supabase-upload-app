@@ -160,7 +160,7 @@ export function GuestChatPanel() {
       <Dialog open={registerOpen} onClose={() => setRegisterOpen(false)}>
         <Dialog.Header caption={t("chatView.guestRegisterTitle")} />
         <Dialog.Body>{t("chatView.guestRegisterText")}</Dialog.Body>
-        <Dialog.Footer>
+        <Dialog.Footer className="aikit-chat-panel__guest-register-footer">
           <Button onClick={() => setRegisterOpen(false)}>{t("chatView.cancel")}</Button>
           <Link href="/auth/signup"><Button view="action">{t("chatView.guestRegisterAction")}</Button></Link>
         </Dialog.Footer>

@@ -227,6 +227,11 @@ body.navigation-position-bottom .aikit-chat-panel {
   gap: var(--g-spacing-4);
 }
 
+.aikit-chat-panel__guest-register-footer .g-dialog-footer__children {
+  justify-content: flex-end;
+  gap: var(--g-spacing-3);
+}
+
 .aikit-chat-panel__settings > div {
   display: flex;
   flex-direction: column;
