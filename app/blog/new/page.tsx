@@ -57,9 +57,12 @@ export default function NewBlogPost() {
 
   return (
     <div className="blog-editor-page">
-      <PostEditor onSave={() => {
-        // Always redirect to the blog page after creating a new post
-        router.push("/blog");
+      <PostEditor onSave={(published, savedPost) => {
+        if (published && savedPost?.slug) {
+          router.push(`/blog/${savedPost.slug}`);
+        } else {
+          router.push("/blog");
+        }
       }} />
     </div>
   )

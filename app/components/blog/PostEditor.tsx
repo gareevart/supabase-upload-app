@@ -38,8 +38,12 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
     savePost
   } = useBlogEditorContent(initialPost, onSave);
 
-  const handleSave = () => {
-    void savePost(initialPost ? Boolean(initialPost.published) : false);
+  const handleSaveDraft = () => {
+    void savePost(false);
+  };
+
+  const handlePublish = () => {
+    void savePost(true);
   };
 
   const handleCancel = () => {
@@ -87,11 +91,20 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
         <Button
           type="button"
           size="l"
+          view="flat"
+          loading={isLoading}
+          onClick={handleSaveDraft}
+        >
+          {t('blogEditor.saveDraft')}
+        </Button>
+        <Button
+          type="button"
+          size="l"
           view="action"
           loading={isLoading}
-          onClick={handleSave}
+          onClick={handlePublish}
         >
-          {t(initialPost ? 'blogEditor.save' : 'blogEditor.create')}
+          {t('blogEditor.publish')}
         </Button>
         <Button
           type="button"
