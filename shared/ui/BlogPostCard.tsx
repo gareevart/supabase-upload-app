@@ -36,6 +36,7 @@ interface BlogPostCardProps {
   readButtonText?: string;
   onReadClick?: (post: BlogPost) => void;
   isDraft?: boolean;
+  canEdit?: boolean;
   onEdit?: (postId: string) => void;
   onDelete?: (postId: string) => void;
   isDeleting?: boolean;
@@ -49,6 +50,7 @@ export const BlogPostCard = ({
   readButtonText,
   onReadClick,
   isDraft = false,
+  canEdit = false,
   onEdit,
   onDelete,
   isDeleting = false
@@ -179,10 +181,20 @@ export const BlogPostCard = ({
             <Icon data={TrashBin} size={16} />
           </Button>
         </div>
-      ) : showReadButton && (
-        <Button view="normal" size="m" onClick={handleReadClick}>
-          {readLabel}
-        </Button>
+      ) : (
+        <div className="blog-card__actions">
+          {canEdit && (
+            <Button view="outlined" size="m" onClick={() => onEdit?.(post.id)}>
+              <Icon data={Pencil} size={16} />
+              {t('blogCard.edit')}
+            </Button>
+          )}
+          {showReadButton && (
+            <Button view="normal" size="m" onClick={handleReadClick}>
+              {readLabel}
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );

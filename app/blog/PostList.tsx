@@ -141,6 +141,7 @@ export const PostList = ({
               gridView={gridView}
               isPriority={isPriority}
               isDraft={draftsOnly}
+              canEdit={onlyMyPosts && post.author_id === userId}
               onEdit={handleEditPost}
               showReadButton={false}
               onDelete={(postId) => setConfirmDeleteId(postId)}
