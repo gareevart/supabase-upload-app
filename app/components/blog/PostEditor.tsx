@@ -91,20 +91,20 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
         <Button
           type="button"
           size="l"
-          view="flat"
-          loading={isLoading}
-          onClick={handleSaveDraft}
-        >
-          {t('blogEditor.saveDraft')}
-        </Button>
-        <Button
-          type="button"
-          size="l"
           view="action"
           loading={isLoading}
           onClick={handlePublish}
         >
           {t('blogEditor.publish')}
+        </Button>
+        <Button
+          type="button"
+          size="l"
+          view="flat"
+          loading={isLoading}
+          onClick={handleSaveDraft}
+        >
+          {t('blogEditor.saveDraft')}
         </Button>
         <Button
           type="button"
