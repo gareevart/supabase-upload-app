@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { usePathname } from 'next/navigation';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { SWRConfig } from 'swr';
@@ -14,6 +15,9 @@ import { I18nProvider } from '../contexts/I18nContext';
 const queryClient = new QueryClient();
 
 type Theme = 'light' | 'dark';
+type PageDirection = 'left' | 'right';
+
+const mobileNavigationOrder = ['/', '/blog', '/projects', '/search', '/auth/profile'];
 
 function getInitialTheme(): Theme {
   if (typeof window === 'undefined') return 'light';
@@ -107,6 +111,34 @@ function ThemeManager({ children }: { children: React.ReactNode }) {
   return <ThemeWrapper theme={theme}>{children}</ThemeWrapper>;
 }
 
+function MobilePageTransition({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname() ?? '/';
+  const previousPathnameRef = useRef(pathname);
+  const [direction, setDirection] = useState<PageDirection>('right');
+  const hasNavigatedRef = useRef(false);
+
+  useEffect(() => {
+    if (pathname === previousPathnameRef.current) return;
+
+    const previousIndex = mobileNavigationOrder.indexOf(previousPathnameRef.current);
+    const nextIndex = mobileNavigationOrder.indexOf(pathname);
+    if (previousIndex !== -1 && nextIndex !== -1) {
+      setDirection(nextIndex > previousIndex ? 'left' : 'right');
+    }
+    hasNavigatedRef.current = true;
+    previousPathnameRef.current = pathname;
+  }, [pathname]);
+
+  return (
+    <div
+      key={pathname}
+      className={hasNavigatedRef.current ? `mobile-page-transition mobile-page-transition--${direction}` : undefined}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
@@ -117,7 +149,7 @@ export default function ClientProviders({ children }: { children: React.ReactNod
               <ThemeManager>
                 <Navigation />
                 <main className="main-content py-6">
-                  {children}
+                  <MobilePageTransition>{children}</MobilePageTransition>
                   <Analytics />
                   <SpeedInsights />
                 </main>
