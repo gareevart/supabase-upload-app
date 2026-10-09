@@ -309,14 +309,12 @@
   padding: 8px 12px;
 }
 
-@media (max-width: 767px) {
-  .mobile-page-transition--left {
-    animation: mobile-page-enter-from-right 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
+.mobile-page-transition--left {
+  animation: mobile-page-enter-from-right 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
 
-  .mobile-page-transition--right {
-    animation: mobile-page-enter-from-left 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
+.mobile-page-transition--right {
+  animation: mobile-page-enter-from-left 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes mobile-page-enter-from-right {
