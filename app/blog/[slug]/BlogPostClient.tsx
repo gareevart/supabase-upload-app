@@ -126,9 +126,10 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
   };
 
   const canEditPost = userRole === 'admin' || userRole === 'editor';
+  const showDesktopTableOfContents = isTableOfContentsOpen && hasTableOfContents && !isNarrowViewport;
 
   return (
-    <div className="blog-page blog-post-page">
+    <div className={`blog-page blog-post-page ${showDesktopTableOfContents ? 'blog-post-page_toc-open' : ''}`}>
       <div className="blog-post-actionbar">
         <ActionBar aria-label={t('blogView.postActions')}>
           <ActionBar.Section style={{ columnGap: 20, gap: 20 }}>
@@ -189,7 +190,7 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
         </ActionBar>
       </div>
 
-      <div className={`blog-post-layout ${isTableOfContentsOpen && hasTableOfContents && !isNarrowViewport ? 'blog-post-layout_toc-open' : ''}`}>
+      <div className={`blog-post-layout ${showDesktopTableOfContents ? 'blog-post-layout_toc-open' : ''}`}>
         <div className="blog-post-body-shell blog-post-container_padded">
           <div className="blog-post-article">
             <Text variant="display-2" className="blog-post-title">{post.title}</Text>
@@ -231,7 +232,7 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
 
       </div>
 
-      {hasTableOfContents && !isNarrowViewport && isTableOfContentsOpen && createPortal(
+      {showDesktopTableOfContents && createPortal(
         <aside className="blog-post-toc" aria-label={t('tableOfContents.title')}>
           <TableOfContents content={post.content} />
         </aside>,

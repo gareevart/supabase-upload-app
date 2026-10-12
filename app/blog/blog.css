@@ -247,6 +247,10 @@
 }
 
 @media (min-width: 1200px) {
+  .blog-post-page_toc-open .blog-post-actionbar {
+    width: calc(100% - var(--blog-post-toc-width));
+  }
+
   .blog-post-layout_toc-open {
     display: grid;
     grid-template-columns: minmax(0, 1fr) var(--blog-post-toc-width);
@@ -255,11 +259,11 @@
   .blog-post-toc {
     box-sizing: border-box;
     position: fixed;
-    top: 40px;
+    top: 0;
     right: 0;
     z-index: 9;
     width: var(--blog-post-toc-width);
-    height: calc(100dvh - 40px);
+    height: 100dvh;
     min-height: 0;
     border-inline-start: 1px solid var(--g-color-line-generic);
     background-color: var(--g-color-base-background);
