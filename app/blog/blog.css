@@ -246,14 +246,28 @@
   overflow: hidden;
 }
 
-@media (min-width: 1200px) {
-  .blog-post-page_toc-open .blog-post-actionbar {
-    width: calc(100% - var(--blog-post-toc-width));
+@media (max-width: 1199px) {
+  /* Gravity Drawer sets inset: 0 inline; keep its veil and panel below ActionBar. */
+  .blog-post-toc-drawer-root.g-drawer {
+    top: 52px !important;
   }
+}
 
-  .blog-post-layout_toc-open {
+@media (max-width: 767px) {
+  .blog-post-toc-drawer-root.g-drawer {
+    top: 40px !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .blog-post-page_toc-open {
     display: grid;
     grid-template-columns: minmax(0, 1fr) var(--blog-post-toc-width);
+  }
+
+  .blog-post-page_toc-open .blog-post-actionbar,
+  .blog-post-page_toc-open .blog-post-layout {
+    grid-column: 1;
   }
 
   .blog-post-toc {

@@ -8,7 +8,6 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { MarkdownRenderer } from "@/features/blog-editor/ui/MarkdownRenderer"
 import { useState, useEffect, useMemo, useRef } from "react"
-import { createPortal } from "react-dom"
 import { Button, Icon, Text, Dialog, Drawer, DropdownMenu, Breadcrumbs } from "@gravity-ui/uikit"
 import { ActionBar } from "@gravity-ui/navigation"
 import { useToast } from "@/hooks/use-toast"
@@ -190,7 +189,7 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
         </ActionBar>
       </div>
 
-      <div className={`blog-post-layout ${showDesktopTableOfContents ? 'blog-post-layout_toc-open' : ''}`}>
+      <div className="blog-post-layout">
         <div className="blog-post-body-shell blog-post-container_padded">
           <div className="blog-post-article">
             <Text variant="display-2" className="blog-post-title">{post.title}</Text>
@@ -232,11 +231,10 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
 
       </div>
 
-      {showDesktopTableOfContents && createPortal(
+      {showDesktopTableOfContents && (
         <aside className="blog-post-toc" aria-label={t('tableOfContents.title')}>
           <TableOfContents content={post.content} />
-        </aside>,
-        document.body,
+        </aside>
       )}
 
       {hasTableOfContents && (
@@ -244,6 +242,7 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
           open={isNarrowViewport && isTableOfContentsOpen}
           placement="right"
           size={280}
+          className="blog-post-toc-drawer-root"
           contentClassName="blog-post-toc-drawer"
           aria-label={t('tableOfContents.title')}
           returnFocus={pendingHeadingId.current === null}
