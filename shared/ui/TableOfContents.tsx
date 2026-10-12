@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Card, Text, List, Link } from '@gravity-ui/uikit';
+import { Button, Icon, Text, List, Link } from '@gravity-ui/uikit';
+import { Xmark } from '@gravity-ui/icons';
 import { useI18n } from '@/app/contexts/I18nContext';
 import { extractHeadings } from '@/shared/lib/blog/headingAnchors';
 import './TableOfContents.css';
@@ -9,11 +10,18 @@ import './TableOfContents.css';
 interface TableOfContentsProps {
   content: unknown;
   className?: string;
+  onClose?: () => void;
+  onNavigate?: (id: string) => void;
 }
 
 const SCROLL_OFFSET = 100;
 
-export const TableOfContents: React.FC<TableOfContentsProps> = ({ content, className = '' }) => {
+export const TableOfContents: React.FC<TableOfContentsProps> = ({
+  content,
+  className = '',
+  onClose,
+  onNavigate,
+}) => {
   const { t } = useI18n();
   const headings = useMemo(() => extractHeadings(content), [content]);
   const [activeId, setActiveId] = useState<string>('');
@@ -43,6 +51,11 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ content, class
   }, [headings]);
 
   const handleClick = (id: string) => {
+    if (onNavigate) {
+      onNavigate(id);
+      return;
+    }
+
     const element = document.getElementById(id);
     element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
@@ -54,10 +67,21 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ content, class
   const rootClassName = ['table-of-contents', className].filter(Boolean).join(' ');
 
   return (
-    <Card className={rootClassName} size="l">
-      <Text variant="subheader-3" className="table-of-contents__title">
-        {t('tableOfContents.title')}
-      </Text>
+    <nav className={rootClassName} aria-label={t('tableOfContents.title')}>
+      <div className="table-of-contents__header">
+        <Text variant="subheader-3" className="table-of-contents__title">
+          {t('tableOfContents.title')}
+        </Text>
+        {onClose && (
+          <Button
+            view="flat"
+            onClick={onClose}
+            aria-label={t('tableOfContents.close')}
+          >
+            <Icon data={Xmark} size={16} />
+          </Button>
+        )}
+      </div>
       <List
         filterable={false}
         sortable={false}
@@ -93,7 +117,7 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ content, class
           );
         }}
       />
-    </Card>
+    </nav>
   );
 };
 

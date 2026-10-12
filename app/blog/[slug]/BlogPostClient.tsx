@@ -7,13 +7,14 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { MarkdownRenderer } from "@/features/blog-editor/ui/MarkdownRenderer"
-import { useState, useEffect } from "react"
-import { Button, Icon, Text, Dialog, DropdownMenu, Breadcrumbs } from "@gravity-ui/uikit"
+import { useState, useEffect, useMemo, useRef } from "react"
+import { createPortal } from "react-dom"
+import { Button, Icon, Text, Dialog, Drawer, DropdownMenu, Breadcrumbs } from "@gravity-ui/uikit"
 import { ActionBar } from "@gravity-ui/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { authFetch } from "@/lib/auth-fetch"
 import { TableOfContents } from "@/shared/ui/TableOfContents"
-import { useIsMobile } from "@/hooks/use-mobile"
+import { extractHeadings } from "@/shared/lib/blog/headingAnchors"
 import { useI18n } from "@/app/contexts/I18nContext"
 import Subscribe from "@/app/components/Subscribe/Subscribe"
 import { getBlobPreviewUrl } from '@/lib/blobUrl'
@@ -42,10 +43,21 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isTableOfContentsOpen, setIsTableOfContentsOpen] = useState(false)
+  const [isNarrowViewport, setIsNarrowViewport] = useState(false)
+  const pendingHeadingId = useRef<string | null>(null)
   const router = useRouter()
   const { toast } = useToast()
-  const isMobile = useIsMobile()
   const { t, language } = useI18n()
+  const hasTableOfContents = useMemo(() => extractHeadings(post.content).length > 0, [post.content])
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 1199px)')
+    const updateViewport = () => setIsNarrowViewport(mediaQuery.matches)
+
+    updateViewport()
+    mediaQuery.addEventListener('change', updateViewport)
+    return () => mediaQuery.removeEventListener('change', updateViewport)
+  }, [])
 
   useEffect(() => {
     // The post itself is server-rendered and passed as a prop; only the
@@ -159,25 +171,26 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
                     ]}
                   />
                 </ActionBar.Item>}
-                <ActionBar.Item>
+                {hasTableOfContents && <ActionBar.Item>
                   <Button
                     view="flat"
                     selected={isTableOfContentsOpen}
                     aria-pressed={isTableOfContentsOpen}
+                    aria-expanded={isTableOfContentsOpen}
                     onClick={() => setIsTableOfContentsOpen((isOpen) => !isOpen)}
                     aria-label={t('tableOfContents.title')}
                     title={t('tableOfContents.title')}
                   >
                     <Icon data={LayoutSideContentRight} size={16} />
                   </Button>
-                </ActionBar.Item>
+                </ActionBar.Item>}
               </ActionBar.Group>
           </ActionBar.Section>
         </ActionBar>
       </div>
 
-      <div className="blog-post-body-shell blog-post-container_padded">
-        <div className="blog-post-body">
+      <div className={`blog-post-layout ${isTableOfContentsOpen && hasTableOfContents && !isNarrowViewport ? 'blog-post-layout_toc-open' : ''}`}>
+        <div className="blog-post-body-shell blog-post-container_padded">
           <div className="blog-post-article">
             <Text variant="display-2" className="blog-post-title">{post.title}</Text>
 
@@ -195,13 +208,6 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
                 </Text>
               </div>
             </div>
-
-            {/* ToC is collapsed by default and opened from the action bar. */}
-            {isMobile && isTableOfContentsOpen && (
-              <div className="blog-post-toc-mobile">
-                <TableOfContents content={post.content} />
-              </div>
-            )}
 
             {post.featured_image && post.show_featured_image !== false && (
               <div className="blog-post-cover">
@@ -221,15 +227,48 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
             </div>
             <Subscribe />
           </div>
-
-          {/* Table of Contents — desktop only, on the right */}
-          {!isMobile && isTableOfContentsOpen && (
-            <aside className="blog-post-toc">
-              <TableOfContents content={post.content} />
-            </aside>
-          )}
         </div>
+
       </div>
+
+      {hasTableOfContents && !isNarrowViewport && isTableOfContentsOpen && createPortal(
+        <aside className="blog-post-toc" aria-label={t('tableOfContents.title')}>
+          <TableOfContents content={post.content} />
+        </aside>,
+        document.body,
+      )}
+
+      {hasTableOfContents && (
+        <Drawer
+          open={isNarrowViewport && isTableOfContentsOpen}
+          placement="right"
+          size={280}
+          contentClassName="blog-post-toc-drawer"
+          aria-label={t('tableOfContents.title')}
+          returnFocus={pendingHeadingId.current === null}
+          onOpenChange={(open) => {
+            if (!open) setIsTableOfContentsOpen(false)
+          }}
+          onTransitionOutComplete={() => {
+            const headingId = pendingHeadingId.current
+            pendingHeadingId.current = null
+            if (headingId) {
+              requestAnimationFrame(() => {
+                document.getElementById(headingId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              })
+            }
+          }}
+        >
+          <TableOfContents
+            content={post.content}
+            onClose={() => setIsTableOfContentsOpen(false)}
+            onNavigate={(headingId) => {
+              pendingHeadingId.current = headingId
+              setIsTableOfContentsOpen(false)
+            }}
+          />
+        </Drawer>
+      )}
 
       <Dialog
         open={showDeleteConfirm}
