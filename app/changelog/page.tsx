@@ -28,6 +28,7 @@ import {
   CircleExclamation,
   ShieldCheck
 } from '@gravity-ui/icons';
+import './Changelog.css';
 
 const ChangelogPage = () => {
   const changelogData = {
@@ -310,14 +311,14 @@ const ChangelogPage = () => {
   const previousReleases = changelogData.previousReleases;
 
   return (
-    <Container maxWidth="xl" className="py-8">
-      <div className="space-y-8">
+    <Container maxWidth="xl" className="changelog-page">
+      <div className="changelog-page__content">
         {/* Header */}
-        <div className="text-center mb-8">
-          <Text variant="display-2" className="mb-2">
+        <div className="changelog-page__header">
+          <Text variant="display-2" className="changelog-page__title">
             Changelog
           </Text>
-          <div className="flex items-center justify-center gap-2 mb-4">
+          <div className="changelog-page__version-row">
             <Label theme="success" size="m">
               {changelogData.version}
             </Label>
@@ -329,24 +330,24 @@ const ChangelogPage = () => {
 
         {/* Main Sections */}
         {changelogData.sections.map((section, sectionIndex) => (
-          <Card key={sectionIndex} className="p-6">
-            <div className="flex items-center gap-3 mb-6">
+          <Card key={sectionIndex} className="changelog-page__card">
+            <div className="changelog-page__section-header">
               <Icon data={section.icon} size={24} />
               <Text variant="header-1">{section.title}</Text>
             </div>
 
-            <div className="space-y-6">
+            <div className="changelog-page__section-list">
               {section.items.map((item, itemIndex) => (
                 <div key={itemIndex}>
-                  <div className="flex items-center gap-2 mb-4">
+                  <div className="changelog-page__item-header">
                     <Icon data={item.icon} size={20} />
                     <Text variant="subheader-1">{item.title}</Text>
                   </div>
                   
-                  <div className="space-y-3">
+                  <div className="changelog-page__feature-list">
                     {item.features.map((feature, featureIndex) => (
-                      <div key={featureIndex} className="py-2 border-l-2 border-gray-200 pl-4 flex flex-col">
-                        <Text variant="body-2" className="font-semibold mb-1">
+                      <div key={featureIndex} className="changelog-page__feature">
+                        <Text variant="body-2" className="changelog-page__feature-name">
                         {feature.name}
                         </Text>
                         <Text variant="body-1" color="complementary">
@@ -357,7 +358,7 @@ const ChangelogPage = () => {
                   </div>
                   
                   {itemIndex < section.items.length - 1 && (
-                    <Divider className="my-4" />
+                    <Divider className="changelog-page__divider" />
                   )}
                 </div>
               ))}
@@ -367,12 +368,12 @@ const ChangelogPage = () => {
 
         {/* Statistics */}
         {changelogData.statistics && (
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-6">
+          <Card className="changelog-page__card">
+            <div className="changelog-page__section-header">
               <Icon data={ChartColumn} size={24} />
               <Text variant="header-1">Статистика изменений</Text>
             </div>
-            <div className="space-y-2">
+            <div className="changelog-page__stats-list">
               <Text variant="body-1">📁 {changelogData.statistics.filesChanged}</Text>
               <Text variant="body-1">➕ {changelogData.statistics.linesAdded}</Text>
               {changelogData.statistics.linesOptimized && (
@@ -385,15 +386,15 @@ const ChangelogPage = () => {
 
         {/* Documentation */}
         {changelogData.documentation && changelogData.documentation.length > 0 && (
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-6">
+          <Card className="changelog-page__card">
+            <div className="changelog-page__section-header">
               <Icon data={FileText} size={24} />
               <Text variant="header-1">Документация</Text>
             </div>
-            <div className="space-y-3">
+            <div className="changelog-page__doc-list">
               {changelogData.documentation.map((doc, index) => (
-                <div key={index} className="py-2 border-l-2 border-gray-200 pl-4 flex flex-col">
-                  <Text variant="body-2" className="font-semibold mb-1">
+                <div key={index} className="changelog-page__doc-item">
+                  <Text variant="body-2" className="changelog-page__doc-path">
                     {doc.path}
                   </Text>
                   <Text variant="body-1" color="complementary">
@@ -407,14 +408,14 @@ const ChangelogPage = () => {
 
         {/* Previous Releases */}
         {previousReleases && previousReleases.length > 0 && (
-          <div className="space-y-8">
+          <div className="changelog-page__releases">
             <Divider />
-            <Text variant="header-1" className="text-center">Предыдущие релизы</Text>
+            <Text variant="header-1" className="changelog-page__release-title">Предыдущие релизы</Text>
             
             {previousReleases.map((release, releaseIndex) => (
-              <div key={releaseIndex} className="space-y-4">
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-4">
+              <div key={releaseIndex} className="changelog-page__release">
+                <div className="changelog-page__release-header">
+                  <div className="changelog-page__release-version">
                     <Label theme="info" size="m">
                       {release.version}
                     </Label>
@@ -425,24 +426,24 @@ const ChangelogPage = () => {
                 </div>
 
                 {release.sections.map((section, sectionIndex) => (
-                  <Card key={sectionIndex} className="p-6">
-                    <div className="flex items-center gap-3 mb-6">
+                  <Card key={sectionIndex} className="changelog-page__card">
+                    <div className="changelog-page__section-header">
                       <Icon data={section.icon} size={24} />
                       <Text variant="header-1">{section.title}</Text>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="changelog-page__section-list">
                       {section.items.map((item, itemIndex) => (
                         <div key={itemIndex}>
-                          <div className="flex items-center gap-2 mb-4">
+                          <div className="changelog-page__item-header">
                             <Icon data={item.icon} size={20} />
                             <Text variant="subheader-1">{item.title}</Text>
                           </div>
                           
-                          <div className="space-y-3">
+                          <div className="changelog-page__feature-list">
                             {item.features.map((feature, featureIndex) => (
-                              <div key={featureIndex} className="py-2 border-l-2 border-gray-200 pl-4 flex flex-col">
-                                <Text variant="body-2" className="font-semibold mb-1">
+                              <div key={featureIndex} className="changelog-page__feature">
+                                <Text variant="body-2" className="changelog-page__feature-name">
                                 {feature.name}
                                 </Text>
                                 <Text variant="body-1" color="complementary">
@@ -453,7 +454,7 @@ const ChangelogPage = () => {
                           </div>
                           
                           {itemIndex < section.items.length - 1 && (
-                            <Divider className="my-4" />
+                            <Divider className="changelog-page__divider" />
                           )}
                         </div>
                       ))}
@@ -462,12 +463,12 @@ const ChangelogPage = () => {
                 ))}
 
                 {release.statistics && (
-                  <Card className="p-6">
-                    <div className="flex items-center gap-3 mb-6">
+                  <Card className="changelog-page__card">
+                    <div className="changelog-page__section-header">
                       <Icon data={ChartColumn} size={24} />
                       <Text variant="header-1">Статистика изменений</Text>
                     </div>
-                    <div className="space-y-2">
+                    <div className="changelog-page__stats-list">
                       <Text variant="body-1">📁 {release.statistics.filesChanged}</Text>
                       <Text variant="body-1">➕ {release.statistics.linesAdded}</Text>
                       {release.statistics.linesOptimized && (
@@ -484,7 +485,7 @@ const ChangelogPage = () => {
             ))}
           </div>
         )}
-    </div>
+      </div>
     </Container>
   );
 };

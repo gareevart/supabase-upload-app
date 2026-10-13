@@ -1,0 +1,132 @@
+/* Changelog page styles */
+
+.changelog-page {
+  padding-top: var(--g-spacing-8, 32px);
+  padding-bottom: var(--g-spacing-8, 32px);
+}
+
+.changelog-page__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-8, 32px);
+}
+
+.changelog-page__header {
+  text-align: center;
+  margin-bottom: var(--g-spacing-8, 32px);
+}
+
+.changelog-page__title {
+  margin-bottom: var(--g-spacing-2, 8px);
+}
+
+.changelog-page__version-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--g-spacing-2, 8px);
+  margin-bottom: var(--g-spacing-4, 16px);
+}
+
+.changelog-page__card {
+  padding: var(--g-spacing-6, 24px);
+}
+
+.changelog-page__section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--g-spacing-3, 12px);
+  margin-bottom: var(--g-spacing-6, 24px);
+}
+
+.changelog-page__section-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-6, 24px);
+}
+
+.changelog-page__item-header {
+  display: flex;
+  align-items: center;
+  gap: var(--g-spacing-2, 8px);
+  margin-bottom: var(--g-spacing-4, 16px);
+}
+
+.changelog-page__feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-3, 12px);
+}
+
+.changelog-page__feature {
+  padding-top: var(--g-spacing-2, 8px);
+  padding-bottom: var(--g-spacing-2, 8px);
+  border-left: 2px solid var(--g-color-line-inverted, #e0e0e0);
+  padding-left: var(--g-spacing-4, 16px);
+  display: flex;
+  flex-direction: column;
+}
+
+.changelog-page__feature-name {
+  font-weight: 600;
+  margin-bottom: var(--g-spacing-1, 4px);
+}
+
+.changelog-page__stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-2, 8px);
+}
+
+.changelog-page__doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-3, 12px);
+}
+
+.changelog-page__doc-item {
+  padding-top: var(--g-spacing-2, 8px);
+  padding-bottom: var(--g-spacing-2, 8px);
+  border-left: 2px solid var(--g-color-line-inverted, #e0e0e0);
+  padding-left: var(--g-spacing-4, 16px);
+  display: flex;
+  flex-direction: column;
+}
+
+.changelog-page__doc-path {
+  font-weight: 600;
+  margin-bottom: var(--g-spacing-1, 4px);
+}
+
+.changelog-page__releases {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-8, 32px);
+}
+
+.changelog-page__release-title {
+  text-align: center;
+}
+
+.changelog-page__release-version {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--g-spacing-2, 8px);
+  margin-bottom: var(--g-spacing-4, 16px);
+}
+
+.changelog-page__release {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-4, 16px);
+}
+
+.changelog-page__release-header {
+  text-align: center;
+}
+
+.changelog-page__divider {
+  margin-top: var(--g-spacing-4, 16px);
+  margin-bottom: var(--g-spacing-4, 16px);
+}
