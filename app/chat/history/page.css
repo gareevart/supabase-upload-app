@@ -1,6 +1,10 @@
 .chat-history-page {
+  box-sizing: border-box;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 100%;
+  overflow-x: clip;
 }
 
 .chat-history-page__actionbar {
@@ -52,7 +56,9 @@
 }
 
 .chat-history-page__main {
+  box-sizing: border-box;
   width: 100%;
+  min-width: 0;
   max-width: 640px;
   margin-inline: auto;
   padding: var(--g-spacing-5);

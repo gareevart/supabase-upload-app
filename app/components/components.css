@@ -13,6 +13,9 @@
 }
 
 .project-card {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
   max-width: 1152px;
   /* max-w-6xl */
   margin-right: auto;
