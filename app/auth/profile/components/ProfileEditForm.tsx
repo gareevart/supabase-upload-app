@@ -10,6 +10,7 @@ import {
 } from '@gravity-ui/uikit';
 import YandexFileUploader from '../../components/YandexFileUploader';
 import { Profile } from '../types';
+import './ProfileEditForm.css';
 
 interface ProfileEditFormProps {
     profile: Profile;
@@ -30,8 +31,8 @@ export const ProfileEditForm = ({
     const { user } = useAuth();
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
-            <div className="flex-col profile-field w-full">
+        <div className="profile-edit-form">
+            <div className="profile-edit-form__field">
                 <Text variant="body-2">Name</Text>
                 <TextInput
                     size='l'
@@ -40,7 +41,7 @@ export const ProfileEditForm = ({
                 />
             </div>
 
-            <div className="flex-col profile-field w-full">
+            <div className="profile-edit-form__field">
                 <Text variant="body-2">Username</Text>
                 <TextInput
                     size='l'
@@ -49,7 +50,7 @@ export const ProfileEditForm = ({
                 />
             </div>
 
-            <div className="flex-col profile-field w-full">
+            <div className="profile-edit-form__field">
                 <Text variant="body-2">Avatar</Text>
                 <YandexFileUploader
                     folderPath="profiles"
@@ -103,7 +104,7 @@ export const ProfileEditForm = ({
                 </Text>
             </div>
 
-            <div className="flex-col profile-field w-full">
+            <div className="profile-edit-form__field">
                 <Text variant="body-2">Bio</Text>
                 <TextArea
                     size='l'
@@ -112,7 +113,7 @@ export const ProfileEditForm = ({
                 />
             </div>
 
-            <div className="flex-col profile-field w-full">
+            <div className="profile-edit-form__field">
                 <Text variant="body-2">Site</Text>
                 <TextInput
                     size='l'
@@ -122,7 +123,7 @@ export const ProfileEditForm = ({
                 />
             </div>
 
-            <div className="profile-actions" style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+            <div className="profile-edit-form__actions">
                 <Button
                     size="l"
                     view="action"
