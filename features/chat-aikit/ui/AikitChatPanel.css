@@ -6,6 +6,7 @@
 }
 
 .aikit-chat-panel__actionbar {
+  box-sizing: border-box;
   position: -webkit-sticky;
   position: sticky;
   top: 0;
@@ -15,6 +16,8 @@
   padding: 0;
   background-color: var(--g-color-base-background);
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .aikit-chat-panel__actionbar_guest {
@@ -87,7 +90,9 @@
 
 /* Centered content wrapper — same as .blog-post-body-shell / .blog-page__main */
 .aikit-chat-panel__body-shell {
+  box-sizing: border-box;
   width: 100%;
+  min-width: 0;
   max-width: var(--blog-content-max-width);
   margin-inline: auto;
   padding-inline: var(--g-spacing-4);

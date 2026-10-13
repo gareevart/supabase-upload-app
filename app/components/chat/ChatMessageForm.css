@@ -1,6 +1,7 @@
 /* ChatMessageForm styles */
 
 .chat-message-form {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   background-color: var(--g-color-base-generic);
@@ -10,6 +11,8 @@
   padding: var(--g-spacing-3);
   flex-shrink: 0;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   /* Prevent shrinking */
 }
 
