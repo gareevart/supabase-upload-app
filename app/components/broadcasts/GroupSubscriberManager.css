@@ -1,0 +1,86 @@
+/* GroupSubscriberManager styles */
+
+.group-subscriber-manager {
+  width: 100%;
+  max-width: 768px;
+  padding: var(--g-spacing-6, 24px);
+}
+
+.group-subscriber-manager__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--g-spacing-4, 16px);
+}
+
+.group-subscriber-manager__current {
+  margin-bottom: var(--g-spacing-6, 24px);
+}
+
+.group-subscriber-manager__current-title {
+  margin-bottom: var(--g-spacing-3, 12px);
+}
+
+.group-subscriber-manager__empty {
+  text-align: center;
+  padding: var(--g-spacing-8, 32px) 0;
+}
+
+/* Add modal styles */
+.group-subscriber-manager__add-modal {
+  width: 100%;
+  max-width: 672px;
+  padding: var(--g-spacing-6, 24px);
+}
+
+.group-subscriber-manager__add-title {
+  margin-bottom: var(--g-spacing-4, 16px);
+}
+
+.group-subscriber-manager__add-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-6, 24px);
+}
+
+.group-subscriber-manager__email-label {
+  margin-bottom: var(--g-spacing-2, 8px);
+}
+
+.group-subscriber-manager__email-button-wrapper {
+  margin-top: var(--g-spacing-2, 8px);
+}
+
+.group-subscriber-manager__existing-label {
+  margin-bottom: var(--g-spacing-2, 8px);
+}
+
+.group-subscriber-manager__subscribers-list {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--g-color-line-inverted, #e0e0e0);
+  border-radius: var(--g-radius-s, 4px);
+  padding: var(--g-spacing-2, 8px);
+}
+
+.group-subscriber-manager__subscribers-list__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-2, 8px);
+}
+
+.group-subscriber-manager__subscriber-item {
+  display: flex;
+  align-items: center;
+  gap: var(--g-spacing-2, 8px);
+}
+
+.group-subscriber-manager__existing-button-wrapper {
+  margin-top: var(--g-spacing-2, 8px);
+}
+
+.group-subscriber-manager__actions {
+  display: flex;
+  gap: var(--g-spacing-3, 12px);
+  justify-content: flex-end;
+}

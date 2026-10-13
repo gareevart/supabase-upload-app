@@ -5,6 +5,7 @@ import { Button, Text, Icon, Modal, TextInput, TextArea, Table, TableColumnConfi
 import { Plus, TrashBin, Person } from '@gravity-ui/icons';
 import { Subscriber } from './types';
 import { useToast } from '@/hooks/use-toast';
+import './GroupSubscriberManager.css';
 
 interface GroupSubscriberManagerProps {
   groupId: string;
@@ -261,8 +262,8 @@ const GroupSubscriberManager: React.FC<GroupSubscriberManagerProps> = ({
 
   return (
     <Modal open={isOpen} onClose={onClose}>
-      <div className="w-full max-w-4xl p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="group-subscriber-manager">
+        <div className="group-subscriber-manager__header">
           <div>
             <Text variant="subheader-1">Управление подписчиками</Text>
             <Text variant="body-2" color="secondary">
@@ -279,13 +280,13 @@ const GroupSubscriberManager: React.FC<GroupSubscriberManagerProps> = ({
         </div>
 
         {/* Current subscribers */}
-        <div className="mb-6">
-          <Text variant="header-2" className="mb-3">
+        <div className="group-subscriber-manager__current">
+          <Text variant="header-2" className="group-subscriber-manager__current-title">
             Подписчики в группе ({subscribers.length})
           </Text>
           
           {subscribers.length === 0 ? (
-            <div className="text-center py-8">
+            <div className="group-subscriber-manager__empty">
               <Text variant="body-1" color="secondary">
                 В группе пока нет подписчиков
               </Text>
@@ -301,20 +302,20 @@ const GroupSubscriberManager: React.FC<GroupSubscriberManagerProps> = ({
 
         {/* Add subscribers modal */}
         <Modal open={showAddModal} onClose={() => setShowAddModal(false)}>
-          <div className="w-full max-w-2xl p-6">
-            <Text variant="subheader-1" className="mb-4">Добавить подписчиков</Text>
+          <div className="group-subscriber-manager__add-modal">
+            <Text variant="subheader-1" className="group-subscriber-manager__add-title">Добавить подписчиков</Text>
             
-            <div className="space-y-6">
+            <div className="group-subscriber-manager__add-content">
               {/* Add by email */}
               <div>
-                <Text variant="body-2" className="mb-2">Добавить по email адресам</Text>
+                <Text variant="body-2" className="group-subscriber-manager__email-label">Добавить по email адресам</Text>
                 <TextInput
                   value={newEmails}
                   onChange={(e) => setNewEmails(e.target.value)}
                   placeholder="Введите email адреса (разделенные запятой, пробелом или новой строкой)"
                   disabled={isSubmitting}            
                 />
-                <div className="mt-2">
+                <div className="group-subscriber-manager__email-button-wrapper">
                   <Button
                     view="action"
                     onClick={handleAddByEmail}
@@ -328,13 +329,13 @@ const GroupSubscriberManager: React.FC<GroupSubscriberManagerProps> = ({
               {/* Add existing subscribers */}
               {availableSubscribers.length > 0 && (
                 <div>
-                  <Text variant="body-2" className="mb-2">
+                  <Text variant="body-2" className="group-subscriber-manager__existing-label">
                     Добавить существующих подписчиков ({availableSubscribers.length} доступно)
                   </Text>
-                  <div className="max-h-60 overflow-y-auto border rounded p-2">
-                    <div className="space-y-2">
+                  <div className="group-subscriber-manager__subscribers-list">
+                    <div className="group-subscriber-manager__subscribers-list__inner">
                       {availableSubscribers.map((subscriber) => (
-                        <div key={subscriber.id} className="flex items-center gap-2">
+                        <div key={subscriber.id} className="group-subscriber-manager__subscriber-item">
                           <Checkbox
                             checked={selectedSubscribers.includes(subscriber.id)}
                             onChange={() => {
@@ -358,7 +359,7 @@ const GroupSubscriberManager: React.FC<GroupSubscriberManagerProps> = ({
                       ))}
                     </div>
                   </div>
-                  <div className="mt-2">
+                  <div className="group-subscriber-manager__existing-button-wrapper">
                     <Button
                       view="action"
                       onClick={handleAddExisting}
@@ -370,7 +371,7 @@ const GroupSubscriberManager: React.FC<GroupSubscriberManagerProps> = ({
                 </div>
               )}
 
-              <div className="flex gap-3 justify-end">
+              <div className="group-subscriber-manager__actions">
                 <Button
                   view="outlined"
                   onClick={() => setShowAddModal(false)}
