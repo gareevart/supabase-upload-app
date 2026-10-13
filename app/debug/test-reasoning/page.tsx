@@ -4,6 +4,7 @@ import { Button, TextArea, Text, Container } from "@gravity-ui/uikit";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { redirect } from "next/navigation";
 import { supabase } from "@/lib/client-supabase";
+import '../debug-pages.css';
 
 const TestReasoningPage = () => {
   const { user, loading: isAuthLoading } = useAuth();
@@ -13,7 +14,7 @@ const TestReasoningPage = () => {
   const [reasoningMode, setReasoningMode] = useState(false);
 
   if (isAuthLoading) {
-    return <Container><div className="py-8 text-center">Загрузка...</div></Container>;
+    return <Container><div className="debug-page__loading">Загрузка...</div></Container>;
   }
 
   if (!user) {
@@ -64,10 +65,10 @@ const TestReasoningPage = () => {
 
   return (
     <Container>
-      <div className="py-8 space-y-4">
+      <div className="debug-page__content">
         <Text variant="header-1">Тест режима рассуждений</Text>
         
-        <div className="space-y-2">
+        <div className="debug-page__info-list">
           <Text variant="body-2">Тестовый промпт:</Text>
           <TextArea
             value={prompt}
@@ -76,7 +77,7 @@ const TestReasoningPage = () => {
           />
         </div>
 
-        <div className="flex items-center space-x-4">
+        <div className="debug-page__buttons">
           <Button
             onClick={() => setReasoningMode(!reasoningMode)}
             view={reasoningMode ? "action" : "outlined"}
@@ -94,9 +95,9 @@ const TestReasoningPage = () => {
         </div>
 
         {response && (
-          <div className="space-y-2">
+          <div className="debug-page__info-list">
             <Text variant="body-2">Ответ API:</Text>
-            <pre className="bg-gray-100 p-4 rounded text-sm overflow-auto">
+            <pre className="debug-page__result-pre">
               {response}
             </pre>
           </div>

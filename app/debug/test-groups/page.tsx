@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { Button, Text, Modal, TextInput, TextArea, Card, Icon } from '@gravity-ui/uikit';
 import { Plus } from '@gravity-ui/icons';
+import '../debug-pages.css';
+import '../../components/broadcasts/GroupSubscriberManager.css';
 
 export default function TestGroupsPage() {
   const [showAddGroup, setShowAddGroup] = useState(false);
@@ -131,10 +133,10 @@ export default function TestGroupsPage() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <Text variant="display-1" className="mb-4">Тестирование создания групп</Text>
+    <div className="debug-page">
+      <Text variant="display-1" className="debug-page__title">Тестирование создания групп</Text>
       
-      <Card className="p-6 mb-4">
+      <Card className="debug-page__card">
         <Text variant="body-1" className="mb-4">
           Эта страница позволяет протестировать создание групп с добавлением email адресов.
         </Text>
@@ -150,11 +152,11 @@ export default function TestGroupsPage() {
       </Card>
 
       {createdGroups.length > 0 && (
-        <Card className="p-6 mb-4">
-          <Text variant="header-2" className="mb-3">Созданные группы:</Text>
-          <div className="space-y-2">
+        <Card className="debug-page__card">
+          <Text variant="header-2" className="debug-page__card-title">Созданные группы:</Text>
+          <div className="debug-page__info-list">
             {createdGroups.map((group) => (
-              <div key={group.id} className="flex items-center justify-between p-2 border rounded">
+              <div key={group.id} className="debug-page__group-item">
                 <Text variant="body-2">{group.name}</Text>
                 <Button
                   view="flat-danger"
@@ -170,11 +172,11 @@ export default function TestGroupsPage() {
       )}
 
       {results.length > 0 && (
-        <Card className="p-6">
-          <Text variant="header-2" className="mb-3">Результаты:</Text>
-          <div className="space-y-2">
+        <Card className="debug-page__card">
+          <Text variant="header-2" className="debug-page__card-title">Результаты:</Text>
+          <div className="debug-page__info-list">
             {results.map((result, index) => (
-              <Text key={index} variant="body-2" className="font-mono">
+              <Text key={index} variant="body-2" className="debug-page__info-value--mono">
                 {result}
               </Text>
             ))}
@@ -183,7 +185,7 @@ export default function TestGroupsPage() {
             view="outlined"
             size="s"
             onClick={() => setResults([])}
-            className="mt-3"
+            style={{ marginTop: '0.75rem' }}
           >
             Очистить результаты
           </Button>
@@ -192,12 +194,12 @@ export default function TestGroupsPage() {
 
       {/* Add Group Modal */}
       <Modal open={showAddGroup} onClose={() => setShowAddGroup(false)}>
-        <div className="w-full max-w-2xl p-6">
-          <Text variant="subheader-1" className="mb-4">Создать тестовую группу</Text>
+        <div className="group-subscriber-manager__add-modal">
+          <Text variant="subheader-1" className="group-subscriber-manager__add-title">Создать тестовую группу</Text>
           
-          <div className="space-y-4">
+          <div className="group-subscriber-manager__add-content">
             <div>
-              <Text variant="body-2" className="mb-1">Название группы *</Text>
+              <Text variant="body-2" className="group-subscriber-manager__email-label">Название группы *</Text>
               <TextInput
                 value={newGroupName}
                 onChange={(e) => setNewGroupName(e.target.value)}
@@ -207,7 +209,7 @@ export default function TestGroupsPage() {
             </div>
 
             <div>
-              <Text variant="body-2" className="mb-1">Описание (необязательно)</Text>
+              <Text variant="body-2" className="group-subscriber-manager__email-label">Описание (необязательно)</Text>
               <TextInput
                 value={newGroupDescription}
                 onChange={(e) => setNewGroupDescription(e.target.value)}
@@ -217,7 +219,7 @@ export default function TestGroupsPage() {
             </div>
 
             <div>
-              <Text variant="body-2" className="mb-2">Email адреса для добавления в группу</Text>
+              <Text variant="body-2" className="group-subscriber-manager__email-label">Email адреса для добавления в группу</Text>
               <TextArea
                 value={newGroupEmails}
                 onChange={(e) => setNewGroupEmails(e.target.value)}
@@ -225,12 +227,12 @@ export default function TestGroupsPage() {
                 disabled={isSubmitting}
                 rows={4}
               />
-              <Text variant="caption-1" color="secondary" className="mt-1">
+              <Text variant="caption-1" color="secondary" style={{ marginTop: '0.25rem' }}>
                 Можно вводить несколько email адресов, разделенных запятой, пробелом или новой строкой
               </Text>
             </div>
 
-            <div className="flex gap-3 justify-end">
+            <div className="group-subscriber-manager__actions">
               <Button
                 view="outlined"
                 onClick={() => setShowAddGroup(false)}

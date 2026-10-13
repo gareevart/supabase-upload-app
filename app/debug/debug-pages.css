@@ -159,6 +159,15 @@
   text-decoration: underline;
 }
 
+.debug-page__group-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--g-spacing-2, 8px);
+  border: 1px solid var(--g-color-line-inverted, #e0e0e0);
+  border-radius: var(--g-radius-s, 4px);
+}
+
 /* Broadcasts debug page styles */
 
 .debug-broadcast__warning {
