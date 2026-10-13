@@ -6,13 +6,14 @@ import { Spin, Text, TabProvider, TabList, Tab, TabPanel } from '@gravity-ui/uik
 import { useRouter, useSearchParams } from 'next/navigation';
 import { SubscriberManagementWidget } from '@/widgets/subscriber-management/SubscriberManagementWidget';
 import { useI18n } from '@/app/contexts/I18nContext';
+import './BroadcastsPageClient.css';
 
 const BroadcastListWidget = dynamicImport(
   () => import('@/widgets/broadcast-list/ui/BroadcastListWidget'),
   {
     ssr: false,
     loading: () => (
-      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4 px-4 py-8 text-center">
+      <div className="broadcasts-page__loading">
         <Spin size="l" />
         <Text variant="body-1">Loading...</Text>
       </div>
@@ -69,16 +70,16 @@ export default function BroadcastsPageClient() {
   };
 
   if (!isClient || isLoading) {
-    return <div className="flex min-h-[400px] flex-col items-center justify-center gap-4 px-4 py-8 text-center"><Spin size="l" /><Text variant="body-1">Checking access...</Text></div>;
+    return <div className="broadcasts-page__loading"><Spin size="l" /><Text variant="body-1">Checking access...</Text></div>;
   }
 
   if (!isAuthorized) {
-    return <div className="container mx-auto px-4 py-8 text-center"><Text variant="display-1">Access denied</Text><Text variant="body-1">{userRole ? `Your role: ${userRole}. Admin or editor access is required.` : 'Your profile or role is not configured.'}</Text></div>;
+    return <div className="broadcasts-page__access-denied"><Text variant="display-1">Access denied</Text><Text variant="body-1">{userRole ? `Your role: ${userRole}. Admin or editor access is required.` : 'Your profile or role is not configured.'}</Text></div>;
   }
 
   return (
-    <main className="container mx-auto flex flex-col gap-6 px-4 py-8">
-      <header className="flex flex-col gap-2">
+    <main className="broadcasts-page__main">
+      <header className="broadcasts-page__header">
         <Text variant="display-1">{t('broadcastsPage.title')}</Text>
         <Text variant="body-1" color="secondary">{t('broadcastsPage.description')}</Text>
       </header>
