@@ -5,6 +5,7 @@ import { Button, Icon, Text, TextInput } from '@gravity-ui/uikit';
 import { Xmark } from '@gravity-ui/icons';
 import { validateEmail } from '@/lib/resend';
 import { useI18n } from '@/app/contexts/I18nContext';
+import './TagInput.css';
 
 interface TagInputProps {
   tags: string[];
@@ -106,15 +107,15 @@ const TagInput: React.FC<TagInputProps> = ({
   };
 
   return (
-    <div className="flex flex-col w-full">
+    <div className={`tag-input ${className}`}>
       <div 
-        className={`flex flex-wrap gap-2 p-2 border rounded-md min-h-[42px] ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'bg-background cursor-text'} ${className}`}
+        className={`tag-input__container ${disabled ? 'tag-input__container--disabled' : ''}`}
         onClick={handleContainerClick}
       >
         {tags.map((tag, index) => (
           <div 
             key={index} 
-            className="flex items-center gap-1 px-2 py-1 text-sm bg-blue-100 text-blue-800 rounded-md"
+            className="tag-input__tag"
           >
             <span>{tag}</span>
             {!disabled && (
@@ -139,17 +140,16 @@ const TagInput: React.FC<TagInputProps> = ({
           placeholder={tags.length === 0 ? placeholder : ''}
           disabled={disabled || tags.length >= maxTags}
           controlProps={{onPaste: handlePaste}}
-          className="flex-grow min-w-[120px]"
         />
       </div>
       
       {error && (
-        <Text variant="body-2" className="text-red-500 mt-1">
+        <Text variant="body-2" className="tag-input__error">
           {error}
         </Text>
       )}
       
-      <Text variant="caption-1" className="text-gray-500 mt-1">
+      <Text variant="caption-1" className="tag-input__hint">
         {t('broadcast.tagInput.hint')}
       </Text>
     </div>

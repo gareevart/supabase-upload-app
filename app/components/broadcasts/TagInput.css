@@ -1,0 +1,45 @@
+/* TagInput styles */
+
+.tag-input {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.tag-input__container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--g-spacing-2, 8px);
+  padding: var(--g-spacing-2, 8px);
+  border: 1px solid var(--g-color-line-inverted, #e0e0e0);
+  border-radius: var(--g-radius-s, 4px);
+  min-height: 42px;
+  background-color: var(--g-color-background, #ffffff);
+  cursor: text;
+}
+
+.tag-input__container--disabled {
+  background-color: var(--g-color-background-dark-grey, #f3f3f3);
+  cursor: not-allowed;
+}
+
+.tag-input__tag {
+  display: flex;
+  align-items: center;
+  gap: var(--g-spacing-1, 4px);
+  padding: var(--g-spacing-1, 4px) var(--g-spacing-2, 8px);
+  font-size: var(--g-font-size-text-s, 13px);
+  background-color: var(--g-color-background-blue-50, #e1f0ff);
+  color: var(--g-color-text-blue-700, #19486e);
+  border-radius: var(--g-radius-s, 4px);
+}
+
+.tag-input__error {
+  margin-top: var(--g-spacing-1, 4px);
+  color: var(--g-color-text-negative, #d13438);
+}
+
+.tag-input__hint {
+  margin-top: var(--g-spacing-1, 4px);
+  color: var(--g-color-text-secondary, #999999);
+}
