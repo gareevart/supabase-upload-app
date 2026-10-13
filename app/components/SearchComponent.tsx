@@ -148,20 +148,18 @@ export default function SearchComponent({
       />
 
       {(isLoading || hasSearched) && (
-        <div className={`search-results-container w-full relative z-[200] ${isMobile ? 'mt-8' : 'mt-6'}`}>
+        <div className={`search-results-container ${isMobile ? 'search-results-container--mobile' : ''}`}>
           {isLoading && (
-            <div className="w-full space-y-4">
+            <div className="search-skeleton-list">
               {[1, 2, 3].map((index) => (
-                <Card key={index} className="w-full min-w-[280px] overflow-hidden" size="l">
-                  <div className="p-2">
-                    <div className="h-48 w-full rounded-lg">
-                      <Skeleton className="h-full w-full" />
-                    </div>
+                <Card key={index} className="search-skeleton-card" size="l">
+                  <div className="search-skeleton-image-wrapper">
+                    <Skeleton className="h-full w-full" />
                   </div>
-                  <div className="p-4">
+                  <div className="search-skeleton-content">
                     <Skeleton className="h-6 w-3/4 mb-2" />
                     <Skeleton className="h-4 w-1/2 mb-4" />
-                    <div className="flex justify-between items-center">
+                    <div className="search-skeleton-footer">
                       <Skeleton className="h-4 w-24" />
                       <Skeleton className="h-8 w-16" />
                     </div>
@@ -172,8 +170,8 @@ export default function SearchComponent({
           )}
 
           {!isLoading && hasSearched && searchResults.length === 0 && (
-            <Card className="w-full text-center p-8">
-              <Text variant="subheader-1" className="mb-2">
+            <Card className="search-no-results-card">
+              <Text variant="subheader-1" className="search-no-results-title">
                 {noResultsText}
               </Text>
               <Text variant="body-1" color="secondary">
@@ -183,12 +181,12 @@ export default function SearchComponent({
           )}
 
           {!isLoading && searchResults.length > 0 && (
-            <div className="w-full">
-              <Text variant="subheader-1" className="pb-2">
+            <div className="search-results-list">
+              <Text variant="subheader-1" className="search-results-count">
                 Найдено результатов: {searchResults.length}
               </Text>
 
-              <div className={`${!isMobile ? 'space-y-6' : 'space-y-4'}`}>
+              <div className="search-results-posts">
                 {searchResults.map((post, index) => (
                   <BlogPostCard
                     key={post.id}
