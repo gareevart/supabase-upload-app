@@ -6,6 +6,7 @@ import { Plus, Person, ChevronDown, ChevronUp } from '@gravity-ui/icons';
 import { BroadcastGroup, Subscriber } from './types';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/app/contexts/I18nContext';
+import './GroupSelector.css';
 
 interface GroupSelectorProps {
   selectedGroups: string[];
@@ -234,7 +235,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-4">
+      <div className="group-selector__loading">
         <Spin size="m" />
       </div>
     );
@@ -242,7 +243,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
+      <div className="group-selector__header">
         <Text variant="body-2">{t('broadcast.groupSelector.title')}</Text>
         <Button
           view="outlined"
@@ -255,20 +256,20 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
         </Button>
       </div>
 
-      <div className="space-y-2">
+      <div className="group-selector__list">
         {groups.map((group) => (
-          <Card key={group.id} className="p-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 flex-1">
+          <Card key={group.id} className="group-selector__card">
+            <div className="group-selector__card-header">
+              <div className="group-selector__card-info">
                 <Checkbox
                   checked={selectedGroups.includes(group.id)}
                   onChange={() => handleGroupToggle(group.id)}
                   disabled={disabled}
                 />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
+                <div className="group-selector__card-name-wrapper">
+                  <div className="group-selector__card-name">
                     <Icon data={Person} size={16} />
-                    <Text variant="body-2" className="font-medium">
+                    <Text variant="body-2" className="group-selector__card-name__text">
                       {group.name}
                     </Text>
                     {group.is_default && (
@@ -298,9 +299,9 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
             </div>
 
             {showGroupDetails === group.id && (
-              <div className="mt-3 pt-3 border-t">
+              <div className="group-selector__card-details">
                 {group.description && (
-                  <Text variant="caption-1" color="secondary" className="mb-2">
+                  <Text variant="caption-1" color="secondary" className="group-selector__card-description">
                     {group.description}
                   </Text>
                 )}
@@ -315,13 +316,13 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
 
       {/* Create Group Modal */}
       <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)}>
-        <div className="w-full max-w-2xl p-2">
-          <div className='mb-4'>
+        <div className="group-selector__modal">
+          <div className='group-selector__modal-title-wrapper'>
             <Text variant="subheader-2">{t('broadcast.groupSelector.createNewGroup')}</Text>
           </div>
-          <div className="space-y-4">
+          <div className="group-selector__modal-form">
             <div>
-              <Text variant="body-2" className="mb-1">{t('broadcast.groupSelector.groupName')}</Text>
+              <Text variant="body-2" className="group-selector__form-label">{t('broadcast.groupSelector.groupName')}</Text>
               <TextInput
                 value={newGroupName}
                 onChange={(e) => setNewGroupName(e.target.value)}
@@ -331,7 +332,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
             </div>
 
             <div>
-              <Text variant="body-2" className="mb-1">{t('broadcast.groupSelector.descriptionOptional')}</Text>
+              <Text variant="body-2" className="group-selector__form-label">{t('broadcast.groupSelector.descriptionOptional')}</Text>
               <TextArea
                 value={newGroupDescription}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewGroupDescription(e.target.value)}
@@ -342,16 +343,16 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
             </div>
 
             <div>
-              <Text variant="body-2" className="mb-2">{t('broadcast.groupSelector.selectSubscribers')}</Text>
-              <div className="max-h-60 overflow-y-auto border rounded p-2">
+              <Text variant="body-2" className="group-selector__form-label-sp">{t('broadcast.groupSelector.selectSubscribers')}</Text>
+              <div className="group-selector__subscribers-list">
                 {subscribers.length === 0 ? (
                   <Text variant="caption-1" color="secondary">
                     {t('broadcast.groupSelector.noSubscribers')}
                   </Text>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="group-selector__subscribers-list__inner">
                     {subscribers.map((subscriber) => (
-                      <div key={subscriber.id} className="flex items-center gap-2">
+                      <div key={subscriber.id} className="group-selector__subscriber-item">
                         <Checkbox
                           checked={selectedSubscribers.includes(subscriber.id)}
                           onChange={() => handleSubscriberToggle(subscriber.id)}
@@ -372,7 +373,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
               </div>
             </div>
 
-            <div className="flex gap-3 justify-end">
+            <div className="group-selector__modal-actions">
               <Button
                 view="outlined"
                 onClick={() => setShowCreateModal(false)}

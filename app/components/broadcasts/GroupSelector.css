@@ -1,0 +1,112 @@
+/* GroupSelector styles */
+
+.group-selector__loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--g-spacing-4, 16px) 0;
+}
+
+.group-selector__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--g-spacing-3, 12px);
+}
+
+.group-selector__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-2, 8px);
+}
+
+.group-selector__card {
+  padding: var(--g-spacing-3, 12px);
+}
+
+.group-selector__card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.group-selector__card-info {
+  display: flex;
+  align-items: center;
+  gap: var(--g-spacing-3, 12px);
+  flex: 1;
+}
+
+.group-selector__card-name-wrapper {
+  flex: 1;
+}
+
+.group-selector__card-name {
+  display: flex;
+  align-items: center;
+  gap: var(--g-spacing-2, 8px);
+}
+
+.group-selector__card-name__text {
+  font-weight: 500;
+}
+
+.group-selector__card-details {
+  margin-top: var(--g-spacing-3, 12px);
+  padding-top: var(--g-spacing-3, 12px);
+  border-top: 1px solid var(--g-color-line-inverted, #e0e0e0);
+}
+
+.group-selector__card-description {
+  margin-bottom: var(--g-spacing-2, 8px);
+}
+
+/* Modal styles */
+.group-selector__modal {
+  width: 100%;
+  max-width: 672px;
+  padding: var(--g-spacing-2, 8px);
+}
+
+.group-selector__modal-title-wrapper {
+  margin-bottom: var(--g-spacing-4, 16px);
+}
+
+.group-selector__modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-4, 16px);
+}
+
+.group-selector__form-label {
+  margin-bottom: var(--g-spacing-1, 4px);
+}
+
+.group-selector__form-label-sp {
+  margin-bottom: var(--g-spacing-2, 8px);
+}
+
+.group-selector__subscribers-list {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--g-color-line-inverted, #e0e0e0);
+  border-radius: var(--g-radius-s, 4px);
+  padding: var(--g-spacing-2, 8px);
+}
+
+.group-selector__subscribers-list__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-2, 8px);
+}
+
+.group-selector__subscriber-item {
+  display: flex;
+  align-items: center;
+  gap: var(--g-spacing-2, 8px);
+}
+
+.group-selector__modal-actions {
+  display: flex;
+  gap: var(--g-spacing-3, 12px);
+  justify-content: flex-end;
+}
