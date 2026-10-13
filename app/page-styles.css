@@ -1,0 +1,39 @@
+/* Page styles for projects, search, and widgets pages */
+
+.page-container {
+  min-height: 100vh;
+}
+
+.page-main {
+  width: 100%;
+  max-width: 896px;
+  /* max-w-4xl */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--g-spacing-4, 16px);
+  padding-right: var(--g-spacing-4, 16px);
+}
+
+@media (min-width: 768px) {
+  .page-main {
+    padding-left: var(--g-spacing-6, 24px);
+    padding-right: var(--g-spacing-6, 24px);
+  }
+}
+
+.page-header {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.page-title {
+  margin-bottom: var(--g-spacing-6, 24px);
+}
+
+.widgets-page__loading {
+  display: flex;
+  justify-content: center;
+  padding: 64px;
+}

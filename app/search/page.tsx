@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { SearchResult } from '@/app/components/SearchComponent';
 import { Text, TabProvider, TabList, Tab, TabPanel } from '@gravity-ui/uikit';
 import './Search.css';
+import '../page-styles.css';
 
 type SearchTab = 'blog' | 'images';
 
@@ -26,10 +27,10 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="min-h-screen">
-      <main className="container mx-auto px-4 md:px-6 max-w-4xl">
-        <div className="flex flex-col justify-between items-start">
-          <Text className="mb-6" variant="display-1">Search</Text>
+    <div className="page-container">
+      <main className="page-main">
+        <div className="page-header">
+          <Text className="page-title" variant="display-1">Search</Text>
         </div>
         <div className="search-tabs-container">
           <TabProvider value={activeTab} onUpdate={(value: string) => setActiveTab(value as SearchTab)}>
