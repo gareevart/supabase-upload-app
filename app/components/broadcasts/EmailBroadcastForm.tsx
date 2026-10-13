@@ -12,6 +12,7 @@ import DateTimePicker from './DateTimePicker';
 import GroupSelector from './GroupSelector';
 import { BroadcastFormProps, NewBroadcast } from './types';
 import { markdownToHtml, renderEmailPreview } from '@/app/utils/markdownToHtml';
+import './EmailBroadcastForm.css';
 
 const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
   initialData,
@@ -176,15 +177,15 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
   }, [initialData, handleSaveDraft, router]);
 
   return (
-  <Card className="p-4">
-      <div className="space-y-6">
+  <Card className="email-broadcast-form">
+      <div className="email-broadcast-form__inner">
         <div>
-          <Text variant="subheader-1" className="mb-4">Создать Email рассылку</Text>
+          <Text variant="subheader-1" className="email-broadcast-form__mb-4">Создать Email рассылку</Text>
 
-          <div className="space-y-4">
+          <div className="email-broadcast-form__space-y-4">
             {/* Subject */}
             <div>
-              <Text variant="body-2" className="mb-1">Тема письма</Text>
+              <Text variant="body-2" className="email-broadcast-form__label">Тема письма</Text>
               <TextInput
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
@@ -194,7 +195,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
                 size="m"
               />
               {errors.subject && (
-                <Text variant="caption-1" className="text-red-500 mt-1">
+                <Text variant="caption-1" className="email-broadcast-form__error">
                   {errors.subject}
                 </Text>
               )}
@@ -211,9 +212,9 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
 
             {/* Manual Recipients */}
             <div>
-              <Text variant="body-2" className="mb-1">
+              <Text variant="body-2" className="email-broadcast-form__label">
                 Дополнительные получатели
-                <Text variant="caption-1" color="secondary" className="ml-2">
+                <Text variant="caption-1" color="secondary" className="email-broadcast-form__ml-2">
                   (добавьте email адреса вручную)
                 </Text>
               </Text>
@@ -225,7 +226,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
               />
 
               {/* Show total recipients count */}
-              <div className="mt-2">
+              <div className="email-broadcast-form__mt-2">
                 <Text variant="caption-1" color="secondary">
                   Всего получателей: {getAllRecipients().length}
                   {groupEmails.length > 0 && (
@@ -235,7 +236,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
               </div>
 
               {errors.recipients && (
-                <Text variant="caption-1" className="text-red-500 mt-1">
+                <Text variant="caption-1" className="email-broadcast-form__error">
                   {errors.recipients}
                 </Text>
               )}
@@ -243,8 +244,8 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
 
             {/* Content */}
             <div>
-              <Text variant="body-2" className="mb-1">Содержание письма</Text>
-              <div className="border rounded-md">
+              <Text variant="body-2" className="email-broadcast-form__label">Содержание письма</Text>
+              <div className="email-broadcast-form__editor-wrapper">
                 <MarkdownEditor
                   content={content}
                   onChange={setContent}
@@ -252,7 +253,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
                 />
               </div>
               {errors.content && (
-                <Text variant="caption-1" className="text-red-500 mt-1">
+                <Text variant="caption-1" className="email-broadcast-form__error">
                   {errors.content}
                 </Text>
               )}
@@ -260,7 +261,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
 
             {/* Scheduler */}
             {showScheduler && (
-              <div className="border rounded-md p-4 bg-gray-50">
+              <div className="email-broadcast-form__scheduler">
                 <DateTimePicker
                   value={scheduledDate}
                   onChange={setScheduledDate}
@@ -271,7 +272,7 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
             )}
 
             {/* Actions */}
-            <div className="flex flex-wrap gap-3 justify-end">
+            <div className="email-broadcast-form__actions">
               <Button
                 view="outlined"
                 onClick={() => setShowPreview(true)}
@@ -351,11 +352,11 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
 
       {/* Preview Modal */}
       <Modal open={showPreview} onClose={() => setShowPreview(false)}>
-        <div className="w-[min(100vw-64px,1100px)] h-[80vh]">
+        <div className="email-broadcast-form__preview-modal">
           <iframe
             ref={previewRef}
             srcDoc={renderEmailPreview(htmlContent)}
-            className="w-full h-full border rounded-md"
+            className="email-broadcast-form__preview"
             title="Email Preview"
             key={showPreview ? 'preview-visible' : 'preview-hidden'}
           />
@@ -364,33 +365,33 @@ const EmailBroadcastForm: React.FC<BroadcastFormProps> = ({
 
       {/* Debug Modal */}
       <Modal open={showDebug} onClose={() => setShowDebug(false)}>
-        <div className="w-full max-w-4xl h-[80vh] overflow-auto p-4">
-          <Text variant="subheader-1" className="mb-4">Debug Information</Text>
+        <div className="email-broadcast-form__debug">
+          <Text variant="subheader-1" className="email-broadcast-form__debug-title">Debug Information</Text>
 
-          <div className="mb-4">
-            <Text variant="body-2" className="font-bold">Content Type:</Text>
+          <div className="email-broadcast-form__debug-section">
+            <Text variant="body-2" className="email-broadcast-form__debug-label">Content Type:</Text>
             <Text variant="body-2">{typeof content}</Text>
           </div>
 
           {typeof content === 'object' && (
-            <div className="mb-4">
-              <Text variant="body-2" className="font-bold">Content Structure:</Text>
-              <pre className="bg-gray-100 p-2 rounded text-xs overflow-auto max-h-40">
+            <div className="email-broadcast-form__debug-section">
+              <Text variant="body-2" className="email-broadcast-form__debug-label">Content Structure:</Text>
+              <pre className="email-broadcast-form__debug-pre">
                 {JSON.stringify(content, null, 2)}
               </pre>
             </div>
           )}
 
-          <div className="mb-4">
-            <Text variant="body-2" className="font-bold">Generated HTML:</Text>
-            <pre className="bg-gray-100 p-2 rounded text-xs overflow-auto max-h-40">
+          <div className="email-broadcast-form__debug-section">
+            <Text variant="body-2" className="email-broadcast-form__debug-label">Generated HTML:</Text>
+            <pre className="email-broadcast-form__debug-pre">
               {htmlContent}
             </pre>
           </div>
 
-          <div className="mb-4">
-            <Text variant="body-2" className="font-bold">Preview:</Text>
-            <div className="border p-2 rounded bg-white">
+          <div className="email-broadcast-form__debug-section">
+            <Text variant="body-2" className="email-broadcast-form__debug-label">Preview:</Text>
+            <div className="email-broadcast-form__debug-preview">
               <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
             </div>
           </div>
