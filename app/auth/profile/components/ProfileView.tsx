@@ -9,6 +9,7 @@ import {
 } from '@gravity-ui/uikit';
 import { Profile } from '@/app/auth/profile/types';
 import { ProfileEditForm } from './ProfileEditForm';
+import './ProfileView.css';
 import { AppearancePanelConnected } from '@/features/appearance';
 import { getBlobPreviewUrl } from '@/lib/blobUrl';
 
@@ -56,7 +57,7 @@ export const ProfileView = ({
                 <div className="profile-view pb2">
                     <Text variant='subheader-3'>User</Text>
                     {isEditing ? (
-                        <div className="flex-col pt-4" style={{ width: '100%', gap: '16px' }}>
+                        <div className="profile-view__edit">
                             <ProfileEditForm
                                 profile={profile}
                                 setProfile={setProfile}
@@ -66,16 +67,15 @@ export const ProfileView = ({
                             />
                         </div>
                     ) : (
-                        <div className="flex-col" style={{ width: '100%' }}>
+                        <div className="profile-view__view">
                             {avatarUrl && !avatarLoadFailed ? (
-                                <div style={{ position: 'relative', width: '80px', height: '80px' }}>
+                                <div className="profile-view__avatar-wrapper">
                                     <Image
                                         src={avatarUrl}
                                         alt={`${avatarLabel} avatar`}
                                         fill
                                         unoptimized
-                                        className="profile-avatar"
-                                        style={{ objectFit: 'cover' }}
+                                        className="profile-view__avatar"
                                         sizes="80px"
                                         onError={() => setAvatarLoadFailed(true)}
                                     />
@@ -123,7 +123,7 @@ export const ProfileView = ({
                     )}
                 </div>
                 {!isEditing && (
-                    <div className="profile-actions">
+                    <div className="profile-view__actions">
                         <Button size="l" view="action" onClick={onEdit}>
                             Edit
                         </Button>

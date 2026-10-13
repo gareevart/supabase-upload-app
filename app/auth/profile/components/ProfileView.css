@@ -1,0 +1,30 @@
+/* ProfileView styles */
+
+.profile-view__edit {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: var(--g-spacing-4, 16px);
+  padding-top: var(--g-spacing-4, 16px);
+}
+
+.profile-view__view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.profile-view__avatar-wrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.profile-view__avatar {
+  object-fit: cover;
+}
+
+.profile-view__actions {
+  display: flex;
+  gap: var(--g-spacing-2, 8px);
+}
