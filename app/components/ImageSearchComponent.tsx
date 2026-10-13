@@ -5,6 +5,7 @@ import { Magnifier, Tag as TagIcon } from '@gravity-ui/icons';
 import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 import './components.css';
+import './ImageSearchComponent.css';
 
 interface Tag {
   id: string;
@@ -185,8 +186,8 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
 
   if (!userId) {
     return (
-      <Card className="w-full text-center p-8">
-        <Text variant="subheader-1" className="mb-2">
+      <Card className="image-search__auth-card">
+        <Text variant="subheader-1" className="image-search__auth-title">
           Authorization required
         </Text>
         <Text variant="body-1" color="secondary">
@@ -209,8 +210,8 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
       />
 
       {/* Фильтр по тегам */}
-      <Card view="outlined" className="mt-4 p-4">
-        <div className="flex items-center gap-2 mb-3">
+      <Card view="outlined" className="image-search__tag-filter">
+        <div className="image-search__tag-header">
           <Icon data={TagIcon} size={16} />
           <Text variant="subheader-2">Фильтр по тегам</Text>
           {selectedTagIds.length > 0 && (
@@ -220,7 +221,7 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
           )}
         </div>
         
-        <div className="flex flex-wrap gap-2">
+        <div className="image-search__tag-list">
           {availableTags.map(tag => {
             const isSelected = selectedTagIds.includes(tag.id);
             return (
@@ -241,7 +242,7 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
         </div>
         
         {selectedTagIds.length > 0 && (
-          <div className="mt-3">
+          <div className="image-search__tag-count">
             <Text variant="caption-2" color="secondary">
               Выбрано тегов: {selectedTagIds.length}
             </Text>
@@ -263,8 +264,8 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
         )}
 
         {!isLoading && hasSearched && searchResults.length === 0 && (
-          <Card className="w-full text-center p-8 mt-6">
-            <Text variant="subheader-1" className="mb-2">
+          <Card className="image-search__empty-card">
+            <Text variant="subheader-1" className="image-search__empty-title">
               Изображения не найдены
             </Text>
             <Text variant="body-1" color="secondary">
@@ -274,8 +275,8 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
         )}
 
         {!isLoading && !hasSearched && (
-          <Card className="w-full text-center p-8 mt-6">
-            <Text variant="subheader-1" className="mb-2">
+          <Card className="image-search__empty-card">
+            <Text variant="subheader-1" className="image-search__empty-title">
               Поиск изображений
             </Text>
             <Text variant="body-1" color="secondary">
@@ -285,8 +286,8 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
         )}
 
         {!isLoading && searchResults.length > 0 && (
-          <div className="mt-6">
-            <Text variant="subheader-1" className="mb-4">
+          <div className="image-search__results-header">
+            <Text variant="subheader-1" className="image-search__results-count">
               Найдено изображений: {searchResults.length}
             </Text>
             
@@ -315,9 +316,9 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
                   </div>
                   
                   {/* Информация об изображении */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-xs">
-                    <div className="truncate font-medium">{image.file_name}</div>
-                    <div className="text-xs opacity-75">{formatDate(image.created_at)}</div>
+                  <div className="image-search__image-overlay">
+                    <div className="image-search__image-name">{image.file_name}</div>
+                    <div className="image-search__image-date">{formatDate(image.created_at)}</div>
                   </div>
                   
                   {/* Отображение тегов */}
