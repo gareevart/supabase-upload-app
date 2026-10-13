@@ -5,6 +5,7 @@ import { Card, Text, Button, Icon } from '@gravity-ui/uikit';
 import { ArrowUturnCwLeft, Pencil, TrashBin, ChevronDown } from '@gravity-ui/icons';
 import { BroadcastDetailProps, BroadcastStats } from './types';
 import { markdownToHtml } from '@/app/utils/markdownToHtml';
+import './BroadcastDetail.css';
 
 const BroadcastDetail: React.FC<BroadcastDetailProps> = ({
   broadcast,
@@ -27,17 +28,17 @@ const BroadcastDetail: React.FC<BroadcastDetailProps> = ({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft':
-        return 'bg-gray-200 text-gray-800';
+        return 'broadcast-detail__status-badge--draft';
       case 'scheduled':
-        return 'bg-blue-100 text-blue-800';
+        return 'broadcast-detail__status-badge--scheduled';
       case 'sending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'broadcast-detail__status-badge--sending';
       case 'sent':
-        return 'bg-green-100 text-green-800';
+        return 'broadcast-detail__status-badge--sent';
       case 'failed':
-        return 'bg-red-100 text-red-800';
+        return 'broadcast-detail__status-badge--failed';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'broadcast-detail__status-badge--draft';
     }
   };
 
@@ -164,10 +165,10 @@ const BroadcastDetail: React.FC<BroadcastDetailProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="broadcast-detail">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
+      <div className="broadcast-detail__header">
+        <div className="broadcast-detail__header-left">
           <Button
             view="flat"
             size="m"
@@ -178,49 +179,49 @@ const BroadcastDetail: React.FC<BroadcastDetailProps> = ({
           </Button>
           <Text variant="display-1">Broadcast Details</Text>
         </div>
-        <div className="flex gap-2">
+        <div className="broadcast-detail__actions">
           {renderActions()}
         </div>
       </div>
 
       {/* Summary Card */}
-      <Card className="p-6">
-        <div className="flex flex-col md:flex-row justify-between gap-6">
-          <div className="flex-1">
-            <Text variant="subheader-1" className="mb-2">
+      <Card className="broadcast-detail__summary">
+        <div className="broadcast-detail__summary-inner">
+          <div className="broadcast-detail__summary-info">
+            <Text variant="subheader-1" className="broadcast-detail__subject">
               {broadcast.subject}
-              <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${getStatusColor(broadcast.status)}`}>
+              <span className={`broadcast-detail__status-badge ${getStatusColor(broadcast.status)}`}>
                 {broadcast.status}
               </span>
             </Text>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div className="broadcast-detail__meta-grid">
               <div>
-                <Text variant="body-2" className="text-gray-500">Recipients</Text>
+                <Text variant="body-2" className="broadcast-detail__meta-label">Recipients</Text>
                 <Text variant="body-1">{broadcast.total_recipients || broadcast.recipients?.length || 0}</Text>
               </div>
               
               {broadcast.status === 'scheduled' && (
                 <div>
-                  <Text variant="body-2" className="text-gray-500">Scheduled For</Text>
+                  <Text variant="body-2" className="broadcast-detail__meta-label">Scheduled For</Text>
                   <Text variant="body-1">{formatDate(broadcast.scheduled_for)}</Text>
                 </div>
               )}
               
               {broadcast.status === 'sent' && (
                 <div>
-                  <Text variant="body-2" className="text-gray-500">Sent At</Text>
+                  <Text variant="body-2" className="broadcast-detail__meta-label">Sent At</Text>
                   <Text variant="body-1">{formatDate(broadcast.sent_at || null)}</Text>
                 </div>
               )}
               
               <div>
-                <Text variant="body-2" className="text-gray-500">Created At</Text>
+                <Text variant="body-2" className="broadcast-detail__meta-label">Created At</Text>
                 <Text variant="body-1">{formatDate(broadcast.created_at)}</Text>
               </div>
               
               <div>
-                <Text variant="body-2" className="text-gray-500">Last Updated</Text>
+                <Text variant="body-2" className="broadcast-detail__meta-label">Last Updated</Text>
                 <Text variant="body-1">{formatDate(broadcast.updated_at)}</Text>
               </div>
             </div>
@@ -228,34 +229,34 @@ const BroadcastDetail: React.FC<BroadcastDetailProps> = ({
           
           {/* Stats for sent broadcasts */}
           {broadcast.status === 'sent' && (
-            <div className="bg-gray-50 p-4 rounded-lg min-w-[200px]">
-              <Text variant="subheader-2" className="mb-2">Statistics</Text>
+            <div className="broadcast-detail__stats">
+              <Text variant="subheader-2" className="broadcast-detail__stats-title">Statistics</Text>
               
-              <div className="space-y-2">
+              <div className="broadcast-detail__stats-list">
                 <div>
-                  <Text variant="body-2" className="text-gray-500">Open Rate</Text>
+                  <Text variant="body-2" className="broadcast-detail__meta-label">Open Rate</Text>
                   <Text variant="display-2">
                     {getStats().openRate}%
                   </Text>
                 </div>
                 
                 <div>
-                  <Text variant="body-2" className="text-gray-500">Click Rate</Text>
+                  <Text variant="body-2" className="broadcast-detail__meta-label">Click Rate</Text>
                   <Text variant="display-2">
                     {getStats().clickRate}%
                   </Text>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-2 mt-4">
+                <div className="broadcast-detail__stats-grid">
                   <div>
-                    <Text variant="caption-1" className="text-gray-500">Opened</Text>
+                    <Text variant="caption-1" className="broadcast-detail__meta-label">Opened</Text>
                     <Text variant="body-1">
                       {getStats().opened}/{getStats().total}
                     </Text>
                   </div>
                   
                   <div>
-                    <Text variant="caption-1" className="text-gray-500">Clicked</Text>
+                    <Text variant="caption-1" className="broadcast-detail__meta-label">Clicked</Text>
                     <Text variant="body-1">
                       {getStats().clicked}/{getStats().total}
                     </Text>
@@ -268,9 +269,9 @@ const BroadcastDetail: React.FC<BroadcastDetailProps> = ({
       </Card>
 
       {/* Content Preview */}
-      <Card className="p-6">
-        <Text variant="subheader-2" className="mb-4">Email Content</Text>
-        <div className="p-4 border rounded-md bg-white">
+      <Card className="broadcast-detail__content">
+        <Text variant="subheader-2" className="broadcast-detail__content-title">Email Content</Text>
+        <div className="broadcast-detail__content-preview">
           {broadcast.content_html ? (
             <div dangerouslySetInnerHTML={{ __html: broadcast.content_html }} />
           ) : (
@@ -280,11 +281,11 @@ const BroadcastDetail: React.FC<BroadcastDetailProps> = ({
       </Card>
 
       {/* Recipients List */}
-      <Card className="p-6">
-        <Text variant="subheader-2" className="mb-4">Recipients</Text>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+      <Card className="broadcast-detail__recipients">
+        <Text variant="subheader-2" className="broadcast-detail__recipients-title">Recipients</Text>
+        <div className="broadcast-detail__recipients-grid">
           {broadcast.recipients.map((email, index) => (
-            <div key={index} className="p-2 bg-gray-50 rounded">
+            <div key={index} className="broadcast-detail__recipient-item">
               {email}
             </div>
           ))}
