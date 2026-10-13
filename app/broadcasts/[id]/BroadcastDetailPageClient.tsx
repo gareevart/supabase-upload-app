@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import dynamicImport from 'next/dynamic';
 import { Spin, Text } from '@gravity-ui/uikit';
+import '../broadcast-pages.css';
 
 // Dynamically import the widget to prevent SSR issues
 const BroadcastDetailWidget = dynamicImport(
@@ -10,7 +11,7 @@ const BroadcastDetailWidget = dynamicImport(
   { 
     ssr: false,
     loading: () => (
-      <div className="flex flex-col gap-4 py-8 px-4 text-center justify-center items-center min-h-[400px]">
+      <div className="broadcast-page-loading">
         <Spin size="l" />
         <Text variant="body-1">Загрузка...</Text>
       </div>
@@ -70,7 +71,7 @@ export default function BroadcastDetailPageClient() {
   
   if (!isClient || isLoading || !id) {
     return (
-      <div className="flex flex-col gap-4 py-8 px-4 text-center justify-center items-center min-h-[400px]">
+      <div className="broadcast-page-loading">
         <Spin size="l" />
         <Text variant="body-1">Загрузка...</Text>
       </div>

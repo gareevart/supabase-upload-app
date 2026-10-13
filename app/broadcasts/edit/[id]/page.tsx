@@ -5,6 +5,7 @@ import BroadcastFormWidget from '@/widgets/broadcast-form/ui/BroadcastFormWidget
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { Spin, Text } from '@gravity-ui/uikit';
+import '../../broadcast-pages.css';
 
 // Define the page props type for Next.js 15
 interface PageProps {
@@ -54,7 +55,7 @@ function EditBroadcastPage({ params }: PageProps) {
   
   if (isLoading || !id) {
     return (
-      <div className="flex flex-col gap-4 py-8 px-4 text-center justify-center items-center min-h-[400px]">
+      <div className="broadcast-page-loading">
         <Spin size="l" />
         <Text variant="body-1">Загрузка...</Text>
       </div>

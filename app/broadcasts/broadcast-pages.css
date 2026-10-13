@@ -1,0 +1,15 @@
+/* Broadcast page loading states */
+
+.broadcast-page-loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-4, 16px);
+  padding-top: var(--g-spacing-8, 32px);
+  padding-bottom: var(--g-spacing-8, 32px);
+  padding-left: var(--g-spacing-4, 16px);
+  padding-right: var(--g-spacing-4, 16px);
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
