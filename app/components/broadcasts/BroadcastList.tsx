@@ -4,6 +4,7 @@ import React from 'react';
 import { Card, Text, Button, Icon } from '@gravity-ui/uikit';
 import { Pencil, TrashBin, ArrowUturnCwLeft, Plus, ChevronRight } from '@gravity-ui/icons';
 import { Broadcast, BroadcastListProps } from './types';
+import './BroadcastList.css';
 
 const BroadcastList: React.FC<BroadcastListProps> = ({
   broadcasts,
@@ -25,17 +26,17 @@ const BroadcastList: React.FC<BroadcastListProps> = ({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft':
-        return 'bg-gray-200 text-gray-800';
+        return 'broadcast-list__status-badge--draft';
       case 'scheduled':
-        return 'bg-blue-100 text-blue-800';
+        return 'broadcast-list__status-badge--scheduled';
       case 'sending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'broadcast-list__status-badge--sending';
       case 'sent':
-        return 'bg-green-100 text-green-800';
+        return 'broadcast-list__status-badge--sent';
       case 'failed':
-        return 'bg-red-100 text-red-800';
+        return 'broadcast-list__status-badge--failed';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'broadcast-list__status-badge--draft';
     }
   };
 
@@ -143,12 +144,12 @@ const BroadcastList: React.FC<BroadcastListProps> = ({
 
   if (broadcasts.length === 0) {
     return (
-      <Card className="flex flex-col gap-2 p-6 text-center">
+      <Card className="broadcast-list__empty">
         <Text variant="subheader-2">No broadcasts found</Text>
         <Button
           view="action"
           size="m"
-          className="mt-4"
+          className="broadcast-list__empty-button"
           onClick={() => onEdit && onEdit('new')}
         >
           <Icon data={Plus} size={16} />
@@ -159,22 +160,22 @@ const BroadcastList: React.FC<BroadcastListProps> = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="broadcast-list">
       {broadcasts.map((broadcast) => (
-        <Card key={broadcast.id} className="p-4">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
+        <Card key={broadcast.id} className="broadcast-list__card">
+          <div className="broadcast-list__card-inner">
+            <div className="broadcast-list__card-info">
+              <div className="broadcast-list__card-title">
                 <Text variant="subheader-2">{broadcast.subject}</Text>
-                <span className={`px-2 py-0.5 rounded-full text-xs ${getStatusColor(broadcast.status)}`}>
+                <span className={`broadcast-list__status-badge ${getStatusColor(broadcast.status)}`}>
                   {broadcast.status}
                 </span>
               </div>
               
-              <div className="mt-1 text-sm text-gray-500">
+              <div className="broadcast-list__card-meta">
                 <div>Recipients: {broadcast.total_recipients}</div>
                 {broadcast.status === 'sent' && (
-                  <div className="flex gap-4">
+                  <div className="broadcast-list__card-stats">
                     <div>Opened: {broadcast.opened_count ?? 0} ({Math.round(((broadcast.opened_count ?? 0) / broadcast.total_recipients) * 100)}%)</div>
                     <div>Clicked: {broadcast.clicked_count ?? 0} ({Math.round(((broadcast.clicked_count ?? 0) / broadcast.total_recipients) * 100)}%)</div>
                   </div>
@@ -188,7 +189,7 @@ const BroadcastList: React.FC<BroadcastListProps> = ({
               </div>
             </div>
             
-            <div className="flex gap-2 self-end md:self-center">
+            <div className="broadcast-list__card-actions">
               {renderActions(broadcast)}
             </div>
           </div>
