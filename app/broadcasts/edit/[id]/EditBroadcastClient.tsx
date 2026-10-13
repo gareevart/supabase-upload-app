@@ -7,6 +7,8 @@ import EmailBroadcastForm from '@/app/components/broadcasts/EmailBroadcastForm';
 import { Broadcast, NewBroadcast } from '@/app/components/broadcasts/types';
 import { useToast } from '@/hooks/use-toast';
 import withBroadcastAuth from '../../withBroadcastAuth';
+import '../../../page-styles.css';
+import '../../../broadcasts/broadcast-pages.css';
 
 interface EditBroadcastClientProps {
   id: string;
@@ -208,37 +210,43 @@ function EditBroadcastClientBase({ id }: EditBroadcastClientProps) {
   
   if (isLoading) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <Text variant="display-1" className="mb-6">Edit Broadcast</Text>
-        <div className="text-center py-8">
-          <Text variant="body-1">Loading broadcast...</Text>
-        </div>
+      <div className="page-container">
+        <main className="page-main">
+          <Text variant="display-1" className="page-title">Edit Broadcast</Text>
+          <div className="broadcast-page-loading">
+            <Text variant="body-1">Loading broadcast...</Text>
+          </div>
+        </main>
       </div>
     );
   }
   
   if (!broadcast) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <Text variant="display-1" className="mb-6">Edit Broadcast</Text>
-        <div className="text-center py-8">
-          <Text variant="body-1">Broadcast not found</Text>
-        </div>
+      <div className="page-container">
+        <main className="page-main">
+          <Text variant="display-1" className="page-title">Edit Broadcast</Text>
+          <div className="broadcast-page-loading">
+            <Text variant="body-1">Broadcast not found</Text>
+          </div>
+        </main>
       </div>
     );
   }
   
   return (
-    <div className="container mx-auto py-8 px-4">
-      <Text variant="display-1" className="mb-6">Edit Broadcast</Text>
+    <div className="page-container">
+      <main className="page-main">
+        <Text variant="display-1" className="page-title">Edit Broadcast</Text>
       
-      <EmailBroadcastForm
-        initialData={broadcast}
-        onSave={handleSave}
-        onSchedule={handleSchedule}
-        onSend={handleSend}
-        isSubmitting={isSubmitting}
-      />
+        <EmailBroadcastForm
+          initialData={broadcast}
+          onSave={handleSave}
+          onSchedule={handleSchedule}
+          onSend={handleSend}
+          isSubmitting={isSubmitting}
+        />
+      </main>
     </div>
   );
 }

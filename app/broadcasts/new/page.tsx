@@ -6,6 +6,8 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { Skeleton, Text, Button, Card } from '@gravity-ui/uikit';
 import { useI18n } from '@/app/contexts/I18nContext';
+import '../../../page-styles.css';
+import '../../../broadcasts/broadcast-pages.css';
 
 function NewBroadcastPage() {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
@@ -37,24 +39,28 @@ function NewBroadcastPage() {
 
   if (isAuthorized === null) {
     return (
-      <div className="container max-w-4xl mx-auto p-4">
-        <Card>
-          <Skeleton className="h-96 w-full" />
-        </Card>
+      <div className="page-container">
+        <main className="page-main">
+          <Card>
+            <Skeleton style={{ height: '24rem', width: '100%' }} />
+          </Card>
+        </main>
       </div>
     );
   }
 
   if (!isAuthorized) {
     return (
-      <div className="container max-w-4xl mx-auto p-4">
-        <Card className="p-6">
-          <Text variant="display-1">{t('broadcast.page.accessDeniedTitle')}</Text>
-          <Text variant="body-1">{t('broadcast.page.accessDeniedDescription')}</Text>
-          <Button size="l" className="mt-4" onClick={() => router.push('/auth/profile')}>
-            {t('broadcast.page.loginButton')}
-          </Button>
-        </Card>
+      <div className="page-container">
+        <main className="page-main">
+          <Card className="debug-page__card">
+            <Text variant="display-1">{t('broadcast.page.accessDeniedTitle')}</Text>
+            <Text variant="body-1">{t('broadcast.page.accessDeniedDescription')}</Text>
+            <Button size="l" style={{ marginTop: '1rem' }} onClick={() => router.push('/auth/profile')}>
+              {t('broadcast.page.loginButton')}
+            </Button>
+          </Card>
+        </main>
       </div>
     );
   }

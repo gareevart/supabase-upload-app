@@ -7,6 +7,8 @@ import EmailBroadcastForm from '@/app/components/broadcasts/EmailBroadcastForm';
 import { NewBroadcast } from '@/app/components/broadcasts/types';
 import { useToast } from '@/hooks/use-toast';
 import withBroadcastAuth from '../withBroadcastAuth';
+import '../../../page-styles.css';
+import '../../../broadcasts/broadcast-pages.css';
 
 function NewBroadcastClientBase() {
   const router = useRouter();
@@ -350,15 +352,17 @@ function NewBroadcastClientBase() {
   };
   
   return (
-    <div className="container mx-auto py-8 px-4">
-      <Text variant="display-1" className="mb-6">Create New Broadcast</Text>
-      
-      <EmailBroadcastForm
-        onSave={handleSave}
-        onSchedule={handleSchedule}
-        onSend={handleSend}
-        isSubmitting={isSubmitting}
-      />
+    <div className="page-container">
+      <main className="page-main">
+        <Text variant="display-1" className="page-title">Create New Broadcast</Text>
+        
+        <EmailBroadcastForm
+          onSave={handleSave}
+          onSchedule={handleSchedule}
+          onSend={handleSend}
+          isSubmitting={isSubmitting}
+        />
+      </main>
     </div>
   );
 }
