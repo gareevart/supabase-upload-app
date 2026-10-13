@@ -6,6 +6,7 @@ import { DatePicker, DateField } from '@gravity-ui/date-components';
 import { dateTimeParse } from '@gravity-ui/date-utils';
 import { DateTimePickerProps } from './types';
 import { useI18n } from '@/app/contexts/I18nContext';
+import './DateTimePicker.css';
 
 const DateTimePicker: React.FC<DateTimePickerProps> = ({
   value,
@@ -105,11 +106,11 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   };
 
   return (
-    <div className="flex flex-col space-y-4">
+    <div className="datetime-picker">
       <Text variant="subheader-2">{t('broadcast.dateTimePicker.title')}</Text>
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
-          <Text variant="body-2" className="mb-2 block">{t('broadcast.dateTimePicker.dateLabel')}</Text>
+      <div className="datetime-picker__row">
+        <div className="datetime-picker__date">
+          <Text variant="body-2" className="datetime-picker__label">{t('broadcast.dateTimePicker.dateLabel')}</Text>
           <DatePicker
             value={date ? dateTimeParse(date.toISOString()) : null}
             format="DD.MM.YYYY"
@@ -119,8 +120,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
             disabled={disabled}
           />
         </div>
-        <div className="w-full sm:w-48">
-          <Text variant="body-2" className="mb-2 block">{t('broadcast.dateTimePicker.timeLabel')}</Text>
+        <div className="datetime-picker__time">
+          <Text variant="body-2" className="datetime-picker__label">{t('broadcast.dateTimePicker.timeLabel')}</Text>
           <DateField
             value={dateTimeParse(`2000-01-01T${time}:00`)}
             format="HH:mm"
@@ -137,7 +138,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
             disabled={disabled}
           />
           {date && (
-            <Text variant="caption-1" color="secondary" className="mt-2 block">
+            <Text variant="caption-1" color="secondary" className="datetime-picker__selected">
               {t('broadcast.dateTimePicker.selected')}: {date.toLocaleDateString(dateLocale, {
                 day: '2-digit',
                 month: '2-digit',

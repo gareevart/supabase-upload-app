@@ -1,0 +1,43 @@
+/* DateTimePicker styles */
+
+.datetime-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-4, 16px);
+}
+
+.datetime-picker__row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-4, 16px);
+}
+
+@media (min-width: 640px) {
+  .datetime-picker__row {
+    flex-direction: row;
+  }
+}
+
+.datetime-picker__date {
+  flex: 1;
+}
+
+.datetime-picker__label {
+  margin-bottom: var(--g-spacing-2, 8px);
+  display: block;
+}
+
+.datetime-picker__time {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .datetime-picker__time {
+    width: 192px;
+  }
+}
+
+.datetime-picker__selected {
+  margin-top: var(--g-spacing-2, 8px);
+  display: block;
+}
