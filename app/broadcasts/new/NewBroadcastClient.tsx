@@ -7,8 +7,8 @@ import EmailBroadcastForm from '@/app/components/broadcasts/EmailBroadcastForm';
 import { NewBroadcast } from '@/app/components/broadcasts/types';
 import { useToast } from '@/hooks/use-toast';
 import withBroadcastAuth from '../withBroadcastAuth';
-import '../../../page-styles.css';
-import '../../../broadcasts/broadcast-pages.css';
+import '../../page-styles.css';
+import '../broadcast-pages.css';
 
 function NewBroadcastClientBase() {
   const router = useRouter();

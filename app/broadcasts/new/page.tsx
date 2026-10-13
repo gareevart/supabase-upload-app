@@ -6,8 +6,8 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { Skeleton, Text, Button, Card } from '@gravity-ui/uikit';
 import { useI18n } from '@/app/contexts/I18nContext';
-import '../../../page-styles.css';
-import '../../../broadcasts/broadcast-pages.css';
+import '../../page-styles.css';
+import '../broadcast-pages.css';
 
 function NewBroadcastPage() {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
