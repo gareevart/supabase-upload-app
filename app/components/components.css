@@ -23,6 +23,12 @@
   gap: var(--g-spacing-3);
 }
 
+.project-card__header {
+  display: flex;
+  flex-direction: row;
+  gap: var(--g-spacing-2, 8px);
+}
+
 .ai-bg {
   background-image: url(/ai-bg.webp);
 }
@@ -392,6 +398,18 @@
 .file-upload-image {
   width: 8rem;
   /* w-32 */
+}
+
+.file-upload-input-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
   height: 8rem;
   /* h-32 */
   border-radius: 9999px;
@@ -566,6 +584,25 @@
 .parallax-card>div:last-child {
   position: relative;
   z-index: 2;
+}
+
+/* Subscribe styles */
+.subscribe__header {
+  display: grid;
+  gap: var(--g-spacing-1, 4px);
+}
+
+.subscribe__title {
+  margin-top: var(--g-spacing-20, 80px);
+}
+
+.subscribe-container {
+  padding: var(--g-spacing-4, 16px);
+  border-radius: var(--g-radius-xl, 16px);
+}
+
+.show-app__title {
+  margin-top: var(--g-spacing-14, 56px);
 }
 
 /* SearchComponent styles */

@@ -106,7 +106,7 @@ export default function FileUpload() {
             type="file"
             accept="image/*"
             onChange={handleFileChange}
-            className="file-upload-input sr-only"
+            className="file-upload-input file-upload-input-sr-only"
             disabled={uploading}
           />
           <Button

@@ -6,7 +6,7 @@ const ShowApp = () => {
 
   return (
     <div className="group-container">
-        <Text className="mt-14" variant="header-2">Pet projects</Text>
+        <Text className="show-app__title" variant="header-2">Pet projects</Text>
         <MyProjects />
     </div>
   );

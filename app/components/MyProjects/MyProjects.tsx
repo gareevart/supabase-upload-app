@@ -27,7 +27,7 @@ const MyProjects = () => {
           theme="info"
           className='project-card parallax-card'
         >
-          <div className='flex row gap-2'>
+          <div className='project-card__header'>
           <Text color="primary" variant="header-1">AI Chat </Text>
           </div>
         </Card>

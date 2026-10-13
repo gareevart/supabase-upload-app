@@ -102,11 +102,11 @@ export const Subscribe = () => {
 
   return (
     <div className="group-container">
-        <div className="grid gap-1">
-            <Text className="mt-20" variant="header-1">Subscribe</Text>
+        <div className="subscribe__header">
+            <Text className="subscribe__title" variant="header-1">Subscribe</Text>
             <Text variant="body-1">Exclusive, newsletter-only content once a month. No spam, no nonsense</Text>
         </div>
-        <div className="p-4 subscribe-container rounded-2xl">
+        <div className="subscribe-container">
              <TextInput 
                 size="xl"
                 view="clear"
