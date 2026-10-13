@@ -199,7 +199,7 @@ body.navigation-position-bottom {
 .page-container {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   gap: 16px;
   width: 100%;
