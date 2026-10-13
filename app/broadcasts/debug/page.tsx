@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import '../../debug/debug-pages.css';
 
 const DebugBroadcastPage = () => {
   const [debugResult, setDebugResult] = React.useState<any>(null);
@@ -24,38 +25,38 @@ const DebugBroadcastPage = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-6">Отладка Broadcast Редактирования</h1>
+    <div className="debug-page">
+      <h1 className="debug-page__title" style={{ fontSize: '1.875rem', fontWeight: 700 }}>Отладка Broadcast Редактирования</h1>
 
-      <div className="space-y-6">
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4">
-          <h2 className="font-bold text-yellow-800">🔍 Проблема выяснена</h2>
-          <p className="text-yellow-700">Отсутствие активной сессии аутентификации (401 Unauthorized)</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div className="debug-broadcast__warning">
+          <h2 className="debug-broadcast__warning-title">🔍 Проблема выяснена</h2>
+          <p className="debug-broadcast__warning-text">Отсутствие активной сессии аутентификации (401 Unauthorized)</p>
         </div>
 
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">Что делать:</h2>
-          <div className="space-y-4">
+        <div className="debug-broadcast__card">
+          <h2 className="debug-broadcast__card-title">Что делать:</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
-              <h3 className="font-bold text-gray-800">1. Авторизуйтесь в системе</h3>
-              <p className="text-gray-600">
-                Перейдите на страницу <a href="/auth" className="text-blue-500 hover:underline font-medium" target="_blank">/auth</a> и войдите в аккаунт
+              <h3 className="debug-broadcast__section-title">1. Авторизуйтесь в системе</h3>
+              <p className="debug-broadcast__section-text">
+                Перейдите на страницу <a href="/auth" className="debug-broadcast__link" target="_blank">/auth</a> и войдите в аккаунт
               </p>
             </div>
 
             <div>
-              <h3 className="font-bold text-gray-800">2. Проверьте статус API</h3>
-              <div className="flex gap-3 mt-2">
+              <h3 className="debug-broadcast__section-title">2. Проверьте статус API</h3>
+              <div className="debug-broadcast__buttons">
                 <button
                   onClick={testAPI}
                   disabled={isLoading}
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                  className="debug-broadcast__button"
                 >
                   {isLoading ? 'Проверка...' : 'Протестировать API'}
                 </button>
                 <button
                   onClick={() => window.open('/auth', '_blank')}
-                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                  className="debug-broadcast__button debug-broadcast__button--gray"
                 >
                   Open Authorization
                 </button>
@@ -63,11 +64,11 @@ const DebugBroadcastPage = () => {
             </div>
 
             <div>
-              <h3 className="font-bold text-gray-800">3. После авторизации</h3>
-              <p className="text-gray-600">
+              <h3 className="debug-broadcast__section-title">3. После авторизации</h3>
+              <p className="debug-broadcast__section-text">
                 Вернитесь к странице редактирования: <a
                   href="/broadcasts/edit/6eec7e5b-b2f9-424d-a4ca-f3f9f4c336d2"
-                  className="text-blue-500 hover:underline font-medium"
+                  className="debug-broadcast__link"
                   target="_blank"
                 >
                   /broadcasts/edit/[id]
@@ -78,31 +79,31 @@ const DebugBroadcastPage = () => {
         </div>
 
         {debugResult && (
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">Результат тестирования:</h2>
-            <div className={`p-4 rounded ${
+          <div className="debug-broadcast__result">
+            <h2 className="debug-broadcast__card-title">Результат тестирования:</h2>
+            <div className={`debug-broadcast__result-block ${
               debugResult.error
-                ? 'bg-red-50 border border-red-200'
+                ? 'debug-broadcast__result-block--error'
                 : debugResult.status === 200
-                  ? 'bg-green-50 border border-green-200'
-                  : 'bg-yellow-50 border border-yellow-200'
+                  ? 'debug-broadcast__result-block--success'
+                  : 'debug-broadcast__result-block--warning'
             }`}>
-              <pre className="text-sm overflow-auto max-h-96 font-mono">
+              <pre className="debug-broadcast__result-pre">
                 {JSON.stringify(debugResult, null, 2)}
               </pre>
             </div>
 
             {debugResult.status === 401 && (
-              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
-                <p className="text-blue-800 font-medium">
+              <div className="debug-broadcast__info-block">
+                <p className="debug-broadcast__info-text">
                   ✅ This is expected error! Authorize in the system and the problem will be resolved.
                 </p>
               </div>
             )}
 
             {debugResult.status === 200 && (
-              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
-                <p className="text-green-800 font-medium">
+              <div className="debug-broadcast__success-block">
+                <p className="debug-broadcast__success-text">
                   ✅ Authorization successful! Now you can edit broadcasts.
                 </p>
               </div>

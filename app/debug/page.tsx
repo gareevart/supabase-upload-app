@@ -5,6 +5,7 @@ import { Button, Card, Text, Spin } from '@gravity-ui/uikit';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import './debug-pages.css';
 
 export default function DebugPage() {
   const router = useRouter();
@@ -176,32 +177,32 @@ export default function DebugPage() {
 
   if (checkingAuth) {
     return (
-      <div className="container mx-auto py-8 px-4 flex justify-center items-center min-h-[400px]">
+      <div className="debug-page__loading">
         <Spin size="l" />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <Text variant="display-1" className="mb-6">Debug Tools</Text>
+    <div className="debug-page">
+      <Text variant="display-1" className="debug-page__title">Debug Tools</Text>
       
       {/* User Info Card */}
       {isAuthenticated && userInfo && (
-        <Card className="p-6 mb-6">
-          <Text variant="subheader-1" className="mb-4">User Information</Text>
-          <div className="space-y-2">
+        <Card className="debug-page__card">
+          <Text variant="subheader-1" className="debug-page__card-title">User Information</Text>
+          <div className="debug-page__info-list">
             <div>
-              <Text variant="body-1" className="font-semibold">User ID:</Text>
-              <Text variant="body-2" className="text-gray-600 font-mono">{userInfo.id}</Text>
+              <Text variant="body-1" className="debug-page__info-label">User ID:</Text>
+              <Text variant="body-2" className="debug-page__info-value debug-page__info-value--mono">{userInfo.id}</Text>
             </div>
             <div>
-              <Text variant="body-1" className="font-semibold">Email:</Text>
-              <Text variant="body-2" className="text-gray-600">{userInfo.email}</Text>
+              <Text variant="body-1" className="debug-page__info-label">Email:</Text>
+              <Text variant="body-2" className="debug-page__info-value">{userInfo.email}</Text>
             </div>
             <div>
-              <Text variant="body-1" className="font-semibold">Created At:</Text>
-              <Text variant="body-2" className="text-gray-600">{userInfo.created_at}</Text>
+              <Text variant="body-1" className="debug-page__info-label">Created At:</Text>
+              <Text variant="body-2" className="debug-page__info-value">{userInfo.created_at}</Text>
             </div>
           </div>
         </Card>
@@ -209,40 +210,40 @@ export default function DebugPage() {
       
       {/* Profile Info Card */}
       {isAuthenticated && profileInfo && (
-        <Card className="p-6 mb-6">
-          <Text variant="subheader-1" className="mb-4">Profile Information</Text>
+        <Card className="debug-page__card">
+          <Text variant="subheader-1" className="debug-page__card-title">Profile Information</Text>
           {profileInfo.error ? (
-            <div className="p-4 bg-red-100 text-red-800 rounded">
+            <div className="debug-page__error-block">
               <Text variant="body-1">Error loading profile: {profileInfo.error}</Text>
               <Text variant="body-2" className="mt-2">This might mean your profile doesn&apos;t exist yet. Use the button below to create it.</Text>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="debug-page__info-list">
               <div>
-                <Text variant="body-1" className="font-semibold">Role:</Text>
-                <Text variant="body-2" className={`${profileInfo.role ? 'text-green-600' : 'text-red-600'} font-semibold`}>
+                <Text variant="body-1" className="debug-page__info-label">Role:</Text>
+                <Text variant="body-2" className={`${profileInfo.role ? 'debug-page__role-green' : 'debug-page__role-red'}`}>
                   {profileInfo.role || 'No role set'}
                 </Text>
               </div>
               {profileInfo.role && profileInfo.role !== 'admin' && profileInfo.role !== 'editor' && (
-                <div className="p-4 bg-yellow-100 text-yellow-800 rounded mt-2">
+                <div className="debug-page__warning-block">
                   <Text variant="body-2">
                     Your role is &quot;{profileInfo.role}&quot; but you need &quot;admin&quot; or &quot;editor&quot; role to access broadcasts.
                   </Text>
                 </div>
               )}
               {(profileInfo.role === 'admin' || profileInfo.role === 'editor') && (
-                <div className="p-4 bg-green-100 text-green-800 rounded mt-2">
+                <div className="debug-page__success-block">
                   <Text variant="body-2">
                     ✓ You have the required role to access broadcasts!
                   </Text>
                 </div>
               )}
-              <details className="mt-4">
-                <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-800">
+              <details>
+                <summary className="debug-page__details-summary">
                   Show full profile data
                 </summary>
-                <pre className="mt-2 p-2 bg-gray-100 rounded overflow-auto text-xs">
+                <pre className="debug-page__details-pre">
                   {JSON.stringify(profileInfo, null, 2)}
                 </pre>
               </details>
@@ -251,13 +252,13 @@ export default function DebugPage() {
         </Card>
       )}
       
-      <Card className="p-6 mb-6">
-        <Text variant="subheader-1" className="mb-4">Admin Tools</Text>
+      <Card className="debug-page__card">
+        <Text variant="subheader-1" className="debug-page__card-title">Admin Tools</Text>
         <Text variant="body-1" className="mb-4">
           Use these tools to diagnose and fix access issues with the broadcast features.
         </Text>
         
-        <div className="flex gap-3 mb-4">
+        <div className="debug-page__buttons">
           <Button
             view="action"
             size="m"
@@ -280,20 +281,20 @@ export default function DebugPage() {
         </div>
         
         {error && (
-          <div className="mt-4 p-4 bg-red-100 text-red-800 rounded">
+          <div className="debug-page__error-block">
             <Text variant="body-1">{error}</Text>
           </div>
         )}
         
         {result && (
-          <div className="mt-4 p-4 bg-green-100 text-green-800 rounded">
+          <div className="debug-page__result-block">
             <Text variant="body-1">{result.message}</Text>
             {result.success && (
               <Text variant="body-2" className="mt-2">
                 Redirecting to broadcasts page in 3 seconds...
               </Text>
             )}
-            <pre className="mt-2 p-2 bg-gray-100 rounded overflow-auto text-xs">
+            <pre className="debug-page__result-pre">
               {JSON.stringify(result, null, 2)}
             </pre>
           </div>
@@ -301,8 +302,8 @@ export default function DebugPage() {
       </Card>
       
       {!isAuthenticated && (
-        <Card className="p-6 mb-6">
-          <Text variant="subheader-1" className="mb-4">Authentication Required</Text>
+        <Card className="debug-page__card">
+          <Text variant="subheader-1" className="debug-page__card-title">Authentication Required</Text>
           <Text variant="body-1" className="mb-4">
             You need to be logged in to use the debug tools and access the broadcast features.
           </Text>
@@ -317,44 +318,44 @@ export default function DebugPage() {
         </Card>
       )}
       
-      <Card className="p-6">
-        <Text variant="subheader-1" className="mb-4">Troubleshooting</Text>
+      <Card className="debug-page__card debug-page__card--no-margin">
+        <Text variant="subheader-1" className="debug-page__card-title">Troubleshooting</Text>
         <Text variant="body-1" className="mb-2">
           If you{"'"}re experiencing issues with the broadcast feature, try the following:
         </Text>
         
-        <ul className="list-disc pl-6 mb-4">
-          <li className="mb-2">
+        <ul className="debug-page__troubleshooting-list">
+          <li className="debug-page__troubleshooting-item">
             <Text variant="body-1">
-              Make sure you{"'"}re logged in by visiting the <a href="/auth" className="text-blue-600 hover:underline">login page</a>
+              Make sure you{"'"}re logged in by visiting the <a href="/auth" className="debug-page__link">login page</a>
             </Text>
           </li>
-          <li className="mb-2">
+          <li className="debug-page__troubleshooting-item">
             <Text variant="body-1">
               Set your role to {'"admin"'} using the button above
             </Text>
           </li>
-          <li className="mb-2">
+          <li className="debug-page__troubleshooting-item">
             <Text variant="body-1">
               Check that the {'"sent_mails"'} table exists in your Supabase database
             </Text>
           </li>
-          <li className="mb-2">
+          <li className="debug-page__troubleshooting-item">
             <Text variant="body-1">
               Verify that you{"'"}re properly authenticated
             </Text>
           </li>
-          <li className="mb-2">
+          <li className="debug-page__troubleshooting-item">
             <Text variant="body-1">
               Check that the RESEND_API_KEY environment variable is correctly set in your .env.local file
             </Text>
           </li>
-          <li className="mb-2">
+          <li className="debug-page__troubleshooting-item">
             <Text variant="body-1">
               Restart your development server after updating environment variables
             </Text>
           </li>
-          <li className="mb-2">
+          <li className="debug-page__troubleshooting-item">
             <Text variant="body-1">
               Check the browser console for any errors
             </Text>
