@@ -289,6 +289,10 @@ body.navigation-position-bottom {
   color: var(--g-color-text-complementary);
 }
 
+.home-bio-lead {
+  font-family: var(--font-jetbrains-mono, 'JetBrains Mono'), ui-monospace, monospace;
+}
+
 .home-eyebrow,
 .home-actions {
   display: flex;

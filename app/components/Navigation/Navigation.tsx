@@ -304,13 +304,9 @@ const Navigation: React.FC = () => {
     };
   }, [isWidgetsPanelOpen, isLeftAnchoredWidgetsPanel]);
 
-  if (isChatRoute) {
-    return null;
-  }
-
   return (
     <>
-      <nav className={`navigation navigation--${navigationPosition} ${editorMenu ? 'navigation--editor' : ''}`}>
+      <nav className={`navigation navigation--${navigationPosition} ${isChatRoute ? 'navigation--chat-route' : ''} ${editorMenu ? 'navigation--editor' : ''}`}>
         <div className="nav-container">
           <div className="nav-items">
             {editorMenu ? (

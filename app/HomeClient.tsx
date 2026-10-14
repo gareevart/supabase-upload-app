@@ -2,6 +2,7 @@
 
 import { Text, Link } from '@gravity-ui/uikit';
 import { BrandLockup } from '@/shared/ui';
+import MyProjects from './components/MyProjects/MyProjects';
 import { useI18n } from './contexts/I18nContext';
 
 export default function HomeClient() {
@@ -18,6 +19,11 @@ export default function HomeClient() {
 
         <p id="home-hero-title" className="home-bio-lead">{t('home.bio.line')}</p>
         <p className="home-bio-body">{t('home.bio.body')}</p>
+      </section>
+
+      <section className="home-projects content-container" aria-labelledby="home-projects-title">
+        <h2 id="home-projects-title" className="home-bio-lead">{t('home.projects.title')}</h2>
+        <MyProjects />
       </section>
 
       <div className="links-container home-socials" aria-label={t('home.social.label')}>
