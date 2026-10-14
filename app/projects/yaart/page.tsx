@@ -307,12 +307,13 @@ const YaartContent = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <main className="container mx-auto px-4 md:px-6 max-w-4xl">
-        <div className="flex flex-col gap-6">
-          <CustomBreadcrumbs segmentLabels={segmentLabels} />
-          <Flex direction="column" gap={2}>
-            <Text variant="display-1">Image Generator</Text>
+    <div className="yaart-page">
+      <main className="yaart-page__main">
+        <CustomBreadcrumbs segmentLabels={segmentLabels} />
+        <div className="yaart-page__header">
+          <Text variant="display-1">Image Generator</Text>
+        </div>
+        <Flex direction="column" gap={2}>
 
             {showLimitWarning && (
               <Alert
@@ -429,8 +430,7 @@ const YaartContent = () => {
                 )}
               </Flex>
             )}
-          </Flex>
-        </div>
+        </Flex>
       </main>
     </div>
   );
@@ -439,8 +439,8 @@ const YaartContent = () => {
 const YaartPage = () => (
   <Suspense
     fallback={
-      <div className="min-h-screen">
-        <main className="container mx-auto px-4 md:px-6 max-w-4xl">
+      <div className="yaart-page">
+        <main className="yaart-page__main">
           <Flex justifyContent="center" alignItems="center" style={{ padding: '80px' }}>
             <Spin size="xl" />
           </Flex>

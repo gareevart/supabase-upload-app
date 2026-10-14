@@ -270,11 +270,15 @@
     grid-column: 1;
   }
 
+  /* Sticky, not fixed: the page-transition wrapper keeps a transform, which would pin a fixed element to it. */
   .blog-post-toc {
     box-sizing: border-box;
-    position: fixed;
+    position: -webkit-sticky;
+    position: sticky;
     top: 0;
-    right: 0;
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: start;
     z-index: 9;
     width: var(--blog-post-toc-width);
     height: 100dvh;
