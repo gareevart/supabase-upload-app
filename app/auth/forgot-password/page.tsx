@@ -1,30 +1,25 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Text, TextInput, useThemeValue } from '@gravity-ui/uikit';
+import { Button, Card, Text, TextInput } from '@gravity-ui/uikit';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import Image from 'next/image';
+import { BrandLockup } from '@/shared/ui';
+import { useI18n } from '@/app/contexts/I18nContext';
 import '../Auth.css';
 
 const ForgotPassword = () => {
-    const theme = useThemeValue();
+    const { t } = useI18n();
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [mounted, setMounted] = useState(false);
-    const [logo, setLogo] = useState(theme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg');
 
     // Only show UI after first client-side render to avoid hydration mismatch
     useEffect(() => {
         setMounted(true);
     }, []);
-
-    // Update logo when theme changes
-    useEffect(() => {
-        setLogo(theme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg');
-    }, [theme]);
 
     const handleResetPassword = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -61,7 +56,7 @@ const ForgotPassword = () => {
         <div className="login-container">
             {/* Add logo above the card */}
             <div className="app-logo">
-                <Image src={logo} alt="Application Logo" width={180} height={60} />
+                <BrandLockup name={t('home.brand.name')} role={t('home.brand.role')} />
             </div>
 
             <Card className='login' maxWidth="360px" theme="normal" size="l">

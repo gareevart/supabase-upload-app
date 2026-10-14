@@ -147,6 +147,7 @@
     position: sticky;
     top: 0;
     height: 100vh;
+    height: 100dvh;
     width: 100px;
     background-color: var(--g-color-base-float-announcement);
   }
@@ -156,6 +157,7 @@
     align-items: center;
     flex-direction: column;
     height: 100%;
+    box-sizing: border-box;
     padding: var(--g-spacing-6);
   }
 

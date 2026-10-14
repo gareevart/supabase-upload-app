@@ -272,25 +272,7 @@ body.navigation-position-bottom {
 }
 
 .home-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
   margin-bottom: 40px;
-}
-
-.home-brand__logo {
-  display: block;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.home-brand__name {
-  font-weight: 500;
-  font-size: clamp(1.125rem, 1rem + 0.4vw, 1.5rem);
-  line-height: 1.2;
-  color: var(--g-color-text-primary);
 }
 
 .home-bio-lead,
@@ -301,6 +283,10 @@ body.navigation-position-bottom {
   font-size: clamp(1.125rem, 0.95rem + 0.6vw, 1.625rem);
   line-height: 1.25;
   color: var(--g-color-text-primary);
+}
+
+.home-bio-body {
+  color: var(--g-color-text-complementary);
 }
 
 .home-eyebrow,

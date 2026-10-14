@@ -2,30 +2,25 @@
 
 import React, { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase';
-import { Card, Text, Button, TextInput, PasswordInput, useToaster, useThemeValue } from '@gravity-ui/uikit'
+import { Card, Text, Button, TextInput, PasswordInput, useToaster } from '@gravity-ui/uikit'
 import Link from 'next/link';
-import Image from 'next/image';
+import { BrandLockup } from '@/shared/ui';
+import { useI18n } from '@/app/contexts/I18nContext';
 import '../Auth.css';
 
 const SignUp = () => {
-  const theme = useThemeValue();
+  const { t } = useI18n();
   const [password, setPassword] = React.useState('');
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [logo, setLogo] = useState(theme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg');
   const { add } = useToaster();
 
   // Only show UI after first client-side render to avoid hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Update logo when theme changes
-  useEffect(() => {
-    setLogo(theme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg');
-  }, [theme]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -59,7 +54,7 @@ const SignUp = () => {
     <div className="login-container">
       {/* Add logo above the card */}
       <div className="app-logo">
-        <Image src={logo} alt="Application Logo" width={180} height={60} />
+        <BrandLockup name={t('home.brand.name')} role={t('home.brand.role')} />
       </div>
 
       <Card maxWidth="360px" theme="normal" size="l" className='login'>

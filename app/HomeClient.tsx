@@ -1,7 +1,7 @@
 "use client"
 
-import Image from 'next/image';
 import { Text, Link } from '@gravity-ui/uikit';
+import { BrandLockup } from '@/shared/ui';
 import { useI18n } from './contexts/I18nContext';
 
 export default function HomeClient() {
@@ -10,12 +10,11 @@ export default function HomeClient() {
   return (
     <div className="home-page page-container">
       <section className="home-hero-min content-container" aria-labelledby="home-hero-title">
-        <div className="home-brand">
-          <span className="home-brand__logo">
-            <Image src="/g-logo.svg" alt={t('home.brand.name')} width={36} height={36} priority />
-          </span>
-          <span className="home-brand__name">{t('home.brand.name')}</span>
-        </div>
+        <BrandLockup
+          className="home-brand"
+          name={t('home.brand.name')}
+          role={t('home.brand.role')}
+        />
 
         <p id="home-hero-title" className="home-bio-lead">{t('home.bio.line')}</p>
         <p className="home-bio-body">{t('home.bio.body')}</p>

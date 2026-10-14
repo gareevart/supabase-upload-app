@@ -1,3 +1,4 @@
+export { BrandLockup } from './BrandLockup';
 export { BlogPostCard } from './BlogPostCard';
 export { TableOfContents } from './TableOfContents';
 export { DrawerMenu } from './DrawerMenu';
