@@ -121,11 +121,11 @@ p {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--g-spacing-5);
-    max-width: 600px;
-    width: 100%;
-    margin: 0 auto;
-    box-sizing: border-box;
     overflow-x: hidden;
+}
+
+.profile-header {
+    width: 100%;
 }
 
 .g-card {
@@ -202,8 +202,7 @@ p {
 
 @media (max-width: 480px) {
     .profile {
-        max-width: calc(100vw - 32px);
-        margin: 0 auto;
+        width: 100%;
     }
 
     .profile-view {

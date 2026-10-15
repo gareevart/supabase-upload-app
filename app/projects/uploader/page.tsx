@@ -33,11 +33,13 @@ export default function Uploader() {
   }
 
   return (
-    <div className="uploader-page">
-      <main className="uploader-page__main">
+    <div className="hub-page uploader-page">
+      <main className="hub-page__main uploader-page__main">
         <div className="uploader-page__content">
           <CustomBreadcrumbs segmentLabels={segmentLabels} />
-          <Text variant="header-1">{t('gallery.title')}</Text>
+          <header className="hub-page__header uploader-page__header">
+            <Text as="h1" variant="display-1">{t('gallery.title')}</Text>
+          </header>
           <FileUpload />
           <FileView />
         </div>

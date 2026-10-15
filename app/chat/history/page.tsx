@@ -54,9 +54,9 @@ export default function ChatHistoryPage() {
         </ActionBar>
       </div>
 
-      <main className="chat-history-page__main">
-        <div className="chat-history-page__header">
-          <Text as="h1" variant="header-1" className="chat-history-page__title">
+      <main className="hub-page__main chat-history-page__main">
+        <div className="hub-page__header chat-history-page__header">
+          <Text as="h1" variant="display-1" className="chat-history-page__title">
             {t("chatView.historyTitle")}
           </Text>
           <Button

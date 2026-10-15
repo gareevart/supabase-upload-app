@@ -60,32 +60,36 @@ const Profile = () => {
         );
 
     return (
-        <div className="profile pt-4 pb-2">
-            <Text variant="header-2">Profile</Text>
+        <div className="hub-page">
+            <main className="hub-page__main profile">
+                <header className="hub-page__header profile-header">
+                    <Text as="h1" variant="display-1">Profile</Text>
+                </header>
 
-            <ProfileView
-                profile={profile}
-                user={user}
-                isEditing={isEditing}
-                isSaving={isSaving}
-                setProfile={setProfile}
-                onEdit={() => setIsEditing(true)}
-                onSave={handleSaveProfile}
-                onCancel={() => setIsEditing(false)}
-                onLogout={handleLogout}
-            />
+                <ProfileView
+                    profile={profile}
+                    user={user}
+                    isEditing={isEditing}
+                    isSaving={isSaving}
+                    setProfile={setProfile}
+                    onEdit={() => setIsEditing(true)}
+                    onSave={handleSaveProfile}
+                    onCancel={() => setIsEditing(false)}
+                    onLogout={handleLogout}
+                />
 
-            <SubscriptionsPanel
-                emailSubscribed={Boolean(subscription?.subscribe_status)}
-                emailLoading={isSubscriptionLoading}
-                onEmailSubscriptionChange={setEmailNewsletterEnabled}
-                fullWidth
-            />
+                <SubscriptionsPanel
+                    emailSubscribed={Boolean(subscription?.subscribe_status)}
+                    emailLoading={isSubscriptionLoading}
+                    onEmailSubscriptionChange={setEmailNewsletterEnabled}
+                    fullWidth
+                />
 
-            <QuotaSection dailyQuota={dailyQuota} />
-            <ApiKeysPanelConnected fullWidth />
+                <QuotaSection dailyQuota={dailyQuota} />
+                <ApiKeysPanelConnected fullWidth />
 
-            <DangerZoneSection email={user.email} role={profile.role} />
+                <DangerZoneSection email={user.email} role={profile.role} />
+            </main>
         </div>
     );
 };
