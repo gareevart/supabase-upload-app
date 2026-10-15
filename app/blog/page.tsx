@@ -152,7 +152,7 @@ function BlogPageContent() {
     <div className="blog-page">
       <main className="blog-page__main">
         <div className="blog-page__header">
-          <Text variant="display-1">{t('blogPage.title')}</Text>
+          <Text as="h1" variant="display-1" className="hub-page__title">{t('blogPage.title')}</Text>
           {isAuthenticated && (
             <Button
               view="action"

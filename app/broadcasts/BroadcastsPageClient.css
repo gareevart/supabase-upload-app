@@ -21,14 +21,9 @@
 }
 
 .broadcasts-page__main {
-  width: 100%;
-  max-width: var(--g-grid-width, 1280px);
-  margin-left: auto;
-  margin-right: auto;
   display: flex;
   flex-direction: column;
   gap: var(--g-spacing-6, 24px);
-  padding: var(--g-spacing-8, 32px) var(--g-spacing-4, 16px);
 }
 
 .broadcasts-page__header {

@@ -78,21 +78,23 @@ export default function BroadcastsPageClient() {
   }
 
   return (
-    <main className="broadcasts-page__main">
-      <header className="broadcasts-page__header">
-        <Text variant="display-1">{t('broadcastsPage.title')}</Text>
-        <Text variant="body-1" color="secondary">{t('broadcastsPage.description')}</Text>
-      </header>
-      <TabProvider value={activeTab} onUpdate={handleTabChange}>
-        <TabList size="l">
-          <Tab value="broadcasts">{t('broadcastsPage.broadcastsTab')}</Tab>
-          <Tab value="subscribers">{t('broadcastsPage.subscribersTab')}</Tab>
-          <Tab value="groups">{t('broadcastsPage.groupsTab')}</Tab>
-        </TabList>
-        <TabPanel value="broadcasts"><BroadcastListWidget /></TabPanel>
-        <TabPanel value="subscribers"><SubscriberManagementWidget mode="subscribers" /></TabPanel>
-        <TabPanel value="groups"><SubscriberManagementWidget mode="groups" /></TabPanel>
-      </TabProvider>
-    </main>
+    <div className="hub-page">
+      <main className="hub-page__main broadcasts-page__main">
+        <header className="broadcasts-page__header">
+          <Text as="h1" variant="display-1">{t('broadcastsPage.title')}</Text>
+          <Text variant="body-1" color="secondary">{t('broadcastsPage.description')}</Text>
+        </header>
+        <TabProvider value={activeTab} onUpdate={handleTabChange}>
+          <TabList size="l">
+            <Tab value="broadcasts">{t('broadcastsPage.broadcastsTab')}</Tab>
+            <Tab value="subscribers">{t('broadcastsPage.subscribersTab')}</Tab>
+            <Tab value="groups">{t('broadcastsPage.groupsTab')}</Tab>
+          </TabList>
+          <TabPanel value="broadcasts"><BroadcastListWidget /></TabPanel>
+          <TabPanel value="subscribers"><SubscriberManagementWidget mode="subscribers" /></TabPanel>
+          <TabPanel value="groups"><SubscriberManagementWidget mode="groups" /></TabPanel>
+        </TabProvider>
+      </main>
+    </div>
   );
 }

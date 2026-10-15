@@ -1,16 +1,15 @@
 "use client"
-import { Text, Icon, Link } from '@gravity-ui/uikit';
+import { Text } from '@gravity-ui/uikit';
 import MyProjects from '../components/MyProjects/MyProjects';
-import '../page-styles.css';
 
-export default function Home() {
+export default function ProjectsPage() {
   return (
-    <div className="page-container">
-      <main className="page-main">
-        <div className="page-header">
-          <Text className="page-title" variant="display-1">Projects</Text>
-          <MyProjects />
-        </div>
+    <div className="hub-page">
+      <main className="hub-page__main">
+        <header className="hub-page__header">
+          <Text as="h1" variant="display-1" className="hub-page__title">Projects</Text>
+        </header>
+        <MyProjects />
       </main>
     </div>
   );
