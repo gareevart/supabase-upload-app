@@ -7,7 +7,7 @@ export default function ProjectsPage() {
     <div className="hub-page">
       <main className="hub-page__main">
         <header className="hub-page__header">
-          <Text as="h1" variant="display-1">Projects</Text>
+          <Text as="h1" variant="display-1" className="hub-page__title">Projects</Text>
         </header>
         <MyProjects />
       </main>

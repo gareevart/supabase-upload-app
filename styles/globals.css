@@ -222,6 +222,10 @@ body.navigation-position-bottom {
   margin-bottom: var(--g-spacing-6, 24px);
 }
 
+.hub-page__title {
+  margin: 0;
+}
+
 .home-page {
   display: flex;
   flex-direction: column;
