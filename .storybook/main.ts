@@ -30,6 +30,7 @@ function buildProcessEnvDefine(mode: string) {
 
 const config: StorybookConfig = {
   stories: [
+    '../components/**/*.stories.@(ts|tsx)',
     '../features/**/*.stories.@(ts|tsx)',
     '../shared/**/*.stories.@(ts|tsx)',
     '../widgets/**/*.stories.@(ts|tsx)',
