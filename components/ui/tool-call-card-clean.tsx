@@ -11,6 +11,14 @@ import {
   type ReactElement,
   type ReactNode,
 } from "react";
+import {Button, Card, ClipboardButton, Icon, Spin, Text} from "@gravity-ui/uikit";
+import {
+  ArrowChevronDown,
+  ArrowRotateLeft,
+  CircleCheckFill,
+  CircleExclamationFill,
+  Wrench,
+} from "@gravity-ui/icons";
 
 /*
  * Tool Call Card (Clean) – one tool call of an AI agent, in a single self-contained file.
@@ -123,7 +131,9 @@ export function ToolCallCard({
     status === "running" ? `${name} running` : status === "success" ? `${name} finished` : `${name} failed${error ? `: ${error}` : ""}`;
 
   return (
-    <div
+    <Card
+      type="container"
+      view="raised"
       className={["ui-tcc", className].filter(Boolean).join(" ")}
       data-status={status}
       data-open={open || undefined}
@@ -133,8 +143,9 @@ export function ToolCallCard({
         {announce}
       </span>
 
-      <button
-        type="button"
+      <Button
+        view="flat"
+        width="max"
         className="ui-tcc__head"
         aria-expanded={open}
         aria-controls={`${id}-body`}
@@ -144,31 +155,26 @@ export function ToolCallCard({
         }}
       >
         <span className="ui-tcc__icon" aria-hidden="true">
-          {icon ?? <WrenchIcon />}
+          {icon ?? <Icon data={Wrench} size={16} />}
         </span>
         <span className="ui-tcc__main">
-          <code className="ui-tcc__name">{name}</code>
+          <Text as="code" variant="caption-1" className="ui-tcc__name">{name}</Text>
           {summary != null && (
-            <span className="ui-tcc__summary" title={typeof summary === "string" ? summary : undefined}>
+            <Text variant="body-1" className="ui-tcc__summary" title={typeof summary === "string" ? summary : undefined}>
               {summary}
-            </span>
+            </Text>
           )}
         </span>
         <span className="ui-tcc__status" key={status}>
-          {status === "running" && <Spinner />}
-          {status === "success" && (
-            <svg className="ui-tcc__ok" viewBox="0 0 16 16" aria-hidden="true">
-              <circle cx="8" cy="8" r="7" />
-              <path d="M5.1 8.2 7.1 10.1 10.9 6" pathLength={1} />
-            </svg>
-          )}
-          {status === "error" && <ErrorIcon />}
-          <span className="ui-tcc__time">
+          {status === "running" && <Spin size="xs" />}
+          {status === "success" && <Icon data={CircleCheckFill} size={16} className="ui-tcc__ok" />}
+          {status === "error" && <Icon data={CircleExclamationFill} size={16} />}
+          <Text variant="caption-1" className="ui-tcc__time">
             {status === "error" ? "Failed" : ms != null ? formatMs(ms, status === "running") : null}
-          </span>
+          </Text>
         </span>
-        <Chevron />
-      </button>
+        <Icon data={ArrowChevronDown} size={12} className="ui-tcc__chevron" />
+      </Button>
 
       <div
         className="ui-tcc__body"
@@ -180,16 +186,15 @@ export function ToolCallCard({
           <div className="ui-tcc__sections">
             {status === "error" && (
               <div className="ui-tcc__error">
-                <ErrorIcon />
-                <p className="ui-tcc__error-text">{error ?? "The tool call failed."}</p>
+                <Icon data={CircleExclamationFill} size={16} />
+                <Text variant="body-1" color="danger" className="ui-tcc__error-text">
+                  {error ?? "The tool call failed."}
+                </Text>
                 {onRetry && (
-                  <button type="button" className="ui-tcc__retry" onClick={onRetry}>
-                    <svg viewBox="0 0 16 16" aria-hidden="true">
-                      <path d="M2.75 8a5.25 5.25 0 1 0 1.6-3.77" />
-                      <path d="M2.5 2.5v2.75h2.75" />
-                    </svg>
+                  <Button view="outlined" size="s" className="ui-tcc__retry" onClick={onRetry}>
+                    <Button.Icon><Icon data={ArrowRotateLeft} /></Button.Icon>
                     Retry
-                  </button>
+                  </Button>
                 )}
               </div>
             )}
@@ -210,7 +215,7 @@ export function ToolCallCard({
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -257,8 +262,8 @@ export function ToolCallGroup({
         {running ? runningLabel : `${count}${failed ? `, ${failed} failed` : ""}`}
       </span>
 
-      <button
-        type="button"
+      <Button
+        view="flat"
         className="ui-tcc-group__head"
         aria-expanded={open}
         aria-controls={`${id}-list`}
@@ -270,7 +275,7 @@ export function ToolCallGroup({
         <span className="ui-tcc-group__stack" aria-hidden="true">
           {icons.map((c, i) => (
             <span className="ui-tcc__icon" key={calls.length - icons.length + i}>
-              {c.icon ?? <WrenchIcon />}
+              {c.icon ?? <Icon data={Wrench} size={12} />}
             </span>
           ))}
         </span>
@@ -281,8 +286,8 @@ export function ToolCallGroup({
           {!running && failed > 0 && <span className="ui-tcc-group__failed">· {failed} failed</span>}
           {ms != null && <span className="ui-tcc-group__time">· {formatMs(ms, running)}</span>}
         </span>
-        <Chevron />
-      </button>
+        <Icon data={ArrowChevronDown} size={12} className="ui-tcc__chevron" />
+      </Button>
 
       <div
         className="ui-tcc__body"
@@ -335,73 +340,25 @@ function CodeSection({ label, value, cap }: { label: string; value: unknown; cap
         <code>{json ? highlight(text) : text}</code>
       </pre>
       {capped && (
-        <button type="button" className="ui-tcc__more" aria-expanded={full} onClick={() => setFull(!full)}>
+        <Button view="flat" size="s" className="ui-tcc__more" aria-expanded={full} onClick={() => setFull(!full)}>
           {full ? "Show less" : "Show all"}
-        </button>
+        </Button>
       )}
     </div>
   );
 }
 
 function CopyButton({ text, label }: { text: string; label: string }) {
-  const [copied, setCopied] = useState(false);
-  useEffect(() => {
-    if (!copied) return;
-    const t = window.setTimeout(() => setCopied(false), 1400);
-    return () => window.clearTimeout(t);
-  }, [copied]);
-
   return (
-    <button
-      type="button"
+    <ClipboardButton
+      text={text}
+      view="outlined"
+      size="s"
       className="ui-tcc__copy"
-      data-copied={copied || undefined}
-      aria-label={copied ? "Copied" : `Copy ${label}`}
-      title={copied ? "Copied" : `Copy ${label}`}
-      onClick={() => copyText(text).then((ok) => ok && setCopied(true))}
-    >
-      <svg className="ui-tcc__copy-icon" viewBox="0 0 16 16" aria-hidden="true">
-        <rect x="5.5" y="5.5" width="8.5" height="8.5" rx="2" />
-        <path d="M10.5 3.75v-.25A1.5 1.5 0 0 0 9 2H3.5A1.5 1.5 0 0 0 2 3.5V9a1.5 1.5 0 0 0 1.5 1.5h.25" />
-      </svg>
-      <svg className="ui-tcc__copy-done" viewBox="0 0 16 16" aria-hidden="true">
-        <path d="M3.5 8.4 6.6 11.3 12.5 4.9" pathLength={1} />
-      </svg>
-    </button>
-  );
-}
-
-function Spinner() {
-  return (
-    <svg className="ui-tcc__spinner" viewBox="0 0 16 16" aria-hidden="true">
-      <circle cx="8" cy="8" r="6" />
-      <path d="M8 2a6 6 0 0 1 6 6" />
-    </svg>
-  );
-}
-
-function ErrorIcon() {
-  return (
-    <svg className="ui-tcc__err" viewBox="0 0 16 16" aria-hidden="true">
-      <circle cx="8" cy="8" r="7" />
-      <path d="M8 4.9v3.5M8 10.9v.1" />
-    </svg>
-  );
-}
-
-function Chevron() {
-  return (
-    <svg className="ui-tcc__chevron" viewBox="0 0 12 12" aria-hidden="true">
-      <path d="M3.5 5.25 6 7.75l2.5-2.5" />
-    </svg>
-  );
-}
-
-function WrenchIcon() {
-  return (
-    <svg viewBox="0 0 16 16">
-      <path d="M10.2 2.4a3.5 3.5 0 0 0-4.3 4.6L2.6 10.3a1.4 1.4 0 0 0 2 2L7.9 9a3.5 3.5 0 0 0 4.6-4.3l-2 2-1.6-.4-.4-1.6 1.7-2.3Z" />
-    </svg>
+      aria-label={`Copy ${label}`}
+      tooltipInitialText={`Copy ${label}`}
+      tooltipSuccessText="Copied"
+    />
   );
 }
 
@@ -488,23 +445,6 @@ function highlight(text: string): ReactNode[] {
   }
   if (last < text.length) out.push(text.slice(last));
   return out;
-}
-
-async function copyText(text: string) {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    // Older browsers and non-secure contexts
-    const area = document.createElement("textarea");
-    area.value = text;
-    area.style.cssText = "position:fixed;opacity:0";
-    document.body.appendChild(area);
-    area.select();
-    const ok = document.execCommand("copy");
-    area.remove();
-    return ok;
-  }
 }
 
 const css = /* css */ `
