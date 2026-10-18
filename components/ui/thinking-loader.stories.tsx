@@ -15,7 +15,7 @@ const meta = {
   args: {
     phases: ["Thinking", "Searching the web", "Reading sources", "Writing response"],
     interval: 2200,
-    size: "md",
+    size: "m",
     variant: "pill",
   },
 } satisfies Meta<typeof ThinkingLoader>;
@@ -26,7 +26,7 @@ type Story = StoryObj<typeof meta>;
 export const Active: Story = {};
 
 export const Small: Story = {
-  args: { size: "sm" },
+  args: { size: "s" },
 };
 
 export const Plain: Story = {

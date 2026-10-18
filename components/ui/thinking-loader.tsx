@@ -9,7 +9,7 @@ export type ThinkingLoaderProps = {
   loop?: boolean;
   done?: boolean;
   doneLabel?: string | ((seconds: number) => string);
-  size?: "sm" | "md";
+  size?: "s" | "m";
   variant?: "pill" | "plain";
   className?: string;
 };
@@ -24,7 +24,7 @@ export function ThinkingLoader({
   loop = false,
   done = false,
   doneLabel = (seconds) => `Thought for ${seconds}s`,
-  size = "md",
+  size = "m",
   variant = "pill",
   className,
 }: ThinkingLoaderProps) {
@@ -181,7 +181,7 @@ const styles = /* css */ `
   vertical-align: middle;
   -webkit-font-smoothing: antialiased;
 }
-.ui-thinking-loader[data-size="sm"] {
+.ui-thinking-loader[data-size="s"] {
   --ui-tl-height: 28px;
   --ui-tl-font: 13px;
   --ui-tl-icon: 13px;
