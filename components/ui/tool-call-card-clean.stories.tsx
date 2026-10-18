@@ -3,10 +3,16 @@ import { fn } from 'storybook/test';
 import { ToolCallCard, ToolCallGroup } from './tool-call-card-clean';
 
 const meta = {
-  title: 'UI/ToolCallCard',
+  title: 'Gravity UI/ToolCallCard',
   component: ToolCallCard,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component:
+          'Tool call states composed with Gravity UI Card, Button, ClipboardButton, Text, Icon, and Spin components.',
+      },
+    },
   },
   decorators: [
     (Story) => (
