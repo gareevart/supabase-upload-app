@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader } from "@gravity-ui/uikit";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 export type ThinkingLoaderProps = {
@@ -15,7 +16,6 @@ export type ThinkingLoaderProps = {
 };
 
 const DEFAULT_PHASES = ["Thinking", "Searching the web", "Reading sources", "Writing response"];
-const RAYS = Array.from({ length: 8 }, (_, index) => index);
 
 export function ThinkingLoader({
   phases = DEFAULT_PHASES,
@@ -104,19 +104,9 @@ export function ThinkingLoader({
       <style>{styles}</style>
 
       <span className="ui-thinking-loader__icon" aria-hidden="true">
-        <svg className="ui-thinking-loader__spinner" viewBox="0 0 16 16">
-          {RAYS.map((ray) => (
-            <line
-              key={ray}
-              x1="8"
-              y1="1.75"
-              x2="8"
-              y2="4.75"
-              transform={`rotate(${ray * 45} 8 8)`}
-              style={{ animationDelay: `${(ray - 8) * 100}ms` }}
-            />
-          ))}
-        </svg>
+        <span className="ui-thinking-loader__spinner">
+          <Loader size={size} />
+        </span>
         <svg className="ui-thinking-loader__check" viewBox="0 0 16 16">
           <path d="M3.5 8.4 6.6 11.3 12.5 4.9" pathLength={1} />
         </svg>
@@ -164,7 +154,8 @@ const styles = /* css */ `
   --ui-tl-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --ui-tl-height: 34px;
   --ui-tl-font: 14px;
-  --ui-tl-icon: 15px;
+  --ui-tl-icon-width: 35px;
+  --ui-tl-icon-height: 28px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -184,7 +175,8 @@ const styles = /* css */ `
 .ui-thinking-loader[data-size="s"] {
   --ui-tl-height: 28px;
   --ui-tl-font: 13px;
-  --ui-tl-icon: 13px;
+  --ui-tl-icon-width: 25px;
+  --ui-tl-icon-height: 20px;
   gap: 7px;
   padding: 0 12px 0 10px;
 }
@@ -196,25 +188,24 @@ const styles = /* css */ `
 .ui-thinking-loader__icon {
   position: relative;
   flex: none;
-  width: var(--ui-tl-icon);
-  height: var(--ui-tl-icon);
+  width: var(--ui-tl-icon-width);
+  height: var(--ui-tl-icon-height);
 }
-.ui-thinking-loader__icon svg {
+.ui-thinking-loader__spinner,
+.ui-thinking-loader__check {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  overflow: visible;
   transition: opacity 240ms ease, transform 420ms var(--ui-tl-ease);
 }
-.ui-thinking-loader__spinner line {
-  stroke: var(--ui-tl-ray);
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  opacity: 0.18;
-  animation: ui-tl-ray 800ms linear infinite;
+.ui-thinking-loader__spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .ui-thinking-loader__check {
+  overflow: visible;
   opacity: 0;
   transform: scale(0.6);
   fill: none;
@@ -268,7 +259,6 @@ const styles = /* css */ `
   opacity: 0.28;
   pointer-events: none;
 }
-@keyframes ui-tl-ray { 0% { opacity: 1; } 100% { opacity: 0.18; } }
 @keyframes ui-tl-in { from { opacity: 0; transform: translateY(70%); filter: blur(3px); } to { opacity: 1; transform: none; filter: none; } }
 @keyframes ui-tl-out { from { opacity: 1; transform: none; filter: none; } to { opacity: 0; transform: translateY(-70%); filter: blur(3px); } }
 @keyframes ui-tl-draw { to { stroke-dashoffset: 0; } }
@@ -281,7 +271,6 @@ const styles = /* css */ `
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
   }
-  .ui-thinking-loader__spinner line { opacity: 0.6; }
   .ui-thinking-loader__shine::after { display: none; }
   .ui-thinking-loader__check path { stroke-dashoffset: 0; }
 }
