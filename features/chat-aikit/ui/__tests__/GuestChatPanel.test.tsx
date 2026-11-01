@@ -2,6 +2,11 @@ import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { GuestChatPanel } from '../GuestChatPanel';
 
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: jest.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 jest.mock('@/app/contexts/I18nContext', () => ({
   useI18n: () => ({ t: (key: string) => ({
     'chatView.breadcrumbNewChat': 'New chat',
