@@ -180,10 +180,6 @@ const Navigation: React.FC = () => {
     setIsDrawerOpen(false);
   };
 
-  const toggleWidgetsPanel = () => {
-    setIsDrawerOpen(false);
-    setIsWidgetsPanelOpen((prev) => !prev);
-  };
 
   const closeWidgetsPanel = () => {
     setIsWidgetsPanelOpen(false);
@@ -442,28 +438,6 @@ const Navigation: React.FC = () => {
                 <Icon data={Magnifier} size={20} />
               </Button>
             </Popover>
-
-            <div ref={widgetsTriggerRef}>
-              <Popover
-                content="Widgets"
-                placement={navigationPosition === 'bottom' ? "top" : "left"}
-                hasArrow
-                openDelay={50}
-                closeDelay={20}
-                className='profile-popup'
-              >
-                <Button
-                  view={isWidgetsPanelOpen ? "action" : "flat"}
-                  selected={isWidgetsPanelOpen}
-                  size="xl"
-                  onClick={toggleWidgetsPanel}
-                  aria-label={isWidgetsPanelOpen ? "Close widgets panel" : "Open widgets panel"}
-                  aria-expanded={isWidgetsPanelOpen}
-                >
-                  <Icon data={Circles3Plus} size={20} />
-                </Button>
-              </Popover>
-            </div>
 
             {(isMobileViewport || navigationPosition === 'bottom') && (
               <Popover
