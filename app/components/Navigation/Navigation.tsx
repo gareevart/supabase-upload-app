@@ -9,6 +9,7 @@ import { DrawerMenu } from '@/shared/ui/DrawerMenu';
 import { CalculatorPanel } from '@/features/calculator/ui';
 import { CameraPanel } from '@/features/camera/ui';
 import { UserWidgetPanel } from '@/features/widget-runtime/ui/UserWidgetPanel';
+import { CommandMenu, type CommandGroup } from '@/components/ui/command-menu-clean';
 import { useEnabledWidgets } from '@/features/widget-list/model/useEnabledWidgets';
 import {
   BUILTIN_WIDGETS_EVENT,
@@ -39,6 +40,7 @@ const Navigation: React.FC = () => {
   const widgetsTriggerRef = useRef<HTMLDivElement>(null);
   const [activeItem, setActiveItem] = useState('home');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
   const [isWidgetsPanelOpen, setIsWidgetsPanelOpen] = useState(false);
   const [calculatorWidgetState, setCalculatorWidgetState] = useState<WidgetAnimationState>('closed');
   const [cameraWidgetState, setCameraWidgetState] = useState<WidgetAnimationState>('closed');
@@ -123,6 +125,18 @@ const Navigation: React.FC = () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener(NAVIGATION_POSITION_EVENT, handleNavigationPositionChange as EventListener);
     };
+  }, []);
+
+  useEffect(() => {
+    const handleCommandMenuShortcut = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setIsCommandMenuOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleCommandMenuShortcut);
+    return () => window.removeEventListener('keydown', handleCommandMenuShortcut);
   }, []);
 
   useEffect(() => {
@@ -304,6 +318,39 @@ const Navigation: React.FC = () => {
     };
   }, [isWidgetsPanelOpen, isLeftAnchoredWidgetsPanel]);
 
+  const commandGroups: CommandGroup[] = [
+    {
+      id: 'suggestions',
+      label: 'Quick actions',
+      commands: [
+        { id: 'calculator', label: 'Open calculator', hint: 'Widget', logo: '123', keywords: ['math', 'tool'] },
+        { id: 'camera', label: 'Open camera', hint: 'Widget', logo: 'CAM', keywords: ['photo', 'tool'] },
+        { id: 'widgets', label: 'Browse widgets', hint: 'Tools', logo: 'W', keywords: ['apps', 'tools'] },
+      ],
+    },
+    {
+      id: 'go-to',
+      label: 'Go to',
+      commands: allNavItems.map((item) => ({
+        id: item.id,
+        label: item.label,
+        icon: <Icon data={item.icon} size={18} />,
+        keywords: [item.link],
+      })),
+    },
+  ];
+
+  const runCommand = (id: string) => {
+    if (id === 'calculator') openCalculatorWidget();
+    else if (id === 'camera') openCameraWidget();
+    else if (id === 'widgets') router.push('/widgets');
+    else {
+      const destination = allNavItems.find((item) => item.id === id);
+      if (destination) router.push(destination.link);
+    }
+    setIsCommandMenuOpen(false);
+  };
+
   return (
     <>
       <nav className={`navigation navigation--${navigationPosition} ${isChatRoute ? 'navigation--chat-route' : ''} ${editorMenu ? 'navigation--editor' : ''}`}>
@@ -376,6 +423,26 @@ const Navigation: React.FC = () => {
               </Popover>
             ))}
 
+            <Popover
+              content="Commands (⌘K)"
+              placement={navigationPosition === 'bottom' ? "top" : "left"}
+              hasArrow
+              openDelay={50}
+              closeDelay={20}
+              className='profile-popup'
+            >
+              <Button
+                view={isCommandMenuOpen ? "action" : "flat"}
+                selected={isCommandMenuOpen}
+                size="xl"
+                onClick={() => setIsCommandMenuOpen(true)}
+                aria-label="Open command menu"
+                aria-haspopup="dialog"
+              >
+                <Icon data={Magnifier} size={20} />
+              </Button>
+            </Popover>
+
             <div ref={widgetsTriggerRef}>
               <Popover
                 content="Widgets"
@@ -438,6 +505,25 @@ const Navigation: React.FC = () => {
           )}
         </div>
       </nav>
+
+      {isCommandMenuOpen && (
+        <div className="command-menu-dialog" role="dialog" aria-modal="true" aria-label="Command menu">
+          <button
+            type="button"
+            className="command-menu-dialog__backdrop"
+            onClick={() => setIsCommandMenuOpen(false)}
+            aria-label="Close command menu"
+          />
+          <div className="command-menu-dialog__content">
+            <CommandMenu
+              autoFocus
+              groups={commandGroups}
+              onClose={() => setIsCommandMenuOpen(false)}
+              onRun={runCommand}
+            />
+          </div>
+        </div>
+      )}
 
       <div
         className={`widgets-panel ${isLeftAnchoredWidgetsPanel ? 'widgets-panel--left' : ''} ${isBottomAnchoredWidgetsPanel ? 'widgets-panel--bottom' : ''} ${isWidgetsPanelOpen ? 'widgets-panel--open' : ''}`}
