@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChatContainer, ActionButton } from "@gravity-ui/aikit";
 import type { ChatType, TChatMessage, TSubmitData } from "@gravity-ui/aikit";
 import { Button, Breadcrumbs, Dialog, DropdownMenu, Icon, Select, Text, TextArea } from "@gravity-ui/uikit";
@@ -20,6 +20,9 @@ import "./AikitChatPanel.css";
 
 export function AikitChatPanel({ chatId }: { chatId: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialPrompt = searchParams.get("prompt")?.trim();
+  const initialPromptHandledRef = useRef(false);
   const isMobile = useIsMobile();
   const { t } = useI18n();
 
@@ -67,6 +70,15 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
     },
     [sendMessage, attachedFiles, useWebSearch, useWidgetMode],
   );
+
+  useEffect(() => {
+    if (!chat || !initialPrompt || initialPromptHandledRef.current) return;
+
+    initialPromptHandledRef.current = true;
+    void handleSendMessage({ content: initialPrompt } as TSubmitData).then(() => {
+      router.replace(`/chat/${chatId}`, { scroll: false });
+    });
+  }, [chat, chatId, handleSendMessage, initialPrompt, router]);
 
   const handleSelectChat = useCallback(
     (c: ChatType) => router.push(`/chat/${c.id}`),

@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ActionButton, ChatContainer } from "@gravity-ui/aikit";
 import type { TChatMessage, TSubmitData } from "@gravity-ui/aikit";
 import { Breadcrumbs, Button, Dialog, Icon, Select, Spin, Text, TextArea } from "@gravity-ui/uikit";
@@ -30,6 +31,10 @@ function readMessages(): Message[] {
 }
 
 export function GuestChatPanel() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialPrompt = searchParams.get("prompt")?.trim();
+  const initialPromptHandledRef = useRef(false);
   const { t } = useI18n();
   const { selectedModel, setSelectedModel, availableModels } = useModelSelection();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -57,9 +62,6 @@ export function GuestChatPanel() {
       setError(t("chatView.guestTooLong"));
       return;
     }
-    setSending(true);
-    setError(null);
-
     const userMessage: Message = {
       id: crypto.randomUUID(),
       chat_id: GUEST_CHAT_ID,
@@ -67,6 +69,9 @@ export function GuestChatPanel() {
       content,
       created_at: new Date().toISOString(),
     };
+    setMessages((current) => [...current, userMessage]);
+    setSending(true);
+    setError(null);
 
     try {
       const response = await fetch("/api/guest-chat", {
@@ -91,7 +96,7 @@ export function GuestChatPanel() {
         content: result.text,
         created_at: new Date().toISOString(),
       };
-      setMessages((current) => [...current, userMessage, assistantMessage]);
+      setMessages((current) => [...current, assistantMessage]);
     } catch (cause) {
       console.error("Guest chat failed:", cause);
       setError(t("chatView.guestError"));
@@ -99,6 +104,15 @@ export function GuestChatPanel() {
       setSending(false);
     }
   }, [messages, selectedModel, sending, systemPrompt, t]);
+
+  useEffect(() => {
+    if (!loaded || !initialPrompt || initialPromptHandledRef.current) return;
+
+    initialPromptHandledRef.current = true;
+    void sendMessage({ content: initialPrompt } as TSubmitData).then(() => {
+      router.replace("/chat", { scroll: false });
+    });
+  }, [initialPrompt, loaded, router, sendMessage]);
 
   const saveSettings = () => {
     localStorage.setItem(SYSTEM_PROMPT_STORAGE_KEY, systemPrompt);

@@ -11,8 +11,8 @@ const MAX_REQUESTS_PER_WINDOW = 12;
 const requestsByIp = new Map<string, { count: number; resetAt: number }>();
 
 export async function POST(request: Request) {
-  const origin = request.headers.get('origin');
-  if (origin && origin !== new URL(request.url).origin) {
+  const fetchSite = request.headers.get('sec-fetch-site');
+  if (fetchSite === 'cross-site') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

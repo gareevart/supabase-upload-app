@@ -148,6 +148,7 @@ export function CommandMenu({
           aria-activedescendant={activeId ? `${inputId}-${activeId}` : undefined}
           value={query}
           placeholder={placeholder}
+          maxLength={4000}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => {
             if (event.nativeEvent.isComposing || event.keyCode === 229) return;
@@ -159,9 +160,11 @@ export function CommandMenu({
               jumpGroup(event.shiftKey ? -1 : 1);
             } else if (event.key === "Enter") {
               event.preventDefault();
-              const selected = commands.find((command) => command.id === activeId);
-              if (selected) run(selected);
-              else if (query.trim()) onRun?.("ask", query.trim());
+              if (query.trim()) onRun?.("ask", query.trim());
+              else {
+                const selected = commands.find((command) => command.id === activeId);
+                if (selected) run(selected);
+              }
             } else if (event.key === "Escape") {
               event.preventDefault();
               if (query) setQuery("");

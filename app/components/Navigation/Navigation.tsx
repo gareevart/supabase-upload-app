@@ -319,6 +319,7 @@ const Navigation: React.FC = () => {
       id: 'suggestions',
       label: 'Quick actions',
       commands: [
+        { id: 'ask', label: 'Ask AI assistant', hint: 'Type any question', logo: 'AI', keywords: ['ask', 'chat', 'question', 'assistant'] },
         { id: 'calculator', label: 'Open calculator', hint: 'Widget', logo: '123', keywords: ['math', 'tool'] },
         { id: 'camera', label: 'Open camera', hint: 'Widget', logo: 'CAM', keywords: ['photo', 'tool'] },
         { id: 'widgets', label: 'Browse widgets', hint: 'Tools', logo: 'W', keywords: ['apps', 'tools'] },
@@ -336,8 +337,11 @@ const Navigation: React.FC = () => {
     },
   ];
 
-  const runCommand = (id: string) => {
-    if (id === 'calculator') openCalculatorWidget();
+  const runCommand = (id: string, query?: string) => {
+    if (id === 'ask') {
+      const prompt = query?.trim();
+      router.push(prompt ? `/chat?prompt=${encodeURIComponent(prompt)}` : '/chat');
+    } else if (id === 'calculator') openCalculatorWidget();
     else if (id === 'camera') openCameraWidget();
     else if (id === 'widgets') router.push('/widgets');
     else {
@@ -491,6 +495,7 @@ const Navigation: React.FC = () => {
           <div className="command-menu-dialog__content">
             <CommandMenu
               autoFocus
+              placeholder="Введите команду или задайте вопрос…"
               groups={commandGroups}
               onClose={() => setIsCommandMenuOpen(false)}
               onRun={runCommand}
