@@ -3,6 +3,55 @@
   /* Ensure navigation stays above the drawer */
 }
 
+.command-menu-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: max(72px, 12vh) 16px 96px;
+}
+
+.command-menu-dialog__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.36);
+  backdrop-filter: blur(4px);
+  animation: command-backdrop-in 160ms ease-out both;
+}
+
+.command-menu-dialog__content {
+  position: relative;
+  width: min(600px, 100%);
+  animation: command-menu-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes command-backdrop-in {
+  from { opacity: 0; }
+}
+
+@keyframes command-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.985);
+  }
+}
+
+@media (max-width: 520px) {
+  .command-menu-dialog {
+    padding-top: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .command-menu-dialog__backdrop,
+  .command-menu-dialog__content {
+    animation: none;
+  }
+}
+
 .widgets-button {
   width: 44px;
   height: 44px;
