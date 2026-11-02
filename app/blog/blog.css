@@ -355,6 +355,10 @@
   text-overflow: ellipsis;
   width: 100%;
   margin-bottom: var(--g-spacing-4);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
 }
 
 @media (min-width: 768px) {
