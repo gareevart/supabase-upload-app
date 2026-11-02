@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 
 import { useRouter, usePathname } from 'next/navigation';
 import { Icon, Button, Popover, Text } from '@gravity-ui/uikit';
@@ -11,6 +11,7 @@ import { CameraPanel } from '@/features/camera/ui';
 import { UserWidgetPanel } from '@/features/widget-runtime/ui/UserWidgetPanel';
 import { CommandMenu, type CommandGroup } from '@/components/ui/command-menu-clean';
 import { useEnabledWidgets } from '@/features/widget-list/model/useEnabledWidgets';
+import { useWidgets } from '@/features/widget-list/model/useWidgets';
 import {
   BUILTIN_WIDGETS_EVENT,
   BuiltinWidgetsState,
@@ -49,7 +50,15 @@ const Navigation: React.FC = () => {
     camera: 71,
   });
   const widgetLayerCounterRef = useRef(71);
-  const { widgets: userWidgets } = useEnabledWidgets();
+  const { widgets: enabledUserWidgets } = useEnabledWidgets();
+  const { widgets: ownedUserWidgets } = useWidgets('my');
+  const searchableUserWidgets = useMemo(() => {
+    const ownedWidgetIds = new Set(ownedUserWidgets.map((widget) => widget.id));
+    return [
+      ...ownedUserWidgets,
+      ...enabledUserWidgets.filter((widget) => !ownedWidgetIds.has(widget.id)),
+    ];
+  }, [enabledUserWidgets, ownedUserWidgets]);
   const [builtinWidgets, setBuiltinWidgets] = useState<BuiltinWidgetsState>({
     calculator: true,
     camera: true,
@@ -325,6 +334,28 @@ const Navigation: React.FC = () => {
         { id: 'widgets', label: 'Browse widgets', hint: 'Tools', logo: 'W', keywords: ['apps', 'tools'] },
       ],
     },
+    ...(searchableUserWidgets.length > 0
+      ? [
+          {
+            id: 'user-widgets',
+            label: 'Ваши виджеты',
+            commands: searchableUserWidgets.map((widget) => ({
+              id: `user-widget:${widget.id}`,
+              label: widget.title,
+              hint: widget.description ?? 'Пользовательский виджет',
+              icon: <Icon data={Circles3Plus} size={18} />,
+              keywords: [
+                'widget',
+                'виджет',
+                widget.description ?? '',
+                widget.author?.name ?? '',
+                widget.author?.username ?? '',
+                ...widget.permissions,
+              ],
+            })),
+          },
+        ]
+      : []),
     {
       id: 'go-to',
       label: 'Go to',
@@ -344,7 +375,9 @@ const Navigation: React.FC = () => {
     } else if (id === 'calculator') openCalculatorWidget();
     else if (id === 'camera') openCameraWidget();
     else if (id === 'widgets') router.push('/widgets');
-    else {
+    else if (id.startsWith('user-widget:')) {
+      openUserWidget(id.slice('user-widget:'.length));
+    } else {
       const destination = allNavItems.find((item) => item.id === id);
       if (destination) router.push(destination.link);
     }
@@ -535,7 +568,7 @@ const Navigation: React.FC = () => {
             <Text variant="body-1">Camera</Text>
           </button>
         )}
-        {userWidgets.map((widget) => (
+          {enabledUserWidgets.map((widget) => (
           <button
             key={widget.id}
             type="button"
@@ -616,7 +649,7 @@ const Navigation: React.FC = () => {
           }
         />
       )}
-      {userWidgets
+      {searchableUserWidgets
         .filter((widget) => (userWidgetWindows[widget.id] ?? 'closed') !== 'closed')
         .map((widget) => {
           const windowState = userWidgetWindows[widget.id];
