@@ -59,6 +59,46 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
   }, [])
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)')
+    let previousScrollY = window.scrollY
+    let frameId: number | null = null
+
+    const updateMobileNavigation = () => {
+      frameId = null
+      const currentScrollY = window.scrollY
+      const isScrollingDown = currentScrollY > previousScrollY && currentScrollY > 80
+
+      document.body.classList.toggle(
+        'blog-post-scrolling-down',
+        mediaQuery.matches && isScrollingDown,
+      )
+      previousScrollY = currentScrollY
+    }
+
+    const handleScroll = () => {
+      if (frameId === null) {
+        frameId = window.requestAnimationFrame(updateMobileNavigation)
+      }
+    }
+
+    const handleViewportChange = () => {
+      if (!mediaQuery.matches) {
+        document.body.classList.remove('blog-post-scrolling-down')
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    mediaQuery.addEventListener('change', handleViewportChange)
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      mediaQuery.removeEventListener('change', handleViewportChange)
+      if (frameId !== null) window.cancelAnimationFrame(frameId)
+      document.body.classList.remove('blog-post-scrolling-down')
+    }
+  }, [])
+
+  useEffect(() => {
     // The post itself is server-rendered and passed as a prop; only the
     // per-user role check needs to run client-side (it cannot be cached).
     const fetchUserRole = async () => {
@@ -156,7 +196,7 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
                     href={`/blog/edit/${post.id}`}
                   >
                     <Icon data={Pencil} size={16} />
-                    {t('blogView.edit')}
+                    <span className="blog-post-edit-label">{t('blogView.edit')}</span>
                   </Button>
                 </ActionBar.Item>}
                 {canEditPost && <ActionBar.Item>
