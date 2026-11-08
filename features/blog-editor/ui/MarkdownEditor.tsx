@@ -81,8 +81,16 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 
     const handleMouseDown = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
+      const toolbarControl = target.closest(
+        '.g-md-toolbar button, .g-md-editor-sticky button, .g-md-toolbar [role="button"], .g-md-editor-sticky [role="button"]',
+      );
 
-      if (target.closest('.g-md-toolbar, button, a, input, select, [role="button"]')) {
+      if (toolbarControl) {
+        event.preventDefault();
+        return;
+      }
+
+      if (target.closest('button, a, input, select, [role="button"]')) {
         return;
       }
 

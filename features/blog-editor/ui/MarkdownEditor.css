@@ -4,7 +4,8 @@
   min-height: 400px;
   display: flex;
   flex-direction: column;
-  --g-md-toolbar-sticky-offset: 0px;
+  overflow: visible;
+  --g-md-toolbar-sticky-offset: env(safe-area-inset-top, 0px);
 }
 
 .markdown-editor > div,
@@ -21,11 +22,19 @@
 
 .markdown-editor .g-md-wysiwyg-editor__toolbar,
 .markdown-editor .g-md-markup-editor__toolbar {
-  position: sticky;
-  top: var(--g-spacing-2);
-  z-index: 50;
   flex-shrink: 0;
+  overflow: visible;
   background-color: var(--g-color-base-background);
+}
+
+.markdown-editor .g-md-editor-sticky_sticky {
+  max-width: calc(100vw - (2 * var(--g-spacing-4)));
+}
+
+@media (max-width: 767px) {
+  .markdown-editor .g-md-editor-sticky_sticky-active:not(.g-md-editor-sticky_clear) {
+    padding-inline: var(--g-spacing-1);
+  }
 }
 
 .markdown-editor .g-md-wysiwyg-editor__editor,
