@@ -375,11 +375,36 @@
     left: 0;
     right: 0;
   }
-}
 
-@media (max-width: 767px) {
+  .blog-post-actionbar [class*='gn-action-bar-section_type_primary'] {
+    min-width: 0;
+    padding-inline: var(--g-spacing-2);
+    column-gap: var(--g-spacing-1) !important;
+    gap: var(--g-spacing-1) !important;
+  }
+
+  .blog-post-actionbar [class*='gn-action-bar-group']:first-child {
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+  }
+
+  .blog-post-actionbar [class*='gn-action-bar-group']:last-child {
+    flex: 0 0 auto;
+    gap: 0;
+  }
+
+  .blog-post-edit-label {
+    display: none;
+  }
+
   .blog-post-body-shell.blog-post-container_padded {
     padding-top: calc(40px + var(--g-spacing-8));
+  }
+
+  body.blog-post-scrolling-down .navigation {
+    transform: translate(-50%, calc(100% + 32px));
+    pointer-events: none;
   }
 }
 

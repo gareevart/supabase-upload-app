@@ -293,6 +293,7 @@
     width: fit-content;
     max-width: calc(100vw - 32px);
     transform: translateX(-50%);
+    transition: transform 0.2s ease;
     height: 65px;
     background-color: var(--g-color-base-float);
     border: 1px solid var(--g-color-line-generic);
