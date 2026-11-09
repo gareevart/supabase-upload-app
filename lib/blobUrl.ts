@@ -14,6 +14,20 @@ export function isPublicBlogAssetPath(path: string): boolean {
   );
 }
 
+/** Gallery images use unguessable path segments so the copied URL can act as a share link. */
+export function isPublicGalleryAssetPath(path: string): boolean {
+  const segments = path.split('/');
+
+  return (
+    segments.length === 3 &&
+    segments[0] === 'profiles' &&
+    segments[1].length > 0 &&
+    segments[2].length > 0 &&
+    !segments.includes('.') &&
+    !segments.includes('..')
+  );
+}
+
 /** Convert private Vercel Blob URLs (or pathnames) to the authenticated file route. */
 export function getBlobPreviewUrl(value: string | null | undefined): string | null {
   if (!value) return null;
