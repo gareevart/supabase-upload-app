@@ -1,7 +1,7 @@
 import { get } from '@vercel/blob';
 import { NextRequest, NextResponse } from 'next/server';
 import { withApiAuth } from '@/app/auth/withApiAuth';
-import { isPublicBlogAssetPath } from '@/lib/blobUrl';
+import { isPublicBlogAssetPath, isPublicGalleryAssetPath } from '@/lib/blobUrl';
 
 const PRIVATE_CACHE_CONTROL = 'private, no-cache';
 const PUBLIC_CACHE_CONTROL = 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800';
@@ -65,13 +65,15 @@ export async function GET(request: NextRequest) {
   const path = request.nextUrl.searchParams.get('path');
   if (!path) return NextResponse.json({ error: 'No file path provided' }, { status: 400 });
 
-  if (isPublicBlogAssetPath(path)) return serveBlob(request, true);
+  if (isPublicBlogAssetPath(path) || isPublicGalleryAssetPath(path)) return serveBlob(request, true);
   return serveAuthenticatedBlob(request);
 }
 
 export async function HEAD(request: NextRequest) {
   const path = request.nextUrl.searchParams.get('path');
-  if (path && isPublicBlogAssetPath(path)) return serveHead(request, true);
+  if (path && (isPublicBlogAssetPath(path) || isPublicGalleryAssetPath(path))) {
+    return serveHead(request, true);
+  }
   return withApiAuth(async (authenticatedRequest: NextRequest) => serveHead(authenticatedRequest, false))(request);
 }
 

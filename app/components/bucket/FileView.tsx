@@ -214,10 +214,11 @@ export default function FileView() {
         tags: imageTagsMap[file.name]?.tags || []
       }));
 
-      const imageUrlEntries = imagesWithTags.map((image) => [
-        image.name,
-        image.url || `/api/storage/file?path=${encodeURIComponent(image.pathname || `profiles/${userId}/${image.name}`)}`,
-      ] as const);
+      const imageUrlEntries = imagesWithTags.map((image) => {
+        const url = image.url || `/api/storage/file?path=${encodeURIComponent(image.pathname || `profiles/${userId}/${image.name}`)}`;
+
+        return [image.name, new URL(url, window.location.origin).toString()] as const;
+      });
       const imageUrls = Object.fromEntries(imageUrlEntries);
 
       updateState({
