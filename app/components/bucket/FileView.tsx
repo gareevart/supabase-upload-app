@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import '../components.css';
 import { listFiles, deleteFile, FileObject } from '@/lib/yandexStorage';
-import { getBlobPreviewUrl } from '@/lib/blobUrl';
+import { getGalleryShareUrl, isPublicGalleryAssetPath } from '@/lib/blobUrl';
 import { supabase } from '@/lib/supabase';
 import { TrashBin, Copy } from '@gravity-ui/icons';
 import {
@@ -45,6 +45,17 @@ interface FileViewState {
   userRole: string | null;
 }
 
+interface FileViewProps {
+  sharedImagePath?: string | null;
+}
+
+function getImageStoragePath(image: ImageWithTags, userId: string | null): string | null {
+  if (image.pathname) return image.pathname;
+  if (!userId) return null;
+
+  return `profiles/${userId}/${image.name}`;
+}
+
 const BLOB_STORE_NAME = 'gareev-blob';
 const PAGINATION_THRESHOLD = 30;
 const PAGE_SIZE_OPTIONS = [30, 50, 100] as const;
@@ -67,7 +78,7 @@ function getGridColumnCount(windowWidth: number): number {
   return 2;
 }
 
-export default function FileView() {
+export default function FileView({ sharedImagePath }: FileViewProps) {
   const [state, setState] = useState<FileViewState>({
     images: [],
     loading: true,
@@ -140,6 +151,34 @@ export default function FileView() {
   }, [toaster]);
 
   const fetchImages = useCallback(async () => {
+    if (sharedImagePath) {
+      if (!isPublicGalleryAssetPath(sharedImagePath)) {
+        updateState({
+          images: [],
+          imageUrls: {},
+          userRole: null,
+          loading: false,
+          error: t('gallery.fileView.error.urlNotFound')
+        });
+        return;
+      }
+
+      const fileName = sharedImagePath.split('/').at(-1) || sharedImagePath;
+      const imageUrl = new URL(
+        `/api/storage/file?path=${encodeURIComponent(sharedImagePath)}`,
+        window.location.origin,
+      ).toString();
+
+      updateState({
+        images: [{ name: fileName, pathname: sharedImagePath }],
+        imageUrls: { [fileName]: imageUrl },
+        userRole: null,
+        loading: false,
+        error: null
+      });
+      return;
+    }
+
     if (!userId) {
       updateState({
         images: [],
@@ -236,7 +275,7 @@ export default function FileView() {
         error: err.message || t('gallery.fileView.error.loadList')
       });
     }
-  }, [userId, updateState, t]);
+  }, [sharedImagePath, userId, updateState, t]);
 
   const handleDelete = useCallback(async (fileName: string) => {
     if (!userId) {
@@ -277,7 +316,12 @@ export default function FileView() {
   }, [userId, updateState, showToast, fetchImages, t]);
 
   const handleCopyUrl = useCallback(async (fileName: string) => {
-    const url = state.imageUrls[fileName];
+    const image = state.images.find((item) => item.name === fileName);
+    const imagePath = image ? getImageStoragePath(image, userId) : null;
+    const url = imagePath
+      ? getGalleryShareUrl(imagePath, window.location.origin)
+      : null;
+
     if (!url) {
       showToast('error', t('gallery.toast.error'), t('gallery.fileView.error.urlNotFound'));
       return;
@@ -290,7 +334,7 @@ export default function FileView() {
       console.error('Error copying to clipboard:', err);
       showToast('error', t('gallery.toast.error'), t('gallery.fileView.error.copyFailed'));
     }
-  }, [state.imageUrls, showToast, t]);
+  }, [state.images, userId, showToast, t]);
 
   const handleOpenGallery = useCallback((index: number) => {
     setGalleryIndex(index);
@@ -332,6 +376,13 @@ export default function FileView() {
   useEffect(() => {
     fetchImages();
   }, [fetchImages]);
+
+  useEffect(() => {
+    if (sharedImagePath && state.images.length > 0) {
+      setGalleryIndex(0);
+      setGalleryOpen(true);
+    }
+  }, [sharedImagePath, state.images]);
 
   // Эффект для слушателей событий
   useEffect(() => {
@@ -492,7 +543,7 @@ export default function FileView() {
               >
                 <Icon data={Copy} size={18} />
               </Button>
-              {!image.name.startsWith('public/') && (
+              {!sharedImagePath && !image.name.startsWith('public/') && (
                 <Button
                   size="m"
                   view="normal-contrast"
@@ -603,6 +654,10 @@ export default function FileView() {
         >
           {state.images.map((image) => {
             const imageUrl = state.imageUrls[image.name];
+            const imagePath = getImageStoragePath(image, userId);
+            const shareUrl = imagePath
+              ? getGalleryShareUrl(imagePath, window.location.origin)
+              : null;
 
             return (
               <GalleryItem
@@ -611,9 +666,9 @@ export default function FileView() {
                   src: imageUrl,
                   name: image.name,
                 })}
-                actions={imageUrl ? [
+                actions={shareUrl ? [
                   getGalleryItemCopyLinkAction({
-                    copyUrl: imageUrl,
+                    copyUrl: shareUrl,
                     onCopy: () => showToast('success', t('gallery.toast.success'), t('gallery.toast.linkCopied')),
                   }),
                 ] : undefined}

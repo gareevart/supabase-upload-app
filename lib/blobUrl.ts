@@ -14,18 +14,26 @@ export function isPublicBlogAssetPath(path: string): boolean {
   );
 }
 
-/** Gallery images use unguessable path segments so the copied URL can act as a share link. */
+/** Gallery images use unguessable path segments so a gallery URL can act as a share link. */
 export function isPublicGalleryAssetPath(path: string): boolean {
   const segments = path.split('/');
+  const hasSafeSegments = segments.every(
+    (segment) => segment.length > 0 && segment !== '.' && segment !== '..',
+  );
+  const isCanonicalPath = segments.length === 3;
+  const isLegacyPath = segments.length === 4 && segments[1] === segments[2];
 
   return (
-    segments.length === 3 &&
     segments[0] === 'profiles' &&
-    segments[1].length > 0 &&
-    segments[2].length > 0 &&
-    !segments.includes('.') &&
-    !segments.includes('..')
+    hasSafeSegments &&
+    (isCanonicalPath || isLegacyPath)
   );
+}
+
+export function getGalleryShareUrl(path: string, origin: string): string {
+  const url = new URL('/projects/uploader', origin);
+  url.searchParams.set('image', path);
+  return url.toString();
 }
 
 /** Convert private Vercel Blob URLs (or pathnames) to the authenticated file route. */

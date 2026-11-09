@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Text } from "@gravity-ui/uikit";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useI18n } from "@/app/contexts/I18nContext";
@@ -16,19 +16,24 @@ export default function Uploader() {
   const { user, loading: isAuthLoading } = useAuth();
   const { t } = useI18n();
   const router = useRouter();
+  const [sharedImagePath, setSharedImagePath] = useState<string | null>();
   const segmentLabels = {
     projects: t('gallery.breadcrumb.projects'),
     uploader: t('gallery.breadcrumb.gallery'),
   };
 
   useEffect(() => {
-    if (!isAuthLoading && !user) {
+    setSharedImagePath(new URLSearchParams(window.location.search).get('image'));
+  }, []);
+
+  useEffect(() => {
+    if (sharedImagePath === null && !isAuthLoading && !user) {
       sessionStorage.setItem('returnUrl', '/projects/uploader');
       router.push('/auth');
     }
-  }, [isAuthLoading, user, router]);
+  }, [isAuthLoading, sharedImagePath, user, router]);
 
-  if (isAuthLoading || !user) {
+  if (sharedImagePath === undefined || (!sharedImagePath && (isAuthLoading || !user))) {
     return <GalleryPageSkeleton />;
   }
 
@@ -40,8 +45,8 @@ export default function Uploader() {
           <header className="hub-page__header uploader-page__header">
             <Text as="h1" variant="display-1">{t('gallery.title')}</Text>
           </header>
-          <FileUpload />
-          <FileView />
+          {!sharedImagePath && <FileUpload />}
+          <FileView sharedImagePath={sharedImagePath} />
         </div>
       </main>
     </div>

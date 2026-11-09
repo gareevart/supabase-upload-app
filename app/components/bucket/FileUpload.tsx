@@ -56,8 +56,8 @@ export default function FileUpload() {
 
       // Загружаем файл в хранилище
       const { error: uploadError, data } = await uploadFile(
-        file, 
-        `profiles/${userId}`,
+        file,
+        'profiles',
         userId
       );
       if (uploadError) {
