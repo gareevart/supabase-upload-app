@@ -30,6 +30,7 @@ export type CommandMenuProps = {
   placeholder?: string;
   onRun?: (id: string, query?: string) => void;
   onClose?: () => void;
+  onQueryChange?: (query: string) => void;
   autoFocus?: boolean;
   className?: string;
 };
@@ -58,6 +59,7 @@ export function CommandMenu({
   placeholder = "Type a command or search…",
   onRun,
   onClose,
+  onQueryChange,
   autoFocus = false,
   className,
 }: CommandMenuProps) {
@@ -149,7 +151,10 @@ export function CommandMenu({
           value={query}
           placeholder={placeholder}
           maxLength={4000}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            onQueryChange?.(event.target.value);
+          }}
           onKeyDown={(event) => {
             if (event.nativeEvent.isComposing || event.keyCode === 229) return;
             if (event.key === "ArrowDown" || event.key === "ArrowUp") {
