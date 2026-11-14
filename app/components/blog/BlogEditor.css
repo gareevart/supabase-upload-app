@@ -1,12 +1,30 @@
 /* PostEditor */
 .post-editor {
+  box-sizing: border-box;
   width: 100%;
   max-width: 896px;
+  min-width: 0;
   margin: 0 auto;
   padding: var(--g-spacing-4);
   display: flex;
   flex-direction: column;
   gap: var(--g-spacing-6);
+}
+
+.post-editor > *,
+.post-metadata,
+.post-metadata > *,
+.markdown-editor {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.blog-editor-page {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding-block: var(--g-spacing-8);
 }
 
 .post-editor__actions {
