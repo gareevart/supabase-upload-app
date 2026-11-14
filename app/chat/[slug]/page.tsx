@@ -1,6 +1,6 @@
 "use client";
 import { useParams, redirect } from "next/navigation";
-import { Spin, Text } from "@gravity-ui/uikit";
+import { Spin, PlaceholderContainer } from "@gravity-ui/uikit";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { AikitChatPanel } from "@/features/chat-aikit/ui";
 import "../chat-page.css";
@@ -25,9 +25,13 @@ const ChatPage = () => {
 
   if (!chatId) {
     return (
-      <div className="chat-page-not-found">
-        <Text variant="body-1">Чат не найден</Text>
-      </div>
+      <PlaceholderContainer
+        className="chat-page-not-found"
+        size="l"
+        direction="column"
+        title="Чат не найден"
+        image={{ src: '/file.svg', alt: '' }}
+      />
     );
   }
 

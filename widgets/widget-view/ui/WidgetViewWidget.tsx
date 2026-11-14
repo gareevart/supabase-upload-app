@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "@gravity-ui/icons";
-import { Button, Icon, Label, Spin, Text, useToaster } from "@gravity-ui/uikit";
+import { Button, Icon, Label, Spin, Text, PlaceholderContainer, useToaster } from "@gravity-ui/uikit";
 import { UserWidget, WidgetGrant, WidgetPermission } from "@/shared/types/widget";
 import { WidgetApi } from "@/shared/api/widgets";
 import { WidgetSandbox } from "@/features/widget-runtime/ui/WidgetSandbox";
@@ -139,12 +139,19 @@ export function WidgetViewWidget({ widgetId }: WidgetViewWidgetProps) {
 
   if (loadError || !widget) {
     return (
-      <div className="widget-view__error">
-        <Text variant="header-1">{t('widgetView.notFound')}</Text>
-        <Button view="action" size="l" onClick={() => router.push('/widgets')}>
-          {t('widgetView.backToList')}
-        </Button>
-      </div>
+      <PlaceholderContainer
+        className="widget-view__error"
+        size="l"
+        direction="column"
+        title={t('widgetView.notFound')}
+        image={{ src: '/file.svg', alt: '' }}
+        actions={[{
+          text: t('widgetView.backToList'),
+          view: 'action',
+          size: 'l',
+          onClick: () => router.push('/widgets'),
+        }]}
+      />
     );
   }
 

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import BroadcastFormWidget from '@/widgets/broadcast-form/ui/BroadcastFormWidget';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { Skeleton, Text, Button, Card } from '@gravity-ui/uikit';
+import { Skeleton, Card, PlaceholderContainer } from '@gravity-ui/uikit';
 import { useI18n } from '@/app/contexts/I18nContext';
 import '../../page-styles.css';
 import '../broadcast-pages.css';
@@ -53,13 +53,20 @@ function NewBroadcastPage() {
     return (
       <div className="page-container">
         <main className="page-main">
-          <Card className="debug-page__card">
-            <Text variant="display-1">{t('broadcast.page.accessDeniedTitle')}</Text>
-            <Text variant="body-1">{t('broadcast.page.accessDeniedDescription')}</Text>
-            <Button size="l" style={{ marginTop: '1rem' }} onClick={() => router.push('/auth/profile')}>
-              {t('broadcast.page.loginButton')}
-            </Button>
-          </Card>
+          <PlaceholderContainer
+            className="debug-page__card"
+            size="l"
+            direction="column"
+            title={t('broadcast.page.accessDeniedTitle')}
+            description={t('broadcast.page.accessDeniedDescription')}
+            image={{ src: '/file.svg', alt: '' }}
+            actions={[{
+              text: t('broadcast.page.loginButton'),
+              view: 'action',
+              size: 'l',
+              onClick: () => router.push('/auth/profile'),
+            }]}
+          />
         </main>
       </div>
     );

@@ -16,6 +16,7 @@ import {
   usePortalContainer,
   Pagination,
   Select,
+  PlaceholderContainer,
 } from '@gravity-ui/uikit';
 import {
   Gallery,
@@ -603,12 +604,13 @@ export default function FileView({ sharedImagePath }: FileViewProps) {
       {state.loading ? (
         renderSkeletons()
       ) : state.images.length === 0 ? (
-        <div className="file-view-empty">
-          {userId 
-            ? t('gallery.fileView.empty')
-            : t('gallery.fileView.emptyUnauthorized')
-          }
-        </div>
+        <PlaceholderContainer
+          className="file-view-empty"
+          size="l"
+          direction="column"
+          title={userId ? t('gallery.fileView.empty') : t('gallery.fileView.emptyUnauthorized')}
+          image={{ src: '/file.svg', alt: '' }}
+        />
       ) : (
         <>
           {renderImageGrid()}

@@ -4,7 +4,7 @@ import PostEditor from "@/app/components/blog/PostEditor"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
-import { Button, Skeleton, Card, Text } from "@gravity-ui/uikit"
+import { Skeleton, Card, PlaceholderContainer } from "@gravity-ui/uikit"
 import { useI18n } from "@/app/contexts/I18nContext"
 import "@/app/components/blog/BlogEditor.css"
 
@@ -40,17 +40,20 @@ export default function NewBlogPost() {
   if (isAuthenticated === false) {
     return (
       <div className="blog-editor-state">
-        <Card className="blog-editor-state__card">
-          <Text variant="display-1">{t('blogEditor.authRequiredTitle')}</Text>
-          <Text variant="body-1">{t('blogEditor.authRequiredText')}</Text>
-          <Button
-            size="l"
-            view="action"
-            onClick={() => router.push("/auth/profile")}
-          >
-            {t('blogEditor.logIn')}
-          </Button>
-        </Card>
+        <PlaceholderContainer
+          className="blog-editor-state__card"
+          size="l"
+          direction="column"
+          title={t('blogEditor.authRequiredTitle')}
+          description={t('blogEditor.authRequiredText')}
+          image={{ src: '/file.svg', alt: '' }}
+          actions={[{
+            text: t('blogEditor.logIn'),
+            view: 'action',
+            size: 'l',
+            onClick: () => router.push("/auth/profile"),
+          }]}
+        />
       </div>
     )
   }

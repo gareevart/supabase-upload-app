@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useCallback } from 'react';
-import { Text, TextInput, Card, Button, Skeleton, Icon, Label } from '@gravity-ui/uikit';
+import { Text, TextInput, Card, Button, Skeleton, Icon, Label, PlaceholderContainer } from '@gravity-ui/uikit';
 import { Magnifier, Tag as TagIcon } from '@gravity-ui/icons';
 import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
@@ -186,14 +186,14 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
 
   if (!userId) {
     return (
-      <Card className="image-search__auth-card">
-        <Text variant="subheader-1" className="image-search__auth-title">
-          Authorization required
-        </Text>
-        <Text variant="body-1" color="secondary">
-          Enter the system to search for your images
-        </Text>
-      </Card>
+      <PlaceholderContainer
+        className="image-search__auth-card"
+        size="l"
+        direction="column"
+        title="Authorization required"
+        description="Enter the system to search for your images"
+        image={{ src: '/file.svg', alt: '' }}
+      />
     );
   }
 
@@ -264,25 +264,25 @@ export default function ImageSearchComponent({ userId, className = "" }: ImageSe
         )}
 
         {!isLoading && hasSearched && searchResults.length === 0 && (
-          <Card className="image-search__empty-card">
-            <Text variant="subheader-1" className="image-search__empty-title">
-              Изображения не найдены
-            </Text>
-            <Text variant="body-1" color="secondary">
-              Попробуйте изменить поисковый запрос или выбрать другие теги
-            </Text>
-          </Card>
+          <PlaceholderContainer
+            className="image-search__empty-card"
+            size="l"
+            direction="column"
+            title="Изображения не найдены"
+            description="Попробуйте изменить поисковый запрос или выбрать другие теги"
+            image={{ src: '/file.svg', alt: '' }}
+          />
         )}
 
         {!isLoading && !hasSearched && (
-          <Card className="image-search__empty-card">
-            <Text variant="subheader-1" className="image-search__empty-title">
-              Поиск изображений
-            </Text>
-            <Text variant="body-1" color="secondary">
-              Введите название файла или выберите теги для поиска с��еди ваших изображений
-            </Text>
-          </Card>
+          <PlaceholderContainer
+            className="image-search__empty-card"
+            size="l"
+            direction="column"
+            title="Поиск изображений"
+            description="Введите название файла или выберите теги для поиска среди ваших изображений"
+            image={{ src: '/file.svg', alt: '' }}
+          />
         )}
 
         {!isLoading && searchResults.length > 0 && (

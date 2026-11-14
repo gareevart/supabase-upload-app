@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Card, Text, Button, Icon, Label, Spin } from '@gravity-ui/uikit';
+import { Card, Text, Button, Icon, Label, Spin, PlaceholderContainer } from '@gravity-ui/uikit';
 import { ArrowUturnCwLeft, Pencil, TrashBin, ChevronLeft } from '@gravity-ui/icons';
 import { useBroadcastDetail } from '@/features/broadcast-detail/model/useBroadcastDetail';
 import { useRouter } from 'next/navigation';
@@ -168,14 +168,19 @@ const BroadcastDetailWidget: React.FC<BroadcastDetailWidgetProps> = ({ id }) => 
 
   if (error || !broadcast) {
     return (
-      <div className="broadcast-detail__state">
-        <Text variant="body-1" color="danger">
-          {error || t('broadcastDetail.notFound')}
-        </Text>
-        <Button view="normal" size="l" onClick={handleBack}>
-          {t('broadcastDetail.backToList')}
-        </Button>
-      </div>
+      <PlaceholderContainer
+        className="broadcast-detail__state"
+        size="l"
+        direction="column"
+        title={error || t('broadcastDetail.notFound')}
+        image={{ src: '/file.svg', alt: '' }}
+        actions={[{
+          text: t('broadcastDetail.backToList'),
+          view: 'normal',
+          size: 'l',
+          onClick: handleBack,
+        }]}
+      />
     );
   }
 

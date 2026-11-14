@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useCallback } from 'react';
-import { Text, TextInput, Card, Skeleton, Icon } from '@gravity-ui/uikit';
+import { Text, TextInput, Card, Skeleton, Icon, PlaceholderContainer } from '@gravity-ui/uikit';
 import { Magnifier } from '@gravity-ui/icons';
 import { BlogPostCard } from '@/shared/ui/BlogPostCard';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -170,14 +170,14 @@ export default function SearchComponent({
           )}
 
           {!isLoading && hasSearched && searchResults.length === 0 && (
-            <Card className="search-no-results-card">
-              <Text variant="subheader-1" className="search-no-results-title">
-                {noResultsText}
-              </Text>
-              <Text variant="body-1" color="secondary">
-                {noResultsSubText}
-              </Text>
-            </Card>
+            <PlaceholderContainer
+              className="search-no-results-card"
+              size="l"
+              direction="column"
+              title={noResultsText}
+              description={noResultsSubText}
+              image={{ src: '/file.svg', alt: '' }}
+            />
           )}
 
           {!isLoading && searchResults.length > 0 && (
