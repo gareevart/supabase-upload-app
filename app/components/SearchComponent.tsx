@@ -38,6 +38,7 @@ export interface SearchComponentProps {
   onUpdate?: (query: string) => void;
   onFocusChange?: (focused: boolean) => void;
   expandOnFocus?: boolean;
+  gridView?: boolean;
 }
 
 export default function SearchComponent({
@@ -52,7 +53,8 @@ export default function SearchComponent({
   onResultClick,
   onUpdate,
   onFocusChange,
-  expandOnFocus = false
+  expandOnFocus = false,
+  gridView = false
 }: SearchComponentProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -186,13 +188,13 @@ export default function SearchComponent({
                 Найдено результатов: {searchResults.length}
               </Text>
 
-              <div className="search-results-posts">
+              <div className={!isMobile && gridView ? 'search-results-posts search-results-posts_grid' : 'search-results-posts'}>
                 {searchResults.map((post, index) => (
                   <BlogPostCard
                     key={post.id}
                     post={post}
-                    gridView={false}
-                    isPriority={index < 2}
+                    gridView={gridView}
+                    isPriority={gridView ? index < 4 : index < 2}
                     showReadButton={true}
                     readButtonText={readButtonText}
                     onReadClick={() => handleResultClick(post)}

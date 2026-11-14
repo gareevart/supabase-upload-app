@@ -173,6 +173,7 @@ function BlogPageContent() {
             onFocusChange={handleSearchFocus}
             className="blog-page__search"
             expandOnFocus={true}
+            gridView={gridView}
           />
           <div className={controlsClassName}>
             {isAuthenticated && hasDrafts && (
