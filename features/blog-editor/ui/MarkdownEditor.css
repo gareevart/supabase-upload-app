@@ -23,7 +23,8 @@
 .markdown-editor .g-md-wysiwyg-editor__toolbar,
 .markdown-editor .g-md-markup-editor__toolbar {
   flex-shrink: 0;
-  overflow: visible;
+  max-width: 100%;
+  overflow-x: auto;
   background-color: var(--g-color-base-background);
 }
 
