@@ -680,6 +680,12 @@
   gap: var(--g-spacing-6, 24px);
 }
 
+.search-results-posts_grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--g-spacing-4, 16px);
+}
+
 @media (max-width: 768px) {
   .search-results-posts {
     gap: var(--g-spacing-4, 16px);
