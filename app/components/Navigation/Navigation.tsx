@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import useSWR from 'swr';
 
 import { useRouter, usePathname } from 'next/navigation';
 import { Icon, Button, Popover, Text } from '@gravity-ui/uikit';
@@ -42,7 +43,24 @@ const Navigation: React.FC = () => {
   const [activeItem, setActiveItem] = useState('home');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
+  const [blogSearchInput, setBlogSearchInput] = useState('');
+  const [debouncedBlogQuery, setDebouncedBlogQuery] = useState('');
   const [isWidgetsPanelOpen, setIsWidgetsPanelOpen] = useState(false);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setDebouncedBlogQuery(blogSearchInput.trim()), 300);
+    return () => window.clearTimeout(timeoutId);
+  }, [blogSearchInput]);
+
+  const { data: blogSearchResults = [] } = useSWR(
+    debouncedBlogQuery.length >= 2 ? `/api/blog-posts/search?q=${encodeURIComponent(debouncedBlogQuery)}` : null,
+    async (url: string) => {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Blog search failed');
+      const data = await response.json();
+      return data.results as Array<{ id: string; title: string; excerpt: string | null; slug: string | null }>;
+    },
+  );
   const [calculatorWidgetState, setCalculatorWidgetState] = useState<WidgetAnimationState>('closed');
   const [cameraWidgetState, setCameraWidgetState] = useState<WidgetAnimationState>('closed');
   const [widgetLayers, setWidgetLayers] = useState<Record<WidgetId, number>>({
@@ -334,6 +352,19 @@ const Navigation: React.FC = () => {
         { id: 'widgets', label: 'Browse widgets', hint: 'Tools', logo: 'W', keywords: ['apps', 'tools'] },
       ],
     },
+    ...(debouncedBlogQuery.length >= 2
+      ? [{
+          id: 'blog-search',
+          label: `Результаты поиска по блогу: «${debouncedBlogQuery}»`,
+          commands: blogSearchResults.map((post) => ({
+            id: `blog-post:${post.slug ?? post.id}`,
+            label: post.title,
+            hint: post.excerpt ?? 'Открыть публикацию',
+            icon: <Icon data={BookOpen} size={18} />,
+            keywords: [debouncedBlogQuery],
+          })),
+        }]
+      : []),
     ...(searchableUserWidgets.length > 0
       ? [
           {
@@ -369,7 +400,9 @@ const Navigation: React.FC = () => {
   ];
 
   const runCommand = (id: string, query?: string) => {
-    if (id === 'ask') {
+    if (id.startsWith('blog-post:')) {
+      router.push(`/blog/${encodeURIComponent(id.slice('blog-post:'.length))}`);
+    } else if (id === 'ask') {
       const prompt = query?.trim();
       router.push(prompt ? `/chat?prompt=${encodeURIComponent(prompt)}` : '/chat');
     } else if (id === 'calculator') openCalculatorWidget();
@@ -530,8 +563,12 @@ const Navigation: React.FC = () => {
               autoFocus
               placeholder="Введите команду или задайте вопрос…"
               groups={commandGroups}
-              onClose={() => setIsCommandMenuOpen(false)}
-              onRun={runCommand}
+  onClose={() => {
+    setIsCommandMenuOpen(false);
+    setBlogSearchInput('');
+  }}
+  onQueryChange={setBlogSearchInput}
+  onRun={runCommand}
             />
           </div>
         </div>
