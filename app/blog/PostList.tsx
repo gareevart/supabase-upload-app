@@ -113,6 +113,7 @@ export const PostList = ({
         <PlaceholderContainer
           className="post-list__empty"
           size="l"
+          direction="column"
           title={emptyDescription}
           image={{ src: '/file.svg', alt: '' }}
           actions={onlyMyPosts ? [{

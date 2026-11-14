@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Button, Text, Icon, Table, TableColumnConfig, Spin, Select, DropdownMenu } from '@gravity-ui/uikit';
+import { Button, Text, Icon, Table, TableColumnConfig, Spin, Select, DropdownMenu, PlaceholderContainer } from '@gravity-ui/uikit';
 import { Plus, Pencil, TrashBin, ArrowUturnCwLeft, ChevronRight, Eye, Ellipsis } from '@gravity-ui/icons';
 import { Broadcast, BroadcastStatus } from '@/entities/broadcast/model';
 import { useBroadcastList } from '@/features/broadcast-list/model/useBroadcastList';
@@ -313,16 +313,18 @@ const BroadcastListWidget: React.FC = () => {
           </Button>
         </div>
       ) : broadcasts.length === 0 ? (
-        <div className="flex flex-col gap-2 items-center text-center py-8">
-          <Text variant="header-2" className="mb-4">Рассылки не найдены</Text>
-          <Button
-            view="action"
-            size="l"
-            onClick={handleCreateNew}
-          >
-            Создать рассылку
-          </Button>
-        </div>
+        <PlaceholderContainer
+          size="l"
+          direction="column"
+          title="Рассылки не найдены"
+          image={{ src: '/file.svg', alt: '' }}
+          actions={[{
+            text: 'Создать рассылку',
+            view: 'action',
+            size: 'l',
+            onClick: handleCreateNew,
+          }]}
+        />
       ) : (
         <Table
           data={broadcasts}

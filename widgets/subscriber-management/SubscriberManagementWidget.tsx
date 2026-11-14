@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Button, Text, Icon, Spin } from '@gravity-ui/uikit';
+import { Button, Text, Icon, Spin, PlaceholderContainer } from '@gravity-ui/uikit';
 import { Plus } from '@gravity-ui/icons';
 import { useToast } from '@/hooks/use-toast';
 import { useSubscribers } from '@/features/subscriber-management/model/useSubscribers';
@@ -174,13 +174,35 @@ export const SubscriberManagementWidget: React.FC<{ mode?: 'subscribers' | 'grou
       {mode === 'groups' ? (
         <div>
           {groups.length === 0 ? (
-            <div className="text-center py-8"><Text variant="body-1" className="mb-4">Группы не найдены</Text><Button view="action" size="l" onClick={() => setShowAddGroup(true)}>Создать первую группу</Button></div>
+            <PlaceholderContainer
+            size="l"
+            direction="column"
+            title="Группы не найдены"
+            image={{ src: '/file.svg', alt: '' }}
+            actions={[{
+              text: 'Создать первую группу',
+              view: 'action',
+              size: 'l',
+              onClick: () => setShowAddGroup(true),
+            }]}
+          />
           ) : <BroadcastGroupTable groups={groups} onManage={handleManageGroup} onDelete={handleDeleteGroup} />}
         </div>
       ) : (
         <div>
           {subscribers.length === 0 ? (
-            <div className="text-center py-8"><Text variant="body-1" className="mb-4">Подписчики не найдены</Text><Button view="action" size="l" onClick={() => setShowAddSubscriber(true)}>Добавить первого подписчика</Button></div>
+            <PlaceholderContainer
+              size="l"
+              direction="column"
+              title="Подписчики не найдены"
+              image={{ src: '/file.svg', alt: '' }}
+              actions={[{
+                text: 'Добавить первого подписчика',
+                view: 'action',
+                size: 'l',
+                onClick: () => setShowAddSubscriber(true),
+              }]}
+            />
           ) : <SubscriberTable subscribers={subscribers} />}
         </div>
       )}
