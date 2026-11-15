@@ -14,11 +14,6 @@ const MyProjects = () => {
           <Text color="primary" variant="header-1">{t('gallery.projectCardTitle')}</Text>
         </Card>
     </Link>
-    <Link href="/projects/yaart" rel="noopener noreferrer">
-        <Card type="container" size="l" className='project-card'>
-          <Text color="primary" variant="header-1">Image Generator</Text>
-        </Card>
-    </Link>
         <Link href="/chat" rel="noopener noreferrer">
         <Card
           type="container"

@@ -125,7 +125,6 @@ const response = await fetch('https://api.example.com/data');
 
 ### Generate (AI)
 - ⚠️ `/api/generate-text` - ТРЕБУЕТ МИГРАЦИИ
-- ⚠️ `/api/generate-image` - ТРЕБУЕТ МИГРАЦИИ
 
 ## Проверка миграции
 

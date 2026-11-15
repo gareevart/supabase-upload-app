@@ -31,35 +31,6 @@ const response = await fetch(`${API_BASE}/generate-text`, {
 });
 ```
 
-## 🎨 AI Генератор изображений
-
-**Описание**: Создание изображений с помощью нейросетей по текстовому описанию.
-
-**Возможности**:
-- Поддержка различных размеров (512x512, 768x768, 1024x1024)
-- Выбор между моделями Kandinsky и DALL-E
-- Скачивание и шаринг сгенерированных изображений
-- Отображение метаинформации о генерации
-
-**API Endpoint**: `/api/app-api/generate-image`
-
-**Пример использования**:
-```javascript
-const response = await fetch(`${API_BASE}/generate-image`, {
-    method: 'POST',
-    headers: {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-        prompt: 'Красивый закат над морем',
-        width: 1024,
-        height: 1024,
-        model: 'kandinsky'
-    })
-});
-```
-
 ## 💬 Чат с AI
 
 **Описание**: Интерактивный чат-интерфейс для общения с AI ассистентом.

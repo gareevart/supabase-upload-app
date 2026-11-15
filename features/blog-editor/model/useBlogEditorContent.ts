@@ -30,11 +30,7 @@ export const useBlogEditorContent = (initialPost?: any, onSave?: (published: boo
   const [featuredImageUrl, setFeaturedImageUrl] = useState<string | null>(initialPost?.featured_image ?? null);
   const [showFeaturedImage, setShowFeaturedImage] = useState<boolean>(initialPost?.show_featured_image ?? true);
   const [isLoading, setIsLoading] = useState(false);
-  const [imagePrompt, setImagePrompt] = useState('');
-  const [showGenerationDialog, setShowGenerationDialog] = useState(false);
-  const [generatedImagePreview, setGeneratedImagePreview] = useState('');
-  const [activeImageTab, setActiveImageTab] = useState('prompt');
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [showGalleryDialog, setShowGalleryDialog] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   const router = useRouter();
@@ -171,33 +167,6 @@ export const useBlogEditorContent = (initialPost?: any, onSave?: (published: boo
     setFeaturedImageUrl(null);
   };
 
-  const handleGenerateImage = async () => {
-    if (!imagePrompt.trim()) {
-      toast({ title: 'Error', description: 'Please enter a prompt for image generation', variant: 'destructive' });
-      return;
-    }
-    try {
-      setIsGenerating(true);
-      const response = await fetch('/api/generate-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: imagePrompt }),
-      });
-      if (!response.ok) throw new Error('Failed to generate image');
-      const data = await response.json();
-      setGeneratedImagePreview(data.imageData);
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to generate image', variant: 'destructive' });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleApplyGeneratedImage = () => {
-    setFeaturedImageUrl(generatedImagePreview);
-    setShowGenerationDialog(false);
-  };
-
   const handleSelectGalleryImage = (imageUrl: string) => {
     if (!imageUrl || typeof imageUrl !== 'string') {
       toast({ title: 'Ошибка', description: 'Неверный URL изображения', variant: 'destructive' });
@@ -205,7 +174,7 @@ export const useBlogEditorContent = (initialPost?: any, onSave?: (published: boo
     }
     setFeaturedImageUrl(imageUrl);
     toast({ title: 'Изображение установлено', description: 'Изображение из галереи установлено как обложка' });
-    setShowGenerationDialog(false);
+    setShowGalleryDialog(false);
   };
 
   return {
@@ -216,16 +185,11 @@ export const useBlogEditorContent = (initialPost?: any, onSave?: (published: boo
     featuredImageUrl,
     showFeaturedImage, setShowFeaturedImage,
     isLoading,
-    imagePrompt, setImagePrompt,
-    showGenerationDialog, setShowGenerationDialog,
-    generatedImagePreview,
-    activeImageTab, setActiveImageTab,
-    isGenerating, isUploading,
+    showGalleryDialog, setShowGalleryDialog,
+    isUploading,
     handleContentChange,
     handleFeaturedImageUpload,
     handleDeleteFeaturedImage,
-    handleGenerateImage,
-    handleApplyGeneratedImage,
     handleSelectGalleryImage,
     savePost,
   };

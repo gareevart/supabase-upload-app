@@ -6,8 +6,6 @@ export interface Profile {
     website: string | null;
     theme: string | null;
     role: string | null;
-    daily_image_quota_remaining?: number;
-    quota_last_updated?: string;
 }
 
 export interface Subscription {
