@@ -6,15 +6,11 @@ import withAuth from '../withAuth';
 import { useAuth } from '@/app/contexts/AuthContext';
 import '../Auth.css';
 
-// Import custom hooks
 import { useClientSideRendering, useUserProfile } from './hooks/useProfile';
 import { useSubscription } from './hooks/useSubscription';
-import { useQuotaInfo } from './hooks/useQuota';
 
-// Import components
 import { ProfileView } from './components/ProfileView';
 import { SubscriptionsPanel } from '@/features/subscriptions/ui';
-import { QuotaSection } from './components/QuotaSection';
 import { ApiKeysPanelConnected } from '@/features/api-keys/ui';
 import { DangerZoneSection } from './components/DangerZoneSection';
 
@@ -27,7 +23,6 @@ const Profile = () => {
     // Use custom hooks
     const { profile, setProfile, loading, saveProfile } = useUserProfile(user?.id, mounted);
     const { subscription, isSubscriptionLoading, setEmailNewsletterEnabled } = useSubscription(user?.id, user?.email, mounted);
-    const dailyQuota = useQuotaInfo(user?.id, mounted);
 
     const handleSaveProfile = async () => {
         if (!user || !profile) return;
@@ -85,7 +80,6 @@ const Profile = () => {
                     fullWidth
                 />
 
-                <QuotaSection dailyQuota={dailyQuota} />
                 <ApiKeysPanelConnected fullWidth />
 
                 <DangerZoneSection email={user.email} role={profile.role} />

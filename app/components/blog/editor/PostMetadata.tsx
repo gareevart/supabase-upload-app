@@ -18,18 +18,10 @@ interface PostMetadataProps {
   setShowFeaturedImage: (show: boolean) => void;
   onDeleteFeaturedImage: () => Promise<void>;
   onUploadFeaturedImage: (file: File) => void;
-  onGenerateImage: () => Promise<void>;
-  onApplyGeneratedImage: () => void;
   onSelectGalleryImage: (imageUrl: string) => void;
-  isGenerating: boolean;
   isUploading: boolean;
-  imagePrompt: string;
-  setImagePrompt: (value: string) => void;
-  generatedImagePreview: string | null;
-  activeImageTab: string;
-  setActiveImageTab: (tab: string) => void;
-  showGenerationDialog: boolean;
-  setShowGenerationDialog: (show: boolean) => void;
+  showGalleryDialog: boolean;
+  setShowGalleryDialog: (show: boolean) => void;
 }
 
 const PostMetadata: React.FC<PostMetadataProps> = ({
@@ -44,18 +36,10 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
   setShowFeaturedImage,
   onDeleteFeaturedImage,
   onUploadFeaturedImage,
-  onGenerateImage,
-  onApplyGeneratedImage,
   onSelectGalleryImage,
-  isGenerating,
   isUploading,
-  imagePrompt,
-  setImagePrompt,
-  generatedImagePreview,
-  activeImageTab,
-  setActiveImageTab,
-  showGenerationDialog,
-  setShowGenerationDialog
+  showGalleryDialog,
+  setShowGalleryDialog
 }) => {
   const { t } = useI18n();
 
@@ -94,18 +78,10 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
         featuredImageUrl={featuredImageUrl}
         onDeleteImage={onDeleteFeaturedImage}
         onUploadImage={onUploadFeaturedImage}
-        onGenerateImage={onGenerateImage}
-        onApplyGeneratedImage={onApplyGeneratedImage}
         onSelectGalleryImage={onSelectGalleryImage}
-        isGenerating={isGenerating}
         isUploading={isUploading}
-        imagePrompt={imagePrompt}
-        setImagePrompt={setImagePrompt}
-        generatedImagePreview={generatedImagePreview}
-        activeImageTab={activeImageTab}
-        setActiveImageTab={setActiveImageTab}
-        showGenerationDialog={showGenerationDialog}
-        setShowGenerationDialog={setShowGenerationDialog}
+        showGalleryDialog={showGalleryDialog}
+        setShowGalleryDialog={setShowGalleryDialog}
       />
 
       {featuredImageUrl && (

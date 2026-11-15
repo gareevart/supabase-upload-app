@@ -24,16 +24,11 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
     featuredImageUrl,
     showFeaturedImage, setShowFeaturedImage,
     isLoading,
-    imagePrompt, setImagePrompt,
-    showGenerationDialog, setShowGenerationDialog,
-    generatedImagePreview,
-    activeImageTab, setActiveImageTab,
-    isGenerating, isUploading,
+    showGalleryDialog, setShowGalleryDialog,
+    isUploading,
     handleContentChange,
     handleFeaturedImageUpload,
     handleDeleteFeaturedImage,
-    handleGenerateImage,
-    handleApplyGeneratedImage,
     handleSelectGalleryImage,
     savePost
   } = useBlogEditorContent(initialPost, onSave);
@@ -68,18 +63,10 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
         setShowFeaturedImage={setShowFeaturedImage}
         onDeleteFeaturedImage={handleDeleteFeaturedImage}
         onUploadFeaturedImage={handleFeaturedImageUpload}
-        onGenerateImage={handleGenerateImage}
-        onApplyGeneratedImage={handleApplyGeneratedImage}
         onSelectGalleryImage={handleSelectGalleryImage}
-        isGenerating={isGenerating}
         isUploading={isUploading}
-        imagePrompt={imagePrompt}
-        setImagePrompt={setImagePrompt}
-        generatedImagePreview={generatedImagePreview}
-        activeImageTab={activeImageTab}
-        setActiveImageTab={setActiveImageTab}
-        showGenerationDialog={showGenerationDialog}
-        setShowGenerationDialog={setShowGenerationDialog}
+        showGalleryDialog={showGalleryDialog}
+        setShowGalleryDialog={setShowGalleryDialog}
       />
       <MarkdownEditor
         content={markdownContent}

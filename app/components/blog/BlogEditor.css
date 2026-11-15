@@ -75,11 +75,7 @@
   gap: var(--g-spacing-2);
 }
 
-/* Image generation / gallery dialog */
-.image-dialog__tabs {
-  margin-bottom: var(--g-spacing-6);
-}
-
+/* Gallery dialog */
 .image-dialog__section {
   display: flex;
   flex-direction: column;
@@ -90,23 +86,6 @@
 .image-dialog__label {
   display: block;
   margin-bottom: var(--g-spacing-2);
-}
-
-.image-dialog__preview {
-  position: relative;
-  margin-top: var(--g-spacing-4);
-}
-
-.image-dialog__preview-img {
-  width: 100%;
-  height: auto;
-  border-radius: var(--g-border-radius-l);
-}
-
-.image-dialog__regenerate {
-  position: absolute;
-  top: var(--g-spacing-2);
-  right: var(--g-spacing-2);
 }
 
 .image-dialog__gallery {

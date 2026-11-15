@@ -94,20 +94,6 @@ console.log('Мои приложения:', data.apps);
 ```
 - **Ответ:** `{ text: "...", model: "...", usage: {...} }`
 
-#### `POST /api/app-api/generate-image`
-Генерация изображений с помощью AI
-- **Права:** `generate_image`
-- **Тело запроса:**
-```json
-{
-  "prompt": "Красивый закат над морем",
-  "width": 1024,
-  "height": 1024,
-  "model": "kandinsky"
-}
-```
-- **Ответ:** `{ image_url: "...", prompt: "...", dimensions: {...} }`
-
 ## 💡 **Примеры использования**
 
 ### **Простое приложение с AI**

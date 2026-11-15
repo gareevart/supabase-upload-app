@@ -64,7 +64,7 @@
   },
   "feedbackPolicy": {
     "depth": "standard",
-    "note": "Toaster (useToaster, ~5s), Spin l/m/xl, Skeleton в списках, Alert inline (yaart, api-keys), PlaceholderContainer для empty."
+    "note": "Toaster (useToaster, ~5s), Spin l/m/xl, Skeleton в списках, Alert inline (api-keys), PlaceholderContainer для empty."
   },
   "componentStyling": {
     "buttonContent": "text-icon",
@@ -178,7 +178,7 @@
     "i18n обязателен en+ru: *.i18n/en.json + ru.json, ключи с префиксом компонента, useI18n().",
     "Новый UI: только @gravity-ui/uikit + @gravity-ui/icons; без Tailwind в новых pages/widgets/features.",
     "Стили: локальный Component.css, BEM-префикс; токены из styles/globals.css и styles/styles.css.",
-    "Ошибки AI-сервисов (quota/403): пользователю — короткое извинение без технического JSON (см. yaart / generate-image).",
+    "Ошибки AI-сервисов (quota/403): пользователю — короткое извинение без технического JSON.",
     "Desktop canvas: html и .g-root.app-canvas с --g-color-base-float-announcement под sidebar gutter."
   ],
   "provenance": {
