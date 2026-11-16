@@ -18,6 +18,8 @@
   "blogEditor.selectFromGalleryButton": "Choose from gallery",
   "blogEditor.saving": "Saving...",
   "blogEditor.selectFromGallery": "Select an image from the gallery:",
+  "blogEditor.galleryOtherPosts": "Post covers",
+  "blogEditor.galleryMyImages": "My gallery",
   "blogEditor.close": "Close",
   "blogEditor.galleryEmpty": "No images available in storage",
   "blogEditor.imageSelectedTitle": "Image selected",

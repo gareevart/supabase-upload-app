@@ -76,6 +76,15 @@
 }
 
 /* Gallery dialog */
+@media (max-width: 639px) {
+  [role="dialog"] {
+    box-sizing: border-box;
+    width: calc(100vw - 2rem);
+    max-width: calc(100vw - 2rem);
+    margin-inline: 1rem;
+  }
+}
+
 .image-dialog__section {
   display: flex;
   flex-direction: column;
@@ -98,6 +107,13 @@
 }
 
 /* StoredImageGallery */
+.image-gallery__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--g-spacing-2);
+  margin-bottom: var(--g-spacing-3);
+}
+
 .image-gallery {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
