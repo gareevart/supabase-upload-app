@@ -18,6 +18,8 @@
   "blogEditor.selectFromGalleryButton": "Выбрать из галереи",
   "blogEditor.saving": "Сохранение...",
   "blogEditor.selectFromGallery": "Выберите изображение из галереи:",
+  "blogEditor.galleryOtherPosts": "Обложки постов",
+  "blogEditor.galleryMyImages": "Моя галерея",
   "blogEditor.close": "Закрыть",
   "blogEditor.galleryEmpty": "Нет доступных изображений в хранилище",
   "blogEditor.imageSelectedTitle": "Изображение выбрано",

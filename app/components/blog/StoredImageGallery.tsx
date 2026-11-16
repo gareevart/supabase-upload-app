@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/app/contexts/I18nContext";
 import "./BlogEditor.css";
 import { getBlobPreviewUrl } from "@/lib/blobUrl";
+import { supabase } from '@/lib/supabase';
 
 interface StoredImageGalleryProps {
   onImageSelect: (imageUrl: string) => void;
@@ -19,16 +20,33 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
   const [images, setImages] = useState<Array<{ name: string; url: string; pathname: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+  const [gallerySource, setGallerySource] = useState<'posts' | 'mine'>('posts');
   const { toast } = useToast();
   const { t } = useI18n();
+  const sourceTabs = (
+    <div className="image-gallery__tabs" role="tablist" aria-label={t('blogEditor.selectFromGallery')}>
+      <Button size="m" view={gallerySource === 'posts' ? 'normal' : 'outlined'} role="tab" aria-selected={gallerySource === 'posts'} onClick={() => setGallerySource('posts')}>
+        {t('blogEditor.galleryOtherPosts')}
+      </Button>
+      <Button size="m" view={gallerySource === 'mine' ? 'normal' : 'outlined'} role="tab" aria-selected={gallerySource === 'mine'} onClick={() => setGallerySource('mine')}>
+        {t('blogEditor.galleryMyImages')}
+      </Button>
+    </div>
+  );
 
   const fetchImages = useCallback(async () => {
     try {
       setIsLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      const prefix = gallerySource === 'posts' ? 'featured/' : user ? `profiles/${user.id}/` : null;
+      if (!prefix) {
+        setImages([]);
+        return;
+      }
 
-      // Fetch list of files from Yandex Cloud Storage via API
-      // Look for images in the 'featured' folder where blog post images are stored
-      const response = await fetch('/api/storage/list?prefix=featured/&bucket=public-gareevde');
+      const response = await fetch(`/api/storage/list?prefix=${encodeURIComponent(prefix)}`, {
+        headers: gallerySource === 'mine' && user ? { 'x-user-id': user.id } : undefined,
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -67,7 +85,7 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Keep toast out of deps to avoid an infinite loop
+  }, [gallerySource]);
 
   useEffect(() => {
     fetchImages();
@@ -75,19 +93,25 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
 
   if (isLoading) {
     return (
-      <div className="image-gallery__skeleton">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <Skeleton key={i} style={{ width: '100%', aspectRatio: '1 / 1' }} />
-        ))}
-      </div>
+      <>
+        {sourceTabs}
+        <div className="image-gallery__skeleton">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Skeleton key={i} style={{ width: '100%', aspectRatio: '1 / 1' }} />
+          ))}
+        </div>
+      </>
     );
   }
 
   if (images.length === 0) {
     return (
-      <div className="image-gallery__empty">
-        <Text variant="body-1" color="secondary">{t('blogEditor.galleryEmpty')}</Text>
-      </div>
+      <>
+        {sourceTabs}
+        <div className="image-gallery__empty">
+          <Text variant="body-1" color="secondary">{t('blogEditor.galleryEmpty')}</Text>
+        </div>
+      </>
     );
   }
 
@@ -101,7 +125,9 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
   };
 
   return (
-    <div className="image-gallery">
+    <>
+      {sourceTabs}
+      <div className="image-gallery">
       {images.map((image) => {
         const isSelected = selectedImageUrl === image.url;
         return (
@@ -127,7 +153,7 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
                 <Icon data={Check} size={16} />
               </div>
             )}
-            <Button
+            {gallerySource === 'mine' && <Button
               size="s"
               view="outlined-danger"
               onClick={async (event) => {
@@ -147,11 +173,12 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
               }}
             >
               Удалить
-            </Button>
+            </Button>}
           </div>
         );
       })}
-    </div>
+      </div>
+    </>
   );
 };
 
