@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Button } from '@gravity-ui/uikit';
+import { Breadcrumbs, Button, DropdownMenu } from '@gravity-ui/uikit';
+import { ActionBar } from '@gravity-ui/navigation';
 import { useBlogEditorContent } from "@/features/blog-editor/model/useBlogEditorContent";
 import { useI18n } from "@/app/contexts/I18nContext";
 import PostMetadata from "./editor/PostMetadata";
@@ -51,57 +52,78 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
 
   return (
     <div className="post-editor">
-      <PostMetadata
-        title={title}
-        setTitle={setTitle}
-        slug={slug}
-        setSlug={setSlug}
-        excerpt={excerpt}
-        setExcerpt={setExcerpt}
-        featuredImageUrl={featuredImageUrl}
-        showFeaturedImage={showFeaturedImage}
-        setShowFeaturedImage={setShowFeaturedImage}
-        onDeleteFeaturedImage={handleDeleteFeaturedImage}
-        onUploadFeaturedImage={handleFeaturedImageUpload}
-        onSelectGalleryImage={handleSelectGalleryImage}
-        isUploading={isUploading}
-        showGalleryDialog={showGalleryDialog}
-        setShowGalleryDialog={setShowGalleryDialog}
-      />
-      <MarkdownEditor
-        content={markdownContent}
-        onChange={handleContentChange}
-        placeholder={t('blogEditor.contentPlaceholder')}
-      />
+      <div className="post-editor__actionbar">
+        <ActionBar aria-label={t('blogEditor.postActions')}>
+          <ActionBar.Section className="post-editor__actionbar-section">
+            <ActionBar.Group className="post-editor__breadcrumb-group" stretchContainer>
+              <ActionBar.Item className="post-editor__breadcrumb-item">
+                <Breadcrumbs>
+                  <Breadcrumbs.Item>
+                    {t(initialPost ? 'blogEditor.editPost' : 'blogEditor.createPost')}
+                  </Breadcrumbs.Item>
+                </Breadcrumbs>
+              </ActionBar.Item>
+            </ActionBar.Group>
 
-      <div className="post-editor__actions">
-        <Button
-          type="button"
-          size="l"
-          view="action"
-          loading={isLoading}
-          onClick={handlePublish}
-        >
-          {t('blogEditor.publish')}
-        </Button>
-        <Button
-          type="button"
-          size="l"
-          view="flat"
-          loading={isLoading}
-          onClick={handleSaveDraft}
-        >
-          {t('blogEditor.saveDraft')}
-        </Button>
-        <Button
-          type="button"
-          size="l"
-          view="flat"
-          disabled={isLoading}
-          onClick={handleCancel}
-        >
-          {t('blogEditor.cancel')}
-        </Button>
+            <ActionBar.Group className="post-editor__action-group" pull="right">
+              <ActionBar.Item>
+                <Button
+                  type="button"
+                  size="l"
+                  view="action"
+                  loading={isLoading}
+                  onClick={handlePublish}
+                >
+                  {t('blogEditor.publish')}
+                </Button>
+              </ActionBar.Item>
+              <ActionBar.Item>
+                <DropdownMenu
+                  size="l"
+                  disabled={isLoading}
+                  defaultSwitcherProps={{
+                    'aria-label': t('blogEditor.moreActions'),
+                  }}
+                  items={[
+                    {
+                      text: t('blogEditor.saveDraft'),
+                      action: handleSaveDraft,
+                    },
+                    {
+                      text: t('blogEditor.cancel'),
+                      action: handleCancel,
+                    },
+                  ]}
+                />
+              </ActionBar.Item>
+            </ActionBar.Group>
+          </ActionBar.Section>
+        </ActionBar>
+      </div>
+
+      <div className="post-editor__content">
+        <PostMetadata
+          title={title}
+          setTitle={setTitle}
+          slug={slug}
+          setSlug={setSlug}
+          excerpt={excerpt}
+          setExcerpt={setExcerpt}
+          featuredImageUrl={featuredImageUrl}
+          showFeaturedImage={showFeaturedImage}
+          setShowFeaturedImage={setShowFeaturedImage}
+          onDeleteFeaturedImage={handleDeleteFeaturedImage}
+          onUploadFeaturedImage={handleFeaturedImageUpload}
+          onSelectGalleryImage={handleSelectGalleryImage}
+          isUploading={isUploading}
+          showGalleryDialog={showGalleryDialog}
+          setShowGalleryDialog={setShowGalleryDialog}
+        />
+        <MarkdownEditor
+          content={markdownContent}
+          onChange={handleContentChange}
+          placeholder={t('blogEditor.contentPlaceholder')}
+        />
       </div>
     </div>
   );
