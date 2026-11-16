@@ -1,8 +1,13 @@
 {
   "blogEditor.publish": "Publish",
   "blogEditor.saveDraft": "Save as draft",
+  "blogEditor.cancel": "Cancel",
   "blogEditor.create": "Create",
   "blogEditor.save": "Save",
+  "blogEditor.createPost": "Create post",
+  "blogEditor.editPost": "Edit post",
+  "blogEditor.postActions": "Post actions",
+  "blogEditor.moreActions": "More actions",
   "blogEditor.contentPlaceholder": "Type your post content here...",
   "blogEditor.titleLabel": "Title",
   "blogEditor.titlePlaceholder": "Post title",

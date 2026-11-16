@@ -1,8 +1,13 @@
 {
   "blogEditor.publish": "Опубликовать",
   "blogEditor.saveDraft": "Сохранить черновик",
+  "blogEditor.cancel": "Отмена",
   "blogEditor.create": "Создать",
   "blogEditor.save": "Сохранить",
+  "blogEditor.createPost": "Создание поста",
+  "blogEditor.editPost": "Редактирование поста",
+  "blogEditor.postActions": "Действия с постом",
+  "blogEditor.moreActions": "Другие действия",
   "blogEditor.contentPlaceholder": "Введите содержимое поста...",
   "blogEditor.titleLabel": "Заголовок",
   "blogEditor.titlePlaceholder": "Заголовок поста",
