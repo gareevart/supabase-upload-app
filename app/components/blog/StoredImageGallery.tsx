@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react';
-import { Button, Card, Skeleton, Icon, Text } from '@gravity-ui/uikit';
+import { Button, Card, Skeleton, Icon, SegmentedRadioGroup, Text } from '@gravity-ui/uikit';
 import { deleteFile } from '@/lib/yandexStorage';
 import { Check } from '@gravity-ui/icons';
 import { useToast } from "@/hooks/use-toast";
@@ -24,14 +24,17 @@ const StoredImageGallery: React.FC<StoredImageGalleryProps> = ({ onImageSelect }
   const { toast } = useToast();
   const { t } = useI18n();
   const sourceTabs = (
-    <div className="image-gallery__tabs" role="tablist" aria-label={t('blogEditor.selectFromGallery')}>
-      <Button size="m" view={gallerySource === 'posts' ? 'normal' : 'outlined'} role="tab" aria-selected={gallerySource === 'posts'} onClick={() => setGallerySource('posts')}>
-        {t('blogEditor.galleryOtherPosts')}
-      </Button>
-      <Button size="m" view={gallerySource === 'mine' ? 'normal' : 'outlined'} role="tab" aria-selected={gallerySource === 'mine'} onClick={() => setGallerySource('mine')}>
-        {t('blogEditor.galleryMyImages')}
-      </Button>
-    </div>
+    <SegmentedRadioGroup
+      className="image-gallery__tabs"
+      aria-label={t('blogEditor.selectFromGallery')}
+      value={gallerySource}
+      onUpdate={setGallerySource}
+      width="max"
+      options={[
+        { value: 'posts', content: t('blogEditor.galleryOtherPosts') },
+        { value: 'mine', content: t('blogEditor.galleryMyImages') },
+      ]}
+    />
   );
 
   const fetchImages = useCallback(async () => {
