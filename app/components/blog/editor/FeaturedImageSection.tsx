@@ -98,6 +98,7 @@ const FeaturedImageSection: React.FC<FeaturedImageSectionProps> = ({
       )}
 
       <Dialog
+        className="image-dialog"
         size="s"
         open={showGalleryDialog}
         onClose={() => setShowGalleryDialog(false)}
