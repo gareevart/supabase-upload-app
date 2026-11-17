@@ -69,7 +69,6 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
               <ActionBar.Item>
                 <Button
                   type="button"
-                  size="l"
                   view="action"
                   loading={isLoading}
                   onClick={handlePublish}
@@ -79,7 +78,6 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
               </ActionBar.Item>
               <ActionBar.Item>
                 <DropdownMenu
-                  size="l"
                   disabled={isLoading}
                   defaultSwitcherProps={{
                     'aria-label': t('blogEditor.moreActions'),
