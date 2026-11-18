@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 import { WidgetApi } from '@/shared/api/widgets';
 import { UserWidget } from '@/shared/types/widget';
 
@@ -21,6 +22,13 @@ export function useWidgets(scope: 'my' | 'public') {
   const refresh = useCallback(async () => {
     try {
       setError(null);
+      if (scope === 'my') {
+        const { data: auth } = await supabase.auth.getSession();
+        if (!auth.session?.user) {
+          setWidgets([]);
+          return;
+        }
+      }
       const { data } =
         scope === 'my' ? await WidgetApi.getMyWidgets() : await WidgetApi.getPublicWidgets();
       setWidgets(data);
