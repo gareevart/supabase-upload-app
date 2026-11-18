@@ -33,19 +33,21 @@ export async function GET(
       }
     );
     
-    // Get user session
-    const { data: { session }, error: sessionError } = await supabaseServerWithAuth.auth.getSession();
+    // Verify the requesting user
+    const { data: { user }, error: authError } = await supabaseServerWithAuth.auth.getUser();
     
-    if (sessionError || !session) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if user has admin or editor role
     const { data: profile, error: profileError } = await supabaseServer
-      .from('profiles')
+      .from('user_roles')
       .select('role')
-      .eq('id', session.user.id)
-      .single();
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'editor'])
+      .limit(1)
+      .maybeSingle();
 
     if (profileError || !profile || !['admin', 'editor'].includes(profile.role)) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
@@ -105,19 +107,21 @@ export async function POST(
       }
     );
     
-    // Get user session
-    const { data: { session }, error: sessionError } = await supabaseServerWithAuth.auth.getSession();
+    // Verify the requesting user
+    const { data: { user }, error: authError } = await supabaseServerWithAuth.auth.getUser();
     
-    if (sessionError || !session) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if user has admin or editor role
     const { data: profile, error: profileError } = await supabaseServer
-      .from('profiles')
+      .from('user_roles')
       .select('role')
-      .eq('id', session.user.id)
-      .single();
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'editor'])
+      .limit(1)
+      .maybeSingle();
 
     if (profileError || !profile || !['admin', 'editor'].includes(profile.role)) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
@@ -236,19 +240,21 @@ export async function DELETE(
       }
     );
     
-    // Get user session
-    const { data: { session }, error: sessionError } = await supabaseServerWithAuth.auth.getSession();
+    // Verify the requesting user
+    const { data: { user }, error: authError } = await supabaseServerWithAuth.auth.getUser();
     
-    if (sessionError || !session) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if user has admin or editor role
     const { data: profile, error: profileError } = await supabaseServer
-      .from('profiles')
+      .from('user_roles')
       .select('role')
-      .eq('id', session.user.id)
-      .single();
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'editor'])
+      .limit(1)
+      .maybeSingle();
 
     if (profileError || !profile || !['admin', 'editor'].includes(profile.role)) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });

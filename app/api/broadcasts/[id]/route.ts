@@ -46,10 +46,12 @@ export const GET = withApiAuth(async (request: NextRequest, user: { id: string }
 
     // Get user profile to check role
     const { data: profile } = await supabase
-      .from('profiles')
+      .from('user_roles')
       .select('role')
-      .eq('id', user.id)
-      .single();
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'editor'])
+      .limit(1)
+      .maybeSingle();
 
     // Check if user has admin or editor role
     if (!profile || !profile.role || !['admin', 'editor'].includes(profile.role)) {
@@ -129,10 +131,12 @@ export const PUT = withApiAuth(async (request: NextRequest, user: { id: string }
 
     // Get user profile to check role
     const { data: profile } = await supabase
-      .from('profiles')
+      .from('user_roles')
       .select('role')
-      .eq('id', user.id)
-      .single();
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'editor'])
+      .limit(1)
+      .maybeSingle();
 
     // Check if user has admin or editor role
     if (!profile || !profile.role || !['admin', 'editor'].includes(profile.role)) {
@@ -210,10 +214,12 @@ export const DELETE = withApiAuth(async (request: NextRequest, user: { id: strin
 
     // Get user profile to check role
     const { data: profile } = await supabase
-      .from('profiles')
+      .from('user_roles')
       .select('role')
-      .eq('id', user.id)
-      .single();
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'editor'])
+      .limit(1)
+      .maybeSingle();
 
     console.log('DELETE broadcast - User profile:', profile);
 

@@ -136,10 +136,12 @@ export const DELETE = withApiAuth(async (_req: NextRequest, user: { id: string }
 
   // Administrators cannot delete their own account.
   const { data: profile, error: profileError } = await admin
-    .from('profiles')
+    .from('user_roles')
     .select('role')
-    .eq('id', user.id)
-    .single();
+    .eq('user_id', user.id)
+    .eq('role', 'admin')
+    .limit(1)
+    .maybeSingle();
 
   if (profileError) {
     return NextResponse.json(

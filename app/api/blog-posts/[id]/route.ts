@@ -114,10 +114,12 @@ const canManagePost = async (userId: string) => {
   });
 
   const { data: profile, error } = await supabaseAdmin
-    .from('profiles')
+    .from('user_roles')
     .select('role')
-    .eq('id', userId)
-    .single();
+    .eq('user_id', userId)
+    .in('role', ['admin', 'editor'])
+    .limit(1)
+    .maybeSingle();
 
   if (error) {
     console.error('Error fetching user role:', error);

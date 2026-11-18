@@ -27,21 +27,23 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    // Get user session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    console.log('Session check:', { hasSession: !!session, error: sessionError });
+    // Verify the requesting user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    console.log('Session check:', { hasUser: !!user, error: authError });
     
-    if (sessionError || !session) {
+    if (authError || !user) {
       console.log('No valid session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if user has admin or editor role
     const { data: profile } = await supabaseServer
-      .from('profiles')
+      .from('user_roles')
       .select('role')
-      .eq('id', session.user.id)
-      .single();
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'editor'])
+      .limit(1)
+      .maybeSingle();
 
     if (!profile || !['admin', 'editor'].includes(profile.role)) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
@@ -106,21 +108,23 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    // Get user session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    console.log('Session check:', { hasSession: !!session, error: sessionError });
+    // Verify the requesting user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    console.log('Session check:', { hasUser: !!user, error: authError });
     
-    if (sessionError || !session) {
+    if (authError || !user) {
       console.log('No valid session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if user has admin or editor role
     const { data: profile } = await supabaseServer
-      .from('profiles')
+      .from('user_roles')
       .select('role')
-      .eq('id', session.user.id)
-      .single();
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'editor'])
+      .limit(1)
+      .maybeSingle();
 
     if (!profile || !['admin', 'editor'].includes(profile.role)) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });

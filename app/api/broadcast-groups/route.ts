@@ -27,24 +27,26 @@ export async function GET(request: NextRequest) {
       }
     );
     
-    // Get user session using server client
-    const { data: { session }, error: sessionError } = await supabaseServerWithAuth.auth.getSession();
+    // Verify the requesting user using server client
+    const { data: { user }, error: authError } = await supabaseServerWithAuth.auth.getUser();
     
-    console.log('Session check:', { hasSession: !!session, sessionError });
+    console.log('Session check:', { hasUser: !!user, authError });
     
-    if (sessionError || !session) {
-      console.log('No session or session error:', sessionError);
+    if (authError || !user) {
+      console.log('No session or session error:', authError);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if user has admin or editor role
     const { data: profile, error: profileError } = await supabaseServer
-      .from('profiles')
+      .from('user_roles')
       .select('role')
-      .eq('id', session.user.id)
-      .single();
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'editor'])
+      .limit(1)
+      .maybeSingle();
 
-    console.log('Profile check:', { profile, profileError, userId: session.user.id });
+    console.log('Profile check:', { profile, profileError, userId: user.id });
 
     if (profileError) {
       console.error('Profile fetch error:', profileError);
@@ -150,24 +152,26 @@ export async function POST(request: NextRequest) {
       }
     );
     
-    // Get user session using server client
-    const { data: { session }, error: sessionError } = await supabaseServerWithAuth.auth.getSession();
+    // Verify the requesting user using server client
+    const { data: { user }, error: authError } = await supabaseServerWithAuth.auth.getUser();
     
-    console.log('Session check:', { hasSession: !!session, sessionError });
+    console.log('Session check:', { hasUser: !!user, authError });
     
-    if (sessionError || !session) {
-      console.log('No session or session error:', sessionError);
+    if (authError || !user) {
+      console.log('No session or session error:', authError);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if user has admin or editor role
     const { data: profile, error: profileError } = await supabaseServer
-      .from('profiles')
+      .from('user_roles')
       .select('role')
-      .eq('id', session.user.id)
-      .single();
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'editor'])
+      .limit(1)
+      .maybeSingle();
 
-    console.log('Profile check:', { profile, profileError, userId: session.user.id });
+    console.log('Profile check:', { profile, profileError, userId: user.id });
 
     if (profileError) {
       console.error('Profile fetch error:', profileError);
@@ -199,7 +203,7 @@ export async function POST(request: NextRequest) {
       .insert({
         name,
         description,
-        user_id: session.user.id,
+        user_id: user.id,
         is_default: false
       })
       .select()
@@ -264,24 +268,26 @@ export async function DELETE(request: NextRequest) {
       }
     );
     
-    // Get user session using server client
-    const { data: { session }, error: sessionError } = await supabaseServerWithAuth.auth.getSession();
+    // Verify the requesting user using server client
+    const { data: { user }, error: authError } = await supabaseServerWithAuth.auth.getUser();
     
-    console.log('Session check:', { hasSession: !!session, sessionError });
+    console.log('Session check:', { hasUser: !!user, authError });
     
-    if (sessionError || !session) {
-      console.log('No session or session error:', sessionError);
+    if (authError || !user) {
+      console.log('No session or session error:', authError);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if user has admin or editor role
     const { data: profile, error: profileError } = await supabaseServer
-      .from('profiles')
+      .from('user_roles')
       .select('role')
-      .eq('id', session.user.id)
-      .single();
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'editor'])
+      .limit(1)
+      .maybeSingle();
 
-    console.log('Profile check:', { profile, profileError, userId: session.user.id });
+    console.log('Profile check:', { profile, profileError, userId: user.id });
 
     if (profileError) {
       console.error('Profile fetch error:', profileError);
