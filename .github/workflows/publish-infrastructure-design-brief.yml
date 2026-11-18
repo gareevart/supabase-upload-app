@@ -1,0 +1,31 @@
+name: Publish Infrastructure Design Brief
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - content/briefs/2026-11-06-infrastructure-design-brief.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish post to gareev.de
+        env:
+          GAREEV_BLOG_API_KEY: ${{ secrets.GAREEV_BLOG_API_KEY }}
+        run: |
+          if [ -z "$GAREEV_BLOG_API_KEY" ]; then
+            echo "Repository secret GAREEV_BLOG_API_KEY is missing."
+            exit 1
+          fi
+          node scripts/publish-blog-post.mjs \
+            --title "Infrastructure Design Brief — October 31–November 6, 2026" \
+            --file content/briefs/2026-11-06-infrastructure-design-brief.md \
+            --excerpt "Eight design stories about agent workspaces, security reviews, deploys, API tokens, cost, schedules, and feedback." \
+            --slug infrastructure-design-brief-2026-10-31-november-6 \
+            --publish
