@@ -63,6 +63,12 @@ export interface Database {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: { user_id: string; role: 'admin' | 'editor' | 'moderator' | 'user' }
+        Insert: { user_id: string; role: 'admin' | 'editor' | 'moderator' | 'user' }
+        Update: { role?: 'admin' | 'editor' | 'moderator' | 'user' }
+        Relationships: []
+      }
       profiles: {
         Row: {
           id: string

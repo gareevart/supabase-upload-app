@@ -28,117 +28,41 @@ function createRequestSupabaseClient(req: NextRequest) {
   );
 }
 
-function getUserIdFromAccessToken(token: string): string | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      return null;
-    }
-
-    const payload = JSON.parse(
-      Buffer.from(parts[1], 'base64url').toString('utf8')
-    ) as { sub?: string; exp?: number };
-
-    if (typeof payload.sub !== 'string') {
-      return null;
-    }
-
-    if (typeof payload.exp === 'number' && payload.exp * 1000 <= Date.now()) {
-      return null;
-    }
-
-    return payload.sub;
-  } catch {
-    return null;
-  }
-}
+const corsHeaders = {
+  'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_APP_URL || '*',
+  'Access-Control-Allow-Credentials': 'true',
+};
 
 export const withApiAuth = (handler: (req: NextRequest, user: { id: string }) => Promise<NextResponse>) => {
   return async (req: NextRequest) => {
+    const client = createRequestSupabaseClient(req);
+    let userId: string;
     try {
-      const authHeader = req.headers.get('authorization');
-      const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
-      let user: { id: string } | null = null;
-      let error: { message?: string; code?: string; status?: number } | null = null;
-
-      const supabase = createRequestSupabaseClient(req);
-
-      // Сначала читаем сессию из cookies — без сетевого запроса к Supabase Auth
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (session?.user?.id) {
-        user = { id: session.user.id };
+      // Preserve cookie precedence for callers that send both credentials.
+      let result = await client.auth.getUser();
+      const authorization = req.headers.get('authorization');
+      if (!result.data.user && authorization?.startsWith('Bearer ') && !authorization.startsWith('Bearer sk_')) {
+        result = await client.auth.getUser(authorization.slice(7));
       }
-
-      // Bearer JWT (редактор, authFetch) — только если cookies-сессии нет
-      if (!user && bearerToken && !bearerToken.startsWith('sk_')) {
-        const { createClient } = await import('@supabase/supabase-js');
-        const remoteClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-          auth: {
-            persistSession: false,
-            autoRefreshToken: false,
-          },
-        });
-
-        try {
-          const result = await remoteClient.auth.getUser(bearerToken);
-          if (result.data.user?.id) {
-            user = { id: result.data.user.id };
-          } else {
-            error = result.error
-              ? { message: result.error.message, code: result.error.code }
-              : { message: 'Invalid access token' };
-          }
-        } catch (authError) {
-          console.error('withApiAuth: Auth error with Bearer token:', authError);
-          const userId = getUserIdFromAccessToken(bearerToken);
-          if (userId) {
-            user = { id: userId };
-          } else {
-            error = authError instanceof Error
-              ? { message: authError.message }
-              : { message: 'Auth failed' };
-          }
-        }
-      }
-
-      if (!user) {
-        error = error || (sessionError
-          ? { message: sessionError.message, code: sessionError.code }
-          : { message: 'Auth session missing!' });
-      }
-
-      if (error || !user) {
+      if (result.error || !result.data.user) {
+        const unavailable = result.error && (result.error.status === 0 || (result.error.status ?? 0) >= 500);
         return NextResponse.json(
-          {
-            error: 'Unauthorized',
-            details: error?.message || 'Auth session missing!',
-            code: error?.code,
-          },
-          {
-            status: 401,
-            headers: {
-              'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_APP_URL || '*',
-              'Access-Control-Allow-Credentials': 'true',
-            },
-          }
+          { error: unavailable ? 'Authentication service unavailable' : 'Unauthorized' },
+          { status: unavailable ? 503 : 401, headers: corsHeaders },
         );
       }
+      userId = result.data.user.id;
+    } catch {
+      return NextResponse.json({ error: 'Authentication service unavailable' }, { status: 503, headers: corsHeaders });
+    }
 
-      const response = await handler(req, { id: user.id });
-
-      response.headers.set('Access-Control-Allow-Origin', process.env.NEXT_PUBLIC_APP_URL || '*');
-      response.headers.set('Access-Control-Allow-Credentials', 'true');
-
+    try {
+      const response = await handler(req, { id: userId });
+      for (const [name, value] of Object.entries(corsHeaders)) response.headers.set(name, value);
       return response;
-    } catch (err) {
-      console.error('Auth middleware error:', {
-        error: err,
-        stack: err instanceof Error ? err.stack?.split('\n').slice(0, 3).join('\n') : undefined,
-      });
-      return NextResponse.json(
-        { error: 'Authentication failed', details: err instanceof Error ? err.message : undefined },
-        { status: 500 }
-      );
+    } catch (error) {
+      console.error('API handler failed:', error);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: corsHeaders });
     }
   };
 };
