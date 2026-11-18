@@ -1,0 +1,87 @@
+.tool-call-card .g-aikit-tool-header__left {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.tool-call-card .g-aikit-tool-header__left > .g-text:first-of-type {
+  flex: none;
+  font-family: var(--g-text-code-font-family);
+}
+
+.tool-call-card__summary {
+  min-width: 0;
+}
+
+.tool-call-card .g-aikit-tool-header__right > :not(.g-aikit-button-group) {
+  order: -1;
+}
+
+.tool-call-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-3);
+}
+
+.tool-call-card__code {
+  position: relative;
+  margin: 0;
+  padding: var(--g-spacing-2) var(--g-spacing-3);
+  overflow: hidden;
+  border-radius: var(--g-border-radius-m);
+  background: var(--g-color-base-generic-ultralight);
+  color: var(--g-color-text-secondary);
+  font-family: var(--g-text-code-font-family);
+  font-size: var(--g-text-code-1-font-size);
+  line-height: var(--g-text-code-1-line-height);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+}
+
+.tool-call-card__code[data-capped] {
+  -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent);
+  mask-image: linear-gradient(to bottom, #000 60%, transparent);
+}
+
+.tool-call-card__token_key { color: var(--g-color-text-primary); }
+.tool-call-card__token_str { color: var(--g-color-text-info); }
+.tool-call-card__token_num { color: var(--g-color-text-warning); }
+.tool-call-card__token_lit { color: var(--g-color-text-misc); }
+
+.tool-call-group__head {
+  align-self: flex-start;
+  justify-content: flex-start;
+  width: auto;
+  max-width: 100%;
+}
+
+.tool-call-group__head .g-button__text {
+  display: flex;
+  align-items: center;
+  gap: var(--g-spacing-2);
+  min-width: 0;
+}
+
+.tool-call-group__stack {
+  flex: none;
+}
+
+.tool-call-group__tile {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--g-border-radius-s);
+  background: var(--g-color-base-background);
+  border: 1px solid var(--g-color-line-generic);
+}
+
+.tool-call-group__tile + .tool-call-group__tile {
+  margin-inline-start: calc(var(--g-spacing-1) * -1);
+}
+
+.tool-call-group__tile > .g-icon {
+  width: 12px;
+  height: 12px;
+}

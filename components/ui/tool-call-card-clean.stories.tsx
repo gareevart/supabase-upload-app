@@ -10,7 +10,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Tool call states composed with Gravity UI Card, Button, ClipboardButton, Text, Icon, and Spin components.',
+          'Tool call states built on the AIKIT ToolMessage component.',
       },
     },
   },
