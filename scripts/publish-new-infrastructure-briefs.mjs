@@ -43,8 +43,7 @@ for (const date of dates) {
   const slug = `infrastructure-design-brief-${date}`;
   const post = existing.find((post) => post.slug === slug);
   if (post?.published && post.featured_image) {
-    console.log(`Already published with cover: ${slug}`);
-    continue;
+    console.log(`Refreshing existing published post cover: ${slug}`);
   }
 
   const markdown = (await readFile(file, 'utf8')).replace(/^\uFEFF/, '').trim();
