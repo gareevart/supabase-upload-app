@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useId, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChatContainer, ActionButton, ContextIndicator } from "@gravity-ui/aikit";
 import type { ChatType, TChatMessage, TSubmitData } from "@gravity-ui/aikit";
@@ -44,6 +44,7 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
   const [useWidgetMode, setUseWidgetMode] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const deleteDialogTitleId = useId();
   const [systemPrompt, setSystemPrompt] = useState("");
 
   useEffect(() => {
@@ -288,42 +289,21 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
       />
       </div>
 
-      {isMobile ? (
-        <DrawerMenu
-          open={deleteDialogOpen}
-          onClose={() => setDeleteDialogOpen(false)}
-          title={t('chatView.deleteTitle')}
-          footer={
-            <>
-              <Button view="outlined" size="l" onClick={() => setDeleteDialogOpen(false)}>
-                {t('chatView.cancel')}
-              </Button>
-              <Button
-                view="outlined-danger"
-                size="l"
-                onClick={handleDeleteCurrentChat}
-                loading={deleteChat.isPending}
-              >
-                {t('chatView.deleteConfirm')}
-              </Button>
-            </>
-          }
-        >
-          <Text variant="body-1">{t('chatView.deleteText')}</Text>
-        </DrawerMenu>
-      ) : (
-        <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-          <Dialog.Header caption={t('chatView.deleteTitle')} />
-          <Dialog.Body>{t('chatView.deleteText')}</Dialog.Body>
-          <Dialog.Footer
-            onClickButtonCancel={() => setDeleteDialogOpen(false)}
-            onClickButtonApply={handleDeleteCurrentChat}
-            textButtonApply={t('chatView.deleteConfirm')}
-            textButtonCancel={t('chatView.cancel')}
-            propsButtonApply={{ view: 'outlined-danger', loading: deleteChat.isPending }}
-          />
-        </Dialog>
-      )}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        aria-labelledby={deleteDialogTitleId}
+      >
+        <Dialog.Header id={deleteDialogTitleId} caption={t('chatView.deleteTitle')} />
+        <Dialog.Body>{t('chatView.deleteText')}</Dialog.Body>
+        <Dialog.Footer
+          onClickButtonCancel={() => setDeleteDialogOpen(false)}
+          onClickButtonApply={handleDeleteCurrentChat}
+          textButtonApply={t('chatView.deleteConfirm')}
+          textButtonCancel={t('chatView.cancel')}
+          propsButtonApply={{ view: 'outlined-danger', loading: deleteChat.isPending }}
+        />
+      </Dialog>
 
       {isMobile ? (
         <DrawerMenu

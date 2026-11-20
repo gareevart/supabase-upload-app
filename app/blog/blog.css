@@ -281,6 +281,12 @@
   gap: var(--g-spacing-1);
 }
 
+.blog-post-meta__avatar {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
 .blog-post-cover {
   position: relative;
   width: 100%;

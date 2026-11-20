@@ -2,13 +2,13 @@
 
 import "../blog.css"
 import { supabase } from "@/lib/supabase"
-import { Calendar, LayoutSideContentRight, Person, Pencil, TrashBin } from "@gravity-ui/icons"
+import { Calendar, LayoutSideContentRight, Pencil, TrashBin } from "@gravity-ui/icons"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { MarkdownRenderer } from "@/features/blog-editor/ui/MarkdownRenderer"
 import { useState, useEffect, useMemo, useRef } from "react"
-import { Button, Icon, Text, Dialog, Drawer, DropdownMenu } from "@gravity-ui/uikit"
+import { Avatar, Button, Icon, Text, Dialog, Drawer, DropdownMenu, Skeleton } from "@gravity-ui/uikit"
 import { PageActionBar } from "@/shared/ui/PageActionBar"
 import { useToast } from "@/hooks/use-toast"
 import { authFetch } from "@/lib/auth-fetch"
@@ -48,6 +48,37 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
   const { toast } = useToast()
   const { t, language } = useI18n()
   const hasTableOfContents = useMemo(() => extractHeadings(post.content).length > 0, [post.content])
+  const authorName = post.author?.name || post.author?.username || t('blogView.anonymous')
+  const authorAvatarUrl = getBlobPreviewUrl(post.author?.avatar_url)
+  const [authorAvatarPhase, setAuthorAvatarPhase] = useState<'loading' | 'ready' | 'fallback'>(
+    authorAvatarUrl ? 'loading' : 'fallback',
+  )
+
+  useEffect(() => {
+    if (!authorAvatarUrl) {
+      setAuthorAvatarPhase('fallback')
+      return
+    }
+
+    let isActive = true
+    const image = new window.Image()
+
+    const finish = (phase: 'ready' | 'fallback') => {
+      if (isActive) setAuthorAvatarPhase(phase)
+    }
+
+    image.addEventListener('load', () => finish(image.naturalWidth > 0 ? 'ready' : 'fallback'))
+    image.addEventListener('error', () => finish('fallback'))
+    image.src = authorAvatarUrl
+
+    if (image.complete && image.naturalWidth > 0) {
+      finish('ready')
+    }
+
+    return () => {
+      isActive = false
+    }
+  }, [authorAvatarUrl])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 1199px)')
@@ -226,9 +257,32 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
                 </Text>
               </div>
               <div className="blog-post-meta__item">
-                <Icon data={Person} size={16} />
+                {authorAvatarUrl && authorAvatarPhase === 'loading' ? (
+                  <Skeleton
+                    className="blog-post-meta__avatar"
+                    variant="circle"
+                    size="xs"
+                    width={20}
+                    height={20}
+                  />
+                ) : authorAvatarUrl && authorAvatarPhase === 'ready' ? (
+                  <Avatar
+                    className="blog-post-meta__avatar"
+                    size="2xs"
+                    imgUrl={authorAvatarUrl}
+                    alt=""
+                    aria-hidden
+                  />
+                ) : (
+                  <Avatar
+                    className="blog-post-meta__avatar"
+                    size="2xs"
+                    text={authorName}
+                    aria-hidden
+                  />
+                )}
                 <Text variant="body-2" color="secondary">
-                  {post.author?.name || post.author?.username || t('blogView.anonymous')}
+                  {authorName}
                 </Text>
               </div>
             </div>

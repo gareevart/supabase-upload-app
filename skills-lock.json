@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "skills": {
+    "glimm": {
+      "source": "nomanjack/glimm-skill",
+      "commit": "d255ead09ad083d4af74ed1a3531e5b74f36f72b",
+      "sourceType": "github",
+      "skillPath": "skills/glimm/SKILL.md",
+      "computedHash": "4110c7bd0cedf8d146c2f61409cd8073b67716e0f3b51853949eaa7053a33ae4"
+    }
+  }
+}

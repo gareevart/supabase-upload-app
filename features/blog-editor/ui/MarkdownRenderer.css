@@ -13,6 +13,10 @@
   display: contents;
 }
 
+.markdown-renderer__preview {
+  display: block;
+}
+
 .markdown-renderer h1,
 .markdown-renderer h2,
 .markdown-renderer h3,
@@ -192,23 +196,24 @@
 }
 
 .markdown-link-preview__media {
-  display: flex;
+  position: relative;
   flex: 0 0 160px;
+  align-self: stretch;
   width: 160px;
-  min-height: 0;
-  align-items: stretch;
-  justify-content: center;
+  overflow: hidden;
   background: var(--g-color-base-simple);
 }
 
 .markdown-link-preview__image {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100% !important;
   height: 100% !important;
-  min-width: 0;
-  min-height: 0;
+  max-width: none !important;
   margin: 0 !important;
   object-fit: cover;
+  object-position: center;
   border-radius: 0 !important;
 }
 
