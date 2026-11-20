@@ -211,26 +211,12 @@ export const PUT = withAuth(async (request: NextRequest, user: { id: string }) =
       );
     }
 
-    // Create a new supabase client for this request
-    const supabase = createServerClient<Database>(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          get: (name: string) => request.cookies.get(name)?.value,
-          set: (name: string, value: string, options: CookieOptions) => {
-            request.cookies.set({
-              name,
-              value,
-              ...options,
-            });
-          },
-          remove: (name: string, options: CookieOptions) => {
-            request.cookies.delete(name);
-          },
-        },
-      }
-    );
+    // withAuth has already authenticated either the session or the API key.
+    // API keys do not establish a Supabase cookie session. Use the server client
+    // here and enforce author/admin/editor authorization below before any write.
+    const supabase = createClient<Database>(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
 
     // Check if the post exists and if the user is the author
     const { data: existingPost, error: fetchError } = await supabase
