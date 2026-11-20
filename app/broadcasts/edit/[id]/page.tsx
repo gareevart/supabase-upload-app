@@ -4,8 +4,8 @@ import React, { useEffect, useState } from 'react';
 import BroadcastFormWidget from '@/widgets/broadcast-form/ui/BroadcastFormWidget';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { Spin, Text } from '@gravity-ui/uikit';
-import '../../broadcast-pages.css';
+import { Skeleton } from '@gravity-ui/uikit';
+import '@/widgets/broadcast-form/ui/BroadcastFormWidget.css';
 
 // Define the page props type for Next.js 15
 interface PageProps {
@@ -55,18 +55,21 @@ function EditBroadcastPage({ params }: PageProps) {
   
   if (isLoading || !id) {
     return (
-      <div className="broadcast-page-loading">
-        <Spin size="l" />
-        <Text variant="body-1">Загрузка...</Text>
+      <div className="broadcast-editor-state">
+        <Skeleton style={{ height: 384, width: '100%' }} />
       </div>
     );
   }
 
   if (!isAuthorized) {
-    return null; // Will redirect
+    return null;
   }
-  
-  return <BroadcastFormWidget id={id} isEdit={true} />;
+
+  return (
+    <div className="broadcast-editor-page">
+      <BroadcastFormWidget id={id} isEdit />
+    </div>
+  );
 }
 
 export default EditBroadcastPage;

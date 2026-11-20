@@ -38,6 +38,7 @@ export type DateTimePickerProps = {
   onChange: (date: Date | null) => void;
   minDate?: Date;
   disabled?: boolean;
+  showTitle?: boolean;
 };
 
 // Type for broadcast form props

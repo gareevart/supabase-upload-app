@@ -14,6 +14,51 @@ interface GroupSelectorProps {
   disabled?: boolean;
 }
 
+type GroupDetailsProps = {
+  group: BroadcastGroup;
+  members: Subscriber[] | undefined;
+  isLoading: boolean;
+  language: string;
+  t: (key: string) => string;
+};
+
+function GroupDetails({ group, members, isLoading, language, t }: GroupDetailsProps) {
+  const createdAt = new Date(group.created_at).toLocaleDateString(language === 'ru' ? 'ru-RU' : 'en-US');
+
+  return (
+    <div className="group-selector__card-details">
+      {group.description ? (
+        <Text variant="caption-1" color="secondary">
+          {group.description}
+        </Text>
+      ) : null}
+      <Text variant="caption-1" color="secondary">
+        {t('broadcast.groupSelector.created')}: {createdAt}
+      </Text>
+      {isLoading || !members ? (
+        <div className="group-selector__members-loading" role="status">
+          <Spin size="s" />
+        </div>
+      ) : members.length === 0 ? (
+        <Text variant="body-2" color="secondary">
+          {t('broadcast.groupSelector.emptyGroup')}
+        </Text>
+      ) : (
+        <ul className="group-selector__members">
+          {members.map((member) => (
+            <li key={member.id} className="group-selector__member">
+              <Text variant="body-2">{member.email}</Text>
+              {member.name ? (
+                <Text variant="caption-1" color="secondary">{member.name}</Text>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 const GroupSelector: React.FC<GroupSelectorProps> = ({
   selectedGroups,
   onGroupsChange,
@@ -23,9 +68,11 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
   const { toast } = useToast();
   const [groups, setGroups] = useState<BroadcastGroup[]>([]);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
+  const [subscribersReady, setSubscribersReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const groupsLoaded = useRef(false);
   const subscribersLoaded = useRef(false);
+  const loadingGroupIds = useRef(new Set<string>());
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showGroupDetails, setShowGroupDetails] = useState<string | null>(null);
 
@@ -91,6 +138,8 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
       subscribersLoaded.current = true;
     } catch (error) {
       console.error('Error fetching subscribers:', error);
+    } finally {
+      setSubscribersReady(true);
     }
   }, []);
 
@@ -112,6 +161,66 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
   };
 
   const [groupSubscribersCache, setGroupSubscribersCache] = useState<Record<string, Subscriber[]>>({});
+  const [loadingGroupId, setLoadingGroupId] = useState<string | null>(null);
+  const groupSubscribersCacheRef = useRef(groupSubscribersCache);
+  groupSubscribersCacheRef.current = groupSubscribersCache;
+
+  const loadGroupMembers = useCallback(async (group: BroadcastGroup) => {
+    if (group.is_default || groupSubscribersCacheRef.current[group.id] || loadingGroupIds.current.has(group.id)) {
+      return;
+    }
+
+    loadingGroupIds.current.add(group.id);
+    setLoadingGroupId(group.id);
+
+    try {
+      const response = await fetch(`/api/subscribers?group_id=${group.id}&active_only=true`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch subscribers');
+      }
+
+      const data = await response.json();
+      setGroupSubscribersCache((prev) => ({
+        ...prev,
+        [group.id]: data.data || [],
+      }));
+    } catch (error) {
+      console.error('Error fetching group subscribers:', error);
+      setGroupSubscribersCache((prev) => ({
+        ...prev,
+        [group.id]: prev[group.id] ?? [],
+      }));
+      toast({
+        title: t('broadcast.toast.error'),
+        description: error instanceof Error ? error.message : t('broadcast.groupSelector.loadGroupsFailed'),
+        variant: 'destructive',
+      });
+    } finally {
+      loadingGroupIds.current.delete(group.id);
+      setLoadingGroupId((current) => (current === group.id ? null : current));
+    }
+  }, [t, toast]);
+
+  const membersFor = (group: BroadcastGroup): Subscriber[] | undefined => {
+    if (group.is_default) {
+      return subscribersReady ? subscribers.filter((subscriber) => subscriber.is_active) : undefined;
+    }
+
+    return groupSubscribersCache[group.id];
+  };
+
+  const toggleGroupDetails = (group: BroadcastGroup) => {
+    if (showGroupDetails === group.id) {
+      setShowGroupDetails(null);
+      return;
+    }
+
+    setShowGroupDetails(group.id);
+    void loadGroupMembers(group);
+  };
 
   const getEmailsFromGroups = useCallback(async (groupIds: string[]): Promise<string[]> => {
     if (groupIds.length === 0) return [];
@@ -244,7 +353,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
   return (
     <div>
       <div className="group-selector__header">
-        <Text variant="body-2">{t('broadcast.groupSelector.title')}</Text>
+        <Text color="secondary" variant="subheader-1">{t('broadcast.groupSelector.title')}</Text>
         <Button
           view="outlined"
           size="s"
@@ -287,9 +396,9 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
               <Button
                 view="flat"
                 size="s"
-                onClick={() => setShowGroupDetails(
-                  showGroupDetails === group.id ? null : group.id
-                )}
+                aria-expanded={showGroupDetails === group.id}
+                aria-label={t('broadcast.groupSelector.toggleMembers')}
+                onClick={() => toggleGroupDetails(group)}
               >
                 <Icon
                   data={showGroupDetails === group.id ? ChevronUp : ChevronDown}
@@ -299,16 +408,13 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
             </div>
 
             {showGroupDetails === group.id && (
-              <div className="group-selector__card-details">
-                {group.description && (
-                  <Text variant="caption-1" color="secondary" className="group-selector__card-description">
-                    {group.description}
-                  </Text>
-                )}
-                <Text variant="caption-1" color="secondary">
-                  {t('broadcast.groupSelector.created')}: {new Date(group.created_at).toLocaleDateString(language === 'ru' ? 'ru-RU' : 'en-US')}
-                </Text>
-              </div>
+              <GroupDetails
+                group={group}
+                members={membersFor(group)}
+                isLoading={group.is_default ? !subscribersReady : loadingGroupId === group.id && !groupSubscribersCache[group.id]}
+                language={language}
+                t={t}
+              />
             )}
           </Card>
         ))}

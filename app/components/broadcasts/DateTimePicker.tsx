@@ -13,6 +13,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   onChange,
   minDate,
   disabled = false,
+  showTitle = true,
 }) => {
   const { language, t } = useI18n();
   const dateLocale = language === 'ru' ? 'ru-RU' : 'en-US';
@@ -107,7 +108,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 
   return (
     <div className="datetime-picker">
-      <Text variant="subheader-2">{t('broadcast.dateTimePicker.title')}</Text>
+      {showTitle ? <Text variant="subheader-2">{t('broadcast.dateTimePicker.title')}</Text> : null}
       <div className="datetime-picker__row">
         <div className="datetime-picker__date">
           <Text variant="body-2" className="datetime-picker__label">{t('broadcast.dateTimePicker.dateLabel')}</Text>

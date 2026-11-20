@@ -51,9 +51,35 @@
 }
 
 .group-selector__card-details {
-  margin-top: var(--g-spacing-3, 12px);
-  padding-top: var(--g-spacing-3, 12px);
-  border-top: 1px solid var(--g-color-line-inverted, #e0e0e0);
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-2);
+  margin-top: var(--g-spacing-3);
+  padding-top: var(--g-spacing-3);
+  border-top: 1px solid var(--g-color-line-generic);
+}
+
+.group-selector__members {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-2);
+  max-height: 240px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.group-selector__member {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.group-selector__members-loading {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
 }
 
 .group-selector__card-description {
