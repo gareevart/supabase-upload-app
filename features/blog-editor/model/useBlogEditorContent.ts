@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { transliterate } from '@/lib/transliterate';
+import { parseLinkOg, serializeLinkOg } from '@/shared/lib/blog/linkOg';
 
 function normalizeSlug(value: string): string {
   const hasCyrillic = /[а-яА-ЯёЁ]/.test(value);
@@ -35,8 +36,16 @@ export const useBlogEditorContent = (initialPost?: any, onSave?: (published: boo
 
   const router = useRouter();
   const { toast } = useToast();
+  const editorMarkdown = useMemo(() => parseLinkOg(markdownContent).markdown, [markdownContent]);
+  const linkOgSettings = useMemo(() => parseLinkOg(markdownContent).settings, [markdownContent]);
 
-  const handleContentChange = (value: string) => setMarkdownContent(value);
+  const handleContentChange = (value: string) => {
+    setMarkdownContent((prev) => serializeLinkOg(value, { enabled: parseLinkOg(prev).settings.enabled }));
+  };
+
+  const handleLinkOgMasterChange = (enabled: boolean) => {
+    setMarkdownContent((prev) => serializeLinkOg(parseLinkOg(prev).markdown, { enabled }));
+  };
 
   const handleSlugChange = (newSlug: string) => {
     setSlug(normalizeSlug(newSlug));
@@ -181,13 +190,15 @@ export const useBlogEditorContent = (initialPost?: any, onSave?: (published: boo
     title, setTitle,
     slug, setSlug: handleSlugChange,
     excerpt, setExcerpt,
-    markdownContent,
+    editorMarkdown,
+    linkOgSettings,
     featuredImageUrl,
     showFeaturedImage, setShowFeaturedImage,
     isLoading,
     showGalleryDialog, setShowGalleryDialog,
     isUploading,
     handleContentChange,
+    handleLinkOgMasterChange,
     handleFeaturedImageUpload,
     handleDeleteFeaturedImage,
     handleSelectGalleryImage,

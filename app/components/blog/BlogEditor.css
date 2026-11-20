@@ -175,7 +175,7 @@
 /* Auth / unauthorized states on the new & edit pages */
 .blog-editor-page {
   min-height: 100vh;
-  padding-block: var(--g-spacing-8);
+  padding-bottom: var(--g-spacing-8);
 }
 
 .blog-editor-state {

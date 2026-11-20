@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   useMarkdownEditor,
   MarkdownEditorView,
@@ -11,6 +11,7 @@ import { useToaster } from '@gravity-ui/uikit';
 import '@gravity-ui/markdown-editor/styles/styles.css';
 import { uploadImage } from '@/shared/lib/blog/uploadImage';
 import { useI18n } from '@/app/contexts/I18nContext';
+import { createLinkOgExtension } from '@/features/blog-editor/model/linkOgExtension';
 import './MarkdownEditor.css';
 
 interface MarkdownEditorProps {
@@ -37,10 +38,21 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   onChangeRef.current = onChange;
   const { add: addToast } = useToaster();
   const { t } = useI18n();
+  const linkOgLabel = useRef(t('linkOg.linkSetting'));
+  linkOgLabel.current = t('linkOg.linkSetting');
+  const linkOgExtension = useMemo(() => createLinkOgExtension(linkOgLabel), []);
 
   const editor = useMarkdownEditor({
     initial: { markup: content },
     md: { html: true, breaks: true, linkify: true },
+    wysiwygConfig: {
+      extensions: linkOgExtension,
+      extensionOptions: {
+        yfmConfigs: {
+          attrs: { allowedAttributes: ['id', 'data-og'] },
+        },
+      },
+    },
     handlers: {
       uploadFile: async (file) => {
         try {

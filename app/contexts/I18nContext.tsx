@@ -39,6 +39,8 @@ import tableOfContentsEn from '@/shared/ui/TableOfContents.i18n/en.json';
 import tableOfContentsRu from '@/shared/ui/TableOfContents.i18n/ru.json';
 import markdownRendererEn from '@/features/blog-editor/ui/MarkdownRenderer.i18n/en.json';
 import markdownRendererRu from '@/features/blog-editor/ui/MarkdownRenderer.i18n/ru.json';
+import linkOgPanelEn from '@/features/blog-editor/ui/LinkOgPanel.i18n/en.json';
+import linkOgPanelRu from '@/features/blog-editor/ui/LinkOgPanel.i18n/ru.json';
 import broadcastDetailEn from '@/widgets/broadcast-detail/ui/BroadcastDetailWidget.i18n/en.json';
 import broadcastDetailRu from '@/widgets/broadcast-detail/ui/BroadcastDetailWidget.i18n/ru.json';
 import subscriptionsPanelEn from '@/features/subscriptions/ui/SubscriptionsPanel.i18n/en.json';
@@ -77,6 +79,7 @@ const enTranslations: TranslationDict = {
   ...blogEditorEn,
   ...tableOfContentsEn,
   ...markdownRendererEn,
+  ...linkOgPanelEn,
   ...broadcastDetailEn,
   ...subscriptionsPanelEn,
   ...apiKeysPanelEn,
@@ -105,6 +108,7 @@ const ruTranslations: TranslationDict = {
   ...blogEditorRu,
   ...tableOfContentsRu,
   ...markdownRendererRu,
+  ...linkOgPanelRu,
   ...broadcastDetailRu,
   ...subscriptionsPanelRu,
   ...apiKeysPanelRu,

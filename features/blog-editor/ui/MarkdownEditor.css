@@ -1,3 +1,10 @@
+.link-og-host {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  margin-left: var(--g-spacing-2);
+}
+
 .markdown-editor {
   border: 1px solid var(--g-color-line-generic);
   border-radius: var(--g-border-radius-m);

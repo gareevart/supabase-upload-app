@@ -5,6 +5,7 @@ import { useI18n } from '@/app/contexts/I18nContext';
 import { LinkPreview } from '@/features/blog-editor/ui/LinkPreview';
 import { YfmCodeBlock } from '@/features/blog-editor/ui/YfmCodeBlock';
 import { prepareBlogHtml } from '@/shared/lib/blog/headingAnchors';
+import { normalizeLinkHref, parseLinkOg, type LinkOgSettings } from '@/shared/lib/blog/linkOg';
 import { splitYfmHtml } from '@/shared/lib/blog/splitYfmHtml';
 import './MarkdownRenderer.css';
 
@@ -16,21 +17,7 @@ interface MarkdownRendererProps {
 interface LinkTarget {
   href: string;
   text: string;
-}
-
-function normalizeExternalHref(value: string): string | null {
-  let href = value.trim();
-  try {
-    href = decodeURIComponent(href);
-  } catch {
-    // Keep the original value when a URL contains a malformed escape sequence.
-  }
-
-  const markdownLink = href.match(/^\[.*?\]\((https?:\/\/[^)]+)\)$/i);
-  if (markdownLink) href = markdownLink[1];
-  if (href.startsWith('//')) href = `https:${href}`;
-  if (href.startsWith('www.')) href = `https://${href}`;
-  return /^https?:\/\//i.test(href) ? href : null;
+  og: boolean;
 }
 
 function splitLinksForPreview(html: string): Array<{ html: string } | { link: LinkTarget }> {
@@ -39,9 +26,13 @@ function splitLinksForPreview(html: string): Array<{ html: string } | { link: Li
   const document = new DOMParser().parseFromString(html, 'text/html');
   const links: LinkTarget[] = [];
   document.querySelectorAll('a[href]').forEach((anchor) => {
-    const href = normalizeExternalHref(anchor.getAttribute('href') ?? '');
+    const href = normalizeLinkHref(anchor.getAttribute('href') ?? '');
     if (!href) return;
-    const index = links.push({ href, text: anchor.textContent?.trim() || href }) - 1;
+    const index = links.push({
+      href,
+      text: anchor.textContent?.trim() || href,
+      og: anchor.getAttribute('data-og') !== 'off',
+    }) - 1;
     anchor.replaceWith(document.createComment(`blog-link-preview:${index}`));
   });
 
@@ -53,29 +44,40 @@ function splitLinksForPreview(html: string): Array<{ html: string } | { link: Li
   );
 }
 
-function HtmlChunk({ html }: { html: string }) {
+function HtmlChunk({ html, settings }: { html: string; settings: LinkOgSettings }) {
   const parts = React.useMemo(() => splitLinksForPreview(html), [html]);
   return (
     <>
-      {parts.map((part, index) =>
-        'link' in part ? (
-          <LinkPreview key={`preview-${index}`} href={part.link.href}>
-            {part.link.text}
-          </LinkPreview>
-        ) : part.html ? (
+      {parts.map((part, index) => {
+        if ('link' in part) {
+          if (!settings.enabled || !part.link.og) {
+            return (
+              <a key={`link-${index}`} href={part.link.href} target="_blank" rel="noreferrer">
+                {part.link.text}
+              </a>
+            );
+          }
+          return (
+            <LinkPreview key={`preview-${index}`} href={part.link.href}>
+              {part.link.text}
+            </LinkPreview>
+          );
+        }
+        return part.html ? (
           <span key={`html-${index}`} dangerouslySetInnerHTML={{ __html: part.html }} />
-        ) : null,
-      )}
+        ) : null;
+      })}
     </>
   );
 }
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className }) => {
   const { t } = useI18n();
+  const parsed = useMemo(() => parseLinkOg(content), [content]);
   const segments = useMemo(() => {
-    const { html } = prepareBlogHtml(content);
+    const { html } = prepareBlogHtml(parsed.markdown);
     return splitYfmHtml(html);
-  }, [content]);
+  }, [parsed.markdown]);
   const copyLabel = t('markdownRenderer.copyCode');
   const copiedLabel = t('markdownRenderer.copiedCode');
 
@@ -84,7 +86,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
       {segments.map((segment, index) =>
         segment.type === 'html' ? (
           <div key={`html-${index}`} className="markdown-renderer__html-chunk">
-            <HtmlChunk html={segment.content} />
+            <HtmlChunk html={segment.content} settings={parsed.settings} />
           </div>
         ) : (
           <YfmCodeBlock

@@ -7,6 +7,7 @@ import { useBlogEditorContent } from "@/features/blog-editor/model/useBlogEditor
 import { useI18n } from "@/app/contexts/I18nContext";
 import PostMetadata from "./editor/PostMetadata";
 import { MarkdownEditor } from "@/features/blog-editor/ui/MarkdownEditor";
+import { LinkOgPanel } from "@/features/blog-editor/ui/LinkOgPanel";
 import "./BlogEditor.css";
 
 type PostEditorProps = {
@@ -21,13 +22,15 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
     title, setTitle,
     slug, setSlug,
     excerpt, setExcerpt,
-    markdownContent,
+    editorMarkdown,
+    linkOgSettings,
     featuredImageUrl,
     showFeaturedImage, setShowFeaturedImage,
     isLoading,
     showGalleryDialog, setShowGalleryDialog,
     isUploading,
     handleContentChange,
+    handleLinkOgMasterChange,
     handleFeaturedImageUpload,
     handleDeleteFeaturedImage,
     handleSelectGalleryImage,
@@ -98,8 +101,12 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
           showGalleryDialog={showGalleryDialog}
           setShowGalleryDialog={setShowGalleryDialog}
         />
+        <LinkOgPanel
+          settings={linkOgSettings}
+          onChange={handleLinkOgMasterChange}
+        />
         <MarkdownEditor
-          content={markdownContent}
+          content={editorMarkdown}
           onChange={handleContentChange}
           placeholder={t('blogEditor.contentPlaceholder')}
         />

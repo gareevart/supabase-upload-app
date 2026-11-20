@@ -39,7 +39,7 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
   onSelectGalleryImage,
   isUploading,
   showGalleryDialog,
-  setShowGalleryDialog
+  setShowGalleryDialog,
 }) => {
   const { t } = useI18n();
 

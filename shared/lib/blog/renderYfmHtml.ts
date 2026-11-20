@@ -1,4 +1,5 @@
 import transform from '@diplodoc/transform';
+import { stripLinkOgBlock } from '@/shared/lib/blog/linkOg';
 
 const NOTE_BLOCK_RE =
   /({% note (?:alert|info|tip|warning)(?:\s+"[^"]*")?\s+%})\s*\n([\s\S]*?)\s*\n({% endnote %})/g;
@@ -25,7 +26,7 @@ function addLazyLoading(html: string): string {
 }
 
 export function renderYfmHtml(content: string): string {
-  const markdown = normalizeYfmBlockDirectives(content ?? '');
+  const markdown = normalizeYfmBlockDirectives(stripLinkOgBlock(content ?? ''));
 
   if (!markdown.trim()) {
     return '';
