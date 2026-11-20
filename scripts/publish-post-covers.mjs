@@ -53,10 +53,6 @@ for (const slug of slugs) {
   if (!mime) throw new Error('Unsupported cover image format.');
 
   const imagePath = join(dirname(jsonPath), image);
-  if (!changed.includes(imagePath)) {
-    throw new Error(`The cover image ${imagePath} must be included in the same push as its metadata.`);
-  }
-
   const bytes = await readFile(imagePath);
   const valid = mime === 'image/png'
     ? bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))
