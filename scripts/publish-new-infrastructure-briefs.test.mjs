@@ -39,8 +39,8 @@ async function run(scenario) {
           }] : []);
         }
         writes++;
-        assert.equal(method, scenario === 'update' ? 'PUT' : 'POST');
-        if (scenario === 'update') assert.ok(String(url).endsWith('/existing-id'));
+        assert.equal(method, scenario === 'create' ? 'POST' : 'PUT');
+        if (scenario !== 'create') assert.ok(String(url).endsWith('/existing-id'));
         const body = JSON.parse(options.body);
         assert.equal(body.excerpt, 'Clear controls for developer tools.');
         assert.equal(body.show_featured_image, true);
@@ -50,7 +50,7 @@ async function run(scenario) {
         return Response.json({ ...body, id: 'existing-id', featured_image: '/api/storage/file?path=featured/test/cover.png' });
       };
       process.on('exit', (code) => {
-        if (code === 0) assert.equal(writes, scenario === 'existing' ? 0 : 1);
+        if (code === 0) assert.equal(writes, 1);
       });
     `;
     await writeFile(join(dir, 'mock.mjs'), mock);
@@ -61,7 +61,7 @@ async function run(scenario) {
   } finally { await rm(dir, { recursive: true, force: true }); }
 }
 for (const scenario of ['create', 'update', 'existing']) {
-  test(scenario + ': publishes a cover or skips an already covered post', async () => {
+  test(scenario + ': publishes or refreshes a cover', async () => {
     const result = await run(scenario);
     assert.equal(result.status, 0, result.stderr);
     assert.ok(!result.stdout.includes('sk_' + 'a'.repeat(64)));
