@@ -5,7 +5,6 @@ import type { Database } from '@/lib/types'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY as string
 
-// Image metadata
 export const size = {
   width: 1200,
   height: 630,
@@ -13,59 +12,66 @@ export const size = {
 
 export const contentType = 'image/png'
 
-// Helper function to truncate text
 function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text
   return text.slice(0, maxLength).trim() + '...'
 }
 
-// Image generation
-export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
+function getSiteOrigin(): string {
+  const deploymentHost =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL
 
-  // Create Supabase client with service role for server-side access
-  const supabase = createClient<Database>(supabaseUrl, supabaseServiceKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
+  return deploymentHost ? `https://${deploymentHost}` : 'https://gareev.de'
+}
 
-  // Fetch post data
-  const { data: post, error } = await supabase
-    .from('blog_posts')
-    .select('title, excerpt')
-    .eq('slug', slug)
-    .eq('published', true)
-    .single()
+function toBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer)
+  const chunkSize = 0x8000
+  let binary = ''
 
-  // Fallback if post not found
-  if (error || !post) {
-    return new ImageResponse(
-      (
-        <div
-          style={{
-            fontSize: 64,
-            background: 'white',
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#333',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-          }}
-        >
-          Post Not Found
-        </div>
-      ),
-      {
-        ...size,
-      }
-    )
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize))
   }
 
-  // Truncate text to fit in image
-  const title = truncateText(post.title, 80)
-  const excerpt = post.excerpt ? truncateText(post.excerpt, 150) : null
+  return btoa(binary)
+}
 
+async function getCoverDataUrl(value: string | null): Promise<string | null> {
+  if (!value) return null
+
+  try {
+    const siteOrigin = getSiteOrigin()
+    const coverUrl = new URL(value, siteOrigin)
+    const allowedOrigins = new Set([
+      siteOrigin,
+      'https://gareev.de',
+      'https://www.gareev.de',
+    ])
+    const isVercelBlob = coverUrl.hostname.endsWith('.blob.vercel-storage.com')
+
+    // The image route can fetch only this site's own assets or Vercel Blob files.
+    if (coverUrl.protocol !== 'https:' || (!allowedOrigins.has(coverUrl.origin) && !isVercelBlob)) {
+      return null
+    }
+
+    const response = await fetch(coverUrl)
+    const mime = response.headers.get('content-type')?.split(';')[0] || ''
+    if (!response.ok || !['image/png', 'image/jpeg', 'image/webp'].includes(mime)) {
+      return null
+    }
+
+    const bytes = await response.arrayBuffer()
+    if (bytes.byteLength === 0 || bytes.byteLength > 10 * 1024 * 1024) {
+      return null
+    }
+
+    return `data:${mime};base64,${toBase64(bytes)}`
+  } catch {
+    return null
+  }
+}
+
+function fallbackImage(title: string, excerpt: string | null) {
   return new ImageResponse(
     (
       <div
@@ -113,9 +119,45 @@ export default async function Image({ params }: { params: Promise<{ slug: string
         )}
       </div>
     ),
-    {
-      ...size,
-    }
+    { ...size },
   )
 }
 
+export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const supabase = createClient<Database>(supabaseUrl, supabaseServiceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+
+  const { data: post, error } = await supabase
+    .from('blog_posts')
+    .select('title, excerpt, featured_image')
+    .eq('slug', slug)
+    .eq('published', true)
+    .single()
+
+  if (error || !post) {
+    return fallbackImage('Post Not Found', null)
+  }
+
+  const coverDataUrl = await getCoverDataUrl(post.featured_image)
+  if (coverDataUrl) {
+    return new ImageResponse(
+      (
+        <div style={{ width: '100%', height: '100%', display: 'flex' }}>
+          <img
+            src={coverDataUrl}
+            width={size.width}
+            height={size.height}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        </div>
+      ),
+      { ...size },
+    )
+  }
+
+  const title = truncateText(post.title, 80)
+  const excerpt = post.excerpt ? truncateText(post.excerpt, 150) : null
+  return fallbackImage(title, excerpt)
+}
