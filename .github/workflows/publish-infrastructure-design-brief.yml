@@ -4,10 +4,14 @@ on:
   push:
     branches: [main]
     paths:
-      - 'content/briefs/*-infrastructure-design-brief.md'
+      - 'content/briefs/**'
 
 permissions:
   contents: read
+
+concurrency:
+  group: publish-infrastructure-design-brief
+  cancel-in-progress: false
 
 jobs:
   publish:
@@ -16,7 +20,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Publish newly added briefs to gareev.de
+      - name: Test cover publishing
+        run: node --test scripts/publish-new-infrastructure-briefs.test.mjs
+      - name: Publish briefs with generated covers to gareev.de
         env:
           GAREEV_BLOG_API_KEY: ${{ secrets.GAREEV_BLOG_API_KEY }}
           BEFORE_SHA: ${{ github.event.before }}
