@@ -31,7 +31,7 @@ if (slugs.length === 0) {
 }
 
 const headers = { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' };
-const listResponse = await fetch(`${endpoint}?onlyMine=true`, { headers });
+const listResponse = await fetch(`${endpoint}?publishedOnly=true`, { headers });
 if (!listResponse.ok) throw new Error(`Could not check existing posts (HTTP ${listResponse.status}).`);
 const posts = await listResponse.json();
 if (!Array.isArray(posts)) throw new Error('The blog API did not return a post list.');
