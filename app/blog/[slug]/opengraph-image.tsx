@@ -24,19 +24,7 @@ function getSiteOrigin(): string {
   return deploymentHost ? `https://${deploymentHost}` : 'https://gareev.de'
 }
 
-function toBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer)
-  const chunkSize = 0x8000
-  let binary = ''
-
-  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize))
-  }
-
-  return btoa(binary)
-}
-
-async function getCoverDataUrl(value: string | null): Promise<string | null> {
+function getCoverUrl(value: string | null): string | null {
   if (!value) return null
 
   try {
@@ -49,23 +37,12 @@ async function getCoverDataUrl(value: string | null): Promise<string | null> {
     ])
     const isVercelBlob = coverUrl.hostname.endsWith('.blob.vercel-storage.com')
 
-    // The image route can fetch only this site's own assets or Vercel Blob files.
+    // Restrict server-side image fetches to this site and Vercel Blob.
     if (coverUrl.protocol !== 'https:' || (!allowedOrigins.has(coverUrl.origin) && !isVercelBlob)) {
       return null
     }
 
-    const response = await fetch(coverUrl)
-    const mime = response.headers.get('content-type')?.split(';')[0] || ''
-    if (!response.ok || !['image/png', 'image/jpeg', 'image/webp'].includes(mime)) {
-      return null
-    }
-
-    const bytes = await response.arrayBuffer()
-    if (bytes.byteLength === 0 || bytes.byteLength > 10 * 1024 * 1024) {
-      return null
-    }
-
-    return `data:${mime};base64,${toBase64(bytes)}`
+    return coverUrl.href
   } catch {
     return null
   }
@@ -140,13 +117,13 @@ export default async function Image({ params }: { params: Promise<{ slug: string
     return fallbackImage('Post Not Found', null)
   }
 
-  const coverDataUrl = await getCoverDataUrl(post.featured_image)
-  if (coverDataUrl) {
+  const coverUrl = getCoverUrl(post.featured_image)
+  if (coverUrl) {
     return new ImageResponse(
       (
         <div style={{ width: '100%', height: '100%', display: 'flex' }}>
           <img
-            src={coverDataUrl}
+            src={coverUrl}
             width={size.width}
             height={size.height}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
