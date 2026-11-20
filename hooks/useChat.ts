@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/client-supabase";
-import { useYandexGPT } from "@/hooks/useYandexGPT";
+import { useChatCompletion } from "@/hooks/useChatCompletion";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
@@ -26,6 +26,10 @@ export interface Message {
       snippet?: string;
       type?: "blog" | "web";
     }[];
+    /** Token usage of the assistant reply; `totalTokens` is the context size after it */
+    usage?: {
+      totalTokens: number;
+    };
   };
   created_at?: string;
 }
@@ -44,7 +48,7 @@ export const useChat = (chatId: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isMessageSending, setIsMessageSending] = useState(false);
-  const { generateText, isGenerating: isAssistantTyping, generateChatTitle } = useYandexGPT();
+  const { generateText, isGenerating: isAssistantTyping, generateChatTitle } = useChatCompletion();
 
   const {
     data: chat,
@@ -139,12 +143,10 @@ export const useChat = (chatId: string) => {
     mutationFn: async ({
       content,
       attachments,
-      useWebSearch,
       useWidgetMode
     }: {
       content: string;
       attachments?: FileAttachment[];
-      useWebSearch?: boolean;
       useWidgetMode?: boolean;
     }) => {
       setIsMessageSending(true);
@@ -156,45 +158,9 @@ export const useChat = (chatId: string) => {
           // Process each attachment
           const fileDescriptions = await Promise.all(
             attachments.map(async (file) => {
-              // Check if it's an image
+              // Images are not analyzed: the text model does not accept image input
               if (file.type.startsWith('image/')) {
-                try {
-                  // Call image analysis API
-                  const { data: { session } } = await supabase.auth.getSession();
-                  const response = await fetch('/api/analyze-image', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${session?.access_token}`,
-                    },
-                    body: JSON.stringify({
-                      imageUrl: file.url,
-                      imageType: file.type,
-                    }),
-                  });
-
-                  if (response.ok) {
-                    const analysis = await response.json();
-                    console.log('Image analysis response:', {
-                      success: analysis.success,
-                      hasDescription: !!analysis.description,
-                      descriptionLength: analysis.description?.length,
-                      description: analysis.description?.substring(0, 100)
-                    });
-
-                    if (analysis.success && analysis.description && analysis.description.trim()) {
-                      return `[Изображение: ${file.name}]\n${analysis.description}`;
-                    } else {
-                      console.warn('No valid description in analysis result');
-                    }
-                  } else {
-                    console.error('Image analysis failed:', await response.text());
-                  }
-                } catch (error) {
-                  console.error('Error analyzing image:', error);
-                }
-                // Fallback for images if analysis fails
-                return `[Изображение: ${file.name} - изображение прикреплено, но анализ недоступен]`;
+                return `[Изображение: ${file.name} - изображение прикреплено, но анализ изображений недоступен]`;
               }
 
               // Check if it's a PDF
@@ -311,7 +277,7 @@ export const useChat = (chatId: string) => {
           }
         }
 
-        console.log('Enriched content for YandexGPT:', {
+        console.log('Enriched content for the model:', {
           originalContent: content,
           enrichedContent: enrichedContent.substring(0, 200),
           enrichedContentLength: enrichedContent.length,
@@ -334,21 +300,6 @@ export const useChat = (chatId: string) => {
           .single();
 
         if (userMessageError) throw userMessageError;
-
-        // Index this user message into per-chat embeddings (if has text or extracted descriptions)
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          await fetch('/api/chat/index-message', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session?.access_token}`,
-            },
-            body: JSON.stringify({ chatId, messageId: savedMessage.id, text: enrichedContent })
-          });
-        } catch (e) {
-          console.error('Failed to index message for RAG:', e);
-        }
 
         // Get the message history for context - limit to last 10 messages for token efficiency
         // For previous messages with attachments, we need to reconstruct enriched content
@@ -374,7 +325,7 @@ export const useChat = (chatId: string) => {
             };
           });
 
-        // YandexGPT requires non-empty text
+        // The model requires non-empty text
         if (!enrichedContent.trim()) {
           throw new Error("Сообщение не может быть пустым");
         }
@@ -385,24 +336,13 @@ export const useChat = (chatId: string) => {
           text: enrichedContent
         });
 
-        // Get system prompt from chat settings or use default with image understanding support
-        const systemPrompt = chat?.system_prompt || "Ты полезный ассистент с возможностью анализа изображений и файлов. Когда пользователь прикрепляет изображение, ты получаешь его описание и извлеченный текст. Используй эту информацию для детального и точного ответа. Отвечай на вопросы пользователя чётко и лаконично.";
-
-        // Create a temporary reasoning message to show thinking process
-        let reasoningMessageId: string | null = null;
+        // Get system prompt from chat settings or use default
+        const systemPrompt = chat?.system_prompt || "Ты полезный ассистент. Отвечай на вопросы пользователя чётко и лаконично.";
 
         const { text, error, usage, metadata } = await generateText(
-          enrichedContent, // Use enrichedContent with image analysis
+          enrichedContent,
           systemPrompt,
           messageHistory, // Pass message history for context
-          (reasoningChunk: string) => {
-            // Handle reasoning chunks in real-time
-            console.log('Reasoning chunk:', reasoningChunk);
-            // TODO: Update UI with reasoning chunks
-          },
-          Boolean(useWebSearch),
-          content,
-          chatId,
           Boolean(useWidgetMode)
         );
 
@@ -411,11 +351,16 @@ export const useChat = (chatId: string) => {
         }
 
         // Add AI response to the database
+        // Keep the reply's token usage so the chat can show how full the context is
+        const replyTotalTokens = Number(usage?.totalTokens) || 0;
         const assistantMessage: Message = {
           chat_id: chatId,
           role: "assistant",
           content: text,
-          metadata: metadata,
+          metadata: {
+            ...metadata,
+            ...(replyTotalTokens > 0 ? { usage: { totalTokens: replyTotalTokens } } : {}),
+          },
         };
 
         const { error: assistantMessageError } = await supabase

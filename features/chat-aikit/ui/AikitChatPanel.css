@@ -20,15 +20,6 @@
   max-width: 100%;
 }
 
-.aikit-chat-panel__actionbar_guest {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--g-spacing-4);
-  min-height: 40px;
-  padding-inline: var(--g-spacing-5);
-}
-
 .aikit-chat-panel__actionbar [class*='gn-action-bar-section_type_primary'] {
   display: flex;
   flex: 1 1 auto;
@@ -222,19 +213,21 @@ body.navigation-position-bottom .aikit-chat-panel {
 
 .aikit-chat-panel__tools {
   display: flex;
+  flex: 1;
   align-items: center;
   gap: var(--g-spacing-2);
+}
+
+/* Context usage indicator: sits right before the submit button */
+.aikit-chat-panel__context {
+  margin-left: auto;
+  padding-right: var(--g-spacing-1);
 }
 
 .aikit-chat-panel__settings {
   display: flex;
   flex-direction: column;
   gap: var(--g-spacing-4);
-}
-
-.aikit-chat-panel__guest-register-footer .g-dialog-footer__children {
-  justify-content: flex-end;
-  gap: var(--g-spacing-3);
 }
 
 .aikit-chat-panel__settings > div {

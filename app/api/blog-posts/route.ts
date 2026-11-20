@@ -5,23 +5,10 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/types';
 import { withAuth } from '@/app/auth/withApiKeyAuth';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { put } from '@vercel/blob';
 
 // ---------- Featured image data-URL normalization helpers ----------
-const BUCKET_NAME = 'public-gareevde';
-const ENDPOINT_URL = process.env.ENDPOINT_URL || 'https://storage.yandexcloud.net';
-const BUCKET_KEY_ID = process.env.BUCKET_KEY_ID || '';
-const BUCKET_SECRET_KEY = process.env.BUCKET_SECRET_KEY || '';
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
-
-const s3Client = new S3Client({
-  region: 'ru-central1',
-  endpoint: ENDPOINT_URL,
-  credentials: {
-    accessKeyId: BUCKET_KEY_ID,
-    secretAccessKey: BUCKET_SECRET_KEY,
-  },
-});
 
 function detectDataUrl(value: unknown): value is string {
   return typeof value === 'string' && /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(value);
@@ -49,28 +36,19 @@ function parseDataUrl(dataUrl: string): { mime: string; ext: string; buffer: Buf
   }
 }
 
-async function uploadToYandex(params: { buffer: Buffer; mime: string; userId: string; ext: string; folder?: string }) {
-  if (!BUCKET_KEY_ID || !BUCKET_SECRET_KEY) {
-    throw new Error('Storage credentials are not configured');
-  }
-  const { buffer, mime, userId, ext, folder = 'featured' } = params;
-  const ts = Date.now();
-  const rand = Math.random().toString(36).slice(2, 8);
-  const key = `${folder}/${userId}/${ts}-${rand}.${ext}`;
+/** Stores a featured image in Vercel Blob. Blog covers are public via the `/api/storage/file` route. */
+async function uploadFeaturedImage(params: { buffer: Buffer; mime: string; userId: string; ext: string }) {
+  const { buffer, mime, userId, ext } = params;
+  const key = `featured/${userId}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
 
-  const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-    Body: buffer,
-    ContentType: mime,
-    CacheControl: '3600',
-    ACL: 'public-read',
+  await put(key, buffer, {
+    access: 'private',
+    addRandomSuffix: false,
+    contentType: mime,
+    cacheControlMaxAge: 3600,
   });
 
-  await s3Client.send(command);
-
-  const url = `https://${BUCKET_NAME}.storage.yandexcloud.net/${key}?${ts}`;
-  return { url, path: key };
+  return { url: `/api/storage/file?path=${encodeURIComponent(key)}`, path: key };
 }
 
 async function normalizeFeaturedImage(featuredImage: any, userId: string): Promise<string | null | undefined> {
@@ -87,13 +65,13 @@ async function normalizeFeaturedImage(featuredImage: any, userId: string): Promi
     throw Object.assign(new Error('featured_image exceeds 10MB limit'), { status: 413 });
   }
 
-  const { url } = await uploadToYandex({
+  const { url } = await uploadFeaturedImage({
     buffer: parsed.buffer,
     mime: parsed.mime,
     ext: parsed.ext,
     userId,
   });
-  console.log('[blog-posts] Uploaded featured_image to Yandex', {
+  console.log('[blog-posts] Uploaded featured_image to Vercel Blob', {
     userId,
     size: parsed.buffer.length,
   });
@@ -388,30 +366,6 @@ export const POST = withAuth(async (request: NextRequest, user: { id: string }) 
 
     if (error) {
       throw error;
-    }
-
-    // Trigger embedding sync if published
-    if (data.published) {
-      // We don't await this to keep the API responsive, 
-      // it will run in the background (Edge Runtime/Next.js keeps it alive for a bit)
-      // Or if we want to be sure, we can await or use a background job.
-      // For now, let's just trigger it.
-      import('@/lib/blog-sync').then(({ syncBlogPostEmbeddings }) => {
-        syncBlogPostEmbeddings(data.id);
-      }).catch(err => console.error('Failed to trigger sync:', err));
-
-      import('@/lib/blog-push-notify').then(({ notifyBlogPostPublished }) => {
-        if (!data.slug) {
-          return;
-        }
-
-        notifyBlogPostPublished({
-          id: data.id,
-          title: data.title,
-          slug: data.slug,
-          excerpt: data.excerpt,
-        });
-      }).catch(err => console.error('Failed to trigger blog push notification:', err));
     }
 
     // Refresh the statically cached blog list and the new post page.

@@ -13,10 +13,8 @@
   "chatForm.widgetModeOn": "Widget mode enabled — the assistant will generate a widget",
   "chatForm.widgetModeOff": "Create a widget",
   "chatView.attachFile": "Attach file",
-  "chatView.webSearchOn": "Enable web search",
-  "chatView.webSearchOff": "Disable web search",
-  "chatView.reasoningOn": "Enable reasoning mode",
-  "chatView.reasoningOff": "Disable reasoning mode",
+  "chatView.contextUsage": "Context used",
+  "chatView.contextUsageEstimate": "approximate, based on text length",
   "chatView.settingsTooltip": "Chat settings",
   "chatView.settingsTitle": "Chat settings",
   "chatView.modelLabel": "AI model",
@@ -32,11 +30,5 @@
   "chatView.emptyFilteredPlaceholder": "Nothing found",
   "chatView.searchPlaceholder": "Search chats...",
   "chatView.cancel": "Cancel",
-  "chatView.save": "Save",
-  "chatView.guestTitle": "Guest chat",
-  "chatView.guestRegisterTitle": "Want another chat?",
-  "chatView.guestRegisterText": "You can ask as many questions as you like in this chat. Create an account to start another chat.",
-  "chatView.guestRegisterAction": "Sign up",
-  "chatView.guestError": "Could not send your message. Please try again.",
-  "chatView.guestTooLong": "Messages must be 4,000 characters or shorter."
+  "chatView.save": "Save"
 }

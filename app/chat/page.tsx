@@ -5,7 +5,6 @@ import { useChats } from "@/hooks/useChats";
 import { Spin } from "@gravity-ui/uikit";
 import { useEffect, useRef } from "react";
 import "./chat-page.css";
-import { GuestChatPanel } from "@/features/chat-aikit/ui/GuestChatPanel";
 
 const ChatPage = () => {
   const { user, loading: isAuthLoading } = useAuth();
@@ -16,7 +15,14 @@ const ChatPage = () => {
   const isRedirecting = useRef(false);
 
   useEffect(() => {
-    if (isRedirecting.current || isAuthLoading || !user || isChatsLoading) {
+    if (isAuthLoading) return;
+
+    if (!user) {
+      router.replace("/auth");
+      return;
+    }
+
+    if (isRedirecting.current || isChatsLoading) {
       return;
     }
 
@@ -43,16 +49,6 @@ const ChatPage = () => {
 
     redirectToChat();
   }, [user, isAuthLoading, chats, isChatsLoading, router, createChat, prompt]);
-
-  if (isAuthLoading) {
-    return (
-      <div className="chat-page-loading">
-        <Spin size="m" />
-      </div>
-    );
-  }
-
-  if (!user) return <GuestChatPanel />;
 
   return (
     <div className="chat-page-loading">

@@ -2,11 +2,11 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChatContainer, ActionButton } from "@gravity-ui/aikit";
+import { ChatContainer, ActionButton, ContextIndicator } from "@gravity-ui/aikit";
 import type { ChatType, TChatMessage, TSubmitData } from "@gravity-ui/aikit";
 import { Button, Breadcrumbs, Dialog, DropdownMenu, Icon, Select, Text, TextArea } from "@gravity-ui/uikit";
 import { ActionBar } from "@gravity-ui/navigation";
-import { Bulb, Circles3Plus, ClockArrowRotateLeft, Ellipsis, Magnifier, Plus, Sliders, TrashBin } from "@gravity-ui/icons";
+import { Circles3Plus, ClockArrowRotateLeft, Ellipsis, Plus, Sliders, TrashBin } from "@gravity-ui/icons";
 import { useChat } from "@/hooks/useChat";
 import { useChats } from "@/hooks/useChats";
 import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
@@ -14,7 +14,9 @@ import { useI18n } from "@/app/contexts/I18nContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DrawerMenu } from "@/shared/ui/DrawerMenu";
 import { FileUploader, FileAttachment } from "@/app/components/chat/FileUploader";
+import { getModelContextLength } from "@/lib/chatModels";
 import { toAikitMessages, toAikitChats, toChatStatus } from "../model/adapters";
+import { getContextUsage } from "../model/contextUsage";
 import { widgetMessageRegistry } from "./WidgetMessagePart";
 import "./AikitChatPanel.css";
 
@@ -36,10 +38,9 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
     error,
   } = useChat(chatId);
   const { chats, createChat, deleteChat } = useChats();
-  const { reasoningMode, setReasoningMode, selectedModel, setSelectedModel, availableModels } = useModelSelection();
+  const { selectedModel, setSelectedModel, availableModels } = useModelSelection();
 
   const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
-  const [useWebSearch, setUseWebSearch] = useState(false);
   const [useWidgetMode, setUseWidgetMode] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -57,18 +58,23 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
   const chatTitle = activeChat?.name || t('chatView.breadcrumbNewChat');
   const breadcrumbChatTitle = chatTitle.length > 100 ? `${chatTitle.slice(0, 97)}...` : chatTitle;
   const status = toChatStatus(isMessageSending, isAssistantTyping, !!error);
+  const contextUsage = getContextUsage(messages);
+  const contextMaxTokens = getModelContextLength(selectedModel);
+  const contextUsageText = [
+    `${t('chatView.contextUsage')}: ${contextUsage.tokens.toLocaleString()} / ${contextMaxTokens.toLocaleString()}`,
+    contextUsage.isEstimate ? `(${t('chatView.contextUsageEstimate')})` : null,
+  ].filter(Boolean).join(' ');
 
   const handleSendMessage = useCallback(
     async (data: TSubmitData) => {
       await sendMessage.mutateAsync({
         content: data.content,
         attachments: attachedFiles.length > 0 ? attachedFiles : undefined,
-        useWebSearch,
         useWidgetMode,
       });
       setAttachedFiles([]);
     },
-    [sendMessage, attachedFiles, useWebSearch, useWidgetMode],
+    [sendMessage, attachedFiles, useWidgetMode],
   );
 
   useEffect(() => {
@@ -126,30 +132,12 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
       />
       <ActionButton
         size="m"
-        view={useWebSearch ? "action" : "flat"}
-        onClick={() => setUseWebSearch((v) => !v)}
-        tooltipTitle={useWebSearch ? t('chatView.webSearchOff') : t('chatView.webSearchOn')}
-      >
-        <Icon data={Magnifier} size={16} />
-      </ActionButton>
-      <ActionButton
-        size="m"
         view={useWidgetMode ? "action" : "flat"}
         onClick={() => setUseWidgetMode((v) => !v)}
         tooltipTitle={useWidgetMode ? t('chatForm.widgetModeOn') : t('chatForm.widgetModeOff')}
       >
         <Icon data={Circles3Plus} size={16} />
       </ActionButton>
-      {selectedModel === "yandexgpt" && (
-        <ActionButton
-          size="m"
-          view={reasoningMode ? "action" : "flat"}
-          onClick={() => setReasoningMode(!reasoningMode)}
-          tooltipTitle={reasoningMode ? t('chatView.reasoningOff') : t('chatView.reasoningOn')}
-        >
-          <Icon data={Bulb} size={16} />
-        </ActionButton>
-      )}
       <ActionButton
         size="m"
         view="flat"
@@ -158,6 +146,13 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
       >
         <Icon data={Sliders} size={16} />
       </ActionButton>
+      <ContextIndicator
+        className="aikit-chat-panel__context"
+        type="number"
+        usedContext={contextUsage.tokens}
+        maxContext={contextMaxTokens}
+        tooltipContent={contextUsageText}
+      />
     </div>
   );
 

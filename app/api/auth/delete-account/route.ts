@@ -1,23 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  S3Client,
-  ListObjectsV2Command,
-  DeleteObjectsCommand,
-} from '@aws-sdk/client-s3';
+import { del, list } from '@vercel/blob';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { withApiAuth } from '@/app/auth/withApiAuth';
-
-const BUCKET_NAME = 'public-gareevde';
-const ENDPOINT_URL = process.env.ENDPOINT_URL || 'https://storage.yandexcloud.net';
-
-const s3Client = new S3Client({
-  region: 'ru-central1',
-  endpoint: ENDPOINT_URL,
-  credentials: {
-    accessKeyId: process.env.BUCKET_KEY_ID || '',
-    secretAccessKey: process.env.BUCKET_SECRET_KEY || '',
-  },
-});
 
 // Storage prefixes that hold per-user files (see CLAUDE.md key data flows)
 const STORAGE_PREFIXES = ['profiles', 'featured', 'blog', 'editor-images'];
@@ -35,36 +19,22 @@ const USER_OWNED_TABLES: Array<{ table: string; column: string }> = [
   { table: 'blog_posts', column: 'author_id' },
 ];
 
-// Remove every object under `${prefix}/${userId}/` for each known prefix.
+// Remove every blob under `${prefix}/${userId}/` for each known prefix.
 async function deleteUserStorage(userId: string, warnings: string[]) {
   for (const prefix of STORAGE_PREFIXES) {
     const fullPrefix = `${prefix}/${userId}/`;
     try {
-      let continuationToken: string | undefined;
+      let cursor: string | undefined;
       do {
-        const listed = await s3Client.send(
-          new ListObjectsV2Command({
-            Bucket: BUCKET_NAME,
-            Prefix: fullPrefix,
-            ContinuationToken: continuationToken,
-          }),
-        );
+        const page = await list({ prefix: fullPrefix, cursor, limit: 1000 });
+        const pathnames = page.blobs.map((blob) => blob.pathname);
 
-        const objects = listed.Contents?.map((item) => ({ Key: item.Key! })).filter(
-          (o) => o.Key,
-        );
-
-        if (objects && objects.length > 0) {
-          await s3Client.send(
-            new DeleteObjectsCommand({
-              Bucket: BUCKET_NAME,
-              Delete: { Objects: objects },
-            }),
-          );
+        if (pathnames.length > 0) {
+          await del(pathnames);
         }
 
-        continuationToken = listed.IsTruncated ? listed.NextContinuationToken : undefined;
-      } while (continuationToken);
+        cursor = page.hasMore ? page.cursor : undefined;
+      } while (cursor);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'unknown error';
       warnings.push(`storage:${fullPrefix} -> ${message}`);

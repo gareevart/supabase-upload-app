@@ -54,23 +54,6 @@
   flex-shrink: 0;
 }
 
-/* Анимации */
-@keyframes pulse-reasoning {
-
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.7;
-  }
-}
-
-.chat-message-form__button--reasoning.active {
-  animation: pulse-reasoning 2s ease-in-out infinite;
-}
-
 
 /* Адаптивность */
 @media (max-width: 768px) {

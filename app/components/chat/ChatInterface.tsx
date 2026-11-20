@@ -5,7 +5,6 @@ import ReactMarkdown from 'react-markdown';
 import { Button, TextArea, Icon, Dialog, Text, Spin, Label, List, Link, DropdownMenu, useToaster, Select, HelpMark, ClipboardButton } from '@gravity-ui/uikit';
 import { Gear, Bars, Plus } from '@gravity-ui/icons';
 import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
-import { ReasoningBlock } from "./ReasoningBlock";
 import { ChatMessageForm } from "./ChatMessageForm";
 import { useChatSidebar } from "./ChatSidebarContext";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -34,14 +33,11 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
 
   // Use the toaster hook
   const toaster = useToaster();
-  const { reasoningMode, selectedModel, setSelectedModel, availableModels, modelsLoading, modelsError } = useModelSelection();
+  const { selectedModel, setSelectedModel, availableModels, modelsLoading, modelsError } = useModelSelection();
   const { toggleSidebar, isMobileSidebarOpen } = useChatSidebar();
   const isMobile = useIsMobile();
   const { handleCreateChat, createChat } = useCreateChat();
   const [systemPrompt, setSystemPrompt] = useState("");
-  const [currentReasoning, setCurrentReasoning] = useState("");
-  const [isReasoningActive, setIsReasoningActive] = useState(false);
-  const [useWebSearch, setUseWebSearch] = useState(false);
   const [useWidgetMode, setUseWidgetMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -57,11 +53,6 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
     console.log('ChatInterface: selectedModel changed to:', selectedModel);
   }, [selectedModel]);
 
-  // Log reasoning mode changes for debugging
-  useEffect(() => {
-    console.log('ChatInterface: reasoningMode changed to:', reasoningMode);
-  }, [reasoningMode]);
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -70,29 +61,15 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
     scrollToBottom();
   }, [messages]);
 
-  const handleMessageSubmit = async (message: string, files?: FileAttachment[], useWebSearch?: boolean, useWidgetMode?: boolean) => {
-    // Reset reasoning state
-    setCurrentReasoning("");
-    setIsReasoningActive(false);
-
+  const handleMessageSubmit = async (message: string, files?: FileAttachment[], useWidgetMode?: boolean) => {
     try {
-      // Start reasoning if in reasoning mode and using YandexGPT
-      if (reasoningMode && selectedModel === 'yandexgpt') {
-        setIsReasoningActive(true);
-      }
-
       await sendMessage.mutateAsync({
         content: message,
         attachments: files,
-        useWebSearch: useWebSearch,
         useWidgetMode: useWidgetMode
       });
-
-      // Stop reasoning when done
-      setIsReasoningActive(false);
     } catch (error) {
       console.error("Error sending message:", error);
-      setIsReasoningActive(false);
       throw error; // Re-throw to let the form handle it
     }
   };
@@ -225,22 +202,11 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
           )}
 
           <div className="chat-interface__status">
-          {useWebSearch && (
-              <Label theme="info" size="m">
-                Web-search
-              </Label>
-            )}
             {useWidgetMode && (
               <Label theme="info" size="m">
                 Widget mode
               </Label>
             )}
-            {reasoningMode && selectedModel === 'yandexgpt' && (
-              <Label theme="info" size="m">
-                Thinking mode
-              </Label>
-            )}
-
           </div>
         </div>
 
@@ -281,12 +247,6 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
                 onCopy={() => { /* silent copy handled by ClipboardButton tooltip */ }}
               />
             ))}
-            {isReasoningActive && selectedModel === 'yandexgpt' && (
-              <ReasoningBlock
-                content={currentReasoning}
-                isStreaming={isReasoningActive}
-              />
-            )}
             {isAssistantTyping && (
               <div className="chat-interface__typing">
                 <Text variant="body-2">Чат отвечает...</Text>
@@ -302,8 +262,6 @@ export const ChatInterface = ({ chatId }: ChatInterfaceProps) => {
         <ChatMessageForm
           onSubmit={handleMessageSubmit}
           isMessageSending={isMessageSending}
-          useWebSearch={useWebSearch}
-          onToggleWebSearch={() => setUseWebSearch((prev) => !prev)}
           useWidgetMode={useWidgetMode}
           onToggleWidgetMode={() => setUseWidgetMode((prev) => !prev)}
         />

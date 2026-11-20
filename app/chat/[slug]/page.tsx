@@ -19,7 +19,7 @@ const ChatPage = () => {
   }
 
   if (!user) {
-    redirect("/chat");
+    redirect("/auth");
     return null;
   }
 

@@ -12,7 +12,6 @@ npm run test         # Jest
 npm run test:watch   # Jest in watch mode
 npm run test:coverage
 npm run diagnose     # tsx scripts/test-broadcasts-access.ts
-npm run sync:embeddings  # tsx scripts/sync-embeddings.ts
 ```
 
 ## Architecture
@@ -27,7 +26,7 @@ entities/     → domain model entities
 shared/       → reusable UI, API clients, utils, types
 ```
 
-`lib/` holds server-side utilities (Supabase admin, Redis, Yandex APIs, document parsing) used by API routes. `hooks/` holds client-side React hooks.
+`lib/` holds server-side utilities (Supabase admin, Redis, DeepSeek, document parsing) used by API routes. `hooks/` holds client-side React hooks.
 
 **Key architectural rules:**
 - Keep `app/**/page.tsx` thin — compose from widgets/features/shared.
@@ -78,7 +77,8 @@ If Figma MCP returns localhost asset URLs, use them directly. Store design asset
 ## Backend Services
 
 - **Supabase** — auth, PostgreSQL, storage. Client-side uses `@supabase/ssr` cookie-based session; server-side API routes use service role key for RLS bypass.
-- **Yandex Cloud** — GPT (streaming LLM), Vision API (OCR + classification for chat image attachments), Yandex Search, Yandex Object Storage (S3-compatible, used for all file/image uploads).
+- **DeepSeek** — chat LLM (`lib/deepseek.ts`, models in `lib/chatModels.ts`). Text-only: image attachments are not analyzed.
+- **Vercel Blob** — private file/image storage (`/api/storage/*`, `lib/blobUrl.ts`).
 - **Redis** — caches blog post lists (120s TTL). Keys are invalidated on post create/update/delete via `redisDeleteByPrefix()`.
 - **Resend** — transactional email for the broadcasting system.
 
@@ -86,11 +86,11 @@ Auth middleware in API routes: `withAuth()` supports both Supabase session cooki
 
 ## Key Data Flows
 
-**Chat:** Messages stored in Supabase → user sends text + optional file → `/api/generate-text-stream` streams Yandex GPT response → image attachments go through `/api/analyze-image` (Yandex Vision OCR).
+**Chat:** Messages stored in Supabase → user sends text + optional file → `/api/generate-text` calls DeepSeek → reply saved with `metadata.usage` (drives the context-usage indicator). RAG and web search are disabled.
 
-**Blog posts:** TipTap JSON → `POST /api/blog-posts` → featured image data URLs uploaded to Yandex S3 → content stored in `blog_posts` table → Redis cache invalidated → embeddings synced for search.
+**Blog posts:** TipTap JSON → `POST /api/blog-posts` → featured image data URLs uploaded to Vercel Blob → content stored in `blog_posts` table → Redis cache invalidated.
 
-**File uploads:** Client `FileUpload` component → images compressed via Sharp, PDFs parsed via pdf2json → uploaded to Yandex Object Storage → metadata stored in `images` table.
+**File uploads:** Client `FileUpload` component → images compressed via Sharp, PDFs parsed via pdf2json → uploaded to Vercel Blob → metadata stored in `images` table.
 
 ## Environment Variables
 
@@ -100,11 +100,8 @@ Required in `.env.local`:
 |----------|---------|
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase client |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-side Supabase (bypasses RLS) |
-| `YANDEX_API_KEY`, `YANDEX_FOLDER_ID` | Yandex Vision API |
-| `YANDEX_CLOUD_API_KEY`, `YANDEX_CLOUD_FOLDER`, `YANDEX_CLOUD_MODEL` | Yandex GPT |
-| `SEARCH_API_YANDEX_FOLDER`, `SEARCH_API_KEY_ID`, `SEARCH_API_KEY` | Yandex Search |
-| `BUCKET_KEY_ID`, `BUCKET_SECRET_KEY`, `ENDPOINT_URL` | Yandex Object Storage (server) |
-| `NEXT_PUBLIC_BUCKET_KEY_ID`, `NEXT_PUBLIC_BUCKET_SECRET_KEY`, `NEXT_PUBLIC_ENDPOINT_URL` | Yandex Object Storage (client) |
+| `DEEPSEEK_API_KEY` | DeepSeek chat API |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob storage |
 | `REDIS_URL` | Redis |
 | `RESEND_API_KEY`, `RESEND_FROM_EMAIL` | Email sending |
 | `CRON_SECRET` | Cron job auth |

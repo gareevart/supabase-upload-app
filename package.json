@@ -12,14 +12,11 @@
     "test:coverage": "jest --coverage",
     "diagnose": "tsx scripts/test-broadcasts-access.ts",
     "publish:blog": "node scripts/publish-blog-post.mjs",
-    "sync:embeddings": "tsx scripts/sync-embeddings.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build -o public/storybook",
     "dev:all": "concurrently \"npm run dev\" \"npm run storybook\""
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1116.0",
-    "@aws-sdk/s3-request-presigner": "^3.1116.0",
     "@diplodoc/transform": "^4.64.1",
     "@gravity-ui/aikit": "^1.17.0",
     "@gravity-ui/components": "^4.22.0",

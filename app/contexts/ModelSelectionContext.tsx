@@ -14,8 +14,6 @@ interface ModelSelectionContextType {
   availableModels: string[];
   modelsLoading: boolean;
   modelsError: string | null;
-  reasoningMode: boolean;
-  setReasoningMode: (enabled: boolean) => void;
 }
 
 const ModelSelectionContext = createContext<ModelSelectionContextType | undefined>(undefined);
@@ -37,35 +35,12 @@ export const ModelSelectionProvider = ({ children }: ModelSelectionProviderProps
   const modelsLoading = false;
   const modelsError: string | null = null;
 
-  const [reasoningMode, setReasoningMode] = useState<boolean>(() => {
-    // Получаем сохраненное состояние режима рассуждений из localStorage
-    if (typeof window !== 'undefined') {
-      const savedReasoningMode = localStorage.getItem("reasoningMode");
-      return savedReasoningMode === "true";
-    }
-    return false;
-  });
-
   // Сохраняем выбранную модель в localStorage при каждом изменении
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem("selectedModel", selectedModel);
     }
   }, [selectedModel]);
-
-  // Сохраняем состояние режима рассуждений в localStorage при каждом изменении
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem("reasoningMode", reasoningMode.toString());
-    }
-  }, [reasoningMode]);
-
-  // Автоматически отключаем режим рассуждений при переключении с YandexGPT
-  useEffect(() => {
-    if (selectedModel !== 'yandexgpt' && reasoningMode) {
-      setReasoningMode(false);
-    }
-  }, [selectedModel, reasoningMode]);
 
   return (
     <ModelSelectionContext.Provider
@@ -75,8 +50,6 @@ export const ModelSelectionProvider = ({ children }: ModelSelectionProviderProps
         availableModels,
         modelsLoading,
         modelsError,
-        reasoningMode,
-        setReasoningMode,
       }}
     >
       {children}

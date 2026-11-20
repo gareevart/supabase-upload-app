@@ -2,7 +2,6 @@
 
 import { Switch, Text } from '@gravity-ui/uikit';
 import { useI18n } from '@/app/contexts/I18nContext';
-import { useBlogPushNotifications } from '@/features/blog-push-notifications/model/useBlogPushNotifications';
 import '@/features/appearance/ui/AppearancePanel.css';
 import './SubscriptionsPanel.css';
 
@@ -46,38 +45,6 @@ export function SubscriptionsPanel({
   fullWidth = false,
 }: SubscriptionsPanelProps) {
   const { t } = useI18n();
-  const {
-    status: pushStatus,
-    isSupported: isPushSupported,
-    subscribe,
-    unsubscribe,
-    error: pushError,
-  } = useBlogPushNotifications();
-
-  const isPushSubscribed = pushStatus === 'subscribed';
-  const isPushLoading = pushStatus === 'loading';
-  const isPushDenied = pushStatus === 'denied';
-  const isPushUnavailable = Boolean(pushError?.includes('unavailable'));
-
-  const pushHint = !isPushSupported
-    ? t('subscriptionsPanel.pushUnsupported')
-    : isPushDenied
-      ? t('subscriptionsPanel.pushDenied')
-      : isPushUnavailable
-        ? t('subscriptionsPanel.pushUnavailable')
-        : pushError && !isPushUnavailable
-          ? (pushError.includes('Failed to enable push notifications')
-            ? t('subscriptionsPanel.pushSubscribeFailed')
-            : pushError)
-          : undefined;
-
-  const handlePushChange = (enabled: boolean) => {
-    if (enabled) {
-      void subscribe();
-      return;
-    }
-    void unsubscribe();
-  };
 
   const panelClassName = [
     'appearance-panel',
@@ -97,22 +64,6 @@ export function SubscriptionsPanel({
           content={emailSubscribed
             ? t('subscriptionsPanel.emailSubscribed')
             : t('subscriptionsPanel.emailNotSubscribed')}
-        />
-      </SubscriptionsRow>
-
-      <SubscriptionsRow
-        label={t('subscriptionsPanel.blogPush')}
-        hint={pushHint}
-      >
-        <Switch
-          size="l"
-          checked={isPushSubscribed}
-          loading={isPushLoading}
-          disabled={!isPushSupported || isPushDenied || isPushUnavailable}
-          onUpdate={handlePushChange}
-          content={isPushSubscribed
-            ? t('subscriptionsPanel.pushReceiving')
-            : t('subscriptionsPanel.pushNotReceiving')}
         />
       </SubscriptionsRow>
     </section>

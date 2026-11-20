@@ -13,10 +13,8 @@
   "chatForm.widgetModeOn": "Режим виджета включён — ассистент сгенерирует виджет",
   "chatForm.widgetModeOff": "Создать виджет",
   "chatView.attachFile": "Прикрепить файл",
-  "chatView.webSearchOn": "Включить веб-поиск",
-  "chatView.webSearchOff": "Отключить веб-поиск",
-  "chatView.reasoningOn": "Включить режим рассуждений",
-  "chatView.reasoningOff": "Отключить режим рассуждений",
+  "chatView.contextUsage": "Заполнение контекста",
+  "chatView.contextUsageEstimate": "примерно, по длине текста",
   "chatView.settingsTooltip": "Настройки чата",
   "chatView.settingsTitle": "Настройки чата",
   "chatView.modelLabel": "Модель ИИ",
@@ -32,11 +30,5 @@
   "chatView.emptyFilteredPlaceholder": "Ничего не найдено",
   "chatView.searchPlaceholder": "Поиск чатов...",
   "chatView.cancel": "Отмена",
-  "chatView.save": "Сохранить",
-  "chatView.guestTitle": "Гостевой чат",
-  "chatView.guestRegisterTitle": "Хотите создать ещё один чат?",
-  "chatView.guestRegisterText": "В этом чате можно задавать сколько угодно вопросов. Чтобы создать ещё один чат, зарегистрируйтесь на сайте.",
-  "chatView.guestRegisterAction": "Зарегистрироваться",
-  "chatView.guestError": "Не удалось отправить сообщение. Попробуйте ещё раз.",
-  "chatView.guestTooLong": "Сообщение должно содержать не более 4000 символов."
+  "chatView.save": "Сохранить"
 }

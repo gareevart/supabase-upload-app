@@ -1,17 +1,14 @@
 import { useState, useRef } from "react";
 import { TextArea, Button, Icon } from '@gravity-ui/uikit';
-import { Bulb, Stop, ArrowUturnCwLeft, Globe, Circles3Plus } from '@gravity-ui/icons';
-import { useModelSelection } from "@/app/contexts/ModelSelectionContext";
+import { Stop, ArrowUturnCwLeft, Circles3Plus } from '@gravity-ui/icons';
 import { useI18n } from "@/app/contexts/I18nContext";
 import { FileUploader, FileAttachment } from "./FileUploader";
 import "./ChatMessageForm.css";
 
 interface ChatMessageFormProps {
-  onSubmit: (message: string, files?: FileAttachment[], useWebSearch?: boolean, useWidgetMode?: boolean) => Promise<void>;
+  onSubmit: (message: string, files?: FileAttachment[], useWidgetMode?: boolean) => Promise<void>;
   isMessageSending: boolean;
   disabled?: boolean;
-  useWebSearch: boolean;
-  onToggleWebSearch: () => void;
   useWidgetMode: boolean;
   onToggleWidgetMode: () => void;
 }
@@ -20,13 +17,10 @@ export const ChatMessageForm = ({
   onSubmit,
   isMessageSending,
   disabled = false,
-  useWebSearch,
-  onToggleWebSearch,
   useWidgetMode,
   onToggleWidgetMode
 }: ChatMessageFormProps) => {
   const { t } = useI18n();
-  const { reasoningMode, setReasoningMode, selectedModel } = useModelSelection();
   const [messageText, setMessageText] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -43,7 +37,7 @@ export const ChatMessageForm = ({
     setAttachedFiles([]);
 
     try {
-      await onSubmit(message, files.length > 0 ? files : undefined, useWebSearch, useWidgetMode);
+      await onSubmit(message, files.length > 0 ? files : undefined, useWidgetMode);
     } catch (error) {
       console.error("Error sending message:", error);
       // Restore message and files if failed
@@ -105,18 +99,6 @@ export const ChatMessageForm = ({
             <Button
               type="button"
               size="m"
-              view={useWebSearch ? "action" : "outlined"}
-              onClick={onToggleWebSearch}
-              title={useWebSearch ? "Web-search enabled" : "Use web-search"}
-              disabled={disabled}
-              className="chat-message-form__button chat-message-form__button--web-search"
-            >
-              <Icon data={Globe} size={16} />
-            </Button>
-
-            <Button
-              type="button"
-              size="m"
               view={useWidgetMode ? "action" : "outlined"}
               onClick={onToggleWidgetMode}
               title={useWidgetMode ? t('chatForm.widgetModeOn') : t('chatForm.widgetModeOff')}
@@ -125,21 +107,6 @@ export const ChatMessageForm = ({
             >
               <Icon data={Circles3Plus} size={16} />
             </Button>
-
-            {/* Show reasoning button only for YandexGPT */}
-            {selectedModel === 'yandexgpt' && (
-              <Button
-                type="button"
-                size="m"
-                view={reasoningMode ? "action" : "outlined"}
-                onClick={() => setReasoningMode(!reasoningMode)}
-                title={reasoningMode ? "Disable reasoning mode" : "Enable reasoning mode"}
-                disabled={disabled}
-                className={`chat-message-form__button chat-message-form__button--reasoning ${reasoningMode ? 'active' : ''}`}
-              >
-                <Icon data={Bulb} size={16} />
-              </Button>
-            )}
           </div>
 
           <Button
@@ -160,4 +127,3 @@ export const ChatMessageForm = ({
     </form>
   );
 };
-
