@@ -33,6 +33,34 @@ type EditorMenuState = {
   onCancel: () => void;
 };
 
+type NavItem = {
+  id: string;
+  icon: typeof House;
+  label: string;
+  link: string;
+  activePrefixes: readonly string[];
+};
+
+const allNavItems: NavItem[] = [
+  { id: 'home', icon: House, label: 'Home', link: '/', activePrefixes: ['/'] },
+  { id: 'blog', icon: BookOpen, label: 'Blog', link: '/blog', activePrefixes: ['/blog'] },
+  {
+    id: 'projects',
+    icon: Circles4Square,
+    label: 'Projects',
+    link: '/projects',
+    activePrefixes: ['/projects', '/chat'],
+  },
+  { id: 'search', icon: Magnifier, label: 'Search', link: '/search', activePrefixes: ['/search'] },
+  { id: 'profile', icon: Person, label: 'Profile', link: '/auth/profile', activePrefixes: [] },
+];
+
+const matchesNavPrefix = (pathname: string, prefix: string) =>
+  prefix === '/' ? pathname === '/' : pathname === prefix || pathname.startsWith(`${prefix}/`);
+
+const getActiveItemFromPath = (pathname: string): string =>
+  allNavItems.find((item) => item.activePrefixes.some((prefix) => matchesNavPrefix(pathname, prefix)))?.id ?? '';
+
 export const EDITOR_MENU_EVENT = 'editor-menu-change';
 
 const Navigation: React.FC = () => {
@@ -90,19 +118,6 @@ const Navigation: React.FC = () => {
   const isLeftAnchoredWidgetsPanel = navigationPosition === 'left' && !isMobileViewport;
   const isBottomAnchoredWidgetsPanel = navigationPosition === 'bottom' || isMobileViewport;
   const isChatRoute = pathname?.startsWith('/chat') ?? false;
-
-  // Function to determine active item based on current path
-  const getActiveItemFromPath = (pathname: string): string => {
-    if (pathname === '/') return 'home';
-    if (pathname.startsWith('/blog')) return 'blog';
-    if (pathname.startsWith('/projects')) return 'projects';
-    if (pathname.startsWith('/search')) return 'search';
-    if (pathname.startsWith('/broadcasts')) return 'broadcasts';
-    if (pathname.startsWith('/subscribers')) return 'subscribers';
-    if (pathname.startsWith('/widgets')) return ''; // No active item for widgets page
-    if (pathname.startsWith('/auth/profile')) return ''; // No active item for profile page
-    return 'home'; // default fallback
-  };
 
   // Update active item when pathname changes
   useEffect(() => {
@@ -184,14 +199,6 @@ const Navigation: React.FC = () => {
       mediaQuery.removeEventListener('change', handleViewportChange);
     };
   }, []);
-
-  const allNavItems = [
-    { id: 'home', icon: House, label: 'Home', link: '/' },
-    { id: 'blog', icon: BookOpen, label: 'Blog', link: '/blog' },
-    { id: 'projects', icon: Circles4Square, label: 'Projects', link: '/projects' },
-    { id: 'search', icon: Magnifier, label: 'Search', link: '/search' },
-    { id: 'profile', icon: Person, label: 'Profile', link: '/auth/profile' },
-  ];
 
   const mainNavItems = allNavItems.slice(0, 3);
   const drawerNavItems = allNavItems.slice(3, 5);

@@ -182,32 +182,9 @@
   max-width: 100%;
 }
 
-.blog-post-actionbar {
-  position: -webkit-sticky;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background-color: var(--g-color-base-background);
-  width: 100%;
-  max-width: none;
-  margin: 0;
-  padding: 0;
-}
-
-.blog-post-actionbar [class*='gn-action-bar-section_type_primary'] {
-  flex: 1 1 auto;
-  width: 100%;
-  padding-inline: var(--g-spacing-5);
-}
-
 @media (min-width: 768px) {
   .main-content:has(.blog-post-page) {
     padding-top: 0;
-  }
-
-  .blog-post-actionbar {
-    border-top-left-radius: var(--g-border-radius-xl);
-    border-top-right-radius: var(--g-border-radius-xl);
   }
 }
 
@@ -265,7 +242,7 @@
     grid-template-columns: minmax(0, 1fr) var(--blog-post-toc-width);
   }
 
-  .blog-post-page_toc-open .blog-post-actionbar,
+  .blog-post-page_toc-open .page-action-bar,
   .blog-post-page_toc-open .blog-post-layout {
     grid-column: 1;
   }
@@ -321,35 +298,6 @@
   margin-block: var(--g-spacing-4);
 }
 
-.blog-post-breadcrumbs {
-  width: 100%;
-  min-width: 0;
-}
-
-.blog-post-breadcrumbs.g-breadcrumbs {
-  min-width: 0;
-}
-
-.blog-post-breadcrumbs .g-breadcrumbs__item:first-child {
-  flex: 0 0 auto;
-  max-width: none;
-  overflow: visible;
-  text-overflow: clip;
-  white-space: nowrap;
-}
-
-.blog-post-breadcrumbs .g-breadcrumbs__item:last-child {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.blog-post-breadcrumbs .g-breadcrumbs__item_current .g-breadcrumbs__link {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .blog-post-title {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -368,32 +316,6 @@
 }
 
 @media (max-width: 767px) {
-  .blog-post-actionbar {
-    position: fixed;
-    top: env(safe-area-inset-top, 0px);
-    z-index: 20;
-    left: 0;
-    right: 0;
-  }
-
-  .blog-post-actionbar [class*='gn-action-bar-section_type_primary'] {
-    min-width: 0;
-    padding-inline: var(--g-spacing-2);
-    column-gap: var(--g-spacing-1) !important;
-    gap: var(--g-spacing-1) !important;
-  }
-
-  .blog-post-actionbar [class*='gn-action-bar-group']:first-child {
-    min-width: 0;
-    flex: 1 1 auto;
-    overflow: hidden;
-  }
-
-  .blog-post-actionbar [class*='gn-action-bar-group']:last-child {
-    flex: 0 0 auto;
-    gap: 0;
-  }
-
   .blog-post-edit-label {
     display: none;
   }

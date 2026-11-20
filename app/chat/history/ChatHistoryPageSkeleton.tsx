@@ -1,28 +1,24 @@
 "use client";
 
 import { Skeleton } from "@gravity-ui/uikit";
-import { ActionBar } from "@gravity-ui/navigation";
+import { PageActionBar } from "@/shared/ui/PageActionBar";
+import { useI18n } from "@/app/contexts/I18nContext";
 import "./page.css";
 
 const LIST_SKELETON_COUNT = 5;
 
 export function ChatHistoryPageSkeleton() {
+  const { t } = useI18n();
+
   return (
     <div className="chat-history-page">
-      <div className="chat-history-page__actionbar">
-        <ActionBar aria-label="Loading">
-          <ActionBar.Section style={{ columnGap: 20, gap: 20 }}>
-            <ActionBar.Group stretchContainer style={{ minWidth: 0 }}>
-              <ActionBar.Item style={{ minWidth: 0, width: "100%" }}>
-                <Skeleton className="chat-history-page__skeleton-breadcrumbs" />
-              </ActionBar.Item>
-            </ActionBar.Group>
-          </ActionBar.Section>
-        </ActionBar>
-      </div>
+      <PageActionBar
+        ariaLabel={t("chatView.chatActions")}
+        breadcrumbs={<Skeleton className="page-action-bar__skeleton" />}
+      />
 
-      <main className="chat-history-page__main">
-        <div className="chat-history-page__header">
+      <main className="hub-page__main chat-history-page__main">
+        <div className="hub-page__header chat-history-page__header">
           <Skeleton className="chat-history-page__skeleton-title" />
           <Skeleton className="chat-history-page__skeleton-create-button" />
         </div>

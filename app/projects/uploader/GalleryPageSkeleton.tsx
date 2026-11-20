@@ -1,17 +1,24 @@
 'use client';
 
 import { Card, Skeleton } from '@gravity-ui/uikit';
+import { PageActionBar } from '@/shared/ui/PageActionBar';
+import { useI18n } from '@/app/contexts/I18nContext';
 import '../../components/components.css';
 import './page.css';
 
 const GRID_SKELETON_COUNT = 8;
 
 export function GalleryPageSkeleton() {
+  const { t } = useI18n();
+
   return (
     <div className="uploader-page">
-      <main className="uploader-page__main">
+      <PageActionBar
+        ariaLabel={t('gallery.pageActions')}
+        breadcrumbs={<Skeleton className="page-action-bar__skeleton" />}
+      />
+      <main className="hub-page__main uploader-page__main">
         <div className="uploader-page__content">
-          <Skeleton className="uploader-page__skeleton-breadcrumbs" />
           <Skeleton className="uploader-page__skeleton-title" />
 
           <Card view="filled" className="responsive-card uploader-page__skeleton-upload">

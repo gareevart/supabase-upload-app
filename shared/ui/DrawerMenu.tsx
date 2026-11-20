@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Flex, Text } from '@gravity-ui/uikit';
 import './DrawerMenu.css';
 
@@ -23,14 +24,23 @@ export const DrawerMenu = ({
   footer,
   className = '',
   contentClassName = '',
-  bottomOffset = 65,
+  bottomOffset = 0,
 }: DrawerMenuProps) => {
   const titleId = React.useId();
+  const [mounted, setMounted] = useState(false);
   const style = {
     '--drawer-offset-bottom': `${bottomOffset}px`,
   } as React.CSSProperties;
 
-  return (
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
+  return createPortal(
     <div
       className={`drawer-menu ${open ? 'open' : ''} ${className}`}
       style={style}
@@ -54,6 +64,7 @@ export const DrawerMenu = ({
         )}
       </div>
       <div className="drawer-overlay" onClick={onClose} />
-    </div>
+    </div>,
+    document.body,
   );
 };

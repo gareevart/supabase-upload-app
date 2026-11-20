@@ -8,8 +8,8 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { MarkdownRenderer } from "@/features/blog-editor/ui/MarkdownRenderer"
 import { useState, useEffect, useMemo, useRef } from "react"
-import { Button, Icon, Text, Dialog, Drawer, DropdownMenu, Breadcrumbs } from "@gravity-ui/uikit"
-import { ActionBar } from "@gravity-ui/navigation"
+import { Button, Icon, Text, Dialog, Drawer, DropdownMenu } from "@gravity-ui/uikit"
+import { PageActionBar } from "@/shared/ui/PageActionBar"
 import { useToast } from "@/hooks/use-toast"
 import { authFetch } from "@/lib/auth-fetch"
 import { TableOfContents } from "@/shared/ui/TableOfContents"
@@ -169,65 +169,49 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
 
   return (
     <div className={`blog-page blog-post-page ${showDesktopTableOfContents ? 'blog-post-page_toc-open' : ''}`}>
-      <div className="blog-post-actionbar">
-        <ActionBar aria-label={t('blogView.postActions')}>
-          <ActionBar.Section style={{ columnGap: 20, gap: 20 }}>
-            <ActionBar.Group stretchContainer style={{ minWidth: 0 }}>
-              <ActionBar.Item style={{ minWidth: 0, width: '100%' }}>
-                <Breadcrumbs
-                  className="blog-post-breadcrumbs"
-                  maxItems={2}
-                >
-                  <Breadcrumbs.Item href="/blog">
-                    {t('blogView.breadcrumbBlog')}
-                  </Breadcrumbs.Item>
-                  <Breadcrumbs.Item href={post.slug ? `/blog/${post.slug}` : "/blog"}>
-                    {post.title}
-                  </Breadcrumbs.Item>
-                </Breadcrumbs>
-              </ActionBar.Item>
-            </ActionBar.Group>
-
-            <ActionBar.Group pull="right">
-              {canEditPost && <ActionBar.Item>
-                  <Button
-                    view="flat"
-                    component={Link}
-                    href={`/blog/edit/${post.id}`}
-                  >
-                    <Icon data={Pencil} size={16} />
-                    <span className="blog-post-edit-label">{t('blogView.edit')}</span>
-                  </Button>
-                </ActionBar.Item>}
-                {canEditPost && <ActionBar.Item>
-                  <DropdownMenu
-                    items={[
-                      {
-                        text: t('blogView.delete'),
-                        theme: 'danger',
-                        iconStart: <Icon data={TrashBin} size={16} />,
-                        action: () => setShowDeleteConfirm(true),
-                      },
-                    ]}
-                  />
-                </ActionBar.Item>}
-                {hasTableOfContents && <ActionBar.Item>
-                  <Button
-                    view="flat"
-                    selected={isTableOfContentsOpen}
-                    aria-pressed={isTableOfContentsOpen}
-                    aria-expanded={isTableOfContentsOpen}
-                    onClick={() => setIsTableOfContentsOpen((isOpen) => !isOpen)}
-                    aria-label={t('tableOfContents.title')}
-                    title={t('tableOfContents.title')}
-                  >
-                    <Icon data={LayoutSideContentRight} size={16} />
-                  </Button>
-                </ActionBar.Item>}
-              </ActionBar.Group>
-          </ActionBar.Section>
-        </ActionBar>
-      </div>
+      <PageActionBar
+        ariaLabel={t('blogView.postActions')}
+        maxItems={2}
+        items={[
+          { label: t('blogView.breadcrumbBlog'), href: '/blog' },
+          { label: post.title, href: post.slug ? `/blog/${post.slug}` : '/blog' },
+        ]}
+        actions={
+          <>
+            {canEditPost ? (
+              <Button view="flat" component={Link} href={`/blog/edit/${post.id}`}>
+                <Icon data={Pencil} size={16} />
+                <span className="blog-post-edit-label">{t('blogView.edit')}</span>
+              </Button>
+            ) : null}
+            {canEditPost ? (
+              <DropdownMenu
+                items={[
+                  {
+                    text: t('blogView.delete'),
+                    theme: 'danger',
+                    iconStart: <Icon data={TrashBin} size={16} />,
+                    action: () => setShowDeleteConfirm(true),
+                  },
+                ]}
+              />
+            ) : null}
+            {hasTableOfContents ? (
+              <Button
+                view="flat"
+                selected={isTableOfContentsOpen}
+                aria-pressed={isTableOfContentsOpen}
+                aria-expanded={isTableOfContentsOpen}
+                onClick={() => setIsTableOfContentsOpen((isOpen) => !isOpen)}
+                aria-label={t('tableOfContents.title')}
+                title={t('tableOfContents.title')}
+              >
+                <Icon data={LayoutSideContentRight} size={16} />
+              </Button>
+            ) : null}
+          </>
+        }
+      />
 
       <div className="blog-post-layout">
         <div className="blog-post-body-shell blog-post-container_padded">

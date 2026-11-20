@@ -31,9 +31,8 @@
   margin-top: var(--g-spacing-4);
 }
 
-.uploader-page__skeleton-breadcrumbs {
-  width: 180px;
-  height: 20px;
+.main-content:has(.uploader-page) {
+  padding-top: 0;
 }
 
 .uploader-page__skeleton-title {
@@ -73,4 +72,10 @@
   width: 120px;
   height: 44px;
   border-radius: var(--g-border-radius-m);
+}
+
+@media (max-width: 767px) {
+  .uploader-page__main {
+    padding-top: calc(40px + var(--g-spacing-5));
+  }
 }

@@ -7,7 +7,7 @@ import { useI18n } from "@/app/contexts/I18nContext";
 import { useRouter } from "next/navigation";
 import FileUpload from "@/app/components/bucket/FileUpload";
 import FileView from "@/app/components/bucket/FileView";
-import CustomBreadcrumbs from "../../components/Breadcrumbs/Breadcrumbs";
+import { PageActionBar } from "@/shared/ui/PageActionBar";
 import { GalleryPageSkeleton } from "./GalleryPageSkeleton";
 import "../../auth/Auth.css";
 import "./page.css";
@@ -17,11 +17,6 @@ export default function Uploader() {
   const { t } = useI18n();
   const router = useRouter();
   const [sharedImagePath, setSharedImagePath] = useState<string | null>();
-  const segmentLabels = {
-    projects: t('gallery.breadcrumb.projects'),
-    uploader: t('gallery.breadcrumb.gallery'),
-  };
-
   useEffect(() => {
     setSharedImagePath(new URLSearchParams(window.location.search).get('image'));
   }, []);
@@ -39,9 +34,15 @@ export default function Uploader() {
 
   return (
     <div className="hub-page uploader-page">
+      <PageActionBar
+        ariaLabel={t('gallery.pageActions')}
+        items={[
+          { label: t('gallery.breadcrumb.projects'), href: '/projects' },
+          { label: t('gallery.breadcrumb.gallery'), href: '/projects/uploader' },
+        ]}
+      />
       <main className="hub-page__main uploader-page__main">
         <div className="uploader-page__content">
-          <CustomBreadcrumbs segmentLabels={segmentLabels} />
           <header className="hub-page__header uploader-page__header">
             <Text as="h1" variant="display-1">{t('gallery.title')}</Text>
           </header>

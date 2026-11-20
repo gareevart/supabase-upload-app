@@ -4,8 +4,8 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChatContainer, ActionButton, ContextIndicator } from "@gravity-ui/aikit";
 import type { ChatType, TChatMessage, TSubmitData } from "@gravity-ui/aikit";
-import { Button, Breadcrumbs, Dialog, DropdownMenu, Icon, Select, Text, TextArea } from "@gravity-ui/uikit";
-import { ActionBar } from "@gravity-ui/navigation";
+import { Button, Dialog, DropdownMenu, Icon, Select, Text, TextArea } from "@gravity-ui/uikit";
+import { PageActionBar } from "@/shared/ui/PageActionBar";
 import { Circles3Plus, ClockArrowRotateLeft, Ellipsis, Plus, Sliders, TrashBin } from "@gravity-ui/icons";
 import { useChat } from "@/hooks/useChat";
 import { useChats } from "@/hooks/useChats";
@@ -188,65 +188,46 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
 
   return (
     <div className="aikit-chat-panel">
-      <div className="aikit-chat-panel__actionbar">
-        <ActionBar aria-label={t('chatView.chatActions')}>
-          <ActionBar.Section style={{ columnGap: 20, gap: 20 }}>
-            <ActionBar.Group stretchContainer style={{ minWidth: 0 }}>
-              <ActionBar.Item style={{ minWidth: 0, width: '100%' }}>
-                <Breadcrumbs
-                  className="aikit-chat-panel__breadcrumbs"
-                  maxItems={3}
-                >
-                  <Breadcrumbs.Item href="/">
-                    {t('chatView.breadcrumbHome')}
-                  </Breadcrumbs.Item>
-                  <Breadcrumbs.Item href="/chat/history">
-                    {t('chatView.breadcrumbChat')}
-                  </Breadcrumbs.Item>
-                  <Breadcrumbs.Item href={`/chat/${chatId}`}>
-                    {breadcrumbChatTitle}
-                  </Breadcrumbs.Item>
-                </Breadcrumbs>
-              </ActionBar.Item>
-            </ActionBar.Group>
-
-            <ActionBar.Group pull="right">
-              <ActionBar.Item>
-                <Button
-                  view="flat"
-                  onClick={handleCreateChat}
-                  loading={createChat.isPending}
-                  title={t('chatView.newChatTooltip')}
-                >
-                  <Icon data={Plus} size={16} />
+      <PageActionBar
+        ariaLabel={t('chatView.chatActions')}
+        items={[
+          { label: t('gallery.breadcrumb.projects'), href: '/projects' },
+          { label: t('chatView.breadcrumbChat'), href: '/chat/history' },
+          { label: breadcrumbChatTitle, href: `/chat/${chatId}` },
+        ]}
+        actions={
+          <>
+            <Button
+              view="flat"
+              onClick={handleCreateChat}
+              loading={createChat.isPending}
+              title={t('chatView.newChatTooltip')}
+            >
+              <Icon data={Plus} size={16} />
+            </Button>
+            <DropdownMenu
+              items={[
+                {
+                  text: t('chatView.chatHistory'),
+                  iconStart: <Icon data={ClockArrowRotateLeft} size={16} />,
+                  action: () => router.push('/chat/history'),
+                },
+                {
+                  text: t('chatView.deleteChat'),
+                  theme: 'danger',
+                  iconStart: <Icon data={TrashBin} size={16} />,
+                  action: () => setDeleteDialogOpen(true),
+                },
+              ]}
+              switcher={
+                <Button view="flat" size="s" title={t('chatView.chatActions')}>
+                  <Icon data={Ellipsis} size={16} />
                 </Button>
-              </ActionBar.Item>
-              <ActionBar.Item>
-                <DropdownMenu
-                  items={[
-                    {
-                      text: t('chatView.chatHistory'),
-                      iconStart: <Icon data={ClockArrowRotateLeft} size={16} />,
-                      action: () => router.push('/chat/history'),
-                    },
-                    {
-                      text: t('chatView.deleteChat'),
-                      theme: 'danger',
-                      iconStart: <Icon data={TrashBin} size={16} />,
-                      action: () => setDeleteDialogOpen(true),
-                    },
-                  ]}
-                  switcher={
-                    <Button view="flat" size="s" title={t('chatView.chatActions')}>
-                      <Icon data={Ellipsis} size={16} />
-                    </Button>
-                  }
-                />
-              </ActionBar.Item>
-            </ActionBar.Group>
-          </ActionBar.Section>
-        </ActionBar>
-      </div>
+              }
+            />
+          </>
+        }
+      />
 
       <div className="aikit-chat-panel__body-shell">
       <ChatContainer

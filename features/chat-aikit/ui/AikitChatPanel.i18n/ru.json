@@ -1,8 +1,6 @@
 {
-  "chatView.breadcrumbHome": "Главная",
-  "chatView.breadcrumbHistory": "История чатов",
   "chatView.breadcrumbChat": "Чаты",
-  "chatView.historyTitle": "История чатов",
+  "chatView.historyTitle": "Чаты",
   "chatView.chatHistory": "История чатов",
   "chatView.breadcrumbNewChat": "Новый чат",
   "chatView.chatActions": "Действия чата",

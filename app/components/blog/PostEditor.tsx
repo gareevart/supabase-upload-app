@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Breadcrumbs, Button, DropdownMenu } from '@gravity-ui/uikit';
-import { ActionBar } from '@gravity-ui/navigation';
+import { Button, DropdownMenu } from '@gravity-ui/uikit';
+import { PageActionBar } from '@/shared/ui/PageActionBar';
 import { useBlogEditorContent } from "@/features/blog-editor/model/useBlogEditorContent";
 import { useI18n } from "@/app/contexts/I18nContext";
 import PostMetadata from "./editor/PostMetadata";
@@ -52,52 +52,33 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
 
   return (
     <div className="post-editor">
-      <div className="post-editor__actionbar">
-        <ActionBar aria-label={t('blogEditor.postActions')}>
-          <ActionBar.Section className="post-editor__actionbar-section">
-            <ActionBar.Group className="post-editor__breadcrumb-group" stretchContainer>
-              <ActionBar.Item className="post-editor__breadcrumb-item">
-                <Breadcrumbs>
-                  <Breadcrumbs.Item>
-                    {t(initialPost ? 'blogEditor.editPost' : 'blogEditor.createPost')}
-                  </Breadcrumbs.Item>
-                </Breadcrumbs>
-              </ActionBar.Item>
-            </ActionBar.Group>
-
-            <ActionBar.Group className="post-editor__action-group" pull="right">
-              <ActionBar.Item>
-                <Button
-                  type="button"
-                  view="action"
-                  loading={isLoading}
-                  onClick={handlePublish}
-                >
-                  {t('blogEditor.publish')}
-                </Button>
-              </ActionBar.Item>
-              <ActionBar.Item>
-                <DropdownMenu
-                  disabled={isLoading}
-                  defaultSwitcherProps={{
-                    'aria-label': t('blogEditor.moreActions'),
-                  }}
-                  items={[
-                    {
-                      text: t('blogEditor.saveDraft'),
-                      action: handleSaveDraft,
-                    },
-                    {
-                      text: t('blogEditor.cancel'),
-                      action: handleCancel,
-                    },
-                  ]}
-                />
-              </ActionBar.Item>
-            </ActionBar.Group>
-          </ActionBar.Section>
-        </ActionBar>
-      </div>
+      <PageActionBar
+        ariaLabel={t('blogEditor.postActions')}
+        items={[{ label: t(initialPost ? 'blogEditor.editPost' : 'blogEditor.createPost') }]}
+        actions={
+          <>
+            <Button type="button" view="action" loading={isLoading} onClick={handlePublish}>
+              {t('blogEditor.publish')}
+            </Button>
+            <DropdownMenu
+              disabled={isLoading}
+              defaultSwitcherProps={{
+                'aria-label': t('blogEditor.moreActions'),
+              }}
+              items={[
+                {
+                  text: t('blogEditor.saveDraft'),
+                  action: handleSaveDraft,
+                },
+                {
+                  text: t('blogEditor.cancel'),
+                  action: handleCancel,
+                },
+              ]}
+            />
+          </>
+        }
+      />
 
       <div className="post-editor__content">
         <PostMetadata
