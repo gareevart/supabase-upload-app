@@ -61,34 +61,14 @@ export function useBlogPosts(filters: BlogPostFilters = {}) {
 /**
  * Хук для проверки наличия черновиков у пользователя
  */
-export function useUserDrafts() {
-  const [hasDrafts, setHasDrafts] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export function useUserDrafts(userId: string | null) {
+  const { data, mutate } = useSWR(
+    userId ? ["blog-has-drafts", userId] as const : null,
+    ([, authorId]) => checkUserHasDrafts(authorId),
+    { errorRetryCount: 3, errorRetryInterval: 1000 }
+  );
 
-  useEffect(() => {
-    const checkDrafts = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (session?.user?.id) {
-          setUserId(session.user.id);
-          const draftsExist = await checkUserHasDrafts(session.user.id);
-          setHasDrafts(draftsExist);
-        }
-      } catch (error) {
-        console.error("Error checking drafts:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkDrafts();
-  }, []);
-
-  return { hasDrafts, userId, isLoading };
+  return { hasDrafts: data, refreshDrafts: mutate };
 }
 
 /**
