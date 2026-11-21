@@ -32,13 +32,13 @@ export function useBlogPosts(filters: BlogPostFilters = {}) {
   const cacheKey = `blog-posts-${generateCacheKey(filters)}`;
 
   const { data, error, isLoading, mutate } = useSWR<BlogPostsResponse>(
-    cacheKey,
+    filters.draftsOnly && !filters.publishedOnly && !filters.authorId ? null : cacheKey,
     () => fetchBlogPosts(filters),
     {
       // Кэшируем на 5 минут
-      dedupingInterval: 5 * 60 * 1000,
+      dedupingInterval: filters.draftsOnly ? 2000 : 5 * 60 * 1000,
       // Ревалидация при фокусе окна отключена, чтобы избежать лишних запросов
-      revalidateOnFocus: false,
+      revalidateOnFocus: Boolean(filters.draftsOnly),
       // Ревалидация при восстановлении соединения отключена
       revalidateOnReconnect: false,
       // Повторные попытки при ошибке
@@ -64,7 +64,7 @@ export function useBlogPosts(filters: BlogPostFilters = {}) {
 export function useUserDrafts(userId: string | null) {
   const { data, mutate } = useSWR(
     userId ? ["blog-has-drafts", userId] as const : null,
-    ([, authorId]) => checkUserHasDrafts(authorId),
+    () => checkUserHasDrafts(),
     { errorRetryCount: 3, errorRetryInterval: 1000 }
   );
 
