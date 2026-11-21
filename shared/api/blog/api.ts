@@ -21,6 +21,13 @@ export async function fetchBlogPosts(
     pageSize = 10,
   } = filters;
 
+  if (draftsOnly && !publishedOnly) {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    const response = await fetch(`/api/blog-posts/drafts?${params}`, { cache: "no-store" });
+    if (!response.ok) throw new Error("Failed to load blog drafts");
+    return response.json();
+  }
+
   try {
     // Один запрос возвращает и страницу постов, и общее количество
     // ({ count: 'exact' } без head: true) — раньше тут было два отдельных запроса.
@@ -42,14 +49,7 @@ export async function fetchBlogPosts(
       .order("created_at", { ascending: false })
       .range((page - 1) * pageSize, page * pageSize - 1);
 
-    // Применяем фильтры
-    if (publishedOnly) {
-      query = query.eq("published", true);
-    } else if (draftsOnly) {
-      query = query.eq("published", false);
-    } else if (!draftsOnly && !publishedOnly) {
-      query = query.eq("published", true);
-    }
+    query = query.eq("published", true);
 
     if (onlyMyPosts && authorId) {
       query = query.eq("author_id", authorId);
@@ -108,21 +108,11 @@ export async function fetchBlogPosts(
 /**
  * Проверка наличия черновиков у пользователя
  */
-export async function checkUserHasDrafts(userId: string): Promise<boolean> {
-  try {
-    const { data, error } = await supabase
-      .from("blog_posts")
-      .select("id")
-      .eq("author_id", userId)
-      .eq("published", false)
-      .limit(1);
-
-    if (error) throw error;
-    return !!(data && data.length > 0);
-  } catch (error) {
-    console.error("Error checking drafts:", error);
-    return false;
-  }
+export async function checkUserHasDrafts(): Promise<boolean> {
+  const response = await fetch("/api/blog-posts/drafts?exists=true", { cache: "no-store" });
+  if (!response.ok) throw new Error("Failed to check for blog drafts");
+  const { hasDrafts } = await response.json();
+  return hasDrafts === true;
 }
 
 /**

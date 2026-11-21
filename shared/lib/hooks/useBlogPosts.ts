@@ -32,13 +32,13 @@ export function useBlogPosts(filters: BlogPostFilters = {}) {
   const cacheKey = `blog-posts-${generateCacheKey(filters)}`;
 
   const { data, error, isLoading, mutate } = useSWR<BlogPostsResponse>(
-    cacheKey,
+    filters.draftsOnly && !filters.publishedOnly && !filters.authorId ? null : cacheKey,
     () => fetchBlogPosts(filters),
     {
       // Кэшируем на 5 минут
-      dedupingInterval: 5 * 60 * 1000,
+      dedupingInterval: filters.draftsOnly ? 2000 : 5 * 60 * 1000,
       // Ревалидация при фокусе окна отключена, чтобы избежать лишних запросов
-      revalidateOnFocus: false,
+      revalidateOnFocus: Boolean(filters.draftsOnly),
       // Ревалидация при восстановлении соединения отключена
       revalidateOnReconnect: false,
       // Повторные попытки при ошибке
@@ -61,34 +61,14 @@ export function useBlogPosts(filters: BlogPostFilters = {}) {
 /**
  * Хук для проверки наличия черновиков у пользователя
  */
-export function useUserDrafts() {
-  const [hasDrafts, setHasDrafts] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export function useUserDrafts(userId: string | null) {
+  const { data, mutate } = useSWR(
+    userId ? ["blog-has-drafts", userId] as const : null,
+    () => checkUserHasDrafts(),
+    { errorRetryCount: 3, errorRetryInterval: 1000 }
+  );
 
-  useEffect(() => {
-    const checkDrafts = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (session?.user?.id) {
-          setUserId(session.user.id);
-          const draftsExist = await checkUserHasDrafts(session.user.id);
-          setHasDrafts(draftsExist);
-        }
-      } catch (error) {
-        console.error("Error checking drafts:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkDrafts();
-  }, []);
-
-  return { hasDrafts, userId, isLoading };
+  return { hasDrafts: data, refreshDrafts: mutate };
 }
 
 /**

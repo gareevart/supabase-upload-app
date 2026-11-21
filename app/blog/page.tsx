@@ -38,7 +38,7 @@ function BlogPageContent() {
   const viewParam = searchParams?.get('view')
 
   const [gridView, setGridView] = useState(viewParam !== 'list');
-  const [postFilter, setPostFilter] = useState<PostFilter>(filterParam || 'all');
+  const [selectedFilter, setPostFilter] = useState<PostFilter>(filterParam || 'all');
   const isMobile = useIsMobile()
 
   // Synchronize state with URL parameters
@@ -51,9 +51,10 @@ function BlogPageContent() {
     }
   }, [filterParam, viewParam])
 
-  // Use hooks with caching
-  const { isAuthenticated } = useAuth()
-  const { hasDrafts, userId } = useUserDrafts()
+  const { isAuthenticated, userId } = useAuth()
+  const { hasDrafts, refreshDrafts } = useUserDrafts(userId)
+  const showPostFilter = isAuthenticated && hasDrafts === true
+  const postFilter = selectedFilter === 'drafts' && !showPostFilter ? 'all' : selectedFilter
 
   const handleSearchResultClick = (result: SearchResult) => {
     router.push(`/blog/${result.slug}`)
@@ -142,7 +143,7 @@ function BlogPageContent() {
     }
   };
 
-  const toolbarCollapsed = controlsHidden || ((!isAuthenticated || !hasDrafts) && isMobile);
+  const toolbarCollapsed = controlsHidden || (!showPostFilter && isMobile);
   const controlsClassName = [
     'blog-page__controls',
     controlsHidden ? 'blog-page__controls_hidden' : '',
@@ -176,7 +177,7 @@ function BlogPageContent() {
             gridView={gridView}
           />
           <div className={controlsClassName}>
-            {isAuthenticated && hasDrafts && (
+            {showPostFilter && (
               <Select
                 size="l"
                 value={[postFilter]}
@@ -204,7 +205,11 @@ function BlogPageContent() {
 
         {!searchActive && (
           <div className="blog-page__list">
-            <PostList {...getPostListProps()} key={`${postFilter}-${gridView}`} />
+            <PostList
+              {...getPostListProps()}
+              key={`${postFilter}-${gridView}`}
+              onDraftDeleted={() => { void refreshDrafts() }}
+            />
           </div>
         )}
       </main>
