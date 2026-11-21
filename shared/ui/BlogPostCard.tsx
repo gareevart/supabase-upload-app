@@ -166,20 +166,24 @@ export const BlogPostCard = ({
       </div>
       {isDraft ? (
         <div className="blog-card__actions">
-          <Button view="outlined" size="m" onClick={() => onEdit?.(post.id)}>
-            <Icon data={Pencil} size={16} />
-            {t('blogCard.edit')}
-          </Button>
-          <Button
-            view="outlined-danger"
-            size="m"
-            onClick={() => onDelete?.(post.id)}
-            loading={isDeleting}
-            disabled={isDeleting}
-            title={t('blogCard.deleteDraft')}
-          >
-            <Icon data={TrashBin} size={16} />
-          </Button>
+          {onEdit && (
+            <Button view="outlined" size="m" onClick={() => onEdit?.(post.id)}>
+              <Icon data={Pencil} size={16} />
+              {t('blogCard.edit')}
+            </Button>
+          )}
+          {onDelete && (
+            <Button
+              view="outlined-danger"
+              size="m"
+              onClick={() => onDelete?.(post.id)}
+              loading={isDeleting}
+              disabled={isDeleting}
+              title={t('blogCard.deleteDraft')}
+            >
+              <Icon data={TrashBin} size={16} />
+            </Button>
+          )}
         </div>
       ) : (
         <div className="blog-card__actions">
