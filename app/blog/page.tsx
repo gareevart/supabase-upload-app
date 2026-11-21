@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import SearchComponent from "../components/SearchComponent"
 import type { SearchResult } from "../components/SearchComponent"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { useAuth, useUserDrafts } from "@/shared/lib/hooks/useBlogPosts"
+import { useAuth } from "@/shared/lib/hooks/useBlogPosts"
 import { useI18n } from "@/app/contexts/I18nContext"
 import "./BlogPage.css"
 
@@ -51,9 +51,7 @@ function BlogPageContent() {
     }
   }, [filterParam, viewParam])
 
-  // Use hooks with caching
-  const { isAuthenticated } = useAuth()
-  const { hasDrafts, userId } = useUserDrafts()
+  const { isAuthenticated, userId } = useAuth()
 
   const handleSearchResultClick = (result: SearchResult) => {
     router.push(`/blog/${result.slug}`)
@@ -142,7 +140,7 @@ function BlogPageContent() {
     }
   };
 
-  const toolbarCollapsed = controlsHidden || ((!isAuthenticated || !hasDrafts) && isMobile);
+  const toolbarCollapsed = controlsHidden || (!isAuthenticated && isMobile);
   const controlsClassName = [
     'blog-page__controls',
     controlsHidden ? 'blog-page__controls_hidden' : '',
@@ -176,7 +174,7 @@ function BlogPageContent() {
             gridView={gridView}
           />
           <div className={controlsClassName}>
-            {isAuthenticated && hasDrafts && (
+            {isAuthenticated && (
               <Select
                 size="l"
                 value={[postFilter]}
