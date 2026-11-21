@@ -146,9 +146,9 @@ export const PostList = ({
               isPriority={isPriority}
               isDraft={draftsOnly}
               canEdit={onlyMyPosts && post.author_id === userId}
-              onEdit={handleEditPost}
+              onEdit={!draftsOnly || post.author_id === userId ? handleEditPost : undefined}
               showReadButton={false}
-              onDelete={(postId) => setConfirmDeleteId(postId)}
+              onDelete={post.author_id === userId ? setConfirmDeleteId : undefined}
               isDeleting={deletingPostId === post.id}
             />
           );
