@@ -109,20 +109,15 @@ export async function fetchBlogPosts(
  * Проверка наличия черновиков у пользователя
  */
 export async function checkUserHasDrafts(userId: string): Promise<boolean> {
-  try {
-    const { data, error } = await supabase
-      .from("blog_posts")
-      .select("id")
-      .eq("author_id", userId)
-      .eq("published", false)
-      .limit(1);
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("id")
+    .eq("author_id", userId)
+    .eq("published", false)
+    .limit(1);
 
-    if (error) throw error;
-    return !!(data && data.length > 0);
-  } catch (error) {
-    console.error("Error checking drafts:", error);
-    return false;
-  }
+  if (error) throw error;
+  return (data?.length ?? 0) > 0;
 }
 
 /**
