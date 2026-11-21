@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import SearchComponent from "../components/SearchComponent"
 import type { SearchResult } from "../components/SearchComponent"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { useAuth } from "@/shared/lib/hooks/useBlogPosts"
+import { useAuth, useUserDrafts } from "@/shared/lib/hooks/useBlogPosts"
 import { useI18n } from "@/app/contexts/I18nContext"
 import "./BlogPage.css"
 
@@ -38,7 +38,7 @@ function BlogPageContent() {
   const viewParam = searchParams?.get('view')
 
   const [gridView, setGridView] = useState(viewParam !== 'list');
-  const [postFilter, setPostFilter] = useState<PostFilter>(filterParam || 'all');
+  const [selectedFilter, setPostFilter] = useState<PostFilter>(filterParam || 'all');
   const isMobile = useIsMobile()
 
   // Synchronize state with URL parameters
@@ -52,6 +52,9 @@ function BlogPageContent() {
   }, [filterParam, viewParam])
 
   const { isAuthenticated, userId } = useAuth()
+  const { hasDrafts, refreshDrafts } = useUserDrafts(userId)
+  const showPostFilter = isAuthenticated && hasDrafts === true
+  const postFilter = selectedFilter === 'drafts' && !showPostFilter ? 'all' : selectedFilter
 
   const handleSearchResultClick = (result: SearchResult) => {
     router.push(`/blog/${result.slug}`)
@@ -140,7 +143,7 @@ function BlogPageContent() {
     }
   };
 
-  const toolbarCollapsed = controlsHidden || (!isAuthenticated && isMobile);
+  const toolbarCollapsed = controlsHidden || (!showPostFilter && isMobile);
   const controlsClassName = [
     'blog-page__controls',
     controlsHidden ? 'blog-page__controls_hidden' : '',
@@ -174,7 +177,7 @@ function BlogPageContent() {
             gridView={gridView}
           />
           <div className={controlsClassName}>
-            {isAuthenticated && (
+            {showPostFilter && (
               <Select
                 size="l"
                 value={[postFilter]}
@@ -202,7 +205,11 @@ function BlogPageContent() {
 
         {!searchActive && (
           <div className="blog-page__list">
-            <PostList {...getPostListProps()} key={`${postFilter}-${gridView}`} />
+            <PostList
+              {...getPostListProps()}
+              key={`${postFilter}-${gridView}`}
+              onDraftDeleted={() => { void refreshDrafts() }}
+            />
           </div>
         )}
       </main>
