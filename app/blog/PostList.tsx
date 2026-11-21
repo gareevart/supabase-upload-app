@@ -15,13 +15,15 @@ interface PostListProps {
   publishedOnly?: boolean;
   draftsOnly?: boolean;
   gridView?: boolean;
+  onDraftDeleted?: () => void;
 }
 
 export const PostList = ({
   onlyMyPosts = false,
   publishedOnly = false,
   draftsOnly = false,
-  gridView = true
+  gridView = true,
+  onDraftDeleted
 }: PostListProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
@@ -56,6 +58,7 @@ export const PostList = ({
 
       // Update cache after deletion
       mutate();
+      onDraftDeleted?.();
 
       showToast({
         title: t('blogPage.draftDeletedTitle'),
