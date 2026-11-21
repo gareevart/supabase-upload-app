@@ -1,0 +1,45 @@
+:root {
+  --profile-content-max-width: 896px;
+}
+
+.profile-page {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.profile-page__main {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: min(var(--profile-content-max-width), 100%);
+  margin: 20px auto;
+  padding-inline: var(--g-spacing-4);
+}
+
+.profile-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--g-spacing-6);
+}
+
+.profile-page__sections {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--g-spacing-5);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.profile-page__sections > * {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}

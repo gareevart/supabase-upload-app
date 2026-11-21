@@ -242,6 +242,15 @@ const BroadcastFormWidget: React.FC<BroadcastFormWidgetProps> = ({
       <PageActionBar
         ariaLabel={t('broadcast.form.actions')}
         items={[{ label: t(isEdit ? 'broadcast.form.editTitle' : 'broadcast.form.createTitle') }]}
+        favorite={
+          isEdit && id
+            ? {
+                href: `/broadcasts/${id}`,
+                title: subject.trim() || t('broadcast.form.editTitle'),
+                kind: 'broadcast',
+              }
+            : undefined
+        }
         actions={
           <>
             <Button type="button" view="action" loading={isSubmitting} onClick={handleSend}>

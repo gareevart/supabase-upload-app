@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import dynamicImport from 'next/dynamic';
 import { Spin, Text, TabProvider, TabList, Tab, TabPanel } from '@gravity-ui/uikit';
+import { PageActionBar } from '@/shared/ui/PageActionBar';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { SubscriberManagementWidget } from '@/widgets/subscriber-management/SubscriberManagementWidget';
 import { useI18n } from '@/app/contexts/I18nContext';
@@ -79,6 +80,11 @@ export default function BroadcastsPageClient() {
 
   return (
     <div className="hub-page">
+      <PageActionBar
+        ariaLabel={t('broadcastsPage.pageActions')}
+        items={[{ label: t('broadcastsPage.title'), href: '/broadcasts' }]}
+        favorite={{ href: '/broadcasts', title: t('broadcastsPage.title'), kind: 'broadcast' }}
+      />
       <main className="hub-page__main broadcasts-page__main">
         <header className="broadcasts-page__header">
           <Text as="h1" variant="display-1">{t('broadcastsPage.title')}</Text>

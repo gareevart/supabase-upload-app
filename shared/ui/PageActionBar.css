@@ -38,6 +38,43 @@
   width: 100%;
 }
 
+.page-action-bar__current-with-favorite {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--g-spacing-1);
+  max-width: 100%;
+  min-width: 0;
+  vertical-align: middle;
+}
+
+.page-action-bar__current-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-action-bar__favorite {
+  flex: 0 0 auto;
+}
+
+.page-action-bar__breadcrumbs_with-favorite .g-breadcrumbs__item:last-child {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.page-action-bar__breadcrumbs_with-favorite .g-breadcrumbs__item:last-child,
+.page-action-bar__breadcrumbs_with-favorite .g-breadcrumbs__item_current .g-breadcrumbs__link {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-width: 0;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+
 .page-action-bar__actions {
   flex: 0 0 auto;
   gap: var(--g-spacing-1);

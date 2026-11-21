@@ -1,0 +1,21 @@
+{
+  "favorites.addToFavorites": "Add to favorites",
+  "favorites.removeFromFavorites": "Remove from favorites",
+  "favorites.kind.blog": "Blog",
+  "favorites.kind.broadcast": "Broadcasts",
+  "favorites.kind.chat": "AI chat",
+  "favorites.kind.gallery": "Gallery",
+  "favorites.kind.profile": "Profile",
+  "favorites.kind.projects": "Projects",
+  "favorites.commandGroup": "Favorites",
+  "favorites.goToPage": "Favorites",
+  "favorites.pageTitle": "Favorites",
+  "favorites.pageActions": "Favorites actions",
+  "favorites.emptyTitle": "No favorites yet",
+  "favorites.emptyDescription": "Open a page and tap the star in the action bar to save it here.",
+  "favorites.removeItem": "Remove",
+  "favorites.errorTitle": "Could not update favorites",
+  "favorites.errorGeneric": "Please try again.",
+  "favorites.tablePage": "Page",
+  "favorites.tableType": "Type"
+}

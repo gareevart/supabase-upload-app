@@ -3,7 +3,10 @@ import useSWR from 'swr';
 
 import { useRouter, usePathname } from 'next/navigation';
 import { Icon, Button, Popover, Text } from '@gravity-ui/uikit';
-import { House, Circles4Square, Person, Magnifier, BookOpen, Bars, Xmark, Circles3Plus, Calculator, Camera, Gear, ArrowLeft } from '@gravity-ui/icons';
+import { House, Circles4Square, Person, Magnifier, BookOpen, Bars, Xmark, Circles3Plus, Calculator, Camera, Gear, ArrowLeft, Star } from '@gravity-ui/icons';
+import { useFavorites } from '@/features/favorites/model/useFavorites';
+import { getFavoriteKindIcon } from '@/entities/favorite/lib/favoriteKindIcon';
+import type { FavoriteKind } from '@/entities/favorite/model/types';
 import UserAvatar from '../UserAvatar';
 import NavigationItem from './NavigationItem';
 import { DrawerMenu } from '@/shared/ui/DrawerMenu';
@@ -67,6 +70,7 @@ const Navigation: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useI18n();
+  const { favorites } = useFavorites();
   const widgetsTriggerRef = useRef<HTMLDivElement>(null);
   const [activeItem, setActiveItem] = useState('home');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -180,6 +184,13 @@ const Navigation: React.FC = () => {
     window.addEventListener('keydown', handleCommandMenuShortcut);
     return () => window.removeEventListener('keydown', handleCommandMenuShortcut);
   }, []);
+
+  useEffect(() => {
+    document.body.classList.toggle('command-menu-open', isCommandMenuOpen);
+    return () => {
+      document.body.classList.remove('command-menu-open');
+    };
+  }, [isCommandMenuOpen]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 767px)');
@@ -348,7 +359,7 @@ const Navigation: React.FC = () => {
     };
   }, [isWidgetsPanelOpen, isLeftAnchoredWidgetsPanel]);
 
-  const commandGroups: CommandGroup[] = [
+  const commandGroups: CommandGroup[] = useMemo(() => [
     {
       id: 'suggestions',
       label: 'Quick actions',
@@ -359,6 +370,19 @@ const Navigation: React.FC = () => {
         { id: 'widgets', label: 'Browse widgets', hint: 'Tools', logo: 'W', keywords: ['apps', 'tools'] },
       ],
     },
+    ...(favorites.length > 0
+      ? [{
+          id: 'favorites',
+          label: t('favorites.commandGroup'),
+          commands: favorites.map((item) => ({
+            id: `favorite:${encodeURIComponent(item.href)}`,
+            label: item.title,
+            hint: t(`favorites.kind.${item.kind}`),
+            icon: <Icon data={getFavoriteKindIcon(item.kind as FavoriteKind)} size={18} />,
+            keywords: [item.href, 'favorite', 'избранное'],
+          })),
+        }]
+      : []),
     ...(debouncedBlogQuery.length >= 2
       ? [{
           id: 'blog-search',
@@ -397,17 +421,30 @@ const Navigation: React.FC = () => {
     {
       id: 'go-to',
       label: 'Go to',
-      commands: allNavItems.map((item) => ({
-        id: item.id,
-        label: item.label,
-        icon: <Icon data={item.icon} size={18} />,
-        keywords: [item.link],
-      })),
+      commands: [
+        {
+          id: 'favorites-page',
+          label: t('favorites.goToPage'),
+          icon: <Icon data={Star} size={18} />,
+          keywords: ['/favorites', 'favorite', 'избранное'],
+        },
+        ...allNavItems.map((item) => ({
+          id: item.id,
+          label: item.label,
+          icon: <Icon data={item.icon} size={18} />,
+          keywords: [item.link],
+        })),
+      ],
     },
-  ];
+  ], [blogSearchResults, debouncedBlogQuery, favorites, searchableUserWidgets, t]);
 
   const runCommand = (id: string, query?: string) => {
-    if (id.startsWith('blog-post:')) {
+    if (id.startsWith('favorite:')) {
+      const href = decodeURIComponent(id.slice('favorite:'.length));
+      router.push(href);
+    } else if (id === 'favorites-page') {
+      router.push('/favorites');
+    } else if (id.startsWith('blog-post:')) {
       router.push(`/blog/${encodeURIComponent(id.slice('blog-post:'.length))}`);
     } else if (id === 'ask') {
       const prompt = query?.trim();
@@ -643,12 +680,13 @@ const Navigation: React.FC = () => {
         aria-label="Close widgets panel"
       />
 
-      <DrawerMenu open={isDrawerOpen} onClose={closeDrawer} bottomOffset={navigationPosition === 'bottom' || isMobileViewport ? 81 : 65}>
+      <DrawerMenu open={isDrawerOpen} onClose={closeDrawer} reserveTabBar>
         {drawerNavItems.map((item) => (
           <NavigationItem
             key={item.id}
             icon={item.icon}
             label={item.label}
+            size="l"
             isActive={activeItem === item.id}
             onClick={() => {
               setActiveItem(item.id);

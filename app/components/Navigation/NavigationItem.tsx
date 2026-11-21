@@ -8,6 +8,7 @@ interface NavigationItemProps {
   isActive?: boolean;
   onClick?: () => void;
   showLabel?: boolean;
+  size?: 's' | 'm' | 'l' | 'xl';
 }
 
 const NavigationItem: React.FC<NavigationItemProps> = ({
@@ -16,11 +17,13 @@ const NavigationItem: React.FC<NavigationItemProps> = ({
   isActive = false,
   onClick,
   showLabel = false,
+  size,
 }) => {
   return (
     <Button
       className={`nav-item ${isActive ? 'active' : ''} ${showLabel ? 'with-label' : ''}`}
       onClick={onClick}
+      size={size}
       view={isActive ? 'normal' : 'flat'}
       aria-label={label}
       aria-current={isActive ? 'page' : undefined}

@@ -3,5 +3,6 @@
   "broadcastsPage.description": "Create and manage mailings, subscribers, and user groups",
   "broadcastsPage.broadcastsTab": "Mailings",
   "broadcastsPage.subscribersTab": "Subscribers",
-  "broadcastsPage.groupsTab": "Groups"
+  "broadcastsPage.groupsTab": "Groups",
+  "broadcastsPage.pageActions": "Mailings actions"
 }

@@ -201,8 +201,10 @@ p {
 }
 
 @media (max-width: 480px) {
-    .profile {
+    .profile,
+    .profile-page__sections {
         width: 100%;
+        max-width: 100%;
     }
 
     .profile-view {

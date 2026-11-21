@@ -3,5 +3,6 @@
   "broadcastsPage.description": "Создавайте и управляйте рассылками, подписчиками и группами пользователей",
   "broadcastsPage.broadcastsTab": "Рассылки",
   "broadcastsPage.subscribersTab": "Подписчики",
-  "broadcastsPage.groupsTab": "Группы"
+  "broadcastsPage.groupsTab": "Группы",
+  "broadcastsPage.pageActions": "Действия рассылок"
 }

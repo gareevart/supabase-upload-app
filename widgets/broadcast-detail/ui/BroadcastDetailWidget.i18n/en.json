@@ -1,5 +1,6 @@
 {
   "broadcastDetail.title": "Broadcast Details",
+  "broadcastDetail.pageActions": "Broadcast actions",
   "broadcastDetail.back": "Back",
   "broadcastDetail.loading": "Loading broadcast details...",
   "broadcastDetail.notFound": "Broadcast not found",

@@ -40,6 +40,11 @@ export default function Uploader() {
           { label: t('gallery.breadcrumb.projects'), href: '/projects' },
           { label: t('gallery.breadcrumb.gallery'), href: '/projects/uploader' },
         ]}
+        favorite={{
+          href: '/projects/uploader',
+          title: t('gallery.title'),
+          kind: 'gallery',
+        }}
       />
       <main className="hub-page__main uploader-page__main">
         <div className="uploader-page__content">

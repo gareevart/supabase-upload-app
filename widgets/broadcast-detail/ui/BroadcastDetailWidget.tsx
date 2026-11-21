@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Card, Text, Button, Icon, Label, Spin, PlaceholderContainer } from '@gravity-ui/uikit';
+import { PageActionBar } from '@/shared/ui/PageActionBar';
 import { ArrowUturnCwLeft, Pencil, TrashBin, ChevronLeft } from '@gravity-ui/icons';
 import { useBroadcastDetail } from '@/features/broadcast-detail/model/useBroadcastDetail';
 import { useRouter } from 'next/navigation';
@@ -192,17 +193,15 @@ const BroadcastDetailWidget: React.FC<BroadcastDetailWidgetProps> = ({ id }) => 
 
   return (
     <div className="broadcast-detail">
-      {/* Header */}
-      <div className="broadcast-detail__header">
-        <div className="broadcast-detail__header-main">
-          <Button view="outlined" size="m" onClick={handleBack}>
-            <Icon data={ChevronLeft} size={16} />
-            {t('broadcastDetail.back')}
-          </Button>
-          <Text variant="display-1">{t('broadcastDetail.title')}</Text>
-        </div>
-        <div className="broadcast-detail__actions">{renderActions()}</div>
-      </div>
+      <PageActionBar
+        ariaLabel={t('broadcastDetail.pageActions')}
+        items={[
+          { label: t('broadcastsPage.title'), href: '/broadcasts' },
+          { label: broadcast.subject, href: `/broadcasts/${id}` },
+        ]}
+        favorite={{ href: `/broadcasts/${id}`, title: broadcast.subject, kind: 'broadcast' }}
+        actions={renderActions()}
+      />
 
       {/* Summary Card */}
       <Card view="outlined" className="broadcast-detail__card">

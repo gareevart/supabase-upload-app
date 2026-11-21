@@ -196,6 +196,11 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
           { label: t('chatView.breadcrumbChat'), href: '/chat/history' },
           { label: breadcrumbChatTitle, href: `/chat/${chatId}` },
         ]}
+        favorite={{
+          href: `/chat/${chatId}`,
+          title: breadcrumbChatTitle,
+          kind: 'chat',
+        }}
         actions={
           <>
             <Button

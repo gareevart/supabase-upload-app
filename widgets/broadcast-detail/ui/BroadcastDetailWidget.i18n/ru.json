@@ -1,5 +1,6 @@
 {
   "broadcastDetail.title": "Детали рассылки",
+  "broadcastDetail.pageActions": "Действия рассылки",
   "broadcastDetail.back": "Назад",
   "broadcastDetail.loading": "Загрузка деталей рассылки...",
   "broadcastDetail.notFound": "Рассылка не найдена",

@@ -1,0 +1,21 @@
+{
+  "favorites.addToFavorites": "Добавить в избранное",
+  "favorites.removeFromFavorites": "Убрать из избранного",
+  "favorites.kind.blog": "Блог",
+  "favorites.kind.broadcast": "Рассылки",
+  "favorites.kind.chat": "ИИ чат",
+  "favorites.kind.gallery": "Галерея",
+  "favorites.kind.profile": "Профиль",
+  "favorites.kind.projects": "Проекты",
+  "favorites.commandGroup": "Избранное",
+  "favorites.goToPage": "Избранное",
+  "favorites.pageTitle": "Избранное",
+  "favorites.pageActions": "Действия избранного",
+  "favorites.emptyTitle": "Пока ничего нет",
+  "favorites.emptyDescription": "Откройте страницу и нажмите звёздочку в панели действий, чтобы сохранить её здесь.",
+  "favorites.removeItem": "Удалить",
+  "favorites.errorTitle": "Не удалось обновить избранное",
+  "favorites.errorGeneric": "Попробуйте ещё раз.",
+  "favorites.tablePage": "Страница",
+  "favorites.tableType": "Тип"
+}

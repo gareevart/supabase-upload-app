@@ -21,6 +21,20 @@
   animation: command-backdrop-in 160ms ease-out both;
 }
 
+body.command-menu-open .navigation {
+  z-index: 101;
+}
+
+@media (max-width: 767px) {
+  body.command-menu-open.navigation-position-bottom .command-menu-dialog__backdrop {
+    bottom: 88px;
+  }
+
+  body.command-menu-open .command-menu-dialog {
+    padding-bottom: 112px;
+  }
+}
+
 .command-menu-dialog__content {
   position: relative;
   width: min(600px, 100%);

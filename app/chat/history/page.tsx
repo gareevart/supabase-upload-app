@@ -35,6 +35,11 @@ export default function ChatHistoryPage() {
           { label: t("gallery.breadcrumb.projects"), href: "/projects" },
           { label: t("chatView.breadcrumbChat"), href: "/chat/history" },
         ]}
+        favorite={{
+          href: "/chat/history",
+          title: t("chatView.historyTitle"),
+          kind: "chat",
+        }}
       />
 
       <main className="hub-page__main chat-history-page__main">

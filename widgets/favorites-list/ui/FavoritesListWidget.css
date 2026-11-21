@@ -1,0 +1,45 @@
+.favorites-list__empty {
+  padding: var(--g-spacing-8) var(--g-spacing-4);
+}
+
+.favorites-list__table {
+  width: 100%;
+}
+
+.favorites-list__table tbody tr {
+  cursor: pointer;
+}
+
+.favorites-list__title-link {
+  display: block;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.favorites-list__title-link:hover {
+  color: var(--g-color-text-link);
+}
+
+.favorites-list__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.favorites-list__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.favorites-list__type {
+  display: flex;
+  align-items: center;
+  gap: var(--g-spacing-2);
+  color: var(--g-color-text-secondary);
+}
+
+.favorites-list__type .g-icon,
+.favorites-list__type .g-text {
+  color: inherit;
+}

@@ -1,5 +1,6 @@
 {
   "blogPage.title": "Blog",
+  "blogPage.pageActions": "Blog actions",
   "blogPage.createPost": "Create New Post",
   "blogPage.searchPlaceholder": "Search anything",
   "blogPage.readButton": "Read",

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Flex, Text } from '@gravity-ui/uikit';
+import React, { useEffect, useId, useLayoutEffect, useState } from 'react';
+import { Flex, Sheet } from '@gravity-ui/uikit';
+import { useSheetPointerDrag } from './useSheetPointerDrag';
+import { useSheetTabBarAnchor } from './useSheetTabBarAnchor';
 import './DrawerMenu.css';
 
 type DrawerMenuProps = {
@@ -13,6 +14,8 @@ type DrawerMenuProps = {
   footer?: React.ReactNode;
   className?: string;
   contentClassName?: string;
+  /** Оставить место для bottom tab bar; overlay под навигацией (z-index) */
+  reserveTabBar?: boolean;
   bottomOffset?: number;
 };
 
@@ -24,47 +27,70 @@ export const DrawerMenu = ({
   footer,
   className = '',
   contentClassName = '',
-  bottomOffset = 0,
+  reserveTabBar = false,
+  bottomOffset,
 }: DrawerMenuProps) => {
-  const titleId = React.useId();
+  const sheetId = useId();
+  const sheetDomId = sheetId.replace(/:/g, '');
+  const sheetSelector = `.drawer-menu-sheet--${sheetDomId}`;
+  const anchoredAboveTabBar = reserveTabBar || (bottomOffset ?? 0) > 0;
   const [mounted, setMounted] = useState(false);
-  const style = {
-    '--drawer-offset-bottom': `${bottomOffset}px`,
-  } as React.CSSProperties;
+
+  useSheetPointerDrag(open, sheetSelector, onClose);
+  useSheetTabBarAnchor(open, sheetSelector, anchoredAboveTabBar);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  useLayoutEffect(() => {
+    if (!open || bottomOffset === undefined) {
+      return;
+    }
+
+    let sheetRoot: HTMLElement | null = null;
+    let frameId = 0;
+
+    const applyOffset = () => {
+      sheetRoot = document.querySelector(sheetSelector);
+      if (!sheetRoot) {
+        return false;
+      }
+      sheetRoot.style.setProperty('--drawer-offset-bottom', `${bottomOffset}px`);
+      return true;
+    };
+
+    if (!applyOffset()) {
+      frameId = window.requestAnimationFrame(applyOffset);
+    }
+
+    return () => {
+      if (frameId) {
+        window.cancelAnimationFrame(frameId);
+      }
+      sheetRoot?.style.removeProperty('--drawer-offset-bottom');
+    };
+  }, [open, bottomOffset, sheetSelector]);
+
   if (!mounted) {
     return null;
   }
 
-  return createPortal(
-    <div
-      className={`drawer-menu ${open ? 'open' : ''} ${className}`}
-      style={style}
+  return (
+    <Sheet
+      id={sheetDomId}
+      visible={open}
+      onClose={onClose}
+      title={title}
+      className={`drawer-menu-sheet drawer-menu-sheet--${sheetDomId} ${anchoredAboveTabBar ? 'drawer-menu-sheet--above-tab-bar' : ''} ${className}`.trim()}
+      contentClassName={contentClassName}
     >
-      <div
-        className={`drawer-content ${contentClassName}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={title ? titleId : undefined}
-      >
-        {title && (
-          <Text variant="subheader-3" className="drawer-title" id={titleId}>
-            {title}
-          </Text>
-        )}
-        <div className="drawer-body">{children}</div>
-        {footer && (
-          <Flex direction="row" justifyContent="flex-end" gap={2} className="drawer-footer">
-            {footer}
-          </Flex>
-        )}
-      </div>
-      <div className="drawer-overlay" onClick={onClose} />
-    </div>,
-    document.body,
+      <div className="drawer-menu-sheet__body">{children}</div>
+      {footer && (
+        <Flex direction="row" justifyContent="flex-end" gap={2} className="drawer-menu-sheet__footer">
+          {footer}
+        </Flex>
+      )}
+    </Sheet>
   );
 };

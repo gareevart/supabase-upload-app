@@ -53,6 +53,8 @@ import chatViewEn from '@/features/chat-aikit/ui/AikitChatPanel.i18n/en.json';
 import chatViewRu from '@/features/chat-aikit/ui/AikitChatPanel.i18n/ru.json';
 import broadcastsPageEn from '@/app/broadcasts/BroadcastsPage.i18n/en.json';
 import broadcastsPageRu from '@/app/broadcasts/BroadcastsPage.i18n/ru.json';
+import favoritesEn from '@/features/favorites/ui/FavoriteToggleButton.i18n/en.json';
+import favoritesRu from '@/features/favorites/ui/FavoriteToggleButton.i18n/ru.json';
 
 export type AppLanguage = 'en' | 'ru';
 
@@ -86,6 +88,7 @@ const enTranslations: TranslationDict = {
   ...galleryEn,
   ...chatViewEn,
   ...broadcastsPageEn,
+  ...favoritesEn,
 };
 
 const ruTranslations: TranslationDict = {
@@ -115,6 +118,7 @@ const ruTranslations: TranslationDict = {
   ...galleryRu,
   ...chatViewRu,
   ...broadcastsPageRu,
+  ...favoritesRu,
 };
 
 const translations: Record<AppLanguage, TranslationDict> = {

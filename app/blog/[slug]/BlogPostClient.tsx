@@ -207,6 +207,11 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
           { label: t('blogView.breadcrumbBlog'), href: '/blog' },
           { label: post.title, href: post.slug ? `/blog/${post.slug}` : '/blog' },
         ]}
+        favorite={
+          post.slug
+            ? { href: `/blog/${post.slug}`, title: post.title, kind: 'blog' }
+            : undefined
+        }
         actions={
           <>
             {canEditPost ? (
