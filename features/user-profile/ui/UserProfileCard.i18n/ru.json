@@ -1,0 +1,12 @@
+{
+  "userProfileCard.title": "Пользователь",
+  "userProfileCard.email": "Email",
+  "userProfileCard.name": "Имя",
+  "userProfileCard.username": "Имя пользователя",
+  "userProfileCard.bio": "О себе",
+  "userProfileCard.role": "Роль",
+  "userProfileCard.site": "Сайт",
+  "userProfileCard.edit": "Редактировать",
+  "userProfileCard.logout": "Выйти",
+  "userProfileCard.empty": "—"
+}

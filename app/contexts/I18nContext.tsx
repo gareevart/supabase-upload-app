@@ -55,6 +55,12 @@ import broadcastsPageEn from '@/app/broadcasts/BroadcastsPage.i18n/en.json';
 import broadcastsPageRu from '@/app/broadcasts/BroadcastsPage.i18n/ru.json';
 import favoritesEn from '@/features/favorites/ui/FavoriteToggleButton.i18n/en.json';
 import favoritesRu from '@/features/favorites/ui/FavoriteToggleButton.i18n/ru.json';
+import userProfileCardEn from '@/features/user-profile/ui/UserProfileCard.i18n/en.json';
+import userProfileCardRu from '@/features/user-profile/ui/UserProfileCard.i18n/ru.json';
+import profileEditFormEn from '@/app/auth/profile/components/ProfileEditForm.i18n/en.json';
+import profileEditFormRu from '@/app/auth/profile/components/ProfileEditForm.i18n/ru.json';
+import yandexFileUploaderEn from '@/app/auth/components/YandexFileUploader.i18n/en.json';
+import yandexFileUploaderRu from '@/app/auth/components/YandexFileUploader.i18n/ru.json';
 
 export type AppLanguage = 'en' | 'ru';
 
@@ -89,6 +95,9 @@ const enTranslations: TranslationDict = {
   ...chatViewEn,
   ...broadcastsPageEn,
   ...favoritesEn,
+  ...userProfileCardEn,
+  ...profileEditFormEn,
+  ...yandexFileUploaderEn,
 };
 
 const ruTranslations: TranslationDict = {
@@ -119,6 +128,9 @@ const ruTranslations: TranslationDict = {
   ...chatViewRu,
   ...broadcastsPageRu,
   ...favoritesRu,
+  ...userProfileCardRu,
+  ...profileEditFormRu,
+  ...yandexFileUploaderRu,
 };
 
 const translations: Record<AppLanguage, TranslationDict> = {

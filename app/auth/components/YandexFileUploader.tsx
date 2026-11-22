@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Image from 'next/image';
 import { Button, Text, useToaster } from '@gravity-ui/uikit';
 import { useAuth } from '@/app/contexts/AuthContext';
+import { useI18n } from '@/app/contexts/I18nContext';
+import { getBlobPreviewUrl, resolveStorageDeletePath } from '@/lib/blobUrl';
+import './YandexFileUploader.css';
 
 interface YandexFileUploaderProps {
   folderPath: string;
@@ -24,39 +27,43 @@ const YandexFileUploader = ({
   allowDelete,
   onDeleteComplete
 }: YandexFileUploaderProps) => {
+  const { t } = useI18n();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [preview, setPreview] = useState<string | null>(existingFileUrl || null);
+  /** Local data URL preview for a file not uploaded yet */
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
   const { user } = useAuth();
   const { add } = useToaster();
+
+  const hasPersistedAvatar = Boolean(existingFileUrl?.trim());
+  const persistedPreviewUrl = hasPersistedAvatar ? getBlobPreviewUrl(existingFileUrl) : null;
+  const displayPreviewUrl = localPreview ?? persistedPreviewUrl;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFile = e.target.files[0];
-      
-      // Check file type
+
       if (acceptedFileTypes && !selectedFile.type.match(acceptedFileTypes)) {
         setError(`Пожалуйста, выберите правильный тип файла (${acceptedFileTypes})`);
         setFile(null);
         return;
       }
-      
-      // Check file size
+
       if (maxSizeMB && selectedFile.size > maxSizeMB * 1024 * 1024) {
         setError(`Размер файла должен быть меньше ${maxSizeMB}MB`);
         setFile(null);
         return;
       }
-      
+
       setFile(selectedFile);
       setError(null);
-      
-      // Create a preview for images
+
       if (selectedFile.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onloadend = () => {
-          setPreview(reader.result as string);
+          setLocalPreview(reader.result as string);
         };
         reader.readAsDataURL(selectedFile);
       }
@@ -92,7 +99,6 @@ const YandexFileUploader = ({
       }
 
       const uploadedUrl = result.data.directUrl || result.data.publicUrl || result.data.url;
-      setPreview(uploadedUrl);
       onUploadComplete(uploadedUrl);
 
       add({
@@ -103,16 +109,20 @@ const YandexFileUploader = ({
         autoHiding: 5000,
       });
 
-      // Clear the file input
       setFile(null);
-    } catch (error: any) {
+      setLocalPreview(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Произошла ошибка при загрузке файла';
       console.error('Upload error:', error);
-      setError(error.message || 'Произошла ошибка при загрузке файла');
-      
+      setError(message);
+
       add({
         name: 'upload-error',
         title: 'Ошибка',
-        content: error.message || 'Произошла ошибка при загрузке файла',
+        content: message,
         theme: 'danger',
         autoHiding: 5000,
       });
@@ -122,37 +132,17 @@ const YandexFileUploader = ({
   };
 
   const handleDelete = async () => {
-    if (!existingFileUrl || !allowDelete || !user) return;
-    
+    if (!hasPersistedAvatar || !allowDelete || !user) return;
+
     try {
       setUploading(true);
       setError(null);
-      
-      // Extract the Blob pathname from the API URL returned by upload.
-      // Keep the legacy Yandex URL formats for files uploaded before Blob storage.
-      let filePath = '';
-      const apiUrl = existingFileUrl.match(/[?&]path=([^&]+)/)?.[1];
-      if (existingFileUrl.includes('/api/storage/file') && apiUrl) {
-        filePath = decodeURIComponent(apiUrl);
-      } else if (existingFileUrl.includes('storage.yandexcloud.net/public-gareevde/')) {
-        // Format: https://storage.yandexcloud.net/public-gareevde/profiles/userId/filename.ext
-        const parts = existingFileUrl.split('storage.yandexcloud.net/public-gareevde/');
-        if (parts.length > 1) {
-          filePath = parts[1].split('?')[0]; // Remove query parameters
-        }
-      } else if (existingFileUrl.includes('public-gareevde.storage.yandexcloud.net/')) {
-        // Format: https://public-gareevde.storage.yandexcloud.net/profiles/userId/filename.ext
-        const parts = existingFileUrl.split('public-gareevde.storage.yandexcloud.net/');
-        if (parts.length > 1) {
-          filePath = parts[1].split('?')[0]; // Remove query parameters
-        }
-      }
-      
+
+      const filePath = resolveStorageDeletePath(existingFileUrl);
+
       if (!filePath) {
         throw new Error('Не удалось извлечь путь к файлу из URL');
       }
-
-      console.log('Deleting file with path:', filePath);
 
       const response = await fetch(`/api/storage/delete?path=${encodeURIComponent(filePath)}`, {
         method: 'DELETE',
@@ -166,11 +156,10 @@ const YandexFileUploader = ({
       if (!response.ok) {
         throw new Error(result.error || 'Ошибка при удалении файла');
       }
-      
-      setPreview(null);
-      onUploadComplete(''); // Update the parent component with empty URL
-      
-      // Call the onDeleteComplete callback if provided
+
+      setLocalPreview(null);
+      onUploadComplete('');
+
       if (onDeleteComplete) {
         onDeleteComplete();
       }
@@ -182,14 +171,15 @@ const YandexFileUploader = ({
         theme: 'success',
         autoHiding: 5000,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Произошла ошибка при удалении файла';
       console.error('Delete error:', error);
-      setError(error.message || 'Произошла ошибка при удалении файла');
-      
+      setError(message);
+
       add({
         name: 'delete-file-error',
         title: 'Ошибка',
-        content: error.message || 'Произошла ошибка при удалении файла',
+        content: message,
         theme: 'danger',
         autoHiding: 5000,
       });
@@ -198,61 +188,94 @@ const YandexFileUploader = ({
     }
   };
 
+  const selectedFileLabel = file?.name ?? t('yandexFileUploader.noFileSelected');
+
   return (
-    <div>
-      {preview && preview.startsWith('http') && (
-        <div className='flex pb-4 items-center'>
-          <div style={{ position: 'relative', width: '80px', height: '80px' }}>
+    <div className="yandex-file-uploader">
+      {displayPreviewUrl ? (
+        <div className="yandex-file-uploader__preview">
+          <div className="yandex-file-uploader__preview-image">
             <Image
-              src={preview}
+              src={displayPreviewUrl}
               alt="Preview"
               fill
-              className="profile-avatar"
-              style={{ objectFit: 'cover' }}
+              unoptimized
+              className="yandex-file-uploader__preview-img"
               sizes="80px"
             />
           </div>
-          {allowDelete && (
+          {allowDelete && hasPersistedAvatar ? (
             <Button
               size="m"
-              view="outlined-danger" 
+              view="outlined-danger"
               onClick={handleDelete}
               loading={uploading}
-              style={{ marginLeft: '8px' }}
             >
-              Удалить
+              {t('yandexFileUploader.delete')}
             </Button>
-          )}
+          ) : null}
         </div>
-      )}
-      
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      ) : null}
+
+      <div className="yandex-file-uploader__row">
         <input
+          ref={fileInputRef}
           type="file"
           accept={acceptedFileTypes}
           onChange={handleFileChange}
           disabled={uploading}
-          style={{ 
-            flex: '1',
-            padding: '8px',
-            border: '1px solid var(--g-color-line-generic, rgba(255, 255, 255, 0.15))',
-            borderRadius: '8px'
-          }}
+          className="yandex-file-uploader__input--visually-hidden"
+          tabIndex={-1}
+          aria-hidden
         />
-        
-        <Button
-          size="l"
-          view="action"
-          onClick={handleUpload}
-          loading={uploading}
-          disabled={!file}
-        >
-          Загрузить
-        </Button>
+        {file ? (
+          <>
+            <Button
+              size="l"
+              view="normal"
+              onClick={handleUpload}
+              loading={uploading}
+            >
+              {t('yandexFileUploader.upload')}
+            </Button>
+            <Text
+              variant="body-1"
+              color="primary"
+              className="yandex-file-uploader__filename yandex-file-uploader__filename--pickable"
+              ellipsis
+              onClick={() => {
+                if (!uploading) {
+                  fileInputRef.current?.click();
+                }
+              }}
+            >
+              {selectedFileLabel}
+            </Text>
+          </>
+        ) : (
+          <>
+            <Button
+              size="l"
+              view="outlined"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              {t('yandexFileUploader.chooseFile')}
+            </Button>
+            <Text
+              variant="body-1"
+              color="secondary"
+              className="yandex-file-uploader__filename"
+              ellipsis
+            >
+              {selectedFileLabel}
+            </Text>
+          </>
+        )}
       </div>
-      
+
       {error && (
-        <Text color="danger" variant="body-2" style={{ marginTop: '8px' }}>
+        <Text color="danger" variant="body-2">
           {error}
         </Text>
       )}

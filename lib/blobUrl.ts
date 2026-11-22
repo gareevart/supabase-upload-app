@@ -68,3 +68,31 @@ export function getBlobPath(value: string): string {
 
   return value.replace(/^\//, '');
 }
+
+/** Storage path for DELETE /api/storage/delete from a value stored on a profile row. */
+export function resolveStorageDeletePath(storedValue: string): string | null {
+  const trimmed = storedValue.trim();
+  if (!trimmed) return null;
+
+  const apiMatch = trimmed.match(/[?&]path=([^&]+)/);
+  if (trimmed.includes('/api/storage/file') && apiMatch?.[1]) {
+    return decodeURIComponent(apiMatch[1]);
+  }
+
+  if (trimmed.includes('storage.yandexcloud.net/public-gareevde/')) {
+    const parts = trimmed.split('storage.yandexcloud.net/public-gareevde/');
+    if (parts.length > 1) {
+      return parts[1].split('?')[0];
+    }
+  }
+
+  if (trimmed.includes('public-gareevde.storage.yandexcloud.net/')) {
+    const parts = trimmed.split('public-gareevde.storage.yandexcloud.net/');
+    if (parts.length > 1) {
+      return parts[1].split('?')[0];
+    }
+  }
+
+  const path = getBlobPath(trimmed);
+  return path || null;
+}

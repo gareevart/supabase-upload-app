@@ -1,0 +1,30 @@
+.user-profile-card__edit {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: var(--g-spacing-4);
+}
+
+.user-profile-card__view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: var(--g-spacing-3);
+}
+
+.user-profile-card__avatar-wrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.user-profile-card__avatar {
+  object-fit: cover;
+  border-radius: var(--g-border-radius-xl);
+}
+
+.user-profile-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--g-spacing-2);
+}

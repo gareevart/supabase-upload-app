@@ -472,6 +472,11 @@ body.navigation-position-left .main-content:has(.aikit-chat-page) {
   --g-tooltip-border-radius: var(--g-border-radius-m);
 }
 
+/* Gravity Dialog / Modal shell (Dialog uses Modal under the hood) */
+.g-modal__content {
+  --g-modal-border-radius: var(--g-border-radius-l);
+}
+
 /* Gravity popup list surfaces (DropdownMenu, Select, …) */
 .g-popup .g-menu[role="menu"],
 .g-menu.g-dropdown-menu__menu,

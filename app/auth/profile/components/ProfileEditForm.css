@@ -10,11 +10,27 @@
 .profile-edit-form__field {
   display: flex;
   flex-direction: column;
+  gap: var(--g-spacing-1);
   width: 100%;
+}
+
+.profile-edit-form__field--avatar + .profile-edit-form__field {
+  margin-top: var(--g-spacing-1);
 }
 
 .profile-edit-form__actions {
   display: flex;
   gap: var(--g-spacing-2, 8px);
   margin-top: var(--g-spacing-2, 8px);
+}
+
+/* Match blog body text rhythm (.tiptap-content { line-height: 1.6 }) */
+.profile-edit-form__field--bio .g-text-area__control {
+  line-height: 1.4;
+}
+
+@media screen and (max-width: 768px) {
+  .profile-edit-form__field--bio .g-text-area__control {
+    line-height: 1.4 !important;
+  }
 }

@@ -1,0 +1,10 @@
+{
+  "profileEditForm.avatar": "Аватар",
+  "profileEditForm.avatarHint": "Загрузите изображение для аватара (макс. 2MB)",
+  "profileEditForm.sitePlaceholder": "https://example.com",
+  "profileEditForm.save": "Сохранить",
+  "profileEditForm.cancel": "Отмена",
+  "profileEditForm.errorTitle": "Ошибка",
+  "profileEditForm.updateProfileError": "Не удалось обновить профиль: {message}",
+  "profileEditForm.deleteAvatarError": "Произошла ошибка при удалении аватара"
+}

@@ -1,0 +1,10 @@
+{
+  "profileEditForm.avatar": "Avatar",
+  "profileEditForm.avatarHint": "Upload an image for your avatar (max. 2MB)",
+  "profileEditForm.sitePlaceholder": "https://example.com",
+  "profileEditForm.save": "Save",
+  "profileEditForm.cancel": "Cancel",
+  "profileEditForm.errorTitle": "Error",
+  "profileEditForm.updateProfileError": "Failed to update profile: {message}",
+  "profileEditForm.deleteAvatarError": "Something went wrong while removing the avatar"
+}

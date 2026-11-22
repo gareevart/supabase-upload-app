@@ -1,0 +1,12 @@
+{
+  "userProfileCard.title": "User",
+  "userProfileCard.email": "Email",
+  "userProfileCard.name": "Name",
+  "userProfileCard.username": "Username",
+  "userProfileCard.bio": "Bio",
+  "userProfileCard.role": "Role",
+  "userProfileCard.site": "Site",
+  "userProfileCard.edit": "Edit",
+  "userProfileCard.logout": "Logout",
+  "userProfileCard.empty": "—"
+}
