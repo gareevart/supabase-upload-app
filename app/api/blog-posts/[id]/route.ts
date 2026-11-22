@@ -7,6 +7,7 @@ import { cookies } from 'next/headers';
 import type { Database } from '@/lib/types';
 import { withAuth } from '@/app/auth/withApiKeyAuth';
 import { put } from '@vercel/blob';
+import { isBlogAdmin } from '@/shared/lib/blog/elevatedBlogAccess';
 
 // ---------- Featured image data-URL normalization helpers ----------
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
@@ -83,30 +84,6 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
 
-const canManagePost = async (userId: string) => {
-  const supabaseAdmin = createClient<Database>(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
-
-  const { data: profile, error } = await supabaseAdmin
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', userId)
-    .in('role', ['admin', 'editor'])
-    .limit(1)
-    .maybeSingle();
-
-  if (error) {
-    console.error('Error fetching user role:', error);
-    return false;
-  }
-
-  return profile?.role === 'admin' || profile?.role === 'editor';
-};
-
 // GET a single blog post by ID
 export const GET = withAuth(async (request: NextRequest, user: { id: string }) => {
   try {
@@ -120,29 +97,11 @@ export const GET = withAuth(async (request: NextRequest, user: { id: string }) =
       );
     }
 
-    // Create a new supabase client for this request
-    const supabase = createServerClient<Database>(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          get: (name: string) => request.cookies.get(name)?.value,
-          set: (name: string, value: string, options: CookieOptions) => {
-            request.cookies.set({
-              name,
-              value,
-              ...options,
-            });
-          },
-          remove: (name: string, options: CookieOptions) => {
-            request.cookies.delete(name);
-          },
-        },
-      }
-    );
+    const adminClient = createClient<Database>(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
-    // First check if the post exists
-    const { data, error } = await supabase
+    const { data, error } = await adminClient
       .from('blog_posts')
       .select('*')
       .eq('id', id)
@@ -159,16 +118,19 @@ export const GET = withAuth(async (request: NextRequest, user: { id: string }) =
       );
     }
 
-    // Check if the post is published or if the user is the author
-    if (!data.published && data.author_id !== user.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized to view this unpublished blog post' },
-        { status: 403 }
-      );
+    const isAuthor = data.author_id === user.id;
+    if (!data.published && !isAuthor) {
+      const allowed = await isBlogAdmin(adminClient, user.id);
+      if (!allowed) {
+        return NextResponse.json(
+          { error: 'Unauthorized to view this unpublished blog post' },
+          { status: 403 }
+        );
+      }
     }
 
     // Get author information
-    const { data: author, error: authorError } = await supabase
+    const { data: author, error: authorError } = await adminClient
       .from('profiles')
       .select('name, username, avatar_url')
       .eq('id', data.author_id)
@@ -241,8 +203,8 @@ export const PUT = withAuth(async (request: NextRequest, user: { id: string }) =
     // Check if the user is the author or has elevated role
     const isAuthor = existingPost.author_id === user.id;
     if (!isAuthor) {
-      const isAdminOrEditor = await canManagePost(user.id);
-      if (!isAdminOrEditor) {
+      const canManage = await isBlogAdmin(supabase, user.id);
+      if (!canManage) {
         return NextResponse.json(
           { error: 'Unauthorized to update this blog post' },
           { status: 403 }
@@ -437,8 +399,11 @@ export const DELETE = withAuth(async (request: NextRequest, user: { id: string }
     // Check if the user is the author or has elevated role
     const isAuthor = existingPost.author_id === user.id;
     if (!isAuthor) {
-      const isAdminOrEditor = await canManagePost(user.id);
-      if (!isAdminOrEditor) {
+      const deleteAdminClient = createClient<Database>(supabaseUrl, supabaseServiceKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      const canManage = await isBlogAdmin(deleteAdminClient, user.id);
+      if (!canManage) {
         return NextResponse.json(
           { error: 'Unauthorized to delete this blog post' },
           { status: 403 }

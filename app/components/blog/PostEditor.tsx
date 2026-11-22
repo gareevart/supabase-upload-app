@@ -1,13 +1,14 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, DropdownMenu } from '@gravity-ui/uikit';
 import { PageActionBar } from '@/shared/ui/PageActionBar';
+import { EditorToolbarActionBar } from '@/shared/ui/EditorToolbarActionBar';
 import { useBlogEditorContent } from "@/features/blog-editor/model/useBlogEditorContent";
 import { useI18n } from "@/app/contexts/I18nContext";
 import PostMetadata from "./editor/PostMetadata";
 import { MarkdownEditor } from "@/features/blog-editor/ui/MarkdownEditor";
-import { LinkOgPanel } from "@/features/blog-editor/ui/LinkOgPanel";
 import "./BlogEditor.css";
 
 type PostEditorProps = {
@@ -18,6 +19,8 @@ type PostEditorProps = {
 const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
   const { t } = useI18n();
   const router = useRouter();
+  const formattingToolbarHostRef = useRef<HTMLDivElement>(null);
+  const [formattingToolbarPinned, setFormattingToolbarPinned] = useState(false);
   const {
     title, setTitle,
     slug, setSlug,
@@ -55,33 +58,40 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
 
   return (
     <div className="post-editor">
-      <PageActionBar
-        ariaLabel={t('blogEditor.postActions')}
-        items={[{ label: t(initialPost ? 'blogEditor.editPost' : 'blogEditor.createPost') }]}
-        actions={
-          <>
-            <Button type="button" view="action" loading={isLoading} onClick={handlePublish}>
-              {t('blogEditor.publish')}
-            </Button>
-            <DropdownMenu
-              disabled={isLoading}
-              defaultSwitcherProps={{
-                'aria-label': t('blogEditor.moreActions'),
-              }}
-              items={[
-                {
-                  text: t('blogEditor.saveDraft'),
-                  action: handleSaveDraft,
-                },
-                {
-                  text: t('blogEditor.cancel'),
-                  action: handleCancel,
-                },
-              ]}
-            />
-          </>
-        }
-      />
+      <div className="post-editor__chrome">
+        <PageActionBar
+          ariaLabel={t('blogEditor.postActions')}
+          items={[{ label: t(initialPost ? 'blogEditor.editPost' : 'blogEditor.createPost') }]}
+          actions={
+            <>
+              <Button type="button" view="action" loading={isLoading} onClick={handlePublish}>
+                {t('blogEditor.publish')}
+              </Button>
+              <DropdownMenu
+                disabled={isLoading}
+                defaultSwitcherProps={{
+                  'aria-label': t('blogEditor.moreActions'),
+                }}
+                items={[
+                  {
+                    text: t('blogEditor.saveDraft'),
+                    action: handleSaveDraft,
+                  },
+                  {
+                    text: t('blogEditor.cancel'),
+                    action: handleCancel,
+                  },
+                ]}
+              />
+            </>
+          }
+        />
+        <EditorToolbarActionBar
+          ariaLabel={t('blogEditor.formattingToolbar')}
+          hostRef={formattingToolbarHostRef}
+          visible={formattingToolbarPinned}
+        />
+      </div>
 
       <div className="post-editor__content">
         <PostMetadata
@@ -100,15 +110,15 @@ const PostEditor = ({ initialPost, onSave }: PostEditorProps) => {
           isUploading={isUploading}
           showGalleryDialog={showGalleryDialog}
           setShowGalleryDialog={setShowGalleryDialog}
-        />
-        <LinkOgPanel
-          settings={linkOgSettings}
-          onChange={handleLinkOgMasterChange}
+          linkOgPreviewEnabled={linkOgSettings.enabled}
+          onLinkOgPreviewChange={handleLinkOgMasterChange}
         />
         <MarkdownEditor
           content={editorMarkdown}
           onChange={handleContentChange}
           placeholder={t('blogEditor.contentPlaceholder')}
+          toolbarActionBarHostRef={formattingToolbarHostRef}
+          onFormattingToolbarPinnedChange={setFormattingToolbarPinned}
         />
       </div>
     </div>

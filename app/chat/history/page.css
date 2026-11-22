@@ -57,8 +57,3 @@
   flex: 0 0 auto;
 }
 
-@media (max-width: 767px) {
-  .chat-history-page__main {
-    padding-top: calc(40px + var(--g-spacing-5));
-  }
-}

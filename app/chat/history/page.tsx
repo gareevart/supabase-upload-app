@@ -3,7 +3,6 @@
 import { redirect } from "next/navigation";
 import { Button, Icon, Text } from "@gravity-ui/uikit";
 import { Plus } from "@gravity-ui/icons";
-import { PageActionBar } from "@/shared/ui/PageActionBar";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useI18n } from "@/app/contexts/I18nContext";
 import { useChats } from "@/hooks/useChats";
@@ -29,19 +28,6 @@ export default function ChatHistoryPage() {
 
   return (
     <div className="chat-history-page">
-      <PageActionBar
-        ariaLabel={t("chatView.chatActions")}
-        items={[
-          { label: t("gallery.breadcrumb.projects"), href: "/projects" },
-          { label: t("chatView.breadcrumbChat"), href: "/chat/history" },
-        ]}
-        favorite={{
-          href: "/chat/history",
-          title: t("chatView.historyTitle"),
-          kind: "chat",
-        }}
-      />
-
       <main className="hub-page__main chat-history-page__main">
         <div className="hub-page__header chat-history-page__header">
           <Text as="h1" variant="display-1" className="chat-history-page__title">

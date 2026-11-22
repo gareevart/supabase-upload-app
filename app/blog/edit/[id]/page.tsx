@@ -29,29 +29,26 @@ export default function EditBlogPost() {
           return
         }
 
-        // Fetch the post data
-        const { data, error } = await supabase
-          .from("blog_posts")
-          .select("*")
-          .eq("id", postId)
-          .single()
-
-        if (error) {
-          throw error
-        }
-
-        // Get user's profile to check role
         const { data: profile } = await supabase
           .from("profiles")
           .select("role")
           .eq("id", session.user.id)
           .single()
 
-        // Check if user is author, admin, or editor
-        const isAuthor = data.author_id === session.user.id
-        const isAdminOrEditor = profile?.role === 'admin' || profile?.role === 'editor'
+        const postResponse = await fetch(`/api/blog-posts/${postId}`, { cache: "no-store" })
+        if (!postResponse.ok) {
+          if (postResponse.status === 403 || postResponse.status === 404) {
+            setIsAuthorized(false)
+            return
+          }
+          throw new Error(`Failed to load post: ${postResponse.status}`)
+        }
+        const data = await postResponse.json()
 
-        setIsAuthorized(isAuthor || isAdminOrEditor)
+        const isAuthor = data.author_id === session.user.id
+        const isAdmin = profile?.role === 'admin'
+
+        setIsAuthorized(isAuthor || isAdmin)
         setPost(data);
       } catch (error) {
         console.error("Error checking authorization or fetching post:", JSON.stringify(error, null, 2))

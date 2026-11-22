@@ -22,6 +22,8 @@ interface PostMetadataProps {
   isUploading: boolean;
   showGalleryDialog: boolean;
   setShowGalleryDialog: (show: boolean) => void;
+  linkOgPreviewEnabled: boolean;
+  onLinkOgPreviewChange: (enabled: boolean) => void;
 }
 
 const PostMetadata: React.FC<PostMetadataProps> = ({
@@ -40,6 +42,8 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
   isUploading,
   showGalleryDialog,
   setShowGalleryDialog,
+  linkOgPreviewEnabled,
+  onLinkOgPreviewChange,
 }) => {
   const { t } = useI18n();
 
@@ -84,8 +88,8 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
         setShowGalleryDialog={setShowGalleryDialog}
       />
 
-      {featuredImageUrl && (
-        <div className="post-metadata__field">
+      <div className="post-metadata__field">
+        {featuredImageUrl ? (
           <Checkbox
             checked={showFeaturedImage}
             onUpdate={setShowFeaturedImage}
@@ -93,8 +97,15 @@ const PostMetadata: React.FC<PostMetadataProps> = ({
           >
             <Text variant="subheader-1">{t('blogEditor.showCover')}</Text>
           </Checkbox>
-        </div>
-      )}
+        ) : null}
+        <Checkbox
+          checked={linkOgPreviewEnabled}
+          onUpdate={onLinkOgPreviewChange}
+          size="l"
+        >
+          <Text variant="subheader-1">{t('linkOg.master')}</Text>
+        </Checkbox>
+      </div>
 
       <FormRow
         label={t('blogEditor.descriptionLabel')}

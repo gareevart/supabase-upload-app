@@ -1,0 +1,49 @@
+.editor-toolbar-action-bar {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  background-color: var(--g-color-base-background);
+}
+
+.editor-toolbar-action-bar_hidden {
+  height: 0;
+  min-height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.editor-toolbar-action-bar__section {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding-inline: var(--g-spacing-5);
+}
+
+.editor-toolbar-action-bar__host {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.editor-toolbar-action-bar__host [data-layout='sticky-toolbar'] {
+  position: static;
+  top: auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.editor-toolbar-action-bar__host .g-md-editor-sticky_sticky,
+.editor-toolbar-action-bar__host .g-md-editor-sticky_sticky-active {
+  position: static;
+  top: auto;
+  z-index: auto;
+}
+
+.editor-toolbar-action-bar__host .g-md-editor-sticky_sticky-active:not(.g-md-editor-sticky_clear)::before {
+  display: none;
+}

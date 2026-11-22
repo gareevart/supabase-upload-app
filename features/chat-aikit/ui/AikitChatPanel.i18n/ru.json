@@ -28,5 +28,12 @@
   "chatView.emptyFilteredPlaceholder": "Ничего не найдено",
   "chatView.searchPlaceholder": "Поиск чатов...",
   "chatView.cancel": "Отмена",
-  "chatView.save": "Сохранить"
+  "chatView.save": "Сохранить",
+  "chatView.rename": "Переименовать",
+  "chatView.titlePlaceholder": "Название чата",
+  "chatView.loadError": "Ошибка при загрузке чатов. Пожалуйста, попробуйте позже.",
+  "chatView.emptyListHint": "У вас пока нет чатов",
+  "chatView.createChat": "Создать чат",
+  "chatView.createChatTooltip": "Создать новый чат",
+  "chatView.deleteIrreversible": "Вы уверены, что хотите удалить этот чат? Это действие нельзя отменить."
 }

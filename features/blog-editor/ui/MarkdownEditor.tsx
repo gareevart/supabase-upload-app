@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, type RefObject } from 'react';
 import {
   useMarkdownEditor,
   MarkdownEditorView,
@@ -12,12 +12,17 @@ import '@gravity-ui/markdown-editor/styles/styles.css';
 import { uploadImage } from '@/shared/lib/blog/uploadImage';
 import { useI18n } from '@/app/contexts/I18nContext';
 import { createLinkOgExtension } from '@/features/blog-editor/model/linkOgExtension';
+import { useEditorToolbarInActionBar } from '@/features/blog-editor/model/useEditorToolbarInActionBar';
 import './MarkdownEditor.css';
 
 interface MarkdownEditorProps {
   content: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  /** Host for the formatting toolbar when it is pinned under the page Action Bar. */
+  toolbarActionBarHostRef?: RefObject<HTMLDivElement | null>;
+  onFormattingToolbarPinnedChange?: (pinned: boolean) => void;
+  toolbarPinOffsetTop?: number;
 }
 
 // Image/file placed first so they're always visible regardless of container width.
@@ -33,6 +38,9 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   content,
   onChange,
   placeholder,
+  toolbarActionBarHostRef,
+  onFormattingToolbarPinnedChange,
+  toolbarPinOffsetTop,
 }) => {
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
@@ -86,6 +94,18 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   }, [editor]);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const toolbarInActionBar = Boolean(toolbarActionBarHostRef);
+
+  useEditorToolbarInActionBar(
+    editor,
+    containerRef,
+    toolbarActionBarHostRef ?? { current: null },
+    toolbarInActionBar,
+    {
+      pinOffsetTop: toolbarPinOffsetTop,
+      onPinnedChange: onFormattingToolbarPinnedChange,
+    },
+  );
 
   useEffect(() => {
     const root = containerRef.current;
@@ -123,10 +143,18 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   }, [editor]);
 
   return (
-    <div className="markdown-editor" ref={containerRef}>
+    <div
+      className={[
+        'markdown-editor',
+        toolbarInActionBar ? 'markdown-editor_toolbar-in-action-bar' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      ref={containerRef}
+    >
       <MarkdownEditorView
         editor={editor}
-        stickyToolbar
+        stickyToolbar={!toolbarInActionBar}
         wysiwygToolbarConfig={wysiwygToolbarConfig}
         markupToolbarConfig={markupToolbarConfig}
       />

@@ -15,6 +15,16 @@
   --g-md-toolbar-sticky-offset: env(safe-area-inset-top, 0px);
 }
 
+.markdown-editor__toolbar-placeholder {
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.markdown-editor_toolbar-in-action-bar .g-md-wysiwyg-editor__toolbar:empty {
+  display: none;
+  min-height: 0;
+}
+
 .markdown-editor > div,
 .markdown-editor .g-md-editor-component,
 .markdown-editor .g-md-editor-component__editor-wrapper,

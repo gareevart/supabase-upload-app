@@ -7,6 +7,7 @@
   "blogEditor.createPost": "Create post",
   "blogEditor.editPost": "Edit post",
   "blogEditor.postActions": "Post actions",
+  "blogEditor.formattingToolbar": "Formatting toolbar",
   "blogEditor.moreActions": "More actions",
   "blogEditor.contentPlaceholder": "Type your post content here...",
   "blogEditor.titleLabel": "Title",

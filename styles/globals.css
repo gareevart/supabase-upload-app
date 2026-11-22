@@ -467,3 +467,27 @@ body.navigation-position-left .main-content:has(.aikit-chat-page) {
 .main-content:has(.chat-history-page) {
   padding-top: 0;
 }
+
+/* Gravity popup list surfaces (DropdownMenu, Select, …) */
+.g-popup .g-menu[role="menu"],
+.g-menu.g-dropdown-menu__menu,
+.g-popup .g-select-list {
+  padding: var(--g-spacing-1);
+  box-sizing: border-box;
+}
+
+.g-popup .g-select-list {
+  margin: 0;
+}
+
+.g-popup .g-list__item_selected,
+.g-popup .g-list__item_active,
+.g-popup .g-menu__item_selected,
+.g-popup .g-menu__item_active {
+  border-radius: var(--g-border-radius-s);
+}
+
+/* Select popup: at least trigger width, grow for padded list content */
+.g-popup:has(.g-select-popup) {
+  width: max-content;
+}

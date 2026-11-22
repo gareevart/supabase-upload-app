@@ -7,6 +7,7 @@
   "blogEditor.createPost": "Создание поста",
   "blogEditor.editPost": "Редактирование поста",
   "blogEditor.postActions": "Действия с постом",
+  "blogEditor.formattingToolbar": "Панель форматирования",
   "blogEditor.moreActions": "Другие действия",
   "blogEditor.contentPlaceholder": "Введите содержимое поста...",
   "blogEditor.titleLabel": "Заголовок",

@@ -2,11 +2,12 @@ import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useChats, Chat } from "@/hooks/useChats";
 import { useCreateChat } from "@/hooks/useCreateChat";
-import { Button, Skeleton, Text, Icon, TextArea, List, DropdownMenu, Dialog } from "@gravity-ui/uikit";
+import { Button, Skeleton, Text, Icon, TextInput, List, DropdownMenu, Dialog } from "@gravity-ui/uikit";
 import { Plus, Pencil, TrashBin, Xmark, Check } from '@gravity-ui/icons';
 import "./ChatList.css";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DrawerMenu } from "@/shared/ui/DrawerMenu";
+import { useI18n } from "@/app/contexts/I18nContext";
 
 interface ChatListProps {
   onChatSelect?: () => void;
@@ -21,6 +22,7 @@ export const ChatList = ({
 }: ChatListProps = {}) => {
   const isMobile = useIsMobile();
   const router = useRouter();
+  const { t } = useI18n();
   const {
     chats,
     isLoading,
@@ -112,7 +114,7 @@ export const ChatList = ({
               !showTitle && showCreateButton ? "chat-list__header_actions-only" : "",
             ].filter(Boolean).join(" ")}
           >
-            {showTitle ? <Text variant="header-1">Чаты</Text> : <span />}
+            {showTitle ? <Text variant="header-1">{t('chatView.historyTitle')}</Text> : <span />}
             {showCreateButton ? <Skeleton className="chat-list__skeleton-button" /> : null}
           </div>
         )}
@@ -126,7 +128,7 @@ export const ChatList = ({
   if (error) {
     return (
       <Text variant="body-1" color="danger" className="chat-list__error">
-        Ошибка при загрузке чатов. Пожалуйста, попробуйте позже.
+        {t('chatView.loadError')}
       </Text>
     );
   }
@@ -135,13 +137,13 @@ export const ChatList = ({
     <div className="chat-list">
       {(showTitle || showCreateButton) && (
         <div className="chat-list__header">
-          {showTitle ? <Text variant="header-1">Чаты</Text> : <span />}
+          {showTitle ? <Text variant="header-1">{t('chatView.historyTitle')}</Text> : <span />}
           {showCreateButton ? (
             <Button
               size="m"
               onClick={handleCreateChat}
               loading={createChat.isPending}
-              title="Создать новый чат"
+              title={t('chatView.createChatTooltip')}
             >
               <Icon data={Plus} size={16} />
             </Button>
@@ -152,11 +154,11 @@ export const ChatList = ({
       {chats.length === 0 ? (
         <div className="chat-list__empty">
           <Text variant="body-1" color="secondary" className="chat-list__empty-text">
-            У вас пока нет чатов
+            {t('chatView.emptyListHint')}
           </Text>
           <Button onClick={handleCreateChat} loading={createChat.isPending}>
             <Icon data={Plus} size={16} />
-            Создать чат
+            {t('chatView.createChat')}
           </Button>
         </div>
       ) : (
@@ -174,28 +176,32 @@ export const ChatList = ({
             if (isEditing) {
               return (
                 <div
-                  className="chat-list__item-editing"
+                  className="chat-list__item-row chat-list__item-row_editing"
                   onClick={stopItemClick}
                   onMouseDown={stopItemClick}
                 >
-                  <TextArea
+                  <TextInput
+                    view="clear"
+                    size="m"
                     value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    placeholder="Название чата"
+                    onUpdate={setNewTitle}
+                    placeholder={t('chatView.titlePlaceholder')}
                     className="chat-list__item-editing-field"
                     autoFocus
                   />
-                  <Button
-                    size="m"
-                    view="flat"
-                    onClick={() => saveTitle(chat.id)}
-                    loading={updateChatTitle.isPending}
-                  >
-                    <Icon data={Check} size={16} />
-                  </Button>
-                  <Button size="m" view="flat" onClick={cancelEditing}>
-                    <Icon data={Xmark} size={16} />
-                  </Button>
+                  <div className="chat-list__item-menu chat-list__item-menu_editing">
+                    <Button
+                      size="s"
+                      view="flat"
+                      onClick={() => saveTitle(chat.id)}
+                      loading={updateChatTitle.isPending}
+                    >
+                      <Icon data={Check} size={16} />
+                    </Button>
+                    <Button size="s" view="flat" onClick={cancelEditing}>
+                      <Icon data={Xmark} size={16} />
+                    </Button>
+                  </div>
                 </div>
               );
             }
@@ -215,12 +221,12 @@ export const ChatList = ({
                     items={[
                       {
                         action: () => startEditing(chat.id, chat.title),
-                        text: 'Переименовать',
+                        text: t('chatView.rename'),
                         iconStart: <Icon data={Pencil} size={16} />,
                       },
                       {
                         action: (e) => handleDeleteChat(chat.id, e),
-                        text: 'Удалить',
+                        text: t('chatView.deleteConfirm'),
                         iconStart: <Icon data={TrashBin} size={16} />,
                         theme: 'danger',
                       },
@@ -237,24 +243,24 @@ export const ChatList = ({
         <DrawerMenu
           open={deleteDialogOpen}
           onClose={() => setDeleteDialogOpen(false)}
-          title="Удаление чата"
+          title={t('chatView.deleteTitle')}
           footer={
             <>
               <Button view="outlined" size="l" onClick={() => setDeleteDialogOpen(false)}>
-                Отмена
+                {t('chatView.cancel')}
               </Button>
               <Button
                 view="outlined-danger"
                 size="l"
                 onClick={confirmDeleteChat}
               >
-                Удалить
+                {t('chatView.deleteConfirm')}
               </Button>
             </>
           }
         >
           <Text variant="body-1">
-            Вы уверены, что хотите удалить этот чат? Это действие нельзя отменить.
+            {t('chatView.deleteIrreversible')}
           </Text>
         </DrawerMenu>
       ) : (
@@ -263,13 +269,13 @@ export const ChatList = ({
           onClose={() => setDeleteDialogOpen(false)}
           aria-labelledby="delete-dialog-title"
         >
-          <Dialog.Header caption="Удаление чата" id="delete-dialog-title" />
-          <Dialog.Body>Вы уверены, что хотите удалить этот чат? Это действие нельзя отменить.</Dialog.Body>
+          <Dialog.Header caption={t('chatView.deleteTitle')} id="delete-dialog-title" />
+          <Dialog.Body>{t('chatView.deleteIrreversible')}</Dialog.Body>
           <Dialog.Footer
             onClickButtonCancel={() => setDeleteDialogOpen(false)}
             onClickButtonApply={confirmDeleteChat}
-            textButtonApply="Удалить"
-            textButtonCancel="Отмена"
+            textButtonApply={t('chatView.deleteConfirm')}
+            textButtonCancel={t('chatView.cancel')}
             propsButtonApply={{ view: 'outlined-danger' }}
           />
         </Dialog>

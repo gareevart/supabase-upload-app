@@ -32,7 +32,7 @@ export function useBlogPosts(filters: BlogPostFilters = {}) {
   const cacheKey = `blog-posts-${generateCacheKey(filters)}`;
 
   const { data, error, isLoading, mutate } = useSWR<BlogPostsResponse>(
-    filters.draftsOnly && !filters.publishedOnly && !filters.authorId ? null : cacheKey,
+    cacheKey,
     () => fetchBlogPosts(filters),
     {
       // Кэшируем на 5 минут
@@ -77,6 +77,7 @@ export function useUserDrafts(userId: string | null) {
 export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -90,6 +91,14 @@ export function useAuth() {
 
         if (authenticated && session?.user?.id) {
           setUserId(session.user.id);
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", session.user.id)
+            .maybeSingle();
+          setUserRole(profile?.role ?? null);
+        } else {
+          setUserRole(null);
         }
       } catch (error) {
         console.error("Error checking auth:", error);
@@ -101,6 +110,8 @@ export function useAuth() {
     checkAuth();
   }, []);
 
-  return { isAuthenticated, userId, isLoading };
+  const isAdmin = userRole === "admin";
+
+  return { isAuthenticated, userId, userRole, isAdmin, isLoading };
 }
 

@@ -32,7 +32,7 @@ export const PostList = ({
   const isMobile = useIsMobile();
   const router = useRouter();
   const { t } = useI18n();
-  const { userId } = useAuth();
+  const { userId, isAdmin } = useAuth();
 
   const POSTS_PER_PAGE = 10;
 
@@ -146,9 +146,15 @@ export const PostList = ({
               isPriority={isPriority}
               isDraft={draftsOnly}
               canEdit={onlyMyPosts && post.author_id === userId}
-              onEdit={!draftsOnly || post.author_id === userId ? handleEditPost : undefined}
+              onEdit={
+                !draftsOnly || post.author_id === userId || isAdmin
+                  ? handleEditPost
+                  : undefined
+              }
               showReadButton={false}
-              onDelete={post.author_id === userId ? setConfirmDeleteId : undefined}
+              onDelete={
+                post.author_id === userId || isAdmin ? setConfirmDeleteId : undefined
+              }
               isDeleting={deletingPostId === post.id}
             />
           );

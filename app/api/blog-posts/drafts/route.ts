@@ -49,10 +49,33 @@ export const GET = withApiAuth(async (request, user) => {
     return NextResponse.json({ hasDrafts: data.length > 0 }, { headers: responseHeaders });
   }
 
-  const posts = data.map((post) => ({
+  let posts = data.map((post) => ({
     ...post,
     author: { name: null, username: null, avatar_url: null },
   }));
+
+  if (posts.length > 0) {
+    const authorIds = [...new Set(posts.map((post) => post.author_id))];
+    const { data: profilesData } = await supabase
+      .from('profiles')
+      .select('id, name, username, avatar_url')
+      .in('id', authorIds);
+
+    const profilesMap =
+      profilesData?.reduce(
+        (acc, profile) => {
+          acc[profile.id] = profile;
+          return acc;
+        },
+        {} as Record<string, { name: string | null; username: string | null; avatar_url: string | null }>,
+      ) ?? {};
+
+    posts = posts.map((post) => ({
+      ...post,
+      author: profilesMap[post.author_id] ?? post.author,
+    }));
+  }
+
   return NextResponse.json(
     { posts, totalCount: count ?? 0, page, pageSize },
     { headers: responseHeaders },

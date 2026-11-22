@@ -50,7 +50,7 @@ export function FavoriteToggleButton({ href, title, kind, className }: FavoriteT
   return (
     <Button
       className={className}
-      view="flat"
+      view={favorited ? 'flat' : 'flat-secondary'}
       size="s"
       loading={isPending}
       aria-pressed={favorited}
