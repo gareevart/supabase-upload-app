@@ -333,6 +333,7 @@
   body.blog-post-scrolling-down .navigation {
     transform: translate(-50%, calc(100% + 32px));
     pointer-events: none;
+    transition: transform 0.28s ease-in;
   }
 }
 

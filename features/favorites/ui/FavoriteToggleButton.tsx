@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type MouseEvent } from 'react';
-import { Button, Icon } from '@gravity-ui/uikit';
+import { ActionTooltip, Button, Icon } from '@gravity-ui/uikit';
 import { useToast } from '@/hooks/use-toast';
 import { Star, StarFill } from '@gravity-ui/icons';
 import { useI18n } from '@/app/contexts/I18nContext';
@@ -48,19 +48,20 @@ export function FavoriteToggleButton({ href, title, kind, className }: FavoriteT
   };
 
   return (
-    <Button
-      className={className}
-      view={favorited ? 'flat' : 'flat-secondary'}
-      size="s"
-      loading={isPending}
-      aria-pressed={favorited}
-      aria-label={label}
-      title={label}
-      onClick={(event) => {
-        void handleToggle(event);
-      }}
-    >
-      <Icon data={favorited ? StarFill : Star} size={16} />
-    </Button>
+    <ActionTooltip title={label} openDelay={150}>
+      <Button
+        className={className}
+        view={favorited ? 'flat' : 'flat-secondary'}
+        size="s"
+        loading={isPending}
+        aria-pressed={favorited}
+        aria-label={label}
+        onClick={(event) => {
+          void handleToggle(event);
+        }}
+      >
+        <Icon data={favorited ? StarFill : Star} size={16} />
+      </Button>
+    </ActionTooltip>
   );
 }

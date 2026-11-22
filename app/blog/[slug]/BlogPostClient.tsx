@@ -2,13 +2,13 @@
 
 import "../blog.css"
 import { supabase } from "@/lib/supabase"
-import { Calendar, LayoutSideContentRight, Pencil, TrashBin } from "@gravity-ui/icons"
+import { Calendar, Ellipsis, LayoutSideContentRight, Pencil, TrashBin } from "@gravity-ui/icons"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { MarkdownRenderer } from "@/features/blog-editor/ui/MarkdownRenderer"
 import { useState, useEffect, useMemo, useRef } from "react"
-import { Avatar, Button, Icon, Text, Dialog, Drawer, DropdownMenu, Skeleton } from "@gravity-ui/uikit"
+import { ActionTooltip, Avatar, Button, Icon, Text, Dialog, Drawer, DropdownMenu, Skeleton } from "@gravity-ui/uikit"
 import { PageActionBar } from "@/shared/ui/PageActionBar"
 import { useToast } from "@/hooks/use-toast"
 import { authFetch } from "@/lib/auth-fetch"
@@ -48,6 +48,7 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
   const { toast } = useToast()
   const { t, language } = useI18n()
   const hasTableOfContents = useMemo(() => extractHeadings(post.content).length > 0, [post.content])
+  const tableOfContentsHotkey = 'shift+p'
   const authorName = post.author?.name || post.author?.username || t('blogView.anonymous')
   const authorAvatarUrl = getBlobPreviewUrl(post.author?.avatar_url)
   const [authorAvatarPhase, setAuthorAvatarPhase] = useState<'loading' | 'ready' | 'fallback'>(
@@ -91,18 +92,33 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 767px)')
+    const scrollTopOffset = 80
+    const directionThreshold = 12
     let previousScrollY = window.scrollY
+    let isNavHidden = false
     let frameId: number | null = null
 
     const updateMobileNavigation = () => {
       frameId = null
       const currentScrollY = window.scrollY
-      const isScrollingDown = currentScrollY > previousScrollY && currentScrollY > 80
+      const scrollDelta = currentScrollY - previousScrollY
 
-      document.body.classList.toggle(
-        'blog-post-scrolling-down',
-        mediaQuery.matches && isScrollingDown,
-      )
+      if (!mediaQuery.matches) {
+        isNavHidden = false
+        document.body.classList.remove('blog-post-scrolling-down')
+        previousScrollY = currentScrollY
+        return
+      }
+
+      if (currentScrollY <= scrollTopOffset) {
+        isNavHidden = false
+      } else if (scrollDelta > directionThreshold) {
+        isNavHidden = true
+      } else if (scrollDelta < -directionThreshold) {
+        isNavHidden = false
+      }
+
+      document.body.classList.toggle('blog-post-scrolling-down', isNavHidden)
       previousScrollY = currentScrollY
     }
 
@@ -128,6 +144,40 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
       document.body.classList.remove('blog-post-scrolling-down')
     }
   }, [])
+
+  useEffect(() => {
+    if (!hasTableOfContents) {
+      return undefined;
+    }
+
+    const handleTableOfContentsHotkey = (event: KeyboardEvent) => {
+      if (!event.shiftKey || event.key.toLowerCase() !== 'p') {
+        return;
+      }
+      if (event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
+
+      const target = event.target;
+      if (target instanceof HTMLElement) {
+        const tagName = target.tagName;
+        if (
+          tagName === 'INPUT'
+          || tagName === 'TEXTAREA'
+          || tagName === 'SELECT'
+          || target.isContentEditable
+        ) {
+          return;
+        }
+      }
+
+      event.preventDefault();
+      setIsTableOfContentsOpen((isOpen) => !isOpen);
+    };
+
+    window.addEventListener('keydown', handleTableOfContentsHotkey);
+    return () => window.removeEventListener('keydown', handleTableOfContentsHotkey);
+  }, [hasTableOfContents])
 
   useEffect(() => {
     // The post itself is server-rendered and passed as a prop; only the
@@ -215,13 +265,27 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
         actions={
           <>
             {canEditPost ? (
-              <Button view="flat" component={Link} href={`/blog/edit/${post.id}`}>
-                <Icon data={Pencil} size={16} />
-                <span className="blog-post-edit-label">{t('blogView.edit')}</span>
-              </Button>
+              <ActionTooltip title={t('blogView.edit')} openDelay={150}>
+                <Button
+                  view="flat"
+                  component={Link}
+                  href={`/blog/edit/${post.id}`}
+                  aria-label={t('blogView.edit')}
+                >
+                  <Icon data={Pencil} size={16} />
+                  <span className="blog-post-edit-label">{t('blogView.edit')}</span>
+                </Button>
+              </ActionTooltip>
             ) : null}
             {canEditPost ? (
               <DropdownMenu
+                renderSwitcher={(props) => (
+                  <ActionTooltip title={t('blogView.showMore')} openDelay={150}>
+                    <Button {...props} view="flat" size="m" aria-label={t('blogView.showMore')}>
+                      <Icon data={Ellipsis} size={16} />
+                    </Button>
+                  </ActionTooltip>
+                )}
                 items={[
                   {
                     text: t('blogView.delete'),
@@ -233,17 +297,26 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
               />
             ) : null}
             {hasTableOfContents ? (
-              <Button
-                view="flat"
-                selected={isTableOfContentsOpen}
-                aria-pressed={isTableOfContentsOpen}
-                aria-expanded={isTableOfContentsOpen}
-                onClick={() => setIsTableOfContentsOpen((isOpen) => !isOpen)}
-                aria-label={t('tableOfContents.title')}
-                title={t('tableOfContents.title')}
+              <ActionTooltip
+                title={
+                  isTableOfContentsOpen ? t('tableOfContents.close') : t('blogView.showContentBar')
+                }
+                hotkey={tableOfContentsHotkey}
+                openDelay={150}
               >
-                <Icon data={LayoutSideContentRight} size={16} />
-              </Button>
+                <Button
+                  view="flat"
+                  selected={isTableOfContentsOpen}
+                  aria-pressed={isTableOfContentsOpen}
+                  aria-expanded={isTableOfContentsOpen}
+                  onClick={() => setIsTableOfContentsOpen((isOpen) => !isOpen)}
+                  aria-label={
+                    isTableOfContentsOpen ? t('tableOfContents.close') : t('blogView.showContentBar')
+                  }
+                >
+                  <Icon data={LayoutSideContentRight} size={16} />
+                </Button>
+              </ActionTooltip>
             ) : null}
           </>
         }

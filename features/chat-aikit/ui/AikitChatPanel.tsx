@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useId, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChatContainer, ActionButton, ContextIndicator } from "@gravity-ui/aikit";
 import type { ChatType, TChatMessage, TSubmitData } from "@gravity-ui/aikit";
-import { Button, Dialog, DropdownMenu, Icon, Select, Text, TextArea } from "@gravity-ui/uikit";
+import { ActionTooltip, Button, Dialog, DropdownMenu, Icon, Select, Text, TextArea } from "@gravity-ui/uikit";
 import { PageActionBar } from "@/shared/ui/PageActionBar";
 import { Circles3Plus, ClockArrowRotateLeft, Ellipsis, Plus, Sliders, TrashBin } from "@gravity-ui/icons";
 import { useChat } from "@/hooks/useChat";
@@ -203,15 +203,24 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
         }}
         actions={
           <>
-            <Button
-              view="flat"
-              onClick={handleCreateChat}
-              loading={createChat.isPending}
-              title={t('chatView.newChatTooltip')}
-            >
-              <Icon data={Plus} size={16} />
-            </Button>
+            <ActionTooltip title={t('chatView.newChatTooltip')} openDelay={150}>
+              <Button
+                view="flat"
+                onClick={handleCreateChat}
+                loading={createChat.isPending}
+                aria-label={t('chatView.newChatTooltip')}
+              >
+                <Icon data={Plus} size={16} />
+              </Button>
+            </ActionTooltip>
             <DropdownMenu
+              renderSwitcher={(props) => (
+                <ActionTooltip title={t('chatView.chatActions')} openDelay={150}>
+                  <Button {...props} view="flat" size="s" aria-label={t('chatView.chatActions')}>
+                    <Icon data={Ellipsis} size={16} />
+                  </Button>
+                </ActionTooltip>
+              )}
               items={[
                 {
                   text: t('chatView.chatHistory'),
@@ -225,11 +234,6 @@ export function AikitChatPanel({ chatId }: { chatId: string }) {
                   action: () => setDeleteDialogOpen(true),
                 },
               ]}
-              switcher={
-                <Button view="flat" size="s" title={t('chatView.chatActions')}>
-                  <Icon data={Ellipsis} size={16} />
-                </Button>
-              }
             />
           </>
         }

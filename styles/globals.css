@@ -468,6 +468,10 @@ body.navigation-position-left .main-content:has(.aikit-chat-page) {
   padding-top: 0;
 }
 
+.g-action-tooltip {
+  --g-tooltip-border-radius: var(--g-border-radius-m);
+}
+
 /* Gravity popup list surfaces (DropdownMenu, Select, …) */
 .g-popup .g-menu[role="menu"],
 .g-menu.g-dropdown-menu__menu,
