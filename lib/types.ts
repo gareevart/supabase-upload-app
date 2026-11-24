@@ -632,6 +632,18 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
+      reserve_playground: {
+        Args: { p_user_id: string; p_run_id: string }
+        Returns: boolean
+      }
+      owns_playground: {
+        Args: { p_user_id: string; p_run_id: string }
+        Returns: boolean
+      }
+      release_playground: {
+        Args: { p_user_id: string; p_run_id: string }
+        Returns: boolean
+      }
       get_group_emails: {
         Args: {
           group_id_param: string
