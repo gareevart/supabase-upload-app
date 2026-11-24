@@ -1,6 +1,6 @@
 # Cloud Playground public beta
 
-Route: `/playground`, linked from Projects. Anyone can see and edit; every signed-in gareev.de account can run when enabled. The database rollout switch is off on a fresh migration. The site functions only orchestrate; they do not evaluate user code.
+Route: `/projects/playground` (legacy `/playground` redirects), linked from Projects. Anyone can see and edit; every signed-in gareev.de account can run when enabled. The database rollout switch is off on a fresh migration. The site functions only orchestrate; they do not evaluate user code.
 
 ## Setup
 

@@ -1,16 +1,14 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { TextEncoder } from 'node:util';
 import Playground from '../Playground';
 import { authFetch } from '@/lib/auth-fetch';
 
 jest.mock('@/lib/auth-fetch', () => ({ authFetch: jest.fn() }));
-jest.mock('@gravity-ui/uikit', () => ({
-  Button: ({ children, disabled, onClick, type, 'aria-pressed': pressed }: ButtonHTMLAttributes<HTMLButtonElement>) =>
-    <button disabled={disabled} onClick={onClick} type={type} aria-pressed={pressed}>{children}</button>,
-  Text: ({ children, as: Tag = 'span' }: { children: ReactNode; as?: 'h1' | 'h2' | 'p' | 'span' }) =>
-    <Tag>{children}</Tag>,
+jest.mock('../CodeEditor', () => ({
+  __esModule: true,
+  default: ({ name, value, onChange }: { name: string; value: string; onChange: (value: string) => void }) =>
+    <textarea aria-label={name} value={value} onChange={(event) => onChange(event.target.value)} />,
 }));
 
 beforeEach(() => {
@@ -29,8 +27,9 @@ const mockBudget = (data: object) => ({
 });
 
 const addFile = (name: string) => {
-  fireEvent.change(screen.getByRole('textbox', { name: 'New filename' }), { target: { value: name } });
   fireEvent.click(screen.getByRole('button', { name: 'New file' }));
+  fireEvent.change(screen.getByRole('textbox', { name: 'New filename' }), { target: { value: name } });
+  fireEvent.click(screen.getByRole('button', { name: 'Create' }));
 };
 
 it.each([
@@ -63,9 +62,9 @@ it('keeps unsent files when switching to the independent GitHub import mode', ()
   render(<Playground />);
   addFile('custom.py');
   fireEvent.change(screen.getByRole('textbox', { name: 'custom.py' }), { target: { value: 'print(1)' } });
-  fireEvent.click(screen.getByRole('radio', { name: 'GitHub / Vite' }));
+  fireEvent.click(screen.getByRole('button', { name: 'GitHub / Vite' }));
   expect(screen.getByRole('button', { name: 'Import and run' })).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('radio', { name: 'Workspace' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Workspace' }));
   expect(screen.getByRole('textbox', { name: 'custom.py' })).toHaveValue('print(1)');
 });
 

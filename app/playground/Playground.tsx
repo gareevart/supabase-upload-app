@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { Button, Text } from '@gravity-ui/uikit';
+import CodeEditor from './CodeEditor';
 import { authFetch } from '@/lib/auth-fetch';
 import { isSourceName, MAX_CODE_BYTES, MAX_FILES, parseRunInput, parseWorkspace, PREVIEW_MS, WORKSPACE_MS, type PlaygroundBudget, type SourceFile } from '@/lib/playground/input';
 import styles from './playground.module.css';
@@ -41,6 +41,9 @@ export default function Playground() {
   const [workspace, setWorkspace] = useState<Workspace>(DEFAULT_WORKSPACE);
   const [newFileName, setNewFileName] = useState('');
   const [fileError, setFileError] = useState('');
+  const [creatingFile, setCreatingFile] = useState(false);
+  const [showExplorer, setShowExplorer] = useState(true);
+  const [showConsole, setShowConsole] = useState(true);
   const [repo, setRepo] = useState('');
   const [directory, setDirectory] = useState('');
   const [result, setResult] = useState<Result | null>(null);
@@ -159,6 +162,7 @@ export default function Playground() {
     updateWorkspace({ files: [...workspace.files, { name, content: '' }], entry: name });
     setNewFileName('');
     setFileError('');
+    setCreatingFile(false);
   }
 
   function removeActiveFile() {
@@ -167,10 +171,11 @@ export default function Playground() {
     updateWorkspace({ files, entry: files[0]?.name ?? '' });
   }
 
-  async function run(event: FormEvent) {
-    event.preventDefault();
+  async function run(event?: FormEvent) {
+    event?.preventDefault();
     if (busy || preview || budgetBlocked || (mode === 'files' && (!activeFile || tooLarge))) return;
     setBusy(true);
+    setShowConsole(true);
     setError('');
     setLogs('');
     setResult(null);
@@ -217,132 +222,186 @@ export default function Playground() {
     }
   }
 
+  const runDisabled = busy || budgetBlocked || (mode === 'files' ? tooLarge || !activeFile : !repo.trim());
+  const runLabel = mode === 'github' ? 'Import and run' : activeFile ? `Run ${activeFile.name}` : 'Run file';
+  const previewExpired = preview ? `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}` : null;
+  const output = result?.kind === 'output' ? result : null;
+  const language = activeFile?.name.endsWith('.py') ? 'Python' : activeFile?.name.endsWith('.ts') ? 'TypeScript' : 'JavaScript';
+
+  function pickFile(name: string) {
+    updateWorkspace({ ...workspace, entry: name });
+  }
+
+  function updateFile(content: string) {
+    if (!activeFile) return;
+    updateWorkspace({ ...workspace, files: workspace.files.map((file) =>
+      file.name === activeFile.name ? { ...file, content } : file) });
+  }
+
   return (
     <main className={styles.shell}>
-      <header className={styles.header}>
-        <Text variant="caption-2" color="secondary">PUBLIC BETA</Text>
-        <Text as="h1" variant="display-2">Cloud Playground</Text>
-        <Text as="p" color="secondary">
-          Run an experiment in a temporary cloud sandbox. <Link href="/auth">Sign in</Link> with your gareev.de account to run code.
-        </Text>
+      <header className={styles.toolbar}>
+        <div className={styles.brand}>
+          <Link href="/projects" className={styles.back} aria-label="Back to Projects">Projects</Link>
+          <span aria-hidden="true" className={styles.slash}>/</span>
+          <h1>Playground</h1>
+        </div>
+        <div className={styles.toolbarActions}>
+          <details className={styles.budget}>
+            <summary aria-label="Shared Sandbox budget" title="Show shared sandbox budget">
+              <span className={styles.dot} data-on={budget?.enabled && !budgetBlocked} />
+              {budget ? formatTime(budget.remainingSeconds) : 'Shared budget'}
+            </summary>
+            <div className={styles.budgetPopover}>
+              <strong>Shared Sandbox budget</strong>
+              {budgetStatus === 'loading' && <p>Loading budget…</p>}
+              {budgetStatus === 'unavailable' && <p>Budget temporarily unavailable.</p>}
+              {budget && <>
+                <progress aria-label="Shared runtime remaining" max={budget.totalSeconds} value={budget.remainingSeconds} />
+                <p>{Math.round(budget.totalSeconds / 3600)}h every 30 days · <strong>{budget.remainingStarts}/{budget.dailyStarts}</strong> starts left today</p>
+                <p>Shared by all users. Daily starts reset at 00:00 UTC.</p>
+                {budget.active && <p>One sandbox is currently in use.</p>}
+                {!budget.enabled && <p>Cloud runs are disabled on this deployment.</p>}
+              </>}
+            </div>
+          </details>
+          {preview ? (
+            <button type="button" className={styles.ghost} disabled={busy} onClick={() => void stop()}>■ Stop preview</button>
+          ) : (
+            <button type="button" className={styles.run} aria-label={runLabel} disabled={runDisabled}
+              onClick={() => void run()} title={`${runLabel} · Ctrl/⌘ Enter`}>
+              <span aria-hidden="true">▶</span> {busy ? 'Running…' : mode === 'github' ? 'Import & run' : 'Run'}
+            </button>
+          )}
+        </div>
       </header>
 
-      <section className={styles.budget} aria-label="Shared Sandbox budget">
-        <Text as="h2" variant="header-1">Shared Sandbox budget</Text>
-        {budgetStatus === 'loading' && <Text as="p" color="secondary">Loading budget…</Text>}
-        {budgetStatus === 'unavailable' && <Text as="p" color="secondary">Budget temporarily unavailable.</Text>}
-        {budget && <>
-          <div className={styles.budgetMetrics}>
-            <div><strong>{formatTime(budget.remainingSeconds)}</strong> remaining out of {Math.round(budget.totalSeconds / 3600)}h</div>
-            <div><strong>{budget.remainingStarts}/{budget.dailyStarts}</strong> starts left today</div>
+      <div className={styles.activity}>
+        <div className={styles.source} aria-label="Project source">
+          <button type="button" className={styles.ghost} disabled={busy || !!preview} aria-pressed={mode === 'files'}
+            onClick={() => setMode('files')}>Workspace</button>
+          <button type="button" className={styles.ghost} disabled={busy || !!preview} aria-pressed={mode === 'github'}
+            onClick={() => setMode('github')}>GitHub / Vite</button>
+        </div>
+        <div className={styles.activityTools}>
+          <button type="button" className={styles.ghost} aria-expanded={showExplorer} onClick={() => setShowExplorer(!showExplorer)}>Explorer</button>
+          <button type="button" className={styles.ghost} aria-expanded={showConsole} onClick={() => setShowConsole(!showConsole)}>Console</button>
+          <Link href="/auth" onClick={() => {
+            try { window.sessionStorage.setItem('returnUrl', '/projects/playground'); } catch { /* Optional. */ }
+          }}>Sign in</Link>
+        </div>
+      </div>
+
+      <div className={styles.workbench} data-explorer={showExplorer}>
+        {showExplorer && <aside className={styles.explorer} aria-label="Explorer">
+          <div className={styles.sideHeading}>
+            <h2>{mode === 'files' ? 'Explorer' : 'Repository'}</h2>
+            {mode === 'files' && <button type="button" className={styles.icon} aria-label="New file" title="New file"
+              disabled={busy} onClick={() => { setCreatingFile(!creatingFile); setFileError(''); }}>＋</button>}
           </div>
-          <progress aria-label="Shared runtime remaining" max={budget.totalSeconds} value={budget.remainingSeconds} />
-          <Text as="p" variant="caption-2" color="secondary">
-            Shared by all users. Runtime rolls over after 30 days; daily starts reset at 00:00 UTC.
-            {budget.active ? ' The shared sandbox slot is in use.' : ''}
-            {!budget.enabled ? ' Cloud runs are disabled on this deployment.' : ''}
-          </Text>
-        </>}
-      </section>
-
-      <div className={styles.workspace}>
-        <form onSubmit={run} className={styles.panel}>
-          <fieldset className={styles.options} disabled={busy || Boolean(preview)}>
-            <legend>Source</legend>
-            <label><input type="radio" name="source" checked={mode === 'files'} onChange={() => setMode('files')} /> Workspace</label>
-            <label><input type="radio" name="source" checked={mode === 'github'} onChange={() => setMode('github')} /> GitHub / Vite</label>
-          </fieldset>
-
           {mode === 'files' ? (
             <>
-              <div className={styles.fileManager}>
-                <Text as="h2" variant="header-1">Files</Text>
-                <ul className={styles.files} aria-label="Workspace files">
-                  {workspace.files.map((file) => (
-                    <li key={file.name}>
-                      <Button type="button" size="m" aria-pressed={workspace.entry === file.name}
-                        view={workspace.entry === file.name ? 'normal' : 'flat'} disabled={busy}
-                        onClick={() => updateWorkspace({ ...workspace, entry: file.name })}>{file.name}</Button>
-                    </li>
-                  ))}
-                </ul>
-                <div className={styles.createFile}>
-                  <input aria-label="New filename" placeholder="example.ts" value={newFileName} disabled={busy}
-                    onChange={(event) => { setNewFileName(event.target.value); setFileError(''); }}
-                    onKeyDown={(event) => { if (event.key === 'Enter' && !event.nativeEvent.isComposing) { event.preventDefault(); addFile(); } }} />
-                  <Button type="button" size="m" onClick={addFile} disabled={busy}>New file</Button>
-                </div>
-                {fileError && <p role="alert" className={styles.error}>{fileError}</p>}
+              <div className={styles.treeHeading}><span aria-hidden="true">⌄</span> PROJECT FILES</div>
+              {creatingFile && <form className={styles.createFile} onSubmit={(event) => { event.preventDefault(); addFile(); }}>
+                <input autoFocus aria-label="New filename" placeholder="example.ts" value={newFileName} disabled={busy}
+                  onChange={(event) => { setNewFileName(event.target.value); setFileError(''); }}
+                  onKeyDown={(event) => { if (event.key === 'Escape') { setCreatingFile(false); setFileError(''); } }} />
+                <button type="submit" className={styles.ghost} disabled={busy}>Create</button>
+              </form>}
+              {fileError && <p role="alert" className={styles.fileError}>{fileError}</p>}
+              <ul className={styles.files} aria-label="Workspace files">
+                {workspace.files.map((file) => (
+                  <li key={file.name}>
+                    <button type="button" className={styles.file} aria-pressed={workspace.entry === file.name}
+                      onClick={() => pickFile(file.name)} disabled={busy}>
+                      <FileBadge name={file.name} /> <span>{file.name}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              {!workspace.files.length && !creatingFile && <p className={styles.sidebarNote}>No files yet. Add a .js, .ts, or .py file.</p>}
+            </>
+          ) : (
+            <form className={styles.repoForm} onSubmit={run}>
+              <label>Public repository <input type="url" required placeholder="https://github.com/owner/repo" value={repo}
+                disabled={busy || !!preview} onChange={(event) => setRepo(event.target.value)} /></label>
+              <label>App folder <input placeholder="Optional, e.g. apps/editor" value={directory}
+                disabled={busy || !!preview} onChange={(event) => setDirectory(event.target.value)} /></label>
+              <button type="button" className={styles.ghost} disabled={busy || !!preview} onClick={() => {
+                setRepo(GRAVITY_EXAMPLE); setDirectory('');
+              }}>Use Gravity UI example</button>
+              <p>Vite app with an npm or pnpm lockfile. Preview links are public until they expire. Do not use secrets.</p>
+            </form>
+          )}
+        </aside>}
+
+        <section className={styles.editArea} aria-label={mode === 'files' ? 'Editor' : 'App preview'} data-console={showConsole}>
+          <div className={styles.tabs} aria-label="Open files">
+            {mode === 'files' && workspace.files.map((file) => (
+              <button type="button" key={file.name} className={styles.tab} aria-pressed={file.name === workspace.entry}
+                disabled={busy} onClick={() => pickFile(file.name)}>
+                <FileBadge name={file.name} /> {file.name}
+              </button>
+            ))}
+            {mode === 'github' && <span className={styles.previewTab}>⌘ App preview</span>}
+          </div>
+          <div className={styles.canvas}>
+            {mode === 'files' && (activeFile ? (
+              <CodeEditor name={activeFile.name} value={activeFile.content} disabled={busy} onChange={updateFile} onRun={() => void run()} />
+            ) : (
+              <div className={styles.blank}>
+                <strong>No open file</strong>
+                <span>Select a file or create a new one in the Explorer.</span>
+                <button className={styles.ghost} type="button" onClick={() => { setShowExplorer(true); setCreatingFile(true); }}>New file</button>
               </div>
-              {activeFile ? (
-                <>
-                  <label className={styles.field}>
-                    {activeFile.name}
-                    <textarea className={styles.editor} rows={13} value={activeFile.content} spellCheck={false}
-                      autoCapitalize="off" autoCorrect="off" disabled={busy}
-                      onChange={(event) => {
-                        const content = event.target.value;
-                        updateWorkspace({ ...workspace, files: workspace.files.map((file) =>
-                          file.name === activeFile.name ? { ...file, content } : file) });
-                      }} />
-                  </label>
-                  <Button type="button" size="s" view="flat" disabled={busy} onClick={removeActiveFile}>
-                    Delete active file
-                  </Button>
-                </>
-              ) : <Text as="p" color="secondary">Create a .js, .ts, or .py file to start.</Text>}
-              <Text as="p" variant="caption-2" color="secondary">
-                Up to 20 files and 64 KiB. Drafts stay in this tab for up to an hour. Runs are offline.
-              </Text>
-              {tooLarge && <p role="alert" className={styles.error}>Workspace exceeds 64 KiB.</p>}
-            </>
-          ) : (
-            <>
-              <label className={styles.field}>
-                Public GitHub repository URL
-                <input type="url" required value={repo} onChange={(event) => setRepo(event.target.value)}
-                  disabled={busy || Boolean(preview)} placeholder="https://github.com/owner/repository" />
-              </label>
-              <label className={styles.field}>
-                App directory (optional)
-                <input value={directory} onChange={(event) => setDirectory(event.target.value)}
-                  disabled={busy || Boolean(preview)} placeholder="apps/editor" />
-                <small>Use a Vite dev script and a root npm or pnpm lockfile. The default branch is imported.</small>
-              </label>
-              <Button size="m" type="button" disabled={busy || Boolean(preview)}
-                onClick={() => { setRepo(GRAVITY_EXAMPLE); setDirectory(''); }}>Use Gravity UI example</Button>
-              <Text as="p" color="secondary">Anyone with the preview link can open it until it expires. Do not import secrets.</Text>
-            </>
-          )}
-
-          {preview ? (
-            <Button size="l" type="button" loading={busy} onClick={stop}>Stop preview</Button>
-          ) : (
-            <Button size="l" view="action" type="submit" loading={busy}
-              disabled={busy || budgetBlocked || (mode === 'files' && (tooLarge || !activeFile))}>
-              {mode === 'github' ? 'Import and run' : activeFile ? `Run ${activeFile.name}` : 'Run file'}
-            </Button>
-          )}
-        </form>
-
-        <section className={styles.panel} aria-label="Run result" aria-busy={busy}>
-          <Text as="h2" variant="header-1">{preview ? 'Preview' : 'Run result'}</Text>
-          {error && <p role="alert" className={styles.error}>{error}</p>}
-          {logs && <pre className={styles.output}>{logs}</pre>}
-          {busy && !preview && <p role="status">{mode === 'github' ? 'Importing, installing, and starting Vite…' : 'Running in the cloud…'}</p>}
-          {!result && !error && !busy && <Text as="p" color="secondary">Results appear here after a run.</Text>}
-          {result?.kind === 'output' && <>
-            <Text as="p" color={result.exitCode === 0 ? 'positive' : 'danger'}>{result.entry} · Exit code: {result.exitCode}</Text>
-            <pre className={styles.output}>{result.output || 'No output.'}</pre>
-          </>}
-          {preview && <>
-            <Text as="p" color="secondary">Preview expires in {Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, '0')}.</Text>
-            <a href={preview.previewUrl} target="_blank" rel="noopener noreferrer">Open preview in a new tab ↗</a>
-            <iframe className={styles.preview} sandbox="allow-scripts allow-same-origin" title="Sandbox preview"
-              src={preview.previewUrl} referrerPolicy="no-referrer" />
-          </>}
+            ))}
+            {mode === 'github' && (preview ? (
+              <iframe className={styles.preview} sandbox="allow-scripts allow-same-origin" title="Sandbox preview"
+                src={preview.previewUrl} referrerPolicy="no-referrer" />
+            ) : (
+              <div className={styles.blank}>
+                <strong>No running app</strong>
+                <span>Import a Vite project from the Explorer to preview it here.</span>
+              </div>
+            ))}
+          </div>
+          {showConsole && <section className={styles.console} aria-label="Console" aria-busy={busy}>
+            <div className={styles.consoleHead}>
+              <h2>Console</h2>
+              <div>
+                {preview && <a href={preview.previewUrl} target="_blank" rel="noopener noreferrer">Open ↗</a>}
+                {output && <button type="button" className={styles.ghost} onClick={() => setResult(null)}>Clear</button>}
+              </div>
+            </div>
+            <div className={styles.consoleBody} aria-live="polite">
+              {error && <p role="alert" className={styles.error}>{error}</p>}
+              {logs && <pre>{logs}</pre>}
+              {busy && !preview && <p role="status">› {mode === 'github' ? 'Importing, installing, and starting Vite…' : 'Starting cloud sandbox…'}</p>}
+              {!result && !error && !busy && <p className={styles.muted}>Run the active file to see its output here.</p>}
+              {output && <>
+                <p className={output.exitCode === 0 ? styles.success : styles.error}>{output.entry} · Exit code: {output.exitCode}</p>
+                <pre>{output.output || 'No output.'}</pre>
+              </>}
+              {preview && <p className={styles.success}>Preview running · expires in {previewExpired}</p>}
+            </div>
+          </section>}
         </section>
       </div>
+
+      <footer className={styles.statusbar} aria-label="Workspace status">
+        <div>
+          <span>{mode === 'files' ? '● Local draft' : '● Vercel Sandbox'}</span>
+          {tooLarge && mode === 'files' && <span role="alert" className={styles.error}>Workspace exceeds 64 KiB</span>}
+          {mode === 'files' && activeFile && <button type="button" className={styles.ghost} disabled={busy}
+            onClick={removeActiveFile}>Delete active file</button>}
+        </div>
+        <div>{mode === 'files' && <><span>{activeFile ? language : 'No file'}</span><span>UTF-8</span><span>Ctrl/⌘ Enter to run</span></>}</div>
+      </footer>
     </main>
   );
+}
+
+function FileBadge({ name }: { name: string }) {
+  const extension = name.slice(-2);
+  return <span className={styles.fileBadge} data-language={extension} aria-hidden="true">{extension.toUpperCase()}</span>;
 }

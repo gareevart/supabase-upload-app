@@ -1,11 +1,5 @@
-import type { Metadata } from 'next';
-import Playground from './Playground';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'Cloud Playground',
-  robots: { index: false, follow: false },
-};
-
-export default function PlaygroundPage() {
-  return <Playground />;
+export default function PlaygroundRedirect() {
+  redirect('/projects/playground');
 }
