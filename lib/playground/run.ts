@@ -1,5 +1,5 @@
 import { APIError, Sandbox, type Command } from '@vercel/sandbox';
-import { PREVIEW_MS, PREVIEW_PORT, type RunInput } from './input';
+import { PREVIEW_MS, PREVIEW_PORT, WORKSPACE_MS, type RunInput } from './input';
 
 const WORK = '/vercel/sandbox';
 const SOURCE = `${WORK}/workspace`;
@@ -51,7 +51,7 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
       name: sandboxName(runId),
       image: python ? 'vercel/sandbox/python:3.14' : 'vercel/sandbox/node:24',
       resources: { vcpus: 1 },
-      timeout: github ? PREVIEW_MS : 30_000,
+      timeout: github ? PREVIEW_MS : WORKSPACE_MS,
       persistent: false,
       ports: github ? [PREVIEW_PORT] : [],
       networkPolicy: github ? { allow: ['github.com'] } : NO_NETWORK,
@@ -145,13 +145,16 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
   }
 }
 
-export async function stopSandbox(id: string) {
+export async function stopSandbox(id: string): Promise<boolean> {
   try {
     const sandbox = await Sandbox.get({ name: sandboxName(id), resume: false, signal: AbortSignal.timeout(8_000) });
     if (sandbox.status === 'running' || sandbox.status === 'pending' || sandbox.status === 'stopping') {
       await sandbox.stop({ signal: AbortSignal.timeout(10_000) });
     }
+    return true;
   } catch (error) {
     if (!(error instanceof APIError) || error.response.status !== 404) throw error;
+    // The VM is no longer reachable, but its actual stop time is unknown.
+    return false;
   }
 }

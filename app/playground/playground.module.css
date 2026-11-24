@@ -33,3 +33,8 @@
   border: 1px solid var(--g-color-line-generic); background: var(--g-color-base-background);
   color: var(--g-color-text-primary); font: inherit;
 }
+.budget { display: grid; gap: .5rem; margin-bottom: 1rem; padding: .85rem 1rem;
+  border: 1px solid var(--g-color-line-generic); border-radius: 1rem; }
+.budget h2, .budget p { margin: 0; }
+.budgetMetrics { display: flex; flex-wrap: wrap; gap: .45rem 1.5rem; }
+.budget progress { width: 100%; height: .5rem; accent-color: var(--g-color-base-brand); }

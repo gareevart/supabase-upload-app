@@ -3,6 +3,17 @@ export const MAX_FILES = 20;
 export const MAX_REQUEST_BYTES = 400 * 1024;
 export const PREVIEW_PORT = 4173;
 export const PREVIEW_MS = 10 * 60 * 1000;
+export const WORKSPACE_MS = 30_000;
+
+export type PlaygroundBudget = {
+  enabled: boolean;
+  remainingSeconds: number;
+  totalSeconds: number;
+  remainingStarts: number;
+  dailyStarts: number;
+  active: boolean;
+  dailyResetAt: string;
+};
 
 export type SourceFile = { name: string; content: string };
 export type WorkspaceRun = { mode: 'files'; entry: string; files: SourceFile[] };

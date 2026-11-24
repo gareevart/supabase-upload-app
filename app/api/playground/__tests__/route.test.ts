@@ -1,6 +1,6 @@
 /** @jest-environment node */
 import { NextRequest } from 'next/server';
-import { POST, DELETE } from '../route';
+import { GET, POST, DELETE } from '../route';
 import { runInSandbox, stopSandbox } from '@/lib/playground/run';
 import { createClient } from '@supabase/supabase-js';
 
@@ -18,12 +18,12 @@ jest.mock('@supabase/supabase-js', () => ({ createClient: jest.fn() }));
 
 const runId = 'f02fe46c-a3d5-4bee-8f64-0ab151028a10';
 const rpc = jest.fn();
-const ok = (data: boolean) => ({ abortSignal: async () => ({ data, error: null }) });
+const ok = (data: unknown) => ({ abortSignal: async () => ({ data, error: null }) });
 const snapshot = { ...process.env };
 
 beforeEach(() => {
   jest.resetAllMocks();
-  process.env.PLAYGROUND_ALLOWED_USER_IDS = 'invited';
+  process.env.VERCEL_ENV = 'preview';
   process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-only';
   (createClient as jest.Mock).mockReturnValue({ rpc });
@@ -38,31 +38,42 @@ function post(user?: string, origin = 'https://example.com') {
   });
 }
 
-it('does not reserve quota for disabled, anonymous, not invited, or foreign-origin requests', async () => {
+it('does not reserve quota for anonymous or foreign-origin requests', async () => {
   expect((await POST(post())).status).toBe(401);
-  expect((await POST(post('other'))).status).toBe(403);
-  expect((await POST(post('invited', 'https://foreign.example.com'))).status).toBe(403);
-  delete process.env.PLAYGROUND_ALLOWED_USER_IDS;
-  expect((await POST(post('invited'))).status).toBe(503);
+  expect((await POST(post('a-user', 'https://foreign.example.com'))).status).toBe(403);
   expect(rpc).not.toHaveBeenCalled();
   expect(runInSandbox).not.toHaveBeenCalled();
 });
 
-it('fails closed on exhausted quota', async () => {
-  rpc.mockReturnValue(ok(false));
-  expect((await POST(post('invited'))).status).toBe(429);
-  expect(runInSandbox).not.toHaveBeenCalled();
+it('shows non-user-specific quota without authentication', async () => {
+  const snapshot = { enabled: true, remainingSeconds: 17400, totalSeconds: 18000, remainingStarts: 8, dailyStarts: 10, active: false, dailyResetAt: '2026-11-26T00:00:00Z' };
+  rpc.mockReturnValue(ok(snapshot));
+  const response = await GET();
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual(snapshot);
+  expect(rpc).toHaveBeenCalledWith('playground_budget', { p_environment: 'preview' });
 });
 
-it('starts an authorized run and releases only on the runner cleanup callback', async () => {
-  rpc.mockReturnValue(ok(true));
+it.each([['disabled', 503], ['busy', 429], ['daily', 429], ['time', 429], [null, 503]])(
+  'fails closed when reservation returns %s', async (reason, status) => {
+    rpc.mockReturnValue(ok(reason));
+    expect((await POST(post('any-account'))).status).toBe(status);
+    expect(runInSandbox).not.toHaveBeenCalled();
+  },
+);
+
+it('starts a signed-in run without an allowlist and releases only on confirmed runner cleanup', async () => {
+  rpc.mockReturnValue(ok('reserved'));
   (runInSandbox as jest.Mock).mockImplementation(async (_input, _id, release) => {
     await release();
     return { kind: 'output', output: '4', exitCode: 0 };
   });
-  const response = await POST(post('invited'));
+  const response = await POST(post('any-account'));
   expect(await response.json()).toEqual({ kind: 'output', output: '4', exitCode: 0 });
-  expect(rpc.mock.calls.map(([name]) => name)).toEqual(['reserve_playground', 'release_playground']);
+  expect(rpc).toHaveBeenNthCalledWith(1, 'reserve_playground', expect.objectContaining({
+    p_user_id: 'any-account', p_environment: 'preview', p_seconds: 30,
+  }));
+  expect(rpc).toHaveBeenNthCalledWith(2, 'release_playground', expect.objectContaining({ p_refund: true }));
 });
 
 it('never stops a sandbox without ownership', async () => {

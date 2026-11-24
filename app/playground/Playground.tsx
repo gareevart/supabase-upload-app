@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { Button, Text } from '@gravity-ui/uikit';
 import { authFetch } from '@/lib/auth-fetch';
-import { isSourceName, MAX_CODE_BYTES, MAX_FILES, parseRunInput, parseWorkspace, type SourceFile } from '@/lib/playground/input';
+import { isSourceName, MAX_CODE_BYTES, MAX_FILES, parseRunInput, parseWorkspace, PREVIEW_MS, WORKSPACE_MS, type PlaygroundBudget, type SourceFile } from '@/lib/playground/input';
 import styles from './playground.module.css';
 
 const DRAFT = 'gareev-playground-files-v2';
@@ -30,6 +30,12 @@ function cache(key: string, value: unknown) {
   } catch { /* The runner still works when browser storage is disabled. */ }
 }
 
+function formatTime(seconds: number) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor(seconds % 3600 / 60);
+  return `${hours}h ${String(minutes).padStart(2, '0')}m ${String(seconds % 60).padStart(2, '0')}s`;
+}
+
 export default function Playground() {
   const [mode, setMode] = useState<'files' | 'github'>('files');
   const [workspace, setWorkspace] = useState<Workspace>(DEFAULT_WORKSPACE);
@@ -42,11 +48,19 @@ export default function Playground() {
   const [error, setError] = useState('');
   const [logs, setLogs] = useState('');
   const [remaining, setRemaining] = useState(0);
+  const [budget, setBudget] = useState<PlaygroundBudget | null>(null);
+  const [budgetStatus, setBudgetStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading');
+  const [budgetRefresh, refreshBudget] = useState(0);
   const preview = result?.kind === 'preview' ? result : null;
   const activeFile = workspace.files.find((file) => file.name === workspace.entry);
   const encoder = new TextEncoder();
   const bytes = workspace.files.reduce((total, file) => total + encoder.encode(file.content).length, 0);
   const tooLarge = bytes > MAX_CODE_BYTES;
+  const budgetBlocked = budget !== null && (
+    !budget.enabled || budget.remainingStarts === 0 ||
+    budget.remainingSeconds < (mode === 'github' ? PREVIEW_MS : WORKSPACE_MS) / 1_000 ||
+    (budget.active && !preview)
+  );
 
   useEffect(() => {
     const draft = cached<Workspace & { expires: number }>(DRAFT);
@@ -90,6 +104,39 @@ export default function Playground() {
     return () => window.clearInterval(timer);
   }, [preview]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    let running = false;
+    async function loadBudget() {
+      if (running || document.visibilityState === 'hidden') return;
+      running = true;
+      try {
+        const response = await fetch('/api/playground', { signal: controller.signal });
+        if (!response.ok) throw new Error();
+        const next: PlaygroundBudget = await response.json();
+        if (!controller.signal.aborted) {
+          setBudget(next);
+          setBudgetStatus('ready');
+        }
+      } catch {
+        if (!controller.signal.aborted) {
+          setBudget(null);
+          setBudgetStatus('unavailable');
+        }
+      } finally {
+        running = false;
+      }
+    }
+    void loadBudget();
+    const timer = window.setInterval(loadBudget, 15_000);
+    document.addEventListener('visibilitychange', loadBudget);
+    return () => {
+      controller.abort();
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', loadBudget);
+    };
+  }, [budgetRefresh]);
+
   function updateWorkspace(next: Workspace) {
     setWorkspace(next);
     cache(DRAFT, { ...next, expires: Date.now() + DRAFT_TTL });
@@ -122,7 +169,7 @@ export default function Playground() {
 
   async function run(event: FormEvent) {
     event.preventDefault();
-    if (busy || preview || (mode === 'files' && (!activeFile || tooLarge))) return;
+    if (busy || preview || budgetBlocked || (mode === 'files' && (!activeFile || tooLarge))) return;
     setBusy(true);
     setError('');
     setLogs('');
@@ -145,10 +192,11 @@ export default function Playground() {
       }
     } catch (issue) {
       const message = issue instanceof Error ? issue.message : '';
-      setError(message === 'No active session' ? 'Sign in with a beta account to run code.' :
+      setError(message === 'No active session' ? 'Sign in with your gareev.de account to run code.' :
         message || 'Could not start the sandbox.');
     } finally {
       setBusy(false);
+      refreshBudget((version) => version + 1);
     }
   }
 
@@ -165,18 +213,37 @@ export default function Playground() {
       setError('Could not confirm Stop. The preview will expire automatically.');
     } finally {
       setBusy(false);
+      refreshBudget((version) => version + 1);
     }
   }
 
   return (
     <main className={styles.shell}>
       <header className={styles.header}>
-        <Text variant="caption-2" color="secondary">PRIVATE BETA</Text>
+        <Text variant="caption-2" color="secondary">PUBLIC BETA</Text>
         <Text as="h1" variant="display-2">Cloud Playground</Text>
         <Text as="p" color="secondary">
-          Run an experiment in a temporary cloud sandbox. <Link href="/auth">Sign in</Link> with a beta account to run code.
+          Run an experiment in a temporary cloud sandbox. <Link href="/auth">Sign in</Link> with your gareev.de account to run code.
         </Text>
       </header>
+
+      <section className={styles.budget} aria-label="Shared Sandbox budget">
+        <Text as="h2" variant="header-1">Shared Sandbox budget</Text>
+        {budgetStatus === 'loading' && <Text as="p" color="secondary">Loading budget…</Text>}
+        {budgetStatus === 'unavailable' && <Text as="p" color="secondary">Budget temporarily unavailable.</Text>}
+        {budget && <>
+          <div className={styles.budgetMetrics}>
+            <div><strong>{formatTime(budget.remainingSeconds)}</strong> remaining out of {Math.round(budget.totalSeconds / 3600)}h</div>
+            <div><strong>{budget.remainingStarts}/{budget.dailyStarts}</strong> starts left today</div>
+          </div>
+          <progress aria-label="Shared runtime remaining" max={budget.totalSeconds} value={budget.remainingSeconds} />
+          <Text as="p" variant="caption-2" color="secondary">
+            Shared by all users. Runtime rolls over after 30 days; daily starts reset at 00:00 UTC.
+            {budget.active ? ' The shared sandbox slot is in use.' : ''}
+            {!budget.enabled ? ' Cloud runs are disabled on this deployment.' : ''}
+          </Text>
+        </>}
+      </section>
 
       <div className={styles.workspace}>
         <form onSubmit={run} className={styles.panel}>
@@ -252,7 +319,7 @@ export default function Playground() {
             <Button size="l" type="button" loading={busy} onClick={stop}>Stop preview</Button>
           ) : (
             <Button size="l" view="action" type="submit" loading={busy}
-              disabled={busy || (mode === 'files' && (tooLarge || !activeFile))}>
+              disabled={busy || budgetBlocked || (mode === 'files' && (tooLarge || !activeFile))}>
               {mode === 'github' ? 'Import and run' : activeFile ? `Run ${activeFile.name}` : 'Run file'}
             </Button>
           )}
