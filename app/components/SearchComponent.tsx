@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Text, TextInput, Card, Skeleton, Icon, PlaceholderContainer } from '@gravity-ui/uikit';
 import { Magnifier } from '@gravity-ui/icons';
 import { BlogPostCard } from '@/shared/ui/BlogPostCard';
@@ -63,41 +63,54 @@ export default function SearchComponent({
   const [isFocused, setIsFocused] = useState(false);
   const isMobile = useIsMobile();
 
-  const performSearch = useCallback(async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      setHasSearched(false);
-      if (onUpdate) {
-        onUpdate('');
-      }
-      return;
-    }
+  const controllerRef = useRef<AbortController | null>(null);
+
+  const performSearch = useCallback(async (query: string, signal: AbortSignal) => {
+    if (signal.aborted || !query.trim()) return;
 
     setIsLoading(true);
     setHasSearched(true);
 
     try {
-      // Search runs entirely server-side now (title/excerpt + content scan +
-      // author join). Only the matched results cross the wire.
-      const res = await fetch(`/api/blog-posts/search?q=${encodeURIComponent(query)}`);
+      // Search runs entirely server-side; only matched results cross the wire.
+      const res = await fetch(
+        `/api/blog-posts/search?q=${encodeURIComponent(query)}`,
+        { signal },
+      );
+      if (signal.aborted) return;
       if (!res.ok) throw new Error('Search request failed');
       const json = await res.json();
+      if (signal.aborted) return;
       setSearchResults(json.results || []);
     } catch (error) {
+      if (signal.aborted) return;
       console.error('Search error:', error);
       setSearchResults([]);
     } finally {
-      setIsLoading(false);
+      if (!signal.aborted) {
+        setIsLoading(false);
+      }
     }
-  }, [onUpdate]);
+  }, []);
 
   // Debounced search
   useEffect(() => {
+    if (!searchQuery.trim()) return;
+
+    const controller = new AbortController();
+    controllerRef.current = controller;
+
     const timeoutId = setTimeout(() => {
-      performSearch(searchQuery);
+      void performSearch(searchQuery, controller.signal);
     }, 500);
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+      if (controllerRef.current === controller) {
+        controllerRef.current = null;
+      }
+    };
   }, [searchQuery, performSearch]);
 
   const handleResultClick = (post: SearchResult) => {
@@ -133,6 +146,9 @@ export default function SearchComponent({
         placeholder={placeholder}
         value={searchQuery}
         onUpdate={(value) => {
+          if (value !== searchQuery) {
+            controllerRef.current?.abort();
+          }
           setSearchQuery(value);
           // Если поле очищается, сразу сбрасываем состояние поиска
           if (!value.trim()) {
