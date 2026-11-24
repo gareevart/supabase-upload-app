@@ -13,6 +13,10 @@ jest.mock('../CodeEditor', () => ({
 
 beforeEach(() => {
   Object.assign(globalThis, { TextEncoder });
+  Object.defineProperty(window, 'matchMedia', { configurable: true, value: (query: string) => ({
+    media: query, matches: false, addEventListener: jest.fn(), removeEventListener: jest.fn(),
+    addListener: jest.fn(), removeListener: jest.fn(), dispatchEvent: jest.fn(),
+  }) });
   sessionStorage.clear();
   jest.clearAllMocks();
   Object.assign(globalThis, { fetch: jest.fn(() => new Promise(() => {})) });
@@ -62,9 +66,9 @@ it('keeps unsent files when switching to the independent GitHub import mode', ()
   render(<Playground />);
   addFile('custom.py');
   fireEvent.change(screen.getByRole('textbox', { name: 'custom.py' }), { target: { value: 'print(1)' } });
-  fireEvent.click(screen.getByRole('button', { name: 'GitHub / Vite' }));
+  fireEvent.click(screen.getByRole('radio', { name: 'GitHub / Vite' }));
   expect(screen.getByRole('button', { name: 'Import and run' })).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Workspace' }));
+  fireEvent.click(screen.getByRole('radio', { name: 'Workspace' }));
   expect(screen.getByRole('textbox', { name: 'custom.py' })).toHaveValue('print(1)');
 });
 
@@ -72,6 +76,7 @@ it('displays the shared quota and disables Run when it runs out', async () => {
   (fetch as jest.Mock).mockResolvedValue(mockBudget({ ...demoBudget, remainingSeconds: 0 }));
   render(<Playground />);
   expect(await screen.findByText('0h 00m 00s')).toBeInTheDocument();
-  expect(screen.getByText('8/10')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Shared Playground runtime' }));
+  expect(await screen.findByText('8/10')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Run main.js' })).toBeDisabled();
 });

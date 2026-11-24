@@ -2,7 +2,7 @@
 import { Sandbox } from '@vercel/sandbox';
 import { runInSandbox } from '../run';
 
-jest.mock('@vercel/sandbox', () => ({ APIError: Error, Sandbox: { create: jest.fn() } }));
+jest.mock('@vercel/sandbox', () => ({ APIError: class extends Error {}, Sandbox: { create: jest.fn() } }));
 
 const js = { mode: 'files' as const, entry: 'main.js', files: [{ name: 'main.js', content: 'console.log("hello")' }] };
 const id = 'f02fe46c-a3d5-4bee-8f64-0ab151028a10';
@@ -10,7 +10,7 @@ const success = { exitCode: 0, logs: () => Object.assign((async function* () {
   yield { data: 'hello\n' };
 })(), { close: jest.fn() }) };
 let vm: {
-  runCommand: jest.Mock; mkDir: jest.Mock; writeFiles: jest.Mock; update: jest.Mock; stop: jest.Mock;
+  cwd: string; runCommand: jest.Mock; writeFiles: jest.Mock; update: jest.Mock; stop: jest.Mock;
   domain: jest.Mock; expiresAt: Date;
 };
 const release = jest.fn();
@@ -18,7 +18,7 @@ const release = jest.fn();
 beforeEach(() => {
   jest.resetAllMocks();
   vm = {
-    runCommand: jest.fn().mockResolvedValue(success), mkDir: jest.fn().mockResolvedValue(undefined), writeFiles: jest.fn().mockResolvedValue(undefined),
+    cwd: '/vercel', runCommand: jest.fn().mockResolvedValue(success), writeFiles: jest.fn().mockResolvedValue(undefined),
     update: jest.fn().mockResolvedValue(undefined), stop: jest.fn().mockResolvedValue(undefined),
     domain: jest.fn(() => 'https://preview.vercel.run'), expiresAt: new Date('2026-11-27T14:00:00Z'),
   };
@@ -32,9 +32,9 @@ it('runs JavaScript offline with no open ports, returns output and tears down th
   expect(Sandbox.create).toHaveBeenCalledWith(expect.objectContaining({
     networkPolicy: 'deny-all', persistent: false, ports: [], timeout: 30_000,
   }));
-  expect(vm.writeFiles).toHaveBeenCalledWith(expect.arrayContaining([{ path: '/vercel/sandbox/workspace/main.js', content: Buffer.from(js.files[0].content) }]), expect.anything());
+  expect(vm.writeFiles).toHaveBeenCalledWith(expect.arrayContaining([{ path: 'workspace/main.js', content: Buffer.from(js.files[0].content) }]), expect.anything());
   expect(vm.runCommand).toHaveBeenCalledWith(expect.objectContaining({
-    cmd: 'node', args: expect.arrayContaining(['main.js']), cwd: '/vercel/sandbox/workspace', timeoutMs: 8_000,
+    cmd: 'node', args: expect.arrayContaining(['main.js']), cwd: '/vercel/workspace', timeoutMs: 8_000,
   }));
   expect(vm.stop).toHaveBeenCalledTimes(1);
   expect(vm.stop.mock.invocationCallOrder[0]).toBeLessThan(release.mock.invocationCallOrder[0]);
@@ -43,15 +43,14 @@ it('runs JavaScript offline with no open ports, returns output and tears down th
 it('boots Vite only after limiting install to npm and turning off egress', async () => {
   const result = await runInSandbox({ mode: 'github', repo: 'https://github.com/a/b.git', directory: 'apps/editor' }, id, release);
   expect(result).toEqual({ kind: 'preview', runId: id, previewUrl: 'https://preview.vercel.run/', expiresAt: vm.expiresAt.toISOString() });
-  expect(Sandbox.create).toHaveBeenCalledWith(expect.objectContaining({ networkPolicy: { allow: ['github.com'] }, ports: [4173] }));
-  expect(vm.update.mock.calls).toEqual([[{ networkPolicy: { allow: ['registry.npmjs.org'] } }], [{ networkPolicy: 'deny-all' }]]);
+  expect(Sandbox.create).toHaveBeenCalledWith(expect.objectContaining({ networkPolicy: { allow: ['github.com', 'registry.npmjs.org'] }, ports: [4173] }));
+  expect(vm.update.mock.calls).toEqual([[{ networkPolicy: 'deny-all' }]]);
   const install = vm.runCommand.mock.calls.findIndex(([item]) => item.cmd === 'pnpm' && item.args[0] === 'install');
   const dev = vm.runCommand.mock.calls.findIndex(([item]) => item.detached);
   expect(vm.runCommand.mock.calls[install][0].args).toContain('--ignore-scripts');
-  expect(vm.update.mock.invocationCallOrder[0]).toBeLessThan(vm.runCommand.mock.invocationCallOrder[install]);
-  expect(vm.runCommand.mock.invocationCallOrder[install]).toBeLessThan(vm.update.mock.invocationCallOrder[1]);
-  expect(vm.update.mock.invocationCallOrder[1]).toBeLessThan(vm.runCommand.mock.invocationCallOrder[dev]);
-  expect(vm.runCommand.mock.calls[dev][0]).toMatchObject({ cwd: '/vercel/sandbox/repo/apps/editor' });
+  expect(vm.runCommand.mock.invocationCallOrder[install]).toBeLessThan(vm.update.mock.invocationCallOrder[0]);
+  expect(vm.update.mock.invocationCallOrder[0]).toBeLessThan(vm.runCommand.mock.invocationCallOrder[dev]);
+  expect(vm.runCommand.mock.calls[dev][0]).toMatchObject({ cwd: '/vercel/repo/apps/editor' });
   expect(vm.stop).not.toHaveBeenCalled();
   expect(release).not.toHaveBeenCalled();
 });
@@ -74,7 +73,7 @@ it('keeps the lease if the VM cannot be confirmed stopped or created', async () 
     await runInSandbox(js, id, release);
     expect(release).not.toHaveBeenCalled();
     (Sandbox.create as jest.Mock).mockRejectedValueOnce(new Error('timeout'));
-    await expect(runInSandbox(js, id, release)).rejects.toThrow('timeout');
+    await expect(runInSandbox(js, id, release)).rejects.toThrow('Sandbox creation failed');
     expect(release).not.toHaveBeenCalled();
   } finally {
     log.mockRestore();
@@ -88,12 +87,25 @@ it.each([
 ])('executes only the selected entry $entry and writes sibling files', async ({ entry, helper, bin, image }) => {
   await runInSandbox({ mode: 'files', entry, files: [{ name: helper, content: '' }, { name: entry, content: '' }] }, id, release);
   expect(Sandbox.create).toHaveBeenCalledWith(expect.objectContaining({ image, networkPolicy: 'deny-all', ports: [], persistent: false }));
-  expect(vm.mkDir).toHaveBeenCalledWith('/vercel/sandbox/workspace', expect.anything());
-  expect(vm.writeFiles.mock.calls[0][0].map((file: { path: string }) => file.path)).toEqual([
-    '/vercel/sandbox/workspace/package.json', '/vercel/sandbox/workspace/' + helper, '/vercel/sandbox/workspace/' + entry,
-  ]);
-  expect(vm.runCommand).toHaveBeenCalledTimes(1);
-  expect(vm.runCommand).toHaveBeenCalledWith(expect.objectContaining({
-    cmd: bin, args: expect.arrayContaining([entry]), cwd: '/vercel/sandbox/workspace', timeoutMs: 8_000,
+  expect(vm.runCommand).toHaveBeenNthCalledWith(1, expect.objectContaining({
+    cmd: 'mkdir', args: ['--', 'workspace'], cwd: '/vercel',
   }));
+  expect(vm.writeFiles.mock.calls[0][0].map((file: { path: string }) => file.path)).toEqual([
+    'workspace/package.json', 'workspace/' + helper, 'workspace/' + entry,
+  ]);
+  expect(vm.runCommand).toHaveBeenCalledTimes(2);
+  expect(vm.runCommand).toHaveBeenCalledWith(expect.objectContaining({
+    cmd: bin, args: expect.arrayContaining([entry]), cwd: '/vercel/workspace', timeoutMs: 8_000,
+  }));
+});
+
+it('passes a file-write failure through as a named stage and stops the VM', async () => {
+  const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    vm.writeFiles.mockRejectedValueOnce(new Error('virtual filesystem failure'));
+    await expect(runInSandbox(js, id, release)).rejects.toThrow('Writing workspace files failed');
+    expect(vm.runCommand).toHaveBeenCalledTimes(1);
+    expect(vm.stop).toHaveBeenCalledTimes(1);
+    expect(release).toHaveBeenCalledTimes(1);
+  } finally { log.mockRestore(); }
 });

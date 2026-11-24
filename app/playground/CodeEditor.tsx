@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { basicSetup } from 'codemirror';
-import { Annotation, Compartment, EditorState } from '@codemirror/state';
+import { Annotation, Compartment, EditorState, Prec } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { javascript } from '@codemirror/lang-javascript';
 import { python } from '@codemirror/lang-python';
@@ -43,7 +43,7 @@ export default function CodeEditor(props: Props) {
           basicSetup, oneDark, skin, language,
           readonly.of(EditorState.readOnly.of(callbacks.current.disabled)),
           EditorView.contentAttributes.of({ 'aria-label': name }),
-          keymap.of([{ key: 'Mod-Enter', run: () => { callbacks.current.onRun(); return true; } }]),
+          Prec.highest(keymap.of([{ key: 'Mod-Enter', run: () => { callbacks.current.onRun(); return true; } }])),
           EditorView.updateListener.of((update) => {
             if (update.docChanged && !update.transactions.some((tx) => tx.annotation(externalChange))) {
               callbacks.current.onChange(update.state.doc.toString());
