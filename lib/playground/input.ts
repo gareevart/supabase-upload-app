@@ -1,20 +1,46 @@
-export const MAX_CODE_BYTES = 64 * 1024;
+export const MAX_CODE_BYTES = 64 * 1024; // combined workspace content
+export const MAX_FILES = 20;
 export const MAX_REQUEST_BYTES = 400 * 1024;
 export const PREVIEW_PORT = 4173;
 export const PREVIEW_MS = 10 * 60 * 1000;
 
+export type SourceFile = { name: string; content: string };
+export type WorkspaceRun = { mode: 'files'; entry: string; files: SourceFile[] };
+
 export type RunInput =
-  | { mode: 'javascript'; code: string }
+  | WorkspaceRun
   | { mode: 'github'; repo: string; directory: string };
+
+export function isSourceName(name: unknown): name is string {
+  return typeof name === 'string' && /^[a-zA-Z0-9_][a-zA-Z0-9_-]{0,62}\.(js|ts|py)$(?![\s\S])/.test(name);
+}
+
+export function parseWorkspace(input: Record<string, unknown>, maxBytes = MAX_CODE_BYTES): WorkspaceRun | null {
+  if (!isSourceName(input.entry) || !Array.isArray(input.files) || input.files.length === 0 ||
+      input.files.length > MAX_FILES) return null;
+  const files: SourceFile[] = [];
+  const names = new Set<string>();
+  const encoder = new TextEncoder();
+  let bytes = 0;
+  for (const file of input.files) {
+    if (!file || !isSourceName(file.name) || typeof file.content !== 'string' ||
+        names.has(file.name.toLowerCase())) return null;
+    names.add(file.name.toLowerCase());
+    bytes += encoder.encode(file.content).length;
+    if (bytes > maxBytes) return null;
+    files.push({ name: file.name, content: file.content });
+  }
+  if (!files.some((file) => file.name === input.entry)) return null;
+  return { mode: 'files', entry: input.entry, files };
+}
 
 export function parseRunInput(value: unknown): RunInput | null {
   if (!value || typeof value !== 'object') return null;
   const input = value as Record<string, unknown>;
-  if (input.mode === 'javascript') {
-    return typeof input.code === 'string' && input.code.trim() &&
-      new TextEncoder().encode(input.code).length <= MAX_CODE_BYTES
-      ? { mode: 'javascript', code: input.code }
-      : null;
+  if (input.mode === 'files') return parseWorkspace(input);
+  // Accept requests from old Playground tabs until they are reloaded.
+  if (input.mode === 'javascript' && typeof input.code === 'string') {
+    return parseWorkspace({ entry: 'main.js', files: [{ name: 'main.js', content: input.code }] });
   }
   if (input.mode !== 'github' || typeof input.repo !== 'string' || input.repo.length > 230) return null;
   const match = /^https:\/\/github\.com\/([A-Za-z0-9][A-Za-z0-9-]{0,38})\/([A-Za-z0-9_.-]{1,100})\/?$/.exec(input.repo.trim());

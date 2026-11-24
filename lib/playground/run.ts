@@ -2,6 +2,7 @@ import { APIError, Sandbox, type Command } from '@vercel/sandbox';
 import { PREVIEW_MS, PREVIEW_PORT, type RunInput } from './input';
 
 const WORK = '/vercel/sandbox';
+const SOURCE = `${WORK}/workspace`;
 const REPO = `${WORK}/repo`;
 const LOG_LIMIT = 16 * 1024;
 const NO_NETWORK = 'deny-all' as const;
@@ -45,9 +46,10 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
   let keepPreview = false;
   try {
     const github = input.mode === 'github';
+    const python = !github && input.entry.endsWith('.py');
     sandbox = await Sandbox.create({
       name: sandboxName(runId),
-      image: 'vercel/sandbox/node:24',
+      image: python ? 'vercel/sandbox/python:3.14' : 'vercel/sandbox/node:24',
       resources: { vcpus: 1 },
       timeout: github ? PREVIEW_MS : 30_000,
       persistent: false,
@@ -56,11 +58,19 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
       signal: AbortSignal.timeout(25_000),
     });
 
-    if (input.mode === 'javascript') {
-      await sandbox.writeFiles([{ path: 'main.mjs', content: Buffer.from(input.code) }], {
-        signal: AbortSignal.timeout(5_000),
+    if (input.mode === 'files') {
+      await sandbox.mkDir(SOURCE, { signal: AbortSignal.timeout(5_000) });
+      await sandbox.writeFiles([
+        { path: `${SOURCE}/package.json`, content: Buffer.from('{"type":"module"}') },
+        ...input.files.map(({ name, content }) => ({
+          path: `${SOURCE}/${name}`, content: Buffer.from(content),
+        })),
+      ], { signal: AbortSignal.timeout(5_000) });
+      const command = await sandbox.runCommand({
+        cmd: python ? 'python3' : 'node',
+        args: python ? ['-B', '-s', input.entry] : ['--experimental-transform-types', '--disable-warning=ExperimentalWarning', '--', input.entry],
+        cwd: SOURCE, timeoutMs: 8_000,
       });
-      const command = await sandbox.runCommand('node', [`${WORK}/main.mjs`], { timeoutMs: 8_000 });
       return { kind: 'output' as const, output: await collect(command), exitCode: command.exitCode };
     }
 

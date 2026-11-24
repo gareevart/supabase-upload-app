@@ -45,7 +45,7 @@ const start = withApiAuth(async (req, user) => {
   if (!allowlist().includes(user.id)) return error('This account does not have beta access.', 403);
   const body = await readBoundedJson(req).catch(() => null);
   const input = parseRunInput(body);
-  if (!input) return error('Supply JavaScript (up to 64 KiB) or a public GitHub repository URL and optional app directory.', 400);
+  if (!input) return error('Supply a valid .js, .ts or .py workspace (up to 20 files and 64 KiB), or a public GitHub repository URL.', 400);
   const runId = randomUUID();
   try {
     if (!await quota('reserve_playground', user.id, runId)) {

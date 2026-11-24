@@ -20,7 +20,7 @@ it.each(['../app', '/app', 'apps/..', 'apps//site', 'apps\\site', 'apps/%2e%2e',
 it('bounds code by UTF-8 rather than characters', () => {
   expect(parseRunInput({ mode: 'javascript', code: 'я'.repeat(MAX_CODE_BYTES / 2) })).not.toBeNull();
   expect(parseRunInput({ mode: 'javascript', code: 'я'.repeat(MAX_CODE_BYTES / 2 + 1) })).toBeNull();
-  expect(parseRunInput({ mode: 'javascript', code: '  ' })).toBeNull();
+  expect(parseRunInput({ mode: 'javascript', code: '' })).not.toBeNull();
 });
 
 it('bounds the actual body even with no content-length', async () => {
@@ -37,4 +37,29 @@ it('reads supported JSON', async () => {
     body: JSON.stringify({ code: 'console.log("привет")' }),
   });
   await expect(readBoundedJson(req)).resolves.toEqual({ code: 'console.log("привет")' });
+});
+
+
+it('accepts a mixed set of files and a selected entry, including empty new files', () => {
+  const request = { mode: 'files', entry: 'demo.py', files: [
+    { name: 'test.js', content: '' }, { name: 'main.ts', content: 'const a: number = 2;' }, { name: 'demo.py', content: 'print(2)' },
+  ] };
+  expect(parseRunInput(request)).toEqual(request);
+  expect(parseRunInput({ ...request, entry: 'missing.js' })).toBeNull();
+});
+
+it.each(['../main.js', './main.js', '/main.ts', 'dir/main.py', '--main.js', 'package.json', 'a.tsx', 'a.js\n'])
+  ('rejects unsafe and unsupported names: %s', (name) => {
+    expect(parseRunInput({ mode: 'files', entry: 'main.js', files: [
+      { name: 'main.js', content: '' }, { name, content: '' },
+    ] })).toBeNull();
+  });
+
+it('rejects duplicate names including case collisions, plus aggregate byte and file-count overages', () => {
+  const main = { name: 'main.js', content: 'a' };
+  for (const others of [
+    [{ name: 'MAIN.js', content: '' }],
+    [{ name: 'large.py', content: 'x'.repeat(MAX_CODE_BYTES) }],
+    Array.from({ length: 20 }, (_, i) => ({ name: `extra${i}.js`, content: '' })),
+  ]) expect(parseRunInput({ mode: 'files', entry: 'main.js', files: [main, ...others] })).toBeNull();
 });

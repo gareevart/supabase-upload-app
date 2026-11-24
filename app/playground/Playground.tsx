@@ -4,16 +4,19 @@ import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { Button, Text } from '@gravity-ui/uikit';
 import { authFetch } from '@/lib/auth-fetch';
-import { MAX_CODE_BYTES } from '@/lib/playground/input';
+import { isSourceName, MAX_CODE_BYTES, MAX_FILES, parseRunInput, parseWorkspace, type SourceFile } from '@/lib/playground/input';
 import styles from './playground.module.css';
 
-const DRAFT = 'gareev-playground-draft-v1';
+const DRAFT = 'gareev-playground-files-v2';
+const LEGACY_DRAFT = 'gareev-playground-draft-v1';
 const ACTIVE = 'gareev-playground-run-v1';
 const DRAFT_TTL = 60 * 60 * 1000;
 const GRAVITY_EXAMPLE = 'https://github.com/gravity-ui/gravity-ui-vite-example';
 const STARTER = "const ideas = ['design', 'build', 'try'];\nconsole.log(ideas.map((idea) => idea.toUpperCase()));";
 type Preview = { kind: 'preview'; previewUrl: string; expiresAt: string; runId: string };
-type Result = Preview | { kind: 'output'; output: string; exitCode: number };
+type Result = Preview | { kind: 'output'; output: string; exitCode: number; entry: string };
+type Workspace = { files: SourceFile[]; entry: string };
+const DEFAULT_WORKSPACE: Workspace = { files: [{ name: 'main.js', content: STARTER }], entry: 'main.js' };
 
 function cached<T>(key: string): T | null {
   try { return JSON.parse(sessionStorage.getItem(key) ?? 'null') as T | null; }
@@ -28,8 +31,10 @@ function cache(key: string, value: unknown) {
 }
 
 export default function Playground() {
-  const [mode, setMode] = useState<'javascript' | 'github'>('javascript');
-  const [code, setCode] = useState(STARTER);
+  const [mode, setMode] = useState<'files' | 'github'>('files');
+  const [workspace, setWorkspace] = useState<Workspace>(DEFAULT_WORKSPACE);
+  const [newFileName, setNewFileName] = useState('');
+  const [fileError, setFileError] = useState('');
   const [repo, setRepo] = useState('');
   const [directory, setDirectory] = useState('');
   const [result, setResult] = useState<Result | null>(null);
@@ -38,12 +43,30 @@ export default function Playground() {
   const [logs, setLogs] = useState('');
   const [remaining, setRemaining] = useState(0);
   const preview = result?.kind === 'preview' ? result : null;
-  const tooLarge = new TextEncoder().encode(code).length > MAX_CODE_BYTES;
+  const activeFile = workspace.files.find((file) => file.name === workspace.entry);
+  const encoder = new TextEncoder();
+  const bytes = workspace.files.reduce((total, file) => total + encoder.encode(file.content).length, 0);
+  const tooLarge = bytes > MAX_CODE_BYTES;
 
   useEffect(() => {
-    const draft = cached<{ code: string; expires: number }>(DRAFT);
-    if (typeof draft?.code === 'string' && draft.expires > Date.now()) setCode(draft.code);
-    else cache(DRAFT, null);
+    const draft = cached<Workspace & { expires: number }>(DRAFT);
+    if (draft && draft.expires > Date.now()) {
+      const restored = parseWorkspace(draft, Infinity); // Drafts can be edited even above the run limit.
+      if (restored?.mode === 'files') setWorkspace({ files: restored.files, entry: restored.entry });
+      else if (Array.isArray(draft.files) && draft.files.length === 0 && draft.entry === '') {
+        setWorkspace({ files: [], entry: '' });
+      }
+    } else {
+      cache(DRAFT, null);
+      const legacy = cached<{ code: string; expires: number }>(LEGACY_DRAFT);
+      const restored = legacy && legacy.expires > Date.now() ? parseRunInput({ mode: 'javascript', code: legacy.code }) : null;
+      if (restored?.mode === 'files' && legacy) {
+        const migrated = { files: restored.files, entry: restored.entry };
+        setWorkspace(migrated);
+        cache(DRAFT, { ...migrated, expires: legacy.expires });
+      }
+      cache(LEGACY_DRAFT, null);
+    }
     const active = cached<Preview>(ACTIVE);
     if (active?.kind === 'preview' && Date.parse(active.expiresAt) > Date.now()) {
       setResult(active);
@@ -67,9 +90,39 @@ export default function Playground() {
     return () => window.clearInterval(timer);
   }, [preview]);
 
+  function updateWorkspace(next: Workspace) {
+    setWorkspace(next);
+    cache(DRAFT, { ...next, expires: Date.now() + DRAFT_TTL });
+  }
+
+  function addFile() {
+    const name = newFileName.trim();
+    if (!isSourceName(name)) {
+      setFileError('Use a filename such as main.js, example.ts, or script.py.');
+      return;
+    }
+    if (workspace.files.some((file) => file.name.toLowerCase() === name.toLowerCase())) {
+      setFileError('A file with that name already exists.');
+      return;
+    }
+    if (workspace.files.length >= MAX_FILES) {
+      setFileError(`This workspace can contain up to ${MAX_FILES} files.`);
+      return;
+    }
+    updateWorkspace({ files: [...workspace.files, { name, content: '' }], entry: name });
+    setNewFileName('');
+    setFileError('');
+  }
+
+  function removeActiveFile() {
+    if (!activeFile || !window.confirm(`Delete ${activeFile.name} from this workspace?`)) return;
+    const files = workspace.files.filter((file) => file.name !== activeFile.name);
+    updateWorkspace({ files, entry: files[0]?.name ?? '' });
+  }
+
   async function run(event: FormEvent) {
     event.preventDefault();
-    if (busy || preview) return;
+    if (busy || preview || (mode === 'files' && (!activeFile || tooLarge))) return;
     setBusy(true);
     setError('');
     setLogs('');
@@ -77,15 +130,19 @@ export default function Playground() {
     try {
       const response = await authFetch('/api/playground', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mode === 'github' ? { mode, repo, directory } : { mode, code }),
+        body: JSON.stringify(mode === 'github' ? { mode, repo, directory } : { mode, ...workspace }),
       });
       const data = await response.json();
       if (!response.ok) {
         setLogs(typeof data.logs === 'string' ? data.logs : '');
         throw new Error(data.error ?? 'Run failed.');
       }
-      if (data.kind === 'preview') cache(ACTIVE, data);
-      setResult(data);
+      if (data.kind === 'preview') {
+        cache(ACTIVE, data);
+        setResult(data);
+      } else {
+        setResult({ ...data, entry: workspace.entry });
+      }
     } catch (issue) {
       const message = issue instanceof Error ? issue.message : '';
       setError(message === 'No active session' ? 'Sign in with a beta account to run code.' :
@@ -125,22 +182,53 @@ export default function Playground() {
         <form onSubmit={run} className={styles.panel}>
           <fieldset className={styles.options} disabled={busy || Boolean(preview)}>
             <legend>Source</legend>
-            <label><input type="radio" checked={mode === 'javascript'} onChange={() => setMode('javascript')} /> JavaScript</label>
-            <label><input type="radio" checked={mode === 'github'} onChange={() => setMode('github')} /> GitHub / Vite</label>
+            <label><input type="radio" name="source" checked={mode === 'files'} onChange={() => setMode('files')} /> Workspace</label>
+            <label><input type="radio" name="source" checked={mode === 'github'} onChange={() => setMode('github')} /> GitHub / Vite</label>
           </fieldset>
 
-          {mode === 'javascript' ? (
-            <label className={styles.field}>
-              JavaScript editor
-              <textarea className={styles.editor} rows={13} value={code} spellCheck={false} disabled={busy || Boolean(preview)}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setCode(value);
-                  cache(DRAFT, { code: value, expires: Date.now() + DRAFT_TTL });
-                }} />
-              <small>Draft stays in this tab for up to one hour. Node.js runs without network access.</small>
-              {tooLarge && <small role="alert">Code exceeds 64 KiB.</small>}
-            </label>
+          {mode === 'files' ? (
+            <>
+              <div className={styles.fileManager}>
+                <Text as="h2" variant="header-1">Files</Text>
+                <ul className={styles.files} aria-label="Workspace files">
+                  {workspace.files.map((file) => (
+                    <li key={file.name}>
+                      <Button type="button" size="m" aria-pressed={workspace.entry === file.name}
+                        view={workspace.entry === file.name ? 'normal' : 'flat'} disabled={busy}
+                        onClick={() => updateWorkspace({ ...workspace, entry: file.name })}>{file.name}</Button>
+                    </li>
+                  ))}
+                </ul>
+                <div className={styles.createFile}>
+                  <input aria-label="New filename" placeholder="example.ts" value={newFileName} disabled={busy}
+                    onChange={(event) => { setNewFileName(event.target.value); setFileError(''); }}
+                    onKeyDown={(event) => { if (event.key === 'Enter' && !event.nativeEvent.isComposing) { event.preventDefault(); addFile(); } }} />
+                  <Button type="button" size="m" onClick={addFile} disabled={busy}>New file</Button>
+                </div>
+                {fileError && <p role="alert" className={styles.error}>{fileError}</p>}
+              </div>
+              {activeFile ? (
+                <>
+                  <label className={styles.field}>
+                    {activeFile.name}
+                    <textarea className={styles.editor} rows={13} value={activeFile.content} spellCheck={false}
+                      autoCapitalize="off" autoCorrect="off" disabled={busy}
+                      onChange={(event) => {
+                        const content = event.target.value;
+                        updateWorkspace({ ...workspace, files: workspace.files.map((file) =>
+                          file.name === activeFile.name ? { ...file, content } : file) });
+                      }} />
+                  </label>
+                  <Button type="button" size="s" view="flat" disabled={busy} onClick={removeActiveFile}>
+                    Delete active file
+                  </Button>
+                </>
+              ) : <Text as="p" color="secondary">Create a .js, .ts, or .py file to start.</Text>}
+              <Text as="p" variant="caption-2" color="secondary">
+                Up to 20 files and 64 KiB. Drafts stay in this tab for up to an hour. Runs are offline.
+              </Text>
+              {tooLarge && <p role="alert" className={styles.error}>Workspace exceeds 64 KiB.</p>}
+            </>
           ) : (
             <>
               <label className={styles.field}>
@@ -164,8 +252,8 @@ export default function Playground() {
             <Button size="l" type="button" loading={busy} onClick={stop}>Stop preview</Button>
           ) : (
             <Button size="l" view="action" type="submit" loading={busy}
-              disabled={busy || (mode === 'javascript' && (tooLarge || !code.trim()))}>
-              {mode === 'github' ? 'Import and run' : 'Run JavaScript'}
+              disabled={busy || (mode === 'files' && (tooLarge || !activeFile))}>
+              {mode === 'github' ? 'Import and run' : activeFile ? `Run ${activeFile.name}` : 'Run file'}
             </Button>
           )}
         </form>
@@ -177,7 +265,7 @@ export default function Playground() {
           {busy && !preview && <p role="status">{mode === 'github' ? 'Importing, installing, and starting Vite…' : 'Running in the cloud…'}</p>}
           {!result && !error && !busy && <Text as="p" color="secondary">Results appear here after a run.</Text>}
           {result?.kind === 'output' && <>
-            <Text as="p" color={result.exitCode === 0 ? 'positive' : 'danger'}>Exit code: {result.exitCode}</Text>
+            <Text as="p" color={result.exitCode === 0 ? 'positive' : 'danger'}>{result.entry} · Exit code: {result.exitCode}</Text>
             <pre className={styles.output}>{result.output || 'No output.'}</pre>
           </>}
           {preview && <>

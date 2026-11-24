@@ -34,7 +34,7 @@ function post(user?: string, origin = 'https://example.com') {
   const headers = new Headers({ 'content-type': 'application/json', origin });
   if (user) headers.set('x-test-user', user);
   return new NextRequest('https://example.com/api/playground', {
-    method: 'POST', headers, body: JSON.stringify({ mode: 'javascript', code: '2+2' }),
+    method: 'POST', headers, body: JSON.stringify({ mode: 'files', entry: 'example.ts', files: [{ name: 'example.ts', content: 'console.log(2+2)' }] }),
   });
 }
 

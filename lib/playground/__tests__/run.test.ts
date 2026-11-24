@@ -4,12 +4,13 @@ import { runInSandbox } from '../run';
 
 jest.mock('@vercel/sandbox', () => ({ APIError: Error, Sandbox: { create: jest.fn() } }));
 
+const js = { mode: 'files' as const, entry: 'main.js', files: [{ name: 'main.js', content: 'console.log("hello")' }] };
 const id = 'f02fe46c-a3d5-4bee-8f64-0ab151028a10';
 const success = { exitCode: 0, logs: () => Object.assign((async function* () {
   yield { data: 'hello\n' };
 })(), { close: jest.fn() }) };
 let vm: {
-  runCommand: jest.Mock; writeFiles: jest.Mock; update: jest.Mock; stop: jest.Mock;
+  runCommand: jest.Mock; mkDir: jest.Mock; writeFiles: jest.Mock; update: jest.Mock; stop: jest.Mock;
   domain: jest.Mock; expiresAt: Date;
 };
 const release = jest.fn();
@@ -17,7 +18,7 @@ const release = jest.fn();
 beforeEach(() => {
   jest.resetAllMocks();
   vm = {
-    runCommand: jest.fn().mockResolvedValue(success), writeFiles: jest.fn().mockResolvedValue(undefined),
+    runCommand: jest.fn().mockResolvedValue(success), mkDir: jest.fn().mockResolvedValue(undefined), writeFiles: jest.fn().mockResolvedValue(undefined),
     update: jest.fn().mockResolvedValue(undefined), stop: jest.fn().mockResolvedValue(undefined),
     domain: jest.fn(() => 'https://preview.vercel.run'), expiresAt: new Date('2026-11-27T14:00:00Z'),
   };
@@ -26,13 +27,15 @@ beforeEach(() => {
 });
 
 it('runs JavaScript offline with no open ports, returns output and tears down the VM', async () => {
-  await expect(runInSandbox({ mode: 'javascript', code: 'console.log("hello")' }, id, release))
+  await expect(runInSandbox(js, id, release))
     .resolves.toEqual({ kind: 'output', output: 'hello\n', exitCode: 0 });
   expect(Sandbox.create).toHaveBeenCalledWith(expect.objectContaining({
     networkPolicy: 'deny-all', persistent: false, ports: [], timeout: 30_000,
   }));
-  expect(vm.writeFiles).toHaveBeenCalledWith([{ path: 'main.mjs', content: Buffer.from('console.log("hello")') }], expect.anything());
-  expect(vm.runCommand).toHaveBeenCalledWith('node', ['/vercel/sandbox/main.mjs'], { timeoutMs: 8_000 });
+  expect(vm.writeFiles).toHaveBeenCalledWith(expect.arrayContaining([{ path: '/vercel/sandbox/workspace/main.js', content: Buffer.from(js.files[0].content) }]), expect.anything());
+  expect(vm.runCommand).toHaveBeenCalledWith(expect.objectContaining({
+    cmd: 'node', args: expect.arrayContaining(['main.js']), cwd: '/vercel/sandbox/workspace', timeoutMs: 8_000,
+  }));
   expect(vm.stop).toHaveBeenCalledTimes(1);
   expect(vm.stop.mock.invocationCallOrder[0]).toBeLessThan(release.mock.invocationCallOrder[0]);
 });
@@ -68,12 +71,29 @@ it('keeps the lease if the VM cannot be confirmed stopped or created', async () 
   const log = jest.spyOn(console, 'error').mockImplementation(() => {});
   try {
     vm.stop.mockRejectedValueOnce(new Error('unreachable'));
-    await runInSandbox({ mode: 'javascript', code: '1' }, id, release);
+    await runInSandbox(js, id, release);
     expect(release).not.toHaveBeenCalled();
     (Sandbox.create as jest.Mock).mockRejectedValueOnce(new Error('timeout'));
-    await expect(runInSandbox({ mode: 'javascript', code: '1' }, id, release)).rejects.toThrow('timeout');
+    await expect(runInSandbox(js, id, release)).rejects.toThrow('timeout');
     expect(release).not.toHaveBeenCalled();
   } finally {
     log.mockRestore();
   }
+});
+
+
+it.each([
+  { entry: 'main.ts', helper: 'helper.ts', bin: 'node', image: 'vercel/sandbox/node:24' },
+  { entry: 'main.py', helper: 'helper.py', bin: 'python3', image: 'vercel/sandbox/python:3.14' },
+])('executes only the selected entry $entry and writes sibling files', async ({ entry, helper, bin, image }) => {
+  await runInSandbox({ mode: 'files', entry, files: [{ name: helper, content: '' }, { name: entry, content: '' }] }, id, release);
+  expect(Sandbox.create).toHaveBeenCalledWith(expect.objectContaining({ image, networkPolicy: 'deny-all', ports: [], persistent: false }));
+  expect(vm.mkDir).toHaveBeenCalledWith('/vercel/sandbox/workspace', expect.anything());
+  expect(vm.writeFiles.mock.calls[0][0].map((file: { path: string }) => file.path)).toEqual([
+    '/vercel/sandbox/workspace/package.json', '/vercel/sandbox/workspace/' + helper, '/vercel/sandbox/workspace/' + entry,
+  ]);
+  expect(vm.runCommand).toHaveBeenCalledTimes(1);
+  expect(vm.runCommand).toHaveBeenCalledWith(expect.objectContaining({
+    cmd: bin, args: expect.arrayContaining([entry]), cwd: '/vercel/sandbox/workspace', timeoutMs: 8_000,
+  }));
 });
