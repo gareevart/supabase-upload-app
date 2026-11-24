@@ -164,18 +164,25 @@ function BlogPageContent() {
             </Button>
           )}
         </div>
-        <div className={`blog-page__toolbar ${toolbarCollapsed ? 'blog-page__toolbar_collapsed' : ''}`}>
-          <SearchComponent
-            title=""
-            placeholder={t('blogPage.searchPlaceholder')}
-            readButtonText={t('blogPage.readButton')}
-            onResultClick={handleSearchResultClick}
-            onUpdate={handleSearchQueryChange}
-            onFocusChange={handleSearchFocus}
-            className="blog-page__search"
-            expandOnFocus={true}
-            gridView={gridView}
-          />
+        <div
+          className={[
+            'blog-page__toolbar',
+            toolbarCollapsed ? 'blog-page__toolbar_collapsed' : '',
+            searchActive ? 'blog-page__toolbar_search-active' : '',
+          ].filter(Boolean).join(' ')}
+        >
+          <div className="blog-page__search">
+            <SearchComponent
+              title=""
+              placeholder={t('blogPage.searchPlaceholder')}
+              readButtonText={t('blogPage.readButton')}
+              onResultClick={handleSearchResultClick}
+              onUpdate={handleSearchQueryChange}
+              onFocusChange={handleSearchFocus}
+              expandOnFocus={true}
+              gridView={gridView}
+            />
+          </div>
           <div className={controlsClassName}>
             {showPostFilter && (
               <Select

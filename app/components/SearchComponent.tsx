@@ -125,7 +125,7 @@ export default function SearchComponent({
 
   return (
     <div
-      className={`search-container relative z-[200] ${className} ${expandOnFocus && isFocused ? 'expanded' : ''}`}
+      className={`search-container ${className} ${expandOnFocus && isFocused ? 'expanded' : ''}`.trim()}
     >
       <TextInput
         size="l"
