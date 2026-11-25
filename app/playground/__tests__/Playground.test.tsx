@@ -389,7 +389,6 @@ it('runs npm create from the terminal and opens imported Gravity UI files in the
     ok: true, json: async () => ({ kind: 'terminal', output: 'added packages', exitCode: 0, changes }),
   });
   render(<Playground />, { wrapper: Providers });
-  fireEvent.click(screen.getByRole('button', { name: 'Terminal' }));
   const panel = within(screen.getByRole('region', { name: 'Terminal' }));
   fireEvent.change(panel.getByRole('textbox', { name: 'Terminal command' }), { target: { value: 'npm create @gravity-ui' } });
   fireEvent.click(panel.getByRole('button', { name: 'Run' }));
@@ -401,4 +400,32 @@ it('runs npm create from the terminal and opens imported Gravity UI files in the
   expect(within(screen.getByRole('tree')).getByRole('treeitem', { name: 'package-lock.json' })).toBeInTheDocument();
   expect(panel.getByText('/gravity-app $')).toBeInTheDocument();
   expect(within(screen.getByRole('tree')).getByRole('treeitem', { name: 'main.js' })).toBeInTheDocument();
+});
+
+it('keeps Run output and npm commands in the same Terminal history and clears both together', async () => {
+  (authFetch as jest.Mock)
+    .mockResolvedValueOnce({ ok: true, json: async () => ({ kind: 'output', output: 'script ran', exitCode: 0 }) })
+    .mockResolvedValueOnce({ ok: true, json: async () => ({
+      kind: 'terminal', exitCode: 0, output: 'added package',
+      changes: { folders: [], files: [{ name: 'package.json', content: '{"dependencies":{"react":"18"}}' }] },
+    }) });
+  render(<Playground />, { wrapper: Providers });
+  expect(screen.queryByRole('button', { name: 'Console' })).not.toBeInTheDocument();
+  const terminal = screen.getByRole('button', { name: 'Terminal' });
+  fireEvent.click(terminal);
+  expect(screen.queryByRole('region', { name: 'Terminal' })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Run main.js' }));
+  expect(await screen.findByText('script ran')).toBeInTheDocument();
+  const panel = within(screen.getByRole('region', { name: 'Terminal' }));
+  const input = panel.getByRole('textbox', { name: 'Terminal command' });
+  fireEvent.change(input, { target: { value: 'npm install react' } });
+  fireEvent.click(panel.getByRole('button', { name: 'Run' }));
+  const commandOutput = await panel.findByText('added package');
+  const history = within(panel.getByRole('log'));
+  expect(history.getByText('$ npm install react', { exact: false })).toBeInTheDocument();
+  expect(history.getByText('script ran').compareDocumentPosition(commandOutput) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  fireEvent.click(panel.getByRole('button', { name: 'Clear' }));
+  expect(history.queryByText('added package')).not.toBeInTheDocument();
+  expect(history.queryByText('script ran')).not.toBeInTheDocument();
+  expect(input).toBeEnabled();
 });

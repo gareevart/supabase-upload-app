@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import CodeEditor from './CodeEditor';
 import WorkspaceTree, { FileBadge } from './WorkspaceTree';
@@ -32,7 +32,10 @@ const DRAFT_TTL = 60 * 60 * 1000;
 const GRAVITY_EXAMPLE = 'https://github.com/gravity-ui/gravity-ui-vite-example';
 const STARTER = "const ideas = ['design', 'build', 'try'];\nconsole.log(ideas.map((idea) => idea.toUpperCase()));";
 type Preview = { kind: 'preview'; source?: 'html'; previewUrl: string; expiresAt: string; runId: string };
-type Result = Preview | { kind: 'output'; output: string; installLogs?: string; exitCode: number; entry: string };
+type ScriptOutput = { output: string; installLogs?: string; exitCode: number; entry: string };
+type TerminalError = { key: MessageKey; params?: Record<string, string | number> } | { runError: string };
+type TerminalEntry = { command?: string; logs?: string; error?: TerminalError; script?: ScriptOutput };
+const MAX_TERMINAL_ENTRIES = 30;
 type NameAction = { kind: 'file' | 'folder'; parent: string } | { kind: 'rename'; node: WorkspaceNode };
 const DEFAULT_WORKSPACE: Workspace = { files: [{ name: 'main.js', content: STARTER }], entry: 'main.js', folders: [] };
 
@@ -62,25 +65,23 @@ export default function Playground() {
   const [destination, setDestination] = useState('');
   const [moveError, setMoveError] = useState<MessageKey | null>(null);
   const [showExplorer, setShowExplorer] = useState(true);
-  const [showConsole, setShowConsole] = useState(true);
-  const [panel, setPanel] = useState<'console' | 'terminal'>('console');
+  const [showTerminal, setShowTerminal] = useState(true);
   const [terminalCommand, setTerminalCommand] = useState('');
   const [terminalCwd, setTerminalCwd] = useState('');
-  const [terminalOutput, setTerminalOutput] = useState('');
-  const [terminalError, setTerminalError] = useState('');
-  const [terminalBusy, setTerminalBusy] = useState(false);
+  const [transcript, setTranscript] = useState<(TerminalEntry & { id: number })[]>([]);
+  const [runningCommand, setRunningCommand] = useState('');
+  const terminalBody = useRef<HTMLDivElement>(null);
+  const nextTerminalId = useRef(0);
   const [pendingDelete, setPendingDelete] = useState<WorkspaceNode | null>(null);
   const [repo, setRepo] = useState('');
   const [directory, setDirectory] = useState('');
-  const [result, setResult] = useState<Result | null>(null);
+  const [preview, setPreview] = useState<Preview | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<{ key: MessageKey } | { runError: string } | null>(null);
-  const [logs, setLogs] = useState('');
+  const [previewError, setPreviewError] = useState<MessageKey | null>(null);
   const [remaining, setRemaining] = useState(0);
   const [budget, setBudget] = useState<PlaygroundBudget | null>(null);
   const [budgetStatus, setBudgetStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading');
   const [budgetRefresh, refreshBudget] = useState(0);
-  const preview = result?.kind === 'preview' ? result : null;
   const htmlPreview = preview?.source === 'html' ? preview : null;
   const activeFile = workspace.files.find((file) => file.name === workspace.entry);
   const canRun = activeFile && runnableKind(activeFile.name);
@@ -118,9 +119,9 @@ export default function Playground() {
     }
     const active = cached<Preview>(ACTIVE);
     if (active?.kind === 'preview' && isSandboxPreviewUrl(active.previewUrl) && Date.parse(active.expiresAt) > Date.now()) {
-      setResult(active);
+      setPreview(active);
       setMode(active.source === 'html' ? 'files' : 'github');
-      if (active.source === 'html') setShowConsole(false);
+      if (active.source === 'html') setShowTerminal(false);
     } else cache(ACTIVE, null);
   }, []);
 
@@ -130,10 +131,10 @@ export default function Playground() {
       const seconds = Math.max(0, Math.ceil((Date.parse(preview.expiresAt) - Date.now()) / 1000));
       setRemaining(seconds);
       if (seconds === 0) {
-        setResult(null);
+        setPreview(null);
         cache(ACTIVE, null);
-        setError({ key: 'previewExpired' });
-        setShowConsole(true);
+        setPreviewError('previewExpired');
+        setShowTerminal(true);
       }
     };
     tick();
@@ -173,6 +174,21 @@ export default function Playground() {
       document.removeEventListener('visibilitychange', loadBudget);
     };
   }, [budgetRefresh]);
+
+  useEffect(() => {
+    const body = terminalBody.current;
+    if (body) body.scrollTop = body.scrollHeight;
+  }, [showTerminal, transcript, runningCommand, previewError]);
+
+  function appendTerminal(entry: TerminalEntry) {
+    const id = nextTerminalId.current++;
+    setTranscript((history) => [...history.slice(-(MAX_TERMINAL_ENTRIES - 1)), { id, ...entry }]);
+  }
+
+  function clearTerminal() {
+    setTranscript([]);
+    setPreviewError(null);
+  }
 
   function updateWorkspace(next: Workspace) {
     if (terminalCwd && !next.folders.includes(terminalCwd)) setTerminalCwd('');
@@ -261,11 +277,9 @@ export default function Playground() {
     event?.preventDefault();
     if (busy || preview || budgetBlocked || (mode === 'files' && (!canRun || tooLarge))) return;
     setBusy(true);
-    setPanel('console');
-    setShowConsole(canRun !== 'html' || mode === 'github');
-    setError(null);
-    setLogs('');
-    setResult(null);
+    setShowTerminal(canRun !== 'html' || mode === 'github');
+    setPreviewError(null);
+    let logs = '';
     try {
       const response = await authFetch('/api/playground', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -274,20 +288,20 @@ export default function Playground() {
       });
       const data = await response.json();
       if (!response.ok) {
-        setLogs(typeof data.logs === 'string' ? data.logs : '');
+        logs = typeof data.logs === 'string' ? data.logs : '';
         throw new Error(data.error ?? 'Run failed.');
       }
       if (data.kind === 'preview') {
         if (!isSandboxPreviewUrl(data.previewUrl)) throw new Error('Preview is unavailable.');
         cache(ACTIVE, data);
-        setResult(data);
+        setPreview(data);
       } else {
-        setResult({ ...data, entry: workspace.entry });
+        appendTerminal({ script: { ...data, entry: workspace.entry } });
       }
     } catch (issue) {
       const message = issue instanceof Error ? issue.message : '';
-      setError({ runError: message });
-      setShowConsole(true);
+      appendTerminal({ logs, error: { runError: message } });
+      setShowTerminal(true);
     } finally {
       setBusy(false);
       refreshBudget((version) => version + 1);
@@ -300,34 +314,33 @@ export default function Playground() {
     if (!line || busy || preview) return;
     const cwd = terminalCwd;
     const command = parseTerminalCommand(line);
+    const prompt = `/${cwd} $ ${line}`;
+    const commandError = (key: MessageKey, params?: Record<string, string | number>) =>
+      appendTerminal({ command: prompt, error: { key, params } });
     if (line === 'clear') {
-      setTerminalOutput('');
-      setTerminalError('');
+      clearTerminal();
       setTerminalCommand('');
       return;
     }
     if (line === 'cd' || line.startsWith('cd ')) {
       const directory = resolveTerminalDirectory(cwd, line.slice(2).trim(), workspace.folders);
-      setTerminalError(directory === null ? msg('terminalFolderMissing') : '');
-      if (directory !== null) {
-        setTerminalCwd(directory);
-        setTerminalCommand('');
-      }
+      if (directory === null) return commandError('terminalFolderMissing');
+      appendTerminal({ command: prompt });
+      setTerminalCwd(directory);
+      setTerminalCommand('');
       return;
     }
-    if (!command) return setTerminalError(msg('terminalUnsupported'));
+    if (!command) return commandError('terminalUnsupported');
     if (command.kind === 'create' && !terminalCanCreate(workspace, cwd, command.folder)) {
-      return setTerminalError(msg('terminalFolderExists', { name: command.folder }));
+      return commandError('terminalFolderExists', { name: command.folder });
     }
     if (budget && (!budget.enabled || budget.active || !budget.remainingStarts ||
-        budget.remainingSeconds < TERMINAL_RESERVE_MS / 1_000)) return setTerminalError(msg('terminalBudget'));
+        budget.remainingSeconds < TERMINAL_RESERVE_MS / 1_000)) return commandError('terminalBudget');
 
-    setTerminalError('');
-    setTerminalOutput(`/${cwd} $ ${line}
-`);
+    setRunningCommand(prompt);
     setTerminalCommand('');
-    setTerminalBusy(true);
     setBusy(true);
+    let logs = '';
     try {
       const manifests = command.kind === 'install' ? TERMINAL_MANIFESTS.flatMap((name) => {
         const file = workspace.files.find((item) => item.name === joinPath(cwd, name));
@@ -339,14 +352,16 @@ export default function Playground() {
       });
       const data = await res.json();
       if (!res.ok) {
-        if (typeof data.logs === 'string') setTerminalOutput((previous) => previous + data.logs);
-        throw new Error(translateRunError(t, data.error ?? ''));
+        logs = typeof data.logs === 'string' ? data.logs : '';
+        throw new Error(data.error ?? '');
       }
-      if (data.kind !== 'terminal' || typeof data.exitCode !== 'number') throw new Error(msg('runFailed'));
-      setTerminalOutput((previous) => previous + (typeof data.output === 'string' ? data.output : ''));
-      if (data.exitCode !== 0) throw new Error(msg('terminalExit', { code: data.exitCode }));
+      if (data.kind !== 'terminal' || typeof data.exitCode !== 'number') throw new Error();
+      logs = typeof data.output === 'string' ? data.output : '';
+      if (data.exitCode !== 0) {
+        return appendTerminal({ command: prompt, logs, error: { key: 'terminalExit', params: { code: data.exitCode } } });
+      }
       const next = applyTerminalChanges(workspace, cwd, command, data.changes);
-      if (!next) throw new Error(msg('terminalExportFailed'));
+      if (!next) return appendTerminal({ command: prompt, logs, error: { key: 'terminalExportFailed' } });
       updateWorkspace(next);
       if (command.kind === 'create') {
         setTerminalCwd(joinPath(cwd, command.folder));
@@ -354,12 +369,12 @@ export default function Playground() {
         setShowExplorer(true);
         reveal(next.entry);
       }
+      appendTerminal({ command: prompt, logs });
     } catch (issue) {
-      setTerminalError(issue instanceof Error && issue.message !== 'No active session'
-        ? issue.message : translateRunError(t, issue instanceof Error ? issue.message : ''));
+      appendTerminal({ command: prompt, logs, error: { runError: issue instanceof Error ? issue.message : '' } });
     } finally {
       setBusy(false);
-      setTerminalBusy(false);
+      setRunningCommand('');
       refreshBudget((version) => version + 1);
     }
   }
@@ -367,15 +382,15 @@ export default function Playground() {
   async function stop() {
     if (!preview || busy) return;
     setBusy(true);
-    setError(null);
+    setPreviewError(null);
     try {
       const response = await authFetch(`/api/playground?runId=${encodeURIComponent(preview.runId)}`, { method: 'DELETE' });
       if (!response.ok && response.status !== 404) throw new Error();
-      setResult(null);
+      setPreview(null);
       cache(ACTIVE, null);
     } catch {
-      setError({ key: 'stopFailed' });
-      setShowConsole(true);
+      setPreviewError('stopFailed');
+      setShowTerminal(true);
     } finally {
       setBusy(false);
       refreshBudget((version) => version + 1);
@@ -390,7 +405,6 @@ export default function Playground() {
     seconds: String(budget.remainingSeconds % 60).padStart(2, '0'),
   }) : msg('sharedRuntimeShort');
   const previewExpired = preview ? `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}` : null;
-  const output = result?.kind === 'output' ? result : null;
   const language = !activeFile ? msg('noFile') : !canRun ? msg('plainText') : canRun === 'python' ? 'Python' : canRun === 'html' ? 'HTML'
     : /\.[cm]?ts$/i.test(activeFile.name) ? 'TypeScript' : 'JavaScript';
 
@@ -420,17 +434,14 @@ export default function Playground() {
       <div className={styles.activity}>
         <div className={styles.activityTools}>
           <SegmentedRadioGroup size="m" value={mode} disabled={busy || !!preview}
-            onUpdate={(value) => { setMode(value); if (value === 'github') setPanel('console'); }} aria-label={msg('source')}
+            onUpdate={setMode} aria-label={msg('source')}
             options={[{ value: 'files', content: msg('workspace') }, { value: 'github', content: 'GitHub / Vite' }]} />
           <Button view="flat" size="s" selected={showExplorer} aria-expanded={showExplorer}
             onClick={() => setShowExplorer(!showExplorer)}><Icon data={FolderOpen} size={14} /> {msg('explorer')}</Button>
-          <Button view="flat" size="s" selected={showConsole && panel === 'console'} aria-expanded={showConsole && panel === 'console'}
-            onClick={() => { setShowConsole(!showConsole || panel !== 'console'); setPanel('console'); }}>{msg('console')}</Button>
-          {mode === 'files' && <Button view="flat" size="s" selected={showConsole && panel === 'terminal'}
-            aria-expanded={showConsole && panel === 'terminal'}
-            onClick={() => { setShowConsole(!showConsole || panel !== 'terminal'); setPanel('terminal'); }}>
+          <Button view="flat" size="s" selected={showTerminal} aria-expanded={showTerminal}
+            aria-controls="playground-terminal" onClick={() => setShowTerminal(!showTerminal)}>
             <Icon data={Terminal} size={14} /> {msg('terminal')}
-          </Button>}
+          </Button>
           <Button href="/auth" component={Link} view="flat" size="s" onClick={() => {
             try { window.sessionStorage.setItem('returnUrl', '/projects/playground'); } catch { /* Optional. */ }
           }}>{msg('signIn')}</Button>
@@ -538,7 +549,7 @@ export default function Playground() {
         </aside>}
 
         <TabProvider value={mode === 'files' ? workspace.entry : 'preview'} onUpdate={(name) => { if (mode === 'files') pickFile(name); }}>
-          <section className={styles.editArea} aria-label={msg(mode === 'files' ? 'editor' : 'preview')} data-console={showConsole}>
+          <section className={styles.editArea} aria-label={msg(mode === 'files' ? 'editor' : 'preview')} data-terminal={showTerminal}>
             <TabList className={styles.tabs} aria-label={msg(mode === 'files' ? 'editorTabs' : 'previewTabs')} contentOverflow="scroll" size="m">
               {mode === 'files' && workspace.files.map((file) => (
                 <Tab key={file.name} value={file.name} disabled={busy} aria-label={file.name} title={file.name}
@@ -587,54 +598,51 @@ export default function Playground() {
                 </TabPanel>
               )}
             </div>
-            {showConsole && panel === 'console' && <section className={styles.console} aria-label={msg('console')} aria-busy={busy}>
-              <div className={styles.consoleHead}>
-                <Text as="h2" variant="caption-2">{msg('console')}</Text>
-                <div>
-                  {preview && <Button href={preview.previewUrl} target="_blank" rel="noopener noreferrer" view="flat" size="s">
-                    {msg('open')} <Icon data={ArrowUpRightFromSquare} size={12} />
-                  </Button>}
-                  {output && <Button view="flat" size="s" onClick={() => setResult(null)}>{msg('clear')}</Button>}
-                </div>
-              </div>
-              <div className={styles.consoleBody} aria-live="polite">
-                {error && <Alert theme="danger" message={'key' in error ? msg(error.key) : translateRunError(t, error.runError)} />}
-                {logs && <pre>{logs}</pre>}
-                {busy && !preview && <span role="status" className={styles.running}><Spin size="xs" /> {msg(mode === 'github' ? 'importing' : npmRun ? 'installingAndRunning' : 'starting')}</span>}
-                {!result && !error && !busy && <Text as="p" color="secondary" variant="body-1">{msg(mode === 'files' ? 'emptyConsole' : 'emptyRepoConsole')}</Text>}
-                {!result && !error && !busy && mode === 'files' && canRun === 'node' && !npmRun &&
-                  <Text as="p" variant="caption-2" color="secondary">{msg('workspaceNpmHint')}</Text>}
-                {output && <>
-                  {typeof output.installLogs === 'string' && <>
-                    <Text as="p" variant="caption-2">{msg('dependenciesInstalled')}</Text>
-                    {output.installLogs && <pre>{output.installLogs}</pre>}
-                    <Text as="p" variant="caption-2">{msg('scriptOutput')}</Text>
-                  </>}
-                  <Label size="xs" theme={output.exitCode === 0 ? 'success' : 'danger'}>{msg('exitCode', { name: output.entry, code: output.exitCode })}</Label>
-                  <pre>{output.output || msg('noOutput')}</pre>
-                </>}
-                {preview && <Label size="xs" theme="success">{msg('expires', { time: previewExpired ?? '' })}</Label>}
-              </div>
-            </section>}
-            {showConsole && panel === 'terminal' && mode === 'files' && (
-              <section className={styles.terminalPanel} aria-label={msg('terminal')} aria-busy={terminalBusy}>
-                <div className={styles.consoleHead}>
+            {showTerminal && (
+              <section id="playground-terminal" className={styles.terminalPanel} aria-label={msg('terminal')} aria-busy={busy}>
+                <div className={styles.terminalHead}>
                   <Text as="h2" variant="caption-2">{msg('terminal')}</Text>
-                  <Button view="flat" size="s" disabled={terminalBusy}
-                    onClick={() => { setTerminalOutput(''); setTerminalError(''); }}>{msg('clear')}</Button>
+                  <div>
+                    {preview && !htmlPreview && <Button href={preview.previewUrl} target="_blank" rel="noopener noreferrer" view="flat" size="s">
+                      {msg('open')} <Icon data={ArrowUpRightFromSquare} size={12} />
+                    </Button>}
+                    <Button view="flat" size="s" disabled={busy || (!transcript.length && !previewError)}
+                      onClick={clearTerminal}>{msg('clear')}</Button>
+                  </div>
                 </div>
-                <div className={styles.consoleBody} aria-live="polite">
-                  {!terminalOutput && <Text as="p" color="secondary" variant="body-1">{msg('terminalHelp')}</Text>}
-                  {terminalOutput && <pre>{terminalOutput}</pre>}
-                  {terminalBusy && <span role="status" className={styles.running}><Spin size="xs" /> {msg('terminalRunning')}</span>}
-                  {terminalError && <Alert theme="danger" message={terminalError} />}
+                <div ref={terminalBody} className={styles.terminalBody} role="log" aria-label={msg('terminalHistory')}>
+                  {!transcript.length && !preview && !busy && !previewError &&
+                    <Text as="p" color="secondary" variant="body-1">{msg(mode === 'files' ? 'terminalHelp' : 'emptyRepoTerminal')}</Text>}
+                  {transcript.map(({ id, command, logs, error, script }) => (
+                    <div className={styles.terminalEntry} key={id}>
+                      {command && <pre>{command}</pre>}
+                      {logs && <pre>{logs}</pre>}
+                      {script && <>
+                        {typeof script.installLogs === 'string' && <>
+                          <Text as="p" variant="caption-2">{msg('dependenciesInstalled')}</Text>
+                          {script.installLogs && <pre>{script.installLogs}</pre>}
+                          <Text as="p" variant="caption-2">{msg('scriptOutput')}</Text>
+                        </>}
+                        <Label size="xs" theme={script.exitCode === 0 ? 'success' : 'danger'}>{msg('exitCode', { name: script.entry, code: script.exitCode })}</Label>
+                        <pre>{script.output || msg('noOutput')}</pre>
+                      </>}
+                      {error && <Alert theme="danger" message={'key' in error ? msg(error.key, error.params) : translateRunError(t, error.runError)} />}
+                    </div>
+                  ))}
+                  {runningCommand && <pre>{runningCommand}</pre>}
+                  {busy && !preview && <span role="status" className={styles.running}><Spin size="xs" /> {
+                    msg(runningCommand ? 'terminalRunning' : mode === 'github' ? 'importing' : npmRun ? 'installingAndRunning' : 'starting')
+                  }</span>}
+                  {previewError && <Alert theme="danger" message={msg(previewError)} />}
+                  {preview && <Label size="xs" theme="success">{msg('expires', { time: previewExpired ?? '' })}</Label>}
                 </div>
-                <form className={styles.terminalForm} onSubmit={runTerminal}>
+                {mode === 'files' && <form className={styles.terminalForm} onSubmit={runTerminal}>
                   <code>/{terminalCwd} $</code>
                   <TextInput value={terminalCommand} onUpdate={setTerminalCommand}
-                    disabled={busy || !!preview} placeholder="npm create @gravity-ui" autoComplete="off" controlProps={{ maxLength: 320, 'aria-label': msg('terminalCommand') }} />
+                    disabled={busy || !!preview} placeholder="npm create @gravity-ui" autoComplete="off"
+                    controlProps={{ maxLength: 320, 'aria-label': msg('terminalCommand') }} />
                   <Button type="submit" view="action" disabled={busy || !!preview || !terminalCommand.trim()}>{msg('run')}</Button>
-                </form>
+                </form>}
               </section>
             )}
           </section>
