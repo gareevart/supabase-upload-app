@@ -4,10 +4,13 @@ import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import CodeEditor from './CodeEditor';
 import {
-  ActionTooltip, Alert, Breadcrumbs, Button, Dialog, Icon, Label, PlaceholderContainer, Popover, Progress,
-  SegmentedRadioGroup, Spin, Tab, TabList, TabPanel, TabProvider, Text, TextInput, ThemeProvider,
+  ActionTooltip, Alert, Button, Dialog, Icon, Label, PlaceholderContainer, Popover, Progress,
+  SegmentedRadioGroup, Spin, Tab, TabList, TabPanel, TabProvider, Text, TextInput,
 } from '@gravity-ui/uikit';
 import { ArrowUpRightFromSquare, Code, FolderOpen, PlayFill, Plus, Square, Terminal, TrashBin } from '@gravity-ui/icons';
+import { useI18n } from '@/app/contexts/I18nContext';
+import { PageActionBar } from '@/shared/ui/PageActionBar';
+import { translatePlayground, translateRunError, type MessageKey } from './messages';
 import { authFetch } from '@/lib/auth-fetch';
 import { isSourceName, MAX_CODE_BYTES, MAX_FILES, parseRunInput, parseWorkspace, PREVIEW_MS, WORKSPACE_MS, type PlaygroundBudget, type SourceFile } from '@/lib/playground/input';
 import styles from './playground.module.css';
@@ -35,17 +38,13 @@ function cache(key: string, value: unknown) {
   } catch { /* The runner still works when browser storage is disabled. */ }
 }
 
-function formatTime(seconds: number) {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor(seconds % 3600 / 60);
-  return `${hours}h ${String(minutes).padStart(2, '0')}m ${String(seconds % 60).padStart(2, '0')}s`;
-}
-
 export default function Playground() {
+  const { t } = useI18n();
+  const msg = (key: MessageKey, params?: Record<string, string | number>) => translatePlayground(t, key, params);
   const [mode, setMode] = useState<'files' | 'github'>('files');
   const [workspace, setWorkspace] = useState<Workspace>(DEFAULT_WORKSPACE);
   const [newFileName, setNewFileName] = useState('');
-  const [fileError, setFileError] = useState('');
+  const [fileError, setFileError] = useState<MessageKey | null>(null);
   const [creatingFile, setCreatingFile] = useState(false);
   const [showExplorer, setShowExplorer] = useState(true);
   const [showConsole, setShowConsole] = useState(true);
@@ -54,7 +53,7 @@ export default function Playground() {
   const [directory, setDirectory] = useState('');
   const [result, setResult] = useState<Result | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<{ key: MessageKey } | { runError: string } | null>(null);
   const [logs, setLogs] = useState('');
   const [remaining, setRemaining] = useState(0);
   const [budget, setBudget] = useState<PlaygroundBudget | null>(null);
@@ -105,7 +104,7 @@ export default function Playground() {
       if (seconds === 0) {
         setResult(null);
         cache(ACTIVE, null);
-        setError('Preview expired. Start a new run to open it again.');
+        setError({ key: 'previewExpired' });
       }
     };
     tick();
@@ -154,20 +153,20 @@ export default function Playground() {
   function addFile() {
     const name = newFileName.trim();
     if (!isSourceName(name)) {
-      setFileError('Use a filename such as main.js, example.ts, or script.py.');
+      setFileError('invalidFilename');
       return;
     }
     if (workspace.files.some((file) => file.name.toLowerCase() === name.toLowerCase())) {
-      setFileError('A file with that name already exists.');
+      setFileError('duplicateFilename');
       return;
     }
     if (workspace.files.length >= MAX_FILES) {
-      setFileError(`This workspace can contain up to ${MAX_FILES} files.`);
+      setFileError('tooManyFiles');
       return;
     }
     updateWorkspace({ files: [...workspace.files, { name, content: '' }], entry: name });
     setNewFileName('');
-    setFileError('');
+    setFileError(null);
     setCreatingFile(false);
   }
 
@@ -183,7 +182,7 @@ export default function Playground() {
     if (busy || preview || budgetBlocked || (mode === 'files' && (!activeFile || tooLarge))) return;
     setBusy(true);
     setShowConsole(true);
-    setError('');
+    setError(null);
     setLogs('');
     setResult(null);
     try {
@@ -204,8 +203,7 @@ export default function Playground() {
       }
     } catch (issue) {
       const message = issue instanceof Error ? issue.message : '';
-      setError(message === 'No active session' ? 'Sign in with your gareev.de account to run code.' :
-        message || 'Could not start the sandbox.');
+      setError({ runError: message });
     } finally {
       setBusy(false);
       refreshBudget((version) => version + 1);
@@ -215,14 +213,14 @@ export default function Playground() {
   async function stop() {
     if (!preview || busy) return;
     setBusy(true);
-    setError('');
+    setError(null);
     try {
       const response = await authFetch(`/api/playground?runId=${encodeURIComponent(preview.runId)}`, { method: 'DELETE' });
       if (!response.ok && response.status !== 404) throw new Error();
       setResult(null);
       cache(ACTIVE, null);
     } catch {
-      setError('Could not confirm Stop. The preview will expire automatically.');
+      setError({ key: 'stopFailed' });
     } finally {
       setBusy(false);
       refreshBudget((version) => version + 1);
@@ -230,7 +228,12 @@ export default function Playground() {
   }
 
   const runDisabled = busy || budgetBlocked || (mode === 'files' ? tooLarge || !activeFile : !repo.trim());
-  const runLabel = mode === 'github' ? 'Import and run' : activeFile ? `Run ${activeFile.name}` : 'Run file';
+  const runLabel = mode === 'github' ? msg('importAndRun') : activeFile ? msg('runFile', { name: activeFile.name }) : msg('runUnselected');
+  const runtime = budget ? msg('runtime', {
+    hours: Math.floor(budget.remainingSeconds / 3600),
+    minutes: String(Math.floor(budget.remainingSeconds % 3600 / 60)).padStart(2, '0'),
+    seconds: String(budget.remainingSeconds % 60).padStart(2, '0'),
+  }) : msg('sharedRuntimeShort');
   const previewExpired = preview ? `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}` : null;
   const output = result?.kind === 'output' ? result : null;
   const language = activeFile?.name.endsWith('.py') ? 'Python' : activeFile?.name.endsWith('.ts') ? 'TypeScript' : 'JavaScript';
@@ -246,191 +249,189 @@ export default function Playground() {
   }
 
   return (
-    <ThemeProvider theme="dark" scoped>
-      <main className={styles.shell}>
-        <header className={styles.toolbar}>
-          <Breadcrumbs className={styles.brand}>
-            <Breadcrumbs.Item href="/projects">Projects</Breadcrumbs.Item>
-            <Breadcrumbs.Item><Text as="h1" variant="subheader-2">Playground</Text></Breadcrumbs.Item>
-          </Breadcrumbs>
-          <div className={styles.toolbarActions}>
-            <Popover trigger="click" placement="bottom-end" content={
-              <div className={styles.budgetPopover}>
-                <Text as="h2" variant="subheader-2">Shared Playground runtime</Text>
-                {budgetStatus === 'loading' && <Text as="p" color="secondary">Loading budget…</Text>}
-                {budgetStatus === 'unavailable' && <Text as="p" color="secondary">Budget temporarily unavailable.</Text>}
-                {budget && <>
-                  <Progress size="s" value={100 * budget.remainingSeconds / budget.totalSeconds} />
-                  <Text as="p" variant="body-1">{Math.round(budget.totalSeconds / 3600)}h every 30 days · <strong>{budget.remainingStarts}/{budget.dailyStarts}</strong> starts left today</Text>
-                  <Text as="p" variant="caption-2" color="secondary">Shared by all users. Daily starts reset at 00:00 UTC. Vercel meters its own limits separately.</Text>
-                  {budget.active && <Label theme="info" size="xs">Sandbox in use</Label>}
-                  {!budget.enabled && <Label theme="warning" size="xs">Cloud runs disabled</Label>}
-                </>}
-              </div>
-            }>
-              <Button view="outlined" size="m" aria-label="Shared Playground runtime">
-                {budget ? formatTime(budget.remainingSeconds) : 'Shared runtime'}
-              </Button>
-            </Popover>
-            {preview ? (
-              <Button view="outlined" size="m" loading={busy} onClick={() => void stop()}>
-                <Icon data={Square} size={14} /> Stop preview
-              </Button>
-            ) : (
-              <ActionTooltip title={runLabel} hotkey="mod+enter">
-                <Button view="action" size="m" aria-label={runLabel} disabled={runDisabled} loading={busy} onClick={() => void run()}>
-                  <Icon data={PlayFill} size={14} /> {mode === 'github' ? 'Import & run' : 'Run'}
-                </Button>
-              </ActionTooltip>
-            )}
-          </div>
-        </header>
-
-        <div className={styles.activity}>
+    <div className={styles.shell}>
+      <h1 className={styles.a11yHeading}>{msg('title')}</h1>
+      <PageActionBar
+        ariaLabel={msg('actions')}
+        className={styles.pageBar}
+        maxItems={2}
+        items={[{ label: msg('projects'), href: '/projects' }, { label: msg('title') }]}
+      />
+      <div className={styles.activity}>
+        <div className={styles.activityTools}>
           <SegmentedRadioGroup size="m" value={mode} disabled={busy || !!preview}
-            onUpdate={(value) => setMode(value)} aria-label="Project source"
-            options={[{ value: 'files', content: 'Workspace' }, { value: 'github', content: 'GitHub / Vite' }]} />
-          <div className={styles.activityTools}>
-            <Button view="flat" size="s" selected={showExplorer} aria-expanded={showExplorer}
-              onClick={() => setShowExplorer(!showExplorer)}><Icon data={FolderOpen} size={14} /> Explorer</Button>
-            <Button view="flat" size="s" selected={showConsole} aria-expanded={showConsole}
-              onClick={() => setShowConsole(!showConsole)}><Icon data={Terminal} size={14} /> Console</Button>
-            <Button href="/auth" component={Link} view="flat" size="s" onClick={() => {
-              try { window.sessionStorage.setItem('returnUrl', '/projects/playground'); } catch { /* Optional. */ }
-            }}>Sign in</Button>
-          </div>
+            onUpdate={(value) => setMode(value)} aria-label={msg('source')}
+            options={[{ value: 'files', content: msg('workspace') }, { value: 'github', content: 'GitHub / Vite' }]} />
+          <Button view="flat" size="s" selected={showExplorer} aria-expanded={showExplorer}
+            onClick={() => setShowExplorer(!showExplorer)}><Icon data={FolderOpen} size={14} /> {msg('explorer')}</Button>
+          <Button view="flat" size="s" selected={showConsole} aria-expanded={showConsole}
+            onClick={() => setShowConsole(!showConsole)}><Icon data={Terminal} size={14} /> {msg('console')}</Button>
+          <Button href="/auth" component={Link} view="flat" size="s" onClick={() => {
+            try { window.sessionStorage.setItem('returnUrl', '/projects/playground'); } catch { /* Optional. */ }
+          }}>{msg('signIn')}</Button>
         </div>
-
-        <div className={styles.workbench} data-explorer={showExplorer}>
-          {showExplorer && <aside className={styles.explorer} aria-label="Explorer">
-            <div className={styles.sideHeading}>
-              <Text as="h2" variant="caption-2">{mode === 'files' ? 'Explorer' : 'Repository'}</Text>
-              {mode === 'files' && <ActionTooltip title="New file">
-                <Button view="flat" size="s" aria-label="New file" disabled={busy}
-                  onClick={() => { setCreatingFile(!creatingFile); setFileError(''); }}>
-                  <Icon data={Plus} size={16} />
-                </Button>
-              </ActionTooltip>}
+        <div className={styles.toolbarActions}>
+          <Popover trigger="click" placement="bottom-end" content={
+            <div className={styles.budgetPopover}>
+              <Text as="h2" variant="subheader-2">{msg('sharedRuntime')}</Text>
+              {budgetStatus === 'loading' && <Text as="p" color="secondary">{msg('loadingBudget')}</Text>}
+              {budgetStatus === 'unavailable' && <Text as="p" color="secondary">{msg('unavailableBudget')}</Text>}
+              {budget && <>
+                <Progress size="s" value={100 * budget.remainingSeconds / budget.totalSeconds} />
+                <Text as="p" variant="body-1">{msg('window', { hours: Math.round(budget.totalSeconds / 3600), starts: `${budget.remainingStarts}/${budget.dailyStarts}` })}</Text>
+                <Text as="p" variant="caption-2" color="secondary">{msg('budgetNote')}</Text>
+                {budget.active && <Label theme="info" size="xs">{msg('sandboxBusy')}</Label>}
+                {!budget.enabled && <Label theme="warning" size="xs">{msg('cloudDisabled')}</Label>}
+              </>}
             </div>
-            {mode === 'files' ? (
-              <>
-                <Text as="p" variant="caption-2" color="secondary" className={styles.treeHeading}>PROJECT FILES</Text>
-                {creatingFile && <form className={styles.createFile} onSubmit={(event) => { event.preventDefault(); addFile(); }}>
-                  <TextInput autoFocus size="s" controlProps={{ 'aria-label': 'New filename' }} placeholder="example.ts"
-                    value={newFileName} disabled={busy} onUpdate={(value) => { setNewFileName(value); setFileError(''); }}
-                    onKeyDown={(event) => { if (event.key === 'Escape') { setCreatingFile(false); setFileError(''); } }} />
-                  <Button type="submit" view="normal" size="s" disabled={busy}>Create</Button>
-                </form>}
-                {fileError && <div className={styles.fileError} role="alert"><Text color="danger" variant="caption-2">{fileError}</Text></div>}
-                <ul className={styles.files} aria-label="Workspace files">
-                  {workspace.files.map((file) => (
-                    <li key={file.name}>
-                      <Button view="flat" size="s" width="max" className={styles.file} selected={workspace.entry === file.name}
-                        aria-label={file.name} onClick={() => pickFile(file.name)} disabled={busy}>
-                        <span aria-hidden="true"><FileBadge name={file.name} /></span>
-                        <Text ellipsis>{file.name}</Text>
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-                {!workspace.files.length && !creatingFile && <Text as="p" className={styles.sidebarNote} color="secondary" variant="caption-2">Add a .js, .ts, or .py file.</Text>}
-              </>
-            ) : (
-              <form className={styles.repoForm} onSubmit={run}>
-                <label><Text variant="caption-2" color="secondary">Public repository</Text>
-                  <TextInput type="url" size="m" controlProps={{ required: true }} placeholder="https://github.com/owner/repo"
-                    value={repo} disabled={busy || !!preview} onUpdate={setRepo} />
-                </label>
-                <label><Text variant="caption-2" color="secondary">App folder</Text>
-                  <TextInput size="m" placeholder="Optional, e.g. apps/editor" value={directory}
-                    disabled={busy || !!preview} onUpdate={setDirectory} />
-                </label>
-                <Button view="outlined" size="s" disabled={busy || !!preview} onClick={() => { setRepo(GRAVITY_EXAMPLE); setDirectory(''); }}>
-                  Use Gravity UI example
-                </Button>
-                <Text as="p" variant="caption-2" color="secondary">Vite app with an npm or pnpm lockfile. Preview links are public until they expire. Do not use secrets.</Text>
-              </form>
-            )}
-          </aside>}
-
-          <TabProvider value={mode === 'files' ? workspace.entry : 'preview'} onUpdate={(name) => { if (mode === 'files') pickFile(name); }}>
-            <section className={styles.editArea} aria-label={mode === 'files' ? 'Editor' : 'App preview'} data-console={showConsole}>
-              <TabList className={styles.tabs} aria-label="Open files" contentOverflow="scroll" size="m">
-                {mode === 'files' && workspace.files.map((file) => (
-                  <Tab key={file.name} value={file.name} disabled={busy} aria-label={file.name}
-                    icon={<span aria-hidden="true"><FileBadge name={file.name} /></span>}>{file.name}</Tab>
-                ))}
-                {mode === 'github' && <Tab value="preview" icon={<Icon data={Code} size={14} />}>App preview</Tab>}
-              </TabList>
-              <div className={styles.canvas}>
-                {mode === 'files' && (activeFile ? (
-                  <TabPanel value={activeFile.name} className={styles.editorPane}>
-                    <CodeEditor name={activeFile.name} value={activeFile.content} disabled={busy} onChange={updateFile} onRun={() => void run()} />
-                  </TabPanel>
-                ) : (
-                  <div className={styles.blank}>
-                    <PlaceholderContainer size="s" align="center" image={<Icon data={Code} size={24} />}
-                      title="No open file" description="Select a file or create a new one in the Explorer."
-                      actions={[{ text: 'New file', onClick: () => { setShowExplorer(true); setCreatingFile(true); } }]} />
-                  </div>
-                ))}
-                {mode === 'github' && (
-                  <TabPanel value="preview" className={styles.editorPane}>
-                    {preview ? (
-                      <iframe className={styles.preview} sandbox="allow-scripts allow-same-origin" title="Sandbox preview"
-                        src={preview.previewUrl} referrerPolicy="no-referrer" />
-                    ) : (
-                      <div className={styles.blank}>
-                        <PlaceholderContainer size="s" align="center" image={<Icon data={Code} size={24} />}
-                          title="No running app" description="Import a Vite project from the Explorer to preview it here." />
-                      </div>
-                    )}
-                  </TabPanel>
-                )}
-              </div>
-              {showConsole && <section className={styles.console} aria-label="Console" aria-busy={busy}>
-                <div className={styles.consoleHead}>
-                  <Text as="h2" variant="caption-2">Console</Text>
-                  <div>
-                    {preview && <Button href={preview.previewUrl} target="_blank" rel="noopener noreferrer" view="flat" size="s">
-                      Open <Icon data={ArrowUpRightFromSquare} size={12} />
-                    </Button>}
-                    {output && <Button view="flat" size="s" onClick={() => setResult(null)}>Clear</Button>}
-                  </div>
-                </div>
-                <div className={styles.consoleBody} aria-live="polite">
-                  {error && <Alert theme="danger" message={error} />}
-                  {logs && <pre>{logs}</pre>}
-                  {busy && !preview && <span role="status" className={styles.running}><Spin size="xs" /> {mode === 'github' ? 'Importing, installing, and starting Vite…' : 'Starting cloud sandbox…'}</span>}
-                  {!result && !error && !busy && <Text as="p" color="secondary" variant="body-1">Run the active file to see its output here.</Text>}
-                  {output && <>
-                    <Label size="xs" theme={output.exitCode === 0 ? 'success' : 'danger'}>{output.entry} · Exit code: {output.exitCode}</Label>
-                    <pre>{output.output || 'No output.'}</pre>
-                  </>}
-                  {preview && <Label size="xs" theme="success">Preview running · expires in {previewExpired}</Label>}
-                </div>
-              </section>}
-            </section>
-          </TabProvider>
+          }>
+            <Button view="outlined" size="m" aria-label={msg('sharedRuntime')}>
+              {runtime}
+            </Button>
+          </Popover>
+          {preview ? (
+            <Button view="outlined" size="m" loading={busy} onClick={() => void stop()}>
+              <Icon data={Square} size={14} /> {msg('stopPreview')}
+            </Button>
+          ) : (
+            <ActionTooltip title={runLabel} hotkey="mod+enter">
+              <Button view="action" size="m" aria-label={runLabel} disabled={runDisabled} loading={busy} onClick={() => void run()}>
+                <Icon data={PlayFill} size={14} /> {msg(mode === 'github' ? 'importAndRunShort' : 'run')}
+              </Button>
+            </ActionTooltip>
+          )}
         </div>
+      </div>
 
-        <footer className={styles.statusbar} aria-label="Workspace status">
-          <div>
-            <Label theme="utility" size="xxs">{mode === 'files' ? 'Local draft' : 'Vercel Sandbox'}</Label>
-            {tooLarge && mode === 'files' && <span role="alert"><Text color="danger">Workspace exceeds 64 KiB</Text></span>}
-            {mode === 'files' && activeFile && <Button view="flat" size="xs" aria-label="Delete active file"
-              disabled={busy} onClick={() => setPendingDelete(activeFile.name)}><Icon data={TrashBin} size={13} /></Button>}
+      <div className={styles.workbench} data-explorer={showExplorer}>
+        {showExplorer && <aside className={styles.explorer} aria-label={msg('explorer')}>
+          <div className={styles.sideHeading}>
+            <Text as="h2" variant="caption-2">{msg(mode === 'files' ? 'explorer' : 'repo')}</Text>
+            {mode === 'files' && <ActionTooltip title={msg('newFile')}>
+              <Button view="flat" size="s" aria-label={msg('newFile')} disabled={busy}
+                onClick={() => { setCreatingFile(!creatingFile); setFileError(null); }}>
+                <Icon data={Plus} size={16} />
+              </Button>
+            </ActionTooltip>}
           </div>
-          <div>{mode === 'files' && <><Text variant="caption-2">{activeFile ? language : 'No file'}</Text><Text variant="caption-2">UTF-8</Text><Text variant="caption-2">Ctrl/⌘ Enter to run</Text></>}</div>
-        </footer>
-        <Dialog open={!!pendingDelete} onClose={() => setPendingDelete(null)} size="s" initialFocus="cancel">
-          <Dialog.Header caption="Delete file?" />
-          <Dialog.Body>Remove {pendingDelete} from this workspace? This cannot be undone.</Dialog.Body>
-          <Dialog.Footer preset="danger" textButtonApply="Delete" textButtonCancel="Cancel"
-            onClickButtonApply={confirmDelete} onClickButtonCancel={() => setPendingDelete(null)} />
-        </Dialog>
-      </main>
-    </ThemeProvider>
+          {mode === 'files' ? (
+            <>
+              <Text as="p" variant="caption-2" color="secondary" className={styles.treeHeading}>{msg('filesHeading')}</Text>
+              {creatingFile && <form className={styles.createFile} onSubmit={(event) => { event.preventDefault(); addFile(); }}>
+                <TextInput autoFocus size="s" controlProps={{ 'aria-label': msg('filename') }} placeholder="example.ts"
+                  value={newFileName} disabled={busy} onUpdate={(value) => { setNewFileName(value); setFileError(null); }}
+                  onKeyDown={(event) => { if (event.key === 'Escape') { setCreatingFile(false); setFileError(null); } }} />
+                <Button type="submit" view="normal" size="s" disabled={busy}>{msg('create')}</Button>
+              </form>}
+              {fileError && <div className={styles.fileError} role="alert"><Text color="danger" variant="caption-2">{msg(fileError, { count: MAX_FILES })}</Text></div>}
+              <ul className={styles.files} aria-label={msg('filesList')}>
+                {workspace.files.map((file) => (
+                  <li key={file.name}>
+                    <Button view="flat" size="s" width="max" className={styles.file} selected={workspace.entry === file.name}
+                      aria-label={file.name} onClick={() => pickFile(file.name)} disabled={busy}>
+                      <span aria-hidden="true"><FileBadge name={file.name} /></span>
+                      <Text ellipsis>{file.name}</Text>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+              {!workspace.files.length && !creatingFile && <Text as="p" className={styles.sidebarNote} color="secondary" variant="caption-2">{msg('addFileHint')}</Text>}
+            </>
+          ) : (
+            <form className={styles.repoForm} onSubmit={run}>
+              <label><Text variant="caption-2" color="secondary">{msg('publicRepo')}</Text>
+                <TextInput type="url" size="m" controlProps={{ required: true }} placeholder="https://github.com/owner/repo"
+                  value={repo} disabled={busy || !!preview} onUpdate={setRepo} />
+              </label>
+              <label><Text variant="caption-2" color="secondary">{msg('appFolder')}</Text>
+                <TextInput size="m" placeholder={msg('appFolderPlaceholder')} value={directory}
+                  disabled={busy || !!preview} onUpdate={setDirectory} />
+              </label>
+              <Button view="outlined" size="s" disabled={busy || !!preview} onClick={() => { setRepo(GRAVITY_EXAMPLE); setDirectory(''); }}>
+                {msg('gravityExample')}
+              </Button>
+              <Text as="p" variant="caption-2" color="secondary">{msg('repoHint')}</Text>
+            </form>
+          )}
+        </aside>}
+
+        <TabProvider value={mode === 'files' ? workspace.entry : 'preview'} onUpdate={(name) => { if (mode === 'files') pickFile(name); }}>
+          <section className={styles.editArea} aria-label={msg(mode === 'files' ? 'editor' : 'preview')} data-console={showConsole}>
+            <TabList className={styles.tabs} aria-label={msg(mode === 'files' ? 'editorTabs' : 'previewTabs')} contentOverflow="scroll" size="m">
+              {mode === 'files' && workspace.files.map((file) => (
+                <Tab key={file.name} value={file.name} disabled={busy} aria-label={file.name}
+                  icon={<span aria-hidden="true"><FileBadge name={file.name} /></span>}>{file.name}</Tab>
+              ))}
+              {mode === 'github' && <Tab value="preview" icon={<Icon data={Code} size={14} />}>{msg('preview')}</Tab>}
+            </TabList>
+            <div className={styles.canvas}>
+              {mode === 'files' && (activeFile ? (
+                <TabPanel value={activeFile.name} className={styles.editorPane}>
+                  <CodeEditor name={activeFile.name} value={activeFile.content} disabled={busy} onChange={updateFile} onRun={() => void run()} />
+                </TabPanel>
+              ) : (
+                <div className={styles.blank}>
+                  <PlaceholderContainer size="s" align="center" image={<Icon data={Code} size={24} />}
+                    title={msg('noFileOpen')} description={msg('noFileHint')}
+                    actions={[{ text: msg('newFile'), onClick: () => { setShowExplorer(true); setCreatingFile(true); } }]} />
+                </div>
+              ))}
+              {mode === 'github' && (
+                <TabPanel value="preview" className={styles.editorPane}>
+                  {preview ? (
+                    <iframe className={styles.preview} sandbox="allow-scripts allow-same-origin" title={msg('sandboxPreview')}
+                      src={preview.previewUrl} referrerPolicy="no-referrer" />
+                  ) : (
+                    <div className={styles.blank}>
+                      <PlaceholderContainer size="s" align="center" image={<Icon data={Code} size={24} />}
+                        title={msg('noApp')} description={msg('noAppHint')} />
+                    </div>
+                  )}
+                </TabPanel>
+              )}
+            </div>
+            {showConsole && <section className={styles.console} aria-label={msg('console')} aria-busy={busy}>
+              <div className={styles.consoleHead}>
+                <Text as="h2" variant="caption-2">{msg('console')}</Text>
+                <div>
+                  {preview && <Button href={preview.previewUrl} target="_blank" rel="noopener noreferrer" view="flat" size="s">
+                    {msg('open')} <Icon data={ArrowUpRightFromSquare} size={12} />
+                  </Button>}
+                  {output && <Button view="flat" size="s" onClick={() => setResult(null)}>{msg('clear')}</Button>}
+                </div>
+              </div>
+              <div className={styles.consoleBody} aria-live="polite">
+                {error && <Alert theme="danger" message={'key' in error ? msg(error.key) : translateRunError(t, error.runError)} />}
+                {logs && <pre>{logs}</pre>}
+                {busy && !preview && <span role="status" className={styles.running}><Spin size="xs" /> {msg(mode === 'github' ? 'importing' : 'starting')}</span>}
+                {!result && !error && !busy && <Text as="p" color="secondary" variant="body-1">{msg(mode === 'files' ? 'emptyConsole' : 'emptyRepoConsole')}</Text>}
+                {output && <>
+                  <Label size="xs" theme={output.exitCode === 0 ? 'success' : 'danger'}>{msg('exitCode', { name: output.entry, code: output.exitCode })}</Label>
+                  <pre>{output.output || msg('noOutput')}</pre>
+                </>}
+                {preview && <Label size="xs" theme="success">{msg('expires', { time: previewExpired ?? '' })}</Label>}
+              </div>
+            </section>}
+          </section>
+        </TabProvider>
+      </div>
+
+      <footer className={styles.statusbar} aria-label={msg('workspaceStatus')}>
+        <div>
+          <Label theme="utility" size="xxs">{mode === 'files' ? msg('draft') : 'Vercel Sandbox'}</Label>
+          {tooLarge && mode === 'files' && <span role="alert"><Text color="danger">{msg('sizeLimit')}</Text></span>}
+          {mode === 'files' && activeFile && <Button view="flat" size="xs" aria-label={msg('deleteActive')}
+            disabled={busy} onClick={() => setPendingDelete(activeFile.name)}><Icon data={TrashBin} size={13} /></Button>}
+        </div>
+        <div>{mode === 'files' && <><Text variant="caption-2">{activeFile ? language : msg('noFile')}</Text><Text variant="caption-2">UTF-8</Text><Text variant="caption-2">{msg('runShortcut')}</Text></>}</div>
+      </footer>
+      <Dialog open={!!pendingDelete} onClose={() => setPendingDelete(null)} size="s" initialFocus="cancel">
+        <Dialog.Header caption={msg('deleteQuestion')} />
+        <Dialog.Body>{msg('deletePrompt', { name: pendingDelete ?? '' })}</Dialog.Body>
+        <Dialog.Footer preset="danger" textButtonApply={msg('delete')} textButtonCancel={msg('cancel')}
+          onClickButtonApply={confirmDelete} onClickButtonCancel={() => setPendingDelete(null)} />
+      </Dialog>
+    </div>
   );
 }
 

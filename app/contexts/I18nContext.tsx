@@ -62,6 +62,9 @@ import profileEditFormRu from '@/app/auth/profile/components/ProfileEditForm.i18
 import yandexFileUploaderEn from '@/app/auth/components/YandexFileUploader.i18n/en.json';
 import yandexFileUploaderRu from '@/app/auth/components/YandexFileUploader.i18n/ru.json';
 
+import playgroundEn from '@/app/playground/Playground.i18n/en.json';
+import playgroundRu from '@/app/playground/Playground.i18n/ru.json';
+
 export type AppLanguage = 'en' | 'ru';
 
 type TranslationValue = string;
@@ -92,6 +95,7 @@ const enTranslations: TranslationDict = {
   ...subscriptionsPanelEn,
   ...apiKeysPanelEn,
   ...galleryEn,
+  ...playgroundEn,
   ...chatViewEn,
   ...broadcastsPageEn,
   ...favoritesEn,
@@ -125,6 +129,7 @@ const ruTranslations: TranslationDict = {
   ...subscriptionsPanelRu,
   ...apiKeysPanelRu,
   ...galleryRu,
+  ...playgroundRu,
   ...chatViewRu,
   ...broadcastsPageRu,
   ...favoritesRu,
