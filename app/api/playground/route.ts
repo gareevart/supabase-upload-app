@@ -41,7 +41,7 @@ export async function GET() {
 const start = withApiAuth(async (req, user) => {
   const body = await readBoundedJson(req).catch(() => null);
   const input = parseRunInput(body);
-  if (!input) return error('Supply a valid .js, .ts or .py workspace (up to 20 files and 64 KiB), or a public GitHub repository URL.', 400);
+  if (!input) return error('Supply a valid workspace with a JavaScript, TypeScript, or Python entry (up to 20 files and 64 KiB), or a public GitHub repository URL.', 400);
   const runId = randomUUID();
   const args = { p_user_id: user.id, p_run_id: runId };
   try {

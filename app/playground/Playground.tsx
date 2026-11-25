@@ -1,20 +1,23 @@
 'use client';
 
-import { useEffect, useId, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import CodeEditor from './CodeEditor';
+import WorkspaceTree, { FileBadge } from './WorkspaceTree';
 import {
   ActionTooltip, Alert, Button, Dialog, Icon, Label, PlaceholderContainer, Popover, Progress,
-  SegmentedRadioGroup, Spin, Tab, TabList, TabPanel, TabProvider, Text, TextInput,
+  SegmentedRadioGroup, Select, Spin, Tab, TabList, TabPanel, TabProvider, Text, TextInput,
 } from '@gravity-ui/uikit';
-import { ListContainer, useNormalizedList } from '@gravity-ui/normalized-list';
-import { UIKitListItemView, UIKitNormalizedList } from '@gravity-ui/normalized-list/uikit';
-import { ArrowUpRightFromSquare, Code, FolderOpen, PlayFill, Plus, Square, Terminal, TrashBin } from '@gravity-ui/icons';
+import { ArrowRight, ArrowUpRightFromSquare, Code, FilePlus, FolderPlus, FolderOpen, Pencil, PlayFill, Square, Terminal, TrashBin } from '@gravity-ui/icons';
 import { useI18n } from '@/app/contexts/I18nContext';
 import { PageActionBar } from '@/shared/ui/PageActionBar';
 import { translatePlayground, translateRunError, type MessageKey } from './messages';
 import { authFetch } from '@/lib/auth-fetch';
-import { isSourceName, MAX_CODE_BYTES, MAX_FILES, parseRunInput, parseWorkspace, PREVIEW_MS, WORKSPACE_MS, type PlaygroundBudget, type SourceFile } from '@/lib/playground/input';
+import { MAX_CODE_BYTES, parseRunInput, PREVIEW_MS, WORKSPACE_MS, type PlaygroundBudget } from '@/lib/playground/input';
+import {
+  createWorkspaceNode, includesPath, leafName, MAX_FILES, MAX_FOLDERS, MAX_NAME_BYTES, parentPath, parseWorkspaceDraft,
+  relocateWorkspaceNode, removeWorkspaceNode, runnableKind, type Workspace, type WorkspaceNode,
+} from '@/lib/playground/workspace';
 import styles from './playground.module.css';
 
 const DRAFT = 'gareev-playground-files-v2';
@@ -25,8 +28,8 @@ const GRAVITY_EXAMPLE = 'https://github.com/gravity-ui/gravity-ui-vite-example';
 const STARTER = "const ideas = ['design', 'build', 'try'];\nconsole.log(ideas.map((idea) => idea.toUpperCase()));";
 type Preview = { kind: 'preview'; previewUrl: string; expiresAt: string; runId: string };
 type Result = Preview | { kind: 'output'; output: string; exitCode: number; entry: string };
-type Workspace = { files: SourceFile[]; entry: string };
-const DEFAULT_WORKSPACE: Workspace = { files: [{ name: 'main.js', content: STARTER }], entry: 'main.js' };
+type NameAction = { kind: 'file' | 'folder'; parent: string } | { kind: 'rename'; node: WorkspaceNode };
+const DEFAULT_WORKSPACE: Workspace = { files: [{ name: 'main.js', content: STARTER }], entry: 'main.js', folders: [] };
 
 function cached<T>(key: string): T | null {
   try { return JSON.parse(sessionStorage.getItem(key) ?? 'null') as T | null; }
@@ -47,10 +50,15 @@ export default function Playground() {
   const [workspace, setWorkspace] = useState<Workspace>(DEFAULT_WORKSPACE);
   const [newFileName, setNewFileName] = useState('');
   const [fileError, setFileError] = useState<MessageKey | null>(null);
-  const [creatingFile, setCreatingFile] = useState(false);
+  const [nameAction, setNameAction] = useState<NameAction | null>(null);
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState<string[]>([]);
+  const [moveNode, setMoveNode] = useState<WorkspaceNode | null>(null);
+  const [destination, setDestination] = useState('');
+  const [moveError, setMoveError] = useState<MessageKey | null>(null);
   const [showExplorer, setShowExplorer] = useState(true);
   const [showConsole, setShowConsole] = useState(true);
-  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<WorkspaceNode | null>(null);
   const [repo, setRepo] = useState('');
   const [directory, setDirectory] = useState('');
   const [result, setResult] = useState<Result | null>(null);
@@ -63,6 +71,12 @@ export default function Playground() {
   const [budgetRefresh, refreshBudget] = useState(0);
   const preview = result?.kind === 'preview' ? result : null;
   const activeFile = workspace.files.find((file) => file.name === workspace.entry);
+  const canRun = activeFile && runnableKind(activeFile.name);
+  const target: WorkspaceNode | null = selectedFolder !== null
+    ? selectedFolder ? { path: selectedFolder, kind: 'folder' } : null
+    : activeFile ? { path: activeFile.name, kind: 'file' } : null;
+  const currentFolder = selectedFolder ?? parentPath(activeFile?.name ?? '');
+  const filePaths = useMemo(() => workspace.files.map(({ name }) => name), [workspace.files]);
   const encoder = new TextEncoder();
   const bytes = workspace.files.reduce((total, file) => total + encoder.encode(file.content).length, 0);
   const tooLarge = bytes > MAX_CODE_BYTES;
@@ -75,17 +89,14 @@ export default function Playground() {
   useEffect(() => {
     const draft = cached<Workspace & { expires: number }>(DRAFT);
     if (draft && draft.expires > Date.now()) {
-      const restored = parseWorkspace(draft, Infinity); // Drafts can be edited even above the run limit.
-      if (restored?.mode === 'files') setWorkspace({ files: restored.files, entry: restored.entry });
-      else if (Array.isArray(draft.files) && draft.files.length === 0 && draft.entry === '') {
-        setWorkspace({ files: [], entry: '' });
-      }
+      const restored = parseWorkspaceDraft(draft); // Drafts can be edited even above the run limit.
+      if (restored) setWorkspace(restored);
     } else {
       cache(DRAFT, null);
       const legacy = cached<{ code: string; expires: number }>(LEGACY_DRAFT);
       const restored = legacy && legacy.expires > Date.now() ? parseRunInput({ mode: 'javascript', code: legacy.code }) : null;
       if (restored?.mode === 'files' && legacy) {
-        const migrated = { files: restored.files, entry: restored.entry };
+        const migrated = { files: restored.files, entry: restored.entry, folders: [] };
         setWorkspace(migrated);
         cache(DRAFT, { ...migrated, expires: legacy.expires });
       }
@@ -152,36 +163,72 @@ export default function Playground() {
     cache(DRAFT, { ...next, expires: Date.now() + DRAFT_TTL });
   }
 
-  function addFile() {
-    const name = newFileName.trim();
-    if (!isSourceName(name)) {
-      setFileError('invalidFilename');
-      return;
-    }
-    if (workspace.files.some((file) => file.name.toLowerCase() === name.toLowerCase())) {
-      setFileError('duplicateFilename');
-      return;
-    }
-    if (workspace.files.length >= MAX_FILES) {
-      setFileError('tooManyFiles');
-      return;
-    }
-    updateWorkspace({ files: [...workspace.files, { name, content: '' }], entry: name });
-    setNewFileName('');
+  function setFolderOpen(path: string, open: boolean) {
+    setCollapsed((previous) => open ? previous.filter((folder) => folder !== path)
+      : previous.includes(path) ? previous : [...previous, path]);
+  }
+
+  function reveal(path: string) {
+    setCollapsed((previous) => previous.filter((folder) => !includesPath(folder, path)));
+  }
+
+  function cancelNameAction() {
+    setNameAction(null);
     setFileError(null);
-    setCreatingFile(false);
+  }
+
+  function startNameAction(action: NameAction) {
+    setNameAction(action);
+    setNewFileName(action.kind === 'rename' ? leafName(action.node.path) : '');
+    setFileError(null);
+  }
+
+  function submitName(event: FormEvent) {
+    event.preventDefault();
+    if (!nameAction || busy) return;
+    const name = newFileName.trim();
+    const result = nameAction.kind === 'rename'
+      ? relocateWorkspaceNode(workspace, nameAction.node, parentPath(nameAction.node.path), name)
+      : createWorkspaceNode(workspace, nameAction.parent, name, nameAction.kind);
+    if ('error' in result) return setFileError(result.error);
+
+    const kind = nameAction.kind === 'rename' ? nameAction.node.kind : nameAction.kind;
+    updateWorkspace(result.workspace);
+    setSelectedFolder(kind === 'folder' ? result.path : null);
+    if (nameAction.kind === 'rename' && nameAction.node.kind === 'folder') {
+      const oldPath = nameAction.node.path;
+      setCollapsed((previous) => previous.filter((folder) => !includesPath(oldPath, folder)));
+    }
+    reveal(result.path);
+    cancelNameAction();
+  }
+
+  function applyMove() {
+    if (!moveNode || busy) return;
+    const result = relocateWorkspaceNode(workspace, moveNode, destination, leafName(moveNode.path));
+    if ('error' in result) return setMoveError(result.error);
+    updateWorkspace(result.workspace);
+    setSelectedFolder(moveNode.kind === 'folder' ? result.path : null);
+    if (moveNode.kind === 'folder') {
+      setCollapsed((previous) => previous.filter((folder) => !includesPath(moveNode.path, folder)));
+    }
+    reveal(result.path);
+    setMoveNode(null);
   }
 
   function confirmDelete() {
     if (!pendingDelete || busy) return;
-    const files = workspace.files.filter((file) => file.name !== pendingDelete);
-    updateWorkspace({ files, entry: workspace.entry === pendingDelete ? files[0]?.name ?? '' : workspace.entry });
+    updateWorkspace(removeWorkspaceNode(workspace, pendingDelete));
+    if (pendingDelete.kind === 'folder') {
+      setCollapsed((previous) => previous.filter((folder) => !includesPath(pendingDelete.path, folder)));
+      setSelectedFolder(parentPath(pendingDelete.path));
+    }
     setPendingDelete(null);
   }
 
   async function run(event?: FormEvent) {
     event?.preventDefault();
-    if (busy || preview || budgetBlocked || (mode === 'files' && (!activeFile || tooLarge))) return;
+    if (busy || preview || budgetBlocked || (mode === 'files' && (!canRun || tooLarge))) return;
     setBusy(true);
     setShowConsole(true);
     setError(null);
@@ -190,7 +237,8 @@ export default function Playground() {
     try {
       const response = await authFetch('/api/playground', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mode === 'github' ? { mode, repo, directory } : { mode, ...workspace }),
+        body: JSON.stringify(mode === 'github' ? { mode, repo, directory } : { mode, entry: workspace.entry, files: workspace.files,
+          ...(workspace.folders.length ? { folders: workspace.folders } : {}) }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -229,8 +277,8 @@ export default function Playground() {
     }
   }
 
-  const runDisabled = busy || budgetBlocked || (mode === 'files' ? tooLarge || !activeFile : !repo.trim());
-  const runLabel = mode === 'github' ? msg('importAndRun') : activeFile ? msg('runFile', { name: activeFile.name }) : msg('runUnselected');
+  const runDisabled = busy || budgetBlocked || (mode === 'files' ? tooLarge || !canRun : !repo.trim());
+  const runLabel = mode === 'github' ? msg('importAndRun') : canRun ? msg('runFile', { name: activeFile.name }) : msg(activeFile ? 'notRunnable' : 'runUnselected');
   const runtime = budget ? msg('runtime', {
     hours: Math.floor(budget.remainingSeconds / 3600),
     minutes: String(Math.floor(budget.remainingSeconds % 3600 / 60)).padStart(2, '0'),
@@ -238,9 +286,14 @@ export default function Playground() {
   }) : msg('sharedRuntimeShort');
   const previewExpired = preview ? `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}` : null;
   const output = result?.kind === 'output' ? result : null;
-  const language = activeFile?.name.endsWith('.py') ? 'Python' : activeFile?.name.endsWith('.ts') ? 'TypeScript' : 'JavaScript';
+  const language = !activeFile ? msg('noFile') : !canRun ? msg('plainText') : canRun === 'python' ? 'Python'
+    : /\.[cm]?ts$/i.test(activeFile.name) ? 'TypeScript' : 'JavaScript';
 
   function pickFile(name: string) {
+    if (busy || !workspace.files.some((file) => file.name === name)) return;
+    cancelNameAction();
+    setSelectedFolder(null);
+    reveal(name);
     updateWorkspace({ ...workspace, entry: name });
   }
 
@@ -309,26 +362,49 @@ export default function Playground() {
         {showExplorer && <aside className={styles.explorer} aria-label={msg('explorer')}>
           <div className={styles.sideHeading}>
             <Text as="h2" variant="caption-2">{msg(mode === 'files' ? 'explorer' : 'repo')}</Text>
-            {mode === 'files' && <ActionTooltip title={msg('newFile')}>
-              <Button view="flat" size="s" aria-label={msg('newFile')} disabled={busy}
-                onClick={() => { setCreatingFile(!creatingFile); setFileError(null); }}>
-                <Icon data={Plus} size={16} />
-              </Button>
-            </ActionTooltip>}
+            {mode === 'files' && <div className={styles.fileActions}>
+              <TreeAction icon={FilePlus} label={msg('newFile')} disabled={busy}
+                action={() => startNameAction({ kind: 'file', parent: currentFolder })} />
+              <TreeAction icon={FolderPlus} label={msg('newFolder')} disabled={busy}
+                action={() => startNameAction({ kind: 'folder', parent: currentFolder })} />
+              {target && <>
+                <TreeAction icon={Pencil} label={msg('renameNode')} disabled={busy}
+                  action={() => startNameAction({ kind: 'rename', node: target })} />
+                <TreeAction icon={ArrowRight} label={msg('moveNode')} disabled={busy}
+                  action={() => { cancelNameAction(); setMoveError(null); setDestination(parentPath(target.path)); setMoveNode(target); }} />
+                <TreeAction icon={TrashBin} label={msg('deleteNode')} disabled={busy}
+                  action={() => { cancelNameAction(); setPendingDelete(target); }} />
+              </>}
+            </div>}
           </div>
           {mode === 'files' ? (
             <>
-              <Text as="p" variant="caption-2" color="secondary" className={styles.treeHeading}>{msg('filesHeading')}</Text>
-              {creatingFile && <form className={styles.createFile} onSubmit={(event) => { event.preventDefault(); addFile(); }}>
-                <TextInput autoFocus size="s" controlProps={{ 'aria-label': msg('filename') }} placeholder="example.ts"
+              <div className={styles.treeLocation}>
+                <Button size="xs" view="flat" selected={selectedFolder === ''} disabled={busy}
+                  onClick={() => { cancelNameAction(); setSelectedFolder(''); }}>{msg('projectRoot')}</Button>
+                {currentFolder && <Text variant="caption-2" color="secondary" ellipsis title={currentFolder}>/{currentFolder}</Text>}
+              </div>
+              {nameAction && <form className={styles.createFile} onSubmit={submitName}>
+                <TextInput key={nameAction.kind} autoFocus size="s"
+                  controlProps={{ maxLength: MAX_NAME_BYTES, 'aria-label': msg(nameAction.kind === 'rename' ? 'newName' : nameAction.kind === 'folder' ? 'folderName' : 'filename') }}
+                  placeholder={msg(nameAction.kind === 'rename' ? 'newName' : nameAction.kind === 'folder' ? 'folderName' : 'filename')}
                   value={newFileName} disabled={busy} onUpdate={(value) => { setNewFileName(value); setFileError(null); }}
-                  onKeyDown={(event) => { if (event.key === 'Escape') { setCreatingFile(false); setFileError(null); } }} />
-                <Button type="submit" view="normal" size="s" disabled={busy}>{msg('create')}</Button>
+                  onKeyDown={(event) => { if (event.key === 'Escape') cancelNameAction(); }} />
+                <Button type="submit" view="normal" size="s" disabled={busy}>{msg(nameAction.kind === 'rename' ? 'saveName' : 'create')}</Button>
               </form>}
-              {fileError && <div className={styles.fileError} role="alert"><Text color="danger" variant="caption-2">{msg(fileError, { count: MAX_FILES })}</Text></div>}
-              <ExplorerFileList files={workspace.files} entry={workspace.entry} disabled={busy}
-                label={msg('filesList')} onPick={pickFile} />
-              {!workspace.files.length && !creatingFile && <Text as="p" className={styles.sidebarNote} color="secondary" variant="caption-2">{msg('addFileHint')}</Text>}
+              {fileError && <div className={styles.fileError} role="alert"><Text color="danger" variant="caption-2">
+                {msg(fileError, { count: fileError === 'tooManyFolders' ? MAX_FOLDERS : MAX_FILES })}</Text></div>}
+              <WorkspaceTree paths={filePaths} folders={workspace.folders} selected={target?.path ?? ''} collapsed={collapsed}
+                disabled={busy} label={msg('filesList')} onExpand={setFolderOpen} onPick={(node) => {
+                  cancelNameAction();
+                  if (node.kind === 'file') pickFile(node.path);
+                  else {
+                    setSelectedFolder(node.path);
+                    setFolderOpen(node.path, selectedFolder !== node.path || collapsed.includes(node.path));
+                  }
+                }} />
+              {!workspace.files.length && !workspace.folders.length && !nameAction &&
+                <Text as="p" className={styles.sidebarNote} color="secondary" variant="caption-2">{msg('addFileHint')}</Text>}
             </>
           ) : (
             <form className={styles.repoForm} onSubmit={run}>
@@ -352,8 +428,8 @@ export default function Playground() {
           <section className={styles.editArea} aria-label={msg(mode === 'files' ? 'editor' : 'preview')} data-console={showConsole}>
             <TabList className={styles.tabs} aria-label={msg(mode === 'files' ? 'editorTabs' : 'previewTabs')} contentOverflow="scroll" size="m">
               {mode === 'files' && workspace.files.map((file) => (
-                <Tab key={file.name} value={file.name} disabled={busy} aria-label={file.name}
-                  icon={<span aria-hidden="true"><FileBadge name={file.name} /></span>}>{file.name}</Tab>
+                <Tab key={file.name} value={file.name} disabled={busy} aria-label={file.name} title={file.name}
+                  icon={<span aria-hidden="true"><FileBadge name={file.name} /></span>}>{leafName(file.name)}</Tab>
               ))}
               {mode === 'github' && <Tab value="preview" icon={<Icon data={Code} size={14} />}>{msg('preview')}</Tab>}
             </TabList>
@@ -366,7 +442,7 @@ export default function Playground() {
                 <div className={styles.blank}>
                   <PlaceholderContainer size="s" align="center" image={<Icon data={Code} size={24} />}
                     title={msg('noFileOpen')} description={msg('noFileHint')}
-                    actions={[{ text: msg('newFile'), onClick: () => { setShowExplorer(true); setCreatingFile(true); } }]} />
+                    actions={[{ text: msg('newFile'), onClick: () => { setShowExplorer(true); startNameAction({ kind: 'file', parent: currentFolder }); } }]} />
                 </div>
               ))}
               {mode === 'github' && (
@@ -414,75 +490,45 @@ export default function Playground() {
           <Label theme="utility" size="xxs">{mode === 'files' ? msg('draft') : 'Vercel Sandbox'}</Label>
           {tooLarge && mode === 'files' && <span role="alert"><Text color="danger">{msg('sizeLimit')}</Text></span>}
           {mode === 'files' && activeFile && <Button view="flat" size="xs" aria-label={msg('deleteActive')}
-            disabled={busy} onClick={() => setPendingDelete(activeFile.name)}><Icon data={TrashBin} size={13} /></Button>}
+            disabled={busy} onClick={() => setPendingDelete({ path: activeFile.name, kind: 'file' })}><Icon data={TrashBin} size={13} /></Button>}
         </div>
-        <div>{mode === 'files' && <><Text variant="caption-2">{activeFile ? language : msg('noFile')}</Text><Text variant="caption-2">UTF-8</Text><Text variant="caption-2">{msg('runShortcut')}</Text></>}</div>
+        <div>{mode === 'files' && <><Text variant="caption-2">{language}</Text><Text variant="caption-2">UTF-8</Text><Text variant="caption-2">{canRun ? msg('runShortcut') : ''}</Text></>}</div>
       </footer>
       <Dialog open={!!pendingDelete} onClose={() => setPendingDelete(null)} size="s" initialFocus="cancel">
-        <Dialog.Header caption={msg('deleteQuestion')} />
-        <Dialog.Body>{msg('deletePrompt', { name: pendingDelete ?? '' })}</Dialog.Body>
+        <Dialog.Header caption={msg(pendingDelete?.kind === 'folder' ? 'deleteFolderQuestion' : 'deleteQuestion')} />
+        <Dialog.Body>{msg(pendingDelete?.kind === 'folder' ? 'deleteFolderPrompt' : 'deletePrompt', { name: pendingDelete?.path ?? '' })}</Dialog.Body>
         <Dialog.Footer preset="danger" textButtonApply={msg('delete')} textButtonCancel={msg('cancel')}
           onClickButtonApply={confirmDelete} onClickButtonCancel={() => setPendingDelete(null)} />
+      </Dialog>
+      <Dialog open={!!moveNode} onClose={() => setMoveNode(null)} size="s">
+        <Dialog.Header caption={msg('moveNode')} />
+        <Dialog.Body>
+          <div className={styles.moveForm}>
+            <Text>{moveNode?.path}</Text>
+            <Select width="max" label={msg('destination')} aria-label={msg('destination')}
+              value={[destination || '/']} onUpdate={([value]) => { setDestination(value === '/' ? '' : value); setMoveError(null); }}
+              options={[{ value: '/', content: msg('projectRoot') },
+                ...workspace.folders.filter((folder) => moveNode?.kind !== 'folder' || !includesPath(moveNode.path, folder))
+                  .map((folder) => ({ value: folder, content: '/' + folder }))]} />
+            {moveError && <Text color="danger" role="alert">{msg(moveError)}</Text>}
+          </div>
+        </Dialog.Body>
+        <Dialog.Footer textButtonApply={msg('move')} textButtonCancel={msg('cancel')}
+          onClickButtonApply={applyMove} onClickButtonCancel={() => setMoveNode(null)} />
       </Dialog>
     </div>
   );
 }
 
-function ExplorerFileList({ files, entry, disabled, label, onPick }: {
-  files: SourceFile[];
-  entry: string;
-  disabled: boolean;
+function TreeAction({ icon, label, disabled, action }: {
+  icon: React.ComponentProps<typeof Icon>['data'];
   label: string;
-  onPick: (name: string) => void;
+  disabled: boolean;
+  action: () => void;
 }) {
-  const listId = useId();
-  const names = useMemo(() => files.map(({ name }) => name), [files]);
-  const list = useNormalizedList({
-    items: names,
-    getItemId: (name) => name,
-    controlledState: {
-      selectedById: entry ? { [entry]: true } : {},
-      disabledById: disabled ? Object.fromEntries(names.map((name) => [name, true])) : {},
-    },
-  });
-  const activeId = list.state.activeItemId;
-  const rowId = (id: string) => `${listId}-${id}`;
-
-  return (
-    <UIKitNormalizedList
-      list={list}
-      size="s"
-      className={styles.files}
-      mapItemDataToContentProps={(name) => ({
-        title: name,
-        startSlot: <span aria-hidden="true"><FileBadge name={name} /></span>,
-      })}
-      onItemClick={({ id }) => {
-        if (disabled || !list.structure.itemsById[id]) return;
-        list.state.setActiveItemId(id);
-        onPick(id);
-      }}
-      renderContainer={(props) => (
-        <ListContainer {...props} as="ul" extraProps={{
-          'aria-label': label,
-          'aria-disabled': disabled || undefined,
-          'aria-activedescendant': !disabled && activeId && list.structure.itemsById[activeId] ? rowId(activeId) : undefined,
-          tabIndex: files.length && !disabled ? 0 : -1,
-          onFocus: () => list.state.setActiveItemId(disabled ? undefined : entry || undefined),
-          onBlur: () => list.state.setActiveItemId(undefined),
-        }} />
-      )}
-      renderItem={({ props }) => (
-        <UIKitListItemView {...props} aria-disabled={props.disabled || undefined}
-          ref={(node) => { if (node) node.id = rowId(props.id); }} />
-      )}
-    />
-  );
-}
-
-function FileBadge({ name }: { name: string }) {
-  const extension = name.slice(-2);
-  return <Label size="xxs" theme={extension === 'js' ? 'warning' : extension === 'ts' ? 'info' : 'success'}>
-    {extension.toUpperCase()}
-  </Label>;
+  return <ActionTooltip title={label}>
+    <Button view="flat" size="s" aria-label={label} disabled={disabled} onClick={action}>
+      <Icon data={icon} size={14} />
+    </Button>
+  </ActionTooltip>;
 }

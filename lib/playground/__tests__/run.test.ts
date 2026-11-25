@@ -88,10 +88,10 @@ it.each([
   await runInSandbox({ mode: 'files', entry, files: [{ name: helper, content: '' }, { name: entry, content: '' }] }, id, release);
   expect(Sandbox.create).toHaveBeenCalledWith(expect.objectContaining({ image, networkPolicy: 'deny-all', ports: [], persistent: false }));
   expect(vm.runCommand).toHaveBeenNthCalledWith(1, expect.objectContaining({
-    cmd: 'mkdir', args: ['--', 'workspace'], cwd: '/vercel',
+    cmd: 'mkdir', args: ['-p', '--', 'workspace'], cwd: '/vercel',
   }));
   expect(vm.writeFiles.mock.calls[0][0].map((file: { path: string }) => file.path)).toEqual([
-    'workspace/package.json', 'workspace/' + helper, 'workspace/' + entry,
+    ...(bin === 'node' ? ['workspace/package.json'] : []), 'workspace/' + helper, 'workspace/' + entry,
   ]);
   expect(vm.runCommand).toHaveBeenCalledTimes(2);
   expect(vm.runCommand).toHaveBeenCalledWith(expect.objectContaining({
@@ -108,4 +108,23 @@ it('passes a file-write failure through as a named stage and stops the VM', asyn
     expect(vm.stop).toHaveBeenCalledTimes(1);
     expect(release).toHaveBeenCalledTimes(1);
   } finally { log.mockRestore(); }
+});
+
+it('creates nested and empty folders before writing files, and preserves the user’s package.json', async () => {
+  const files = [
+    { name: 'package.json', content: '{"type":"commonjs"}' },
+    { name: 'src/main.cjs', content: 'console.log(require("./settings.json").answer)' },
+    { name: 'src/settings.json', content: '{"answer":42}' },
+  ];
+  await runInSandbox({ mode: 'files', folders: ['src', 'src/empty'], entry: 'src/main.cjs', files }, id, release);
+  expect(vm.runCommand).toHaveBeenNthCalledWith(1, expect.objectContaining({
+    cmd: 'mkdir', args: ['-p', '--', 'workspace', 'workspace/src', 'workspace/src/empty'], cwd: '/vercel',
+  }));
+  expect(vm.writeFiles).toHaveBeenCalledWith(
+    files.map(({ name, content }) => ({ path: 'workspace/' + name, content: Buffer.from(content) })), expect.anything(),
+  );
+  expect(vm.runCommand.mock.invocationCallOrder[0]).toBeLessThan(vm.writeFiles.mock.invocationCallOrder[0]);
+  expect(vm.runCommand).toHaveBeenNthCalledWith(2, expect.objectContaining({
+    cmd: 'node', args: expect.arrayContaining(['--', 'src/main.cjs']), cwd: '/vercel/workspace',
+  }));
 });

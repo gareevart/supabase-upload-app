@@ -65,7 +65,10 @@
 .explorer { min-height: 0; min-width: 0; overflow: auto; border-right: 1px solid var(--line); }
 .sideHeading, .consoleHead { display: flex; justify-content: space-between; align-items: center; min-height: 36px; padding: 0 12px; }
 .sideHeading h2, .consoleHead h2 { text-transform: uppercase; letter-spacing: .04em; }
-.treeHeading { padding: 5px 12px; }
+.fileActions { display: flex; align-items: center; gap: 2px; }
+.treeLocation { display: flex; align-items: center; min-width: 0; gap: 6px; padding: 0 8px 4px; }
+.treeLocation > :last-child { min-width: 0; }
+.moveForm { display: grid; gap: 12px; overflow-wrap: anywhere; }
 .files { gap: 1px; margin: 0; padding: 0 6px; list-style: none; }
 .files:focus-visible { outline: 2px solid var(--g-color-line-focus); outline-offset: -2px; }
 .createFile { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px; padding: 5px 10px; align-items: start; }
@@ -91,8 +94,6 @@
   .editArea[data-console="true"] { grid-template-rows: auto minmax(0, 1fr) clamp(84px, 22%, 160px); }
   .activity { padding: 3px 6px; }
   .workbench[data-explorer='true'] { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(56px, max-content) minmax(0, 1fr); }
-  .explorer { max-height: 144px; border-right: 0; border-bottom: 1px solid var(--line); }
-  .files { display: flex; flex-wrap: wrap; }
-  .treeHeading { display: none; }
+  .explorer { max-height: min(210px, 30dvh); border-right: 0; border-bottom: 1px solid var(--line); }
   .statusbar > div { gap: 4px; }
 }

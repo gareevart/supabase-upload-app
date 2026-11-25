@@ -1,6 +1,7 @@
 import { posix } from 'node:path';
 import { APIError, Sandbox, type Command } from '@vercel/sandbox';
 import { PREVIEW_MS, PREVIEW_PORT, WORKSPACE_MS, type RunInput } from './input';
+import { runnableKind } from './workspace';
 
 const LOG_LIMIT = 16 * 1024;
 const NO_NETWORK = 'deny-all' as const;
@@ -50,7 +51,7 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
   let stage = 'Sandbox creation';
   try {
     const github = input.mode === 'github';
-    const python = !github && input.entry.endsWith('.py');
+    const python = !github && runnableKind(input.entry) === 'python';
     sandbox = await Sandbox.create({
       name: sandboxName(runId),
       image: python ? 'vercel/sandbox/python:3.14' : 'vercel/sandbox/node:24',
@@ -70,12 +71,15 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
 
     if (input.mode === 'files') {
       stage = 'Workspace creation';
+      const folders = input.folders ?? [];
       await requireSuccess(stage, await sandbox.runCommand({
-        cmd: 'mkdir', args: ['--', 'workspace'], cwd: work, timeoutMs: 3_000,
+        cmd: 'mkdir', args: ['-p', '--', 'workspace', ...folders.map((folder) => `workspace/${folder}`)],
+        cwd: work, timeoutMs: 3_000,
       }));
       stage = 'Writing workspace files';
       await sandbox.writeFiles([
-        { path: 'workspace/package.json', content: Buffer.from('{"type":"module"}') },
+        ...(!python && !input.files.some(({ name }) => name === 'package.json') && !folders.includes('package.json')
+          ? [{ path: 'workspace/package.json', content: Buffer.from('{"type":"module"}') }] : []),
         ...input.files.map(({ name, content }) => ({
           path: `workspace/${name}`, content: Buffer.from(content),
         })),
@@ -83,7 +87,7 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
       stage = 'Script execution';
       const command = await sandbox.runCommand({
         cmd: python ? 'python3' : 'node',
-        args: python ? ['-B', '-s', input.entry] : ['--experimental-transform-types', '--disable-warning=ExperimentalWarning', '--', input.entry],
+        args: python ? ['-B', '-s', '--', input.entry] : ['--experimental-transform-types', '--disable-warning=ExperimentalWarning', '--', input.entry],
         cwd: source, timeoutMs: 8_000,
       });
       return { kind: 'output' as const, output: await collect(command), exitCode: command.exitCode };

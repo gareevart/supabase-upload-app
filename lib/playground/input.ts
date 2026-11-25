@@ -1,6 +1,8 @@
+import { parseWorkspaceDraft, runnableKind, type SourceFile } from './workspace';
+
+export { MAX_FILES, type SourceFile } from './workspace';
 export const MAX_CODE_BYTES = 64 * 1024; // combined workspace content
-export const MAX_FILES = 20;
-export const MAX_REQUEST_BYTES = 400 * 1024;
+export const MAX_REQUEST_BYTES = 448 * 1024;
 export const PREVIEW_PORT = 4173;
 export const PREVIEW_MS = 10 * 60 * 1000;
 export const WORKSPACE_MS = 30_000;
@@ -15,34 +17,17 @@ export type PlaygroundBudget = {
   dailyResetAt: string;
 };
 
-export type SourceFile = { name: string; content: string };
-export type WorkspaceRun = { mode: 'files'; entry: string; files: SourceFile[] };
+export type WorkspaceRun = { mode: 'files'; entry: string; files: SourceFile[]; folders?: string[] };
 
 export type RunInput =
   | WorkspaceRun
   | { mode: 'github'; repo: string; directory: string };
 
-export function isSourceName(name: unknown): name is string {
-  return typeof name === 'string' && /^[a-zA-Z0-9_][a-zA-Z0-9_-]{0,62}\.(js|ts|py)$(?![\s\S])/.test(name);
-}
-
 export function parseWorkspace(input: Record<string, unknown>, maxBytes = MAX_CODE_BYTES): WorkspaceRun | null {
-  if (!isSourceName(input.entry) || !Array.isArray(input.files) || input.files.length === 0 ||
-      input.files.length > MAX_FILES) return null;
-  const files: SourceFile[] = [];
-  const names = new Set<string>();
-  const encoder = new TextEncoder();
-  let bytes = 0;
-  for (const file of input.files) {
-    if (!file || !isSourceName(file.name) || typeof file.content !== 'string' ||
-        names.has(file.name.toLowerCase())) return null;
-    names.add(file.name.toLowerCase());
-    bytes += encoder.encode(file.content).length;
-    if (bytes > maxBytes) return null;
-    files.push({ name: file.name, content: file.content });
-  }
-  if (!files.some((file) => file.name === input.entry)) return null;
-  return { mode: 'files', entry: input.entry, files };
+  const workspace = parseWorkspaceDraft(input, maxBytes);
+  if (!workspace || !runnableKind(workspace.entry)) return null;
+  const { files, folders, entry } = workspace;
+  return { mode: 'files', entry, files, ...(folders.length ? { folders } : {}) };
 }
 
 export function parseRunInput(value: unknown): RunInput | null {

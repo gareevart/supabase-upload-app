@@ -79,9 +79,9 @@ it('opens files from the Explorer by mouse and keyboard and stays in sync with t
   addFile('helper.ts');
   fireEvent.change(screen.getByRole('textbox', { name: 'helper.ts' }), { target: { value: 'export const value = 42;' } });
 
-  const list = screen.getByRole('listbox', { name: 'Workspace files' });
-  const main = within(list).getByRole('option', { name: 'main.js', selected: false });
-  const helper = within(list).getByRole('option', { name: 'helper.ts', selected: true });
+  const list = screen.getByRole('tree', { name: 'Workspace files' });
+  const main = within(list).getByRole('treeitem', { name: 'main.js', selected: false });
+  const helper = within(list).getByRole('treeitem', { name: 'helper.ts', selected: true });
   fireEvent.click(main);
 
   expect(main).toHaveAttribute('aria-selected', 'true');
@@ -106,16 +106,66 @@ it('does not switch files while a run is in progress', () => {
   (authFetch as jest.Mock).mockImplementation(() => new Promise(() => {}));
   render(<Playground />, { wrapper: Providers });
   addFile('helper.ts');
-  const list = screen.getByRole('listbox', { name: 'Workspace files' });
+  const list = screen.getByRole('tree', { name: 'Workspace files' });
   act(() => list.focus());
   fireEvent.click(screen.getByRole('button', { name: 'Run helper.ts' }));
 
-  const main = within(list).getByRole('option', { name: 'main.js' });
+  const main = within(list).getByRole('treeitem', { name: 'main.js' });
   expect(main).toHaveAttribute('aria-disabled', 'true');
   fireEvent.click(main);
   fireEvent.keyDown(list, { key: 'ArrowUp' });
   fireEvent.keyDown(list, { key: 'Enter' });
   expect(screen.getByRole('textbox', { name: 'helper.ts' })).toBeInTheDocument();
+});
+
+const addFolder = (name: string) => {
+  fireEvent.click(screen.getByRole('button', { name: 'New folder' }));
+  fireEvent.change(screen.getByRole('textbox', { name: 'Folder name' }), { target: { value: name } });
+  fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+};
+
+it('creates and edits arbitrary text files in nested folders, then restores the tree and document', () => {
+  const view = render(<Playground />, { wrapper: Providers });
+  addFolder('src');
+  addFolder('assets');
+  addFile('README');
+  const tree = screen.getByRole('tree', { name: 'Workspace files' });
+  expect(within(tree).getByRole('treeitem', { name: 'README' })).toHaveAttribute('aria-level', '3');
+  const editor = screen.getByRole('textbox', { name: 'src/assets/README' });
+  fireEvent.change(editor, { target: { value: 'A text file with no extension.' } });
+  expect(screen.getByRole('button', { name: 'Open a JavaScript, TypeScript, or Python file to run' })).toBeDisabled();
+
+  view.unmount();
+  render(<Playground />, { wrapper: Providers });
+  expect(screen.getByRole('treeitem', { name: 'assets' })).toHaveAttribute('aria-level', '2');
+  expect(screen.getByRole('textbox', { name: 'src/assets/README' })).toHaveValue('A text file with no extension.');
+});
+
+it('handles extensionless names that match JavaScript object properties', () => {
+  render(<Playground />, { wrapper: Providers });
+  addFolder('__proto__');
+  addFile('constructor');
+  expect(screen.getByRole('treeitem', { name: '__proto__' })).toBeInTheDocument();
+  expect(screen.getByRole('textbox', { name: '__proto__/constructor' })).toBeInTheDocument();
+});
+
+it('renames folders and confirms recursive deletion while preserving other files', async () => {
+  render(<Playground />, { wrapper: Providers });
+  addFolder('src');
+  addFile('.gitignore');
+  fireEvent.change(screen.getByRole('textbox', { name: 'src/.gitignore' }), { target: { value: 'node_modules/' } });
+  fireEvent.click(screen.getByRole('treeitem', { name: 'src' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Rename selected item' }));
+  fireEvent.change(screen.getByRole('textbox', { name: 'New name' }), { target: { value: 'source' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
+  expect(screen.getByRole('textbox', { name: 'source/.gitignore' })).toHaveValue('node_modules/');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Delete selected item' }));
+  expect(await screen.findByText('Delete source and everything inside it? This cannot be undone.')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+  expect(await screen.findByRole('textbox', { name: 'main.js' })).toBeInTheDocument();
+  expect(screen.queryByRole('treeitem', { name: 'source' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('treeitem', { name: '.gitignore' })).not.toBeInTheDocument();
 });
 
 it('keeps unsent files when switching to the independent GitHub import mode', () => {
@@ -152,7 +202,7 @@ it('uses the post action bar and translates the workspace, dialogs and existing 
   expect(crumb.closest('.page-action-bar')).toBeInTheDocument();
   expect(screen.getByRole('heading', { level: 1, name: 'Playground' })).toBeInTheDocument();
   expect(screen.getByRole('radio', { name: 'Рабочая область' })).toBeInTheDocument();
-  expect(screen.getByRole('listbox', { name: 'Файлы рабочей области' })).toBeInTheDocument();
+  expect(screen.getByRole('tree', { name: 'Файлы рабочей области' })).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Удалить открытый файл' }));
   expect(await screen.findByText('Удалить main.js из рабочей области? Это действие нельзя отменить.')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));
