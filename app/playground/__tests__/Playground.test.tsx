@@ -392,10 +392,24 @@ it('runs npm create from the terminal and opens imported Gravity UI files in the
   const panel = within(screen.getByRole('region', { name: 'Terminal' }));
   fireEvent.change(panel.getByRole('textbox', { name: 'Terminal command' }), { target: { value: 'npm create @gravity-ui' } });
   fireEvent.click(panel.getByRole('button', { name: 'Run' }));
+  const setup = within(panel.getByRole('form', { name: 'Set up a Gravity UI project' }));
+  expect(authFetch).not.toHaveBeenCalled();
+  expect(setup.getByRole('textbox', { name: 'Project folder' })).toHaveValue('gravity-app');
+  fireEvent.change(setup.getByRole('combobox', { name: 'Language' }), { target: { value: 'js' } });
+  fireEvent.change(setup.getByRole('textbox', { name: 'Project folder' }), { target: { value: '../oops' } });
+  fireEvent.click(setup.getByRole('button', { name: 'Create and install' }));
+  expect(setup.getByText(/Use up to 64 lowercase/)).toBeInTheDocument();
+  expect(authFetch).not.toHaveBeenCalled();
+  fireEvent.change(setup.getByRole('textbox', { name: 'Project folder' }), { target: { value: 'gravity-app' } });
+  fireEvent.click(setup.getByRole('checkbox', { name: 'Backend' }));
+  fireEvent.click(setup.getByRole('checkbox', { name: 'Frontend' }));
+  expect(setup.queryByRole('checkbox', { name: 'React' })).not.toBeInTheDocument();
+  fireEvent.click(setup.getByRole('button', { name: 'Create and install' }));
   expect(await screen.findByRole('textbox', { name: 'gravity-app/entries/app.tsx' })).toHaveValue(changes.files[2].content);
   expect(panel.getByText(/added packages/)).toBeInTheDocument();
   expect(JSON.parse((authFetch as jest.Mock).mock.calls[0][1].body)).toEqual({
     mode: 'npm', command: 'npm create @gravity-ui', manifests: [],
+    setup: { folder: 'gravity-app', language: 'js', frontend: false, styles: false, react: false, backend: true },
   });
   expect(within(screen.getByRole('tree')).getByRole('treeitem', { name: 'package-lock.json' })).toBeInTheDocument();
   expect(panel.getByText('/gravity-app $')).toBeInTheDocument();
@@ -428,4 +442,18 @@ it('keeps Run output and npm commands in the same Terminal history and clears bo
   expect(history.queryByText('added package')).not.toBeInTheDocument();
   expect(history.queryByText('script ran')).not.toBeInTheDocument();
   expect(input).toBeEnabled();
+});
+
+it('cancels the Gravity UI setup without starting npm', () => {
+  render(<Playground />, { wrapper: Providers });
+  const terminal = within(screen.getByRole('region', { name: 'Terminal' }));
+  fireEvent.change(terminal.getByRole('textbox', { name: 'Terminal command' }), {
+    target: { value: 'npm create @gravity-ui -- --out demo' },
+  });
+  fireEvent.click(terminal.getByRole('button', { name: 'Run' }));
+  expect(terminal.getByRole('textbox', { name: 'Project folder' })).toHaveValue('demo');
+  fireEvent.click(terminal.getByRole('button', { name: 'Cancel' }));
+  expect(terminal.queryByRole('form', { name: 'Set up a Gravity UI project' })).not.toBeInTheDocument();
+  expect(terminal.getByRole('textbox', { name: 'Terminal command' })).toHaveValue('npm create @gravity-ui -- --out demo');
+  expect(authFetch).not.toHaveBeenCalled();
 });

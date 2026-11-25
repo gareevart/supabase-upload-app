@@ -4,7 +4,7 @@ import { stripVTControlCharacters } from 'node:util';
 import { MAX_REQUEST_BYTES } from './input';
 import { NPM_REGISTRY, WORKSPACE_NPM_CI_ARGS } from './npm-workspace';
 import { TERMINAL_EXPORT } from './terminal-export';
-import { GRAVITY_GENERATOR, MAX_TERMINAL_BYTES, type TerminalInput } from './terminal';
+import { GRAVITY_DEFAULTS, GRAVITY_GENERATOR, MAX_TERMINAL_BYTES, type TerminalInput } from './terminal';
 import { parseWorkspaceDraft } from './workspace';
 
 type Runner = {
@@ -37,11 +37,14 @@ export async function runNpmTerminal(sandbox: Sandbox, work: string, input: Term
 
   if (command.kind === 'create') {
     runner.stage('Project generation');
+    const { language, frontend, styles, react, backend } = command.options ?? GRAVITY_DEFAULTS;
+    const flag = (name: string, enabled: boolean) => enabled ? `--${name}` : `--no-${name}`;
     const generated = await sandbox.runCommand({
       cmd: 'npm',
       args: [`--registry=${NPM_REGISTRY}`, '--yes', '--ignore-scripts', '--no-audit', '--no-fund',
         '--userconfig=./.empty-npmrc', '--globalconfig=/dev/null',
-        'create', GRAVITY_GENERATOR, '--', '--out', command.folder, '--yes'],
+        'create', GRAVITY_GENERATOR, '--', '--out', command.folder, '--language', language,
+        flag('frontend', frontend), flag('styles', styles), flag('react', react), flag('backend', backend), '--yes'],
       cwd: source, env, timeoutMs: 30_000,
     });
     output = npmOutput(await runner.collect(generated));
@@ -57,7 +60,7 @@ export async function runNpmTerminal(sandbox: Sandbox, work: string, input: Term
   const install = await sandbox.runCommand({
     cmd: 'npm', args: ['install', ...npmOptions, '--', ...(command.kind === 'install' ? command.packages : [])],
     cwd: command.kind === 'create' ? posix.join(source, command.folder) : source,
-    env, timeoutMs: command.kind === 'create' ? 78_000 : 95_000,
+    env, timeoutMs: command.kind === 'create' ? 105_000 : 95_000,
   });
   output += `${output ? '\n$ npm install\n' : ''}${npmOutput(await runner.collect(install))}`;
   if (install.exitCode !== 0) return { kind: 'terminal' as const, output, exitCode: install.exitCode };

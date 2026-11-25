@@ -120,7 +120,6 @@
   "playground.terminalHistory": "Terminal history",
   "playground.terminalRunning": "Running npm…",
   "playground.terminalUnsupported": "Supported commands: npm create @gravity-ui, npm install [package], cd, and clear.",
-  "playground.terminalFolderExists": "The folder {name} already exists. Use npm create @gravity-ui -- --out another-name.",
   "playground.terminalFolderMissing": "Folder not found in the Workspace.",
   "playground.terminalBudget": "The shared cloud runtime is disabled, busy, or has too little time remaining for npm.",
   "playground.terminalExit": "npm exited with code {code}. Workspace files were not changed.",
@@ -128,5 +127,13 @@
   "playground.projectGeneration": "Project generation",
   "playground.projectExport": "Project export",
   "playground.sandboxExpires": "Sandbox shuts down in {time}",
-  "playground.openHtmlPreview": "Open HTML in a new tab"
+  "playground.openHtmlPreview": "Open HTML in a new tab",
+  "playground.gravitySetup": "Set up a Gravity UI project",
+  "playground.gravityFolder": "Project folder",
+  "playground.gravityLanguage": "Language",
+  "playground.gravityFrontend": "Frontend",
+  "playground.gravityBackend": "Backend",
+  "playground.gravityInstall": "Create and install",
+  "playground.gravityInvalidFolder": "Use up to 64 lowercase letters, digits, or hyphens. Start with a letter or digit.",
+  "playground.gravityFolderExists": "A file or folder with that name already exists."
 }

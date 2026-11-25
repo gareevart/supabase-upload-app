@@ -122,3 +122,12 @@
 .terminalForm { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 6px 12px; border-top: 1px solid var(--line); }
 .terminalForm code { max-width: min(12rem, 30vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .htmlPreviewActions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+.editArea[data-terminal-setup="true"] { grid-template-rows: auto minmax(0, 1fr) clamp(210px, 60%, 365px); }
+.gravitySetup { min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+.gravityFields { min-height: 0; overflow: auto; display: grid; align-content: start; gap: 10px; padding: 10px 12px; }
+.gravityInputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr)); gap: 8px; }
+.gravityInputs label { min-width: 0; display: grid; align-content: start; gap: 4px; }
+.gravityInputs select { min-height: 28px; min-width: 0; background: var(--canvas); color: var(--g-color-text-primary); border: 1px solid var(--g-color-line-generic); border-radius: 5px; }
+.gravityOptions, .gravityActions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.gravityActions { justify-content: flex-end; padding: 6px 12px; border-top: 1px solid var(--line); }

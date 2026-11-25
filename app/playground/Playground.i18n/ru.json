@@ -120,7 +120,6 @@
   "playground.terminalHistory": "История терминала",
   "playground.terminalRunning": "Выполняю команду npm…",
   "playground.terminalUnsupported": "Поддерживаются npm create @gravity-ui, npm install [пакет], cd и clear.",
-  "playground.terminalFolderExists": "Папка {name} уже существует. Укажите новое имя: npm create @gravity-ui -- --out another-name.",
   "playground.terminalFolderMissing": "Папка не найдена в проекте.",
   "playground.terminalBudget": "Общая песочница отключена, занята или в ней осталось недостаточно времени для npm.",
   "playground.terminalExit": "npm завершился с кодом {code}. Файлы проекта не изменены.",
@@ -128,5 +127,13 @@
   "playground.projectGeneration": "Создание проекта",
   "playground.projectExport": "Перенос файлов",
   "playground.sandboxExpires": "Песочница выключится через {time}",
-  "playground.openHtmlPreview": "Открыть HTML в новой вкладке"
+  "playground.openHtmlPreview": "Открыть HTML в новой вкладке",
+  "playground.gravitySetup": "Настройка проекта Gravity UI",
+  "playground.gravityFolder": "Папка проекта",
+  "playground.gravityLanguage": "Язык",
+  "playground.gravityFrontend": "Фронтенд",
+  "playground.gravityBackend": "Бэкенд",
+  "playground.gravityInstall": "Создать и установить",
+  "playground.gravityInvalidFolder": "До 64 символов: строчные латинские буквы, цифры и дефисы. Начните с буквы или цифры.",
+  "playground.gravityFolderExists": "Файл или папка с таким именем уже существует."
 }

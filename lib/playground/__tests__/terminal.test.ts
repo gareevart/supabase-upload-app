@@ -49,3 +49,15 @@ it('applies only install manifest changes to the current directory', () => {
   expect(result?.files[1].name).toBe('packages/package.json');
   expect(result?.entry).toBe(original.entry);
 });
+
+it('validates Gravity wizard choices on the server without accepting CLI flags or custom registries', () => {
+  const setup = { folder: 'test', language: 'js', frontend: false, react: false, styles: false, backend: true };
+  const request = { command: 'npm create @gravity-ui', manifests: [], setup };
+  expect(parseTerminalInput(request)).toMatchObject({
+    command: { kind: 'create', folder: 'test', options: { language: 'js', frontend: false, backend: true } },
+  });
+  for (const invalid of [
+    { folder: '../bad' }, { registry: 'https://example.com' }, { react: true }, { language: 'bash' },
+  ]) expect(parseTerminalInput({ ...request, setup: { ...setup, ...invalid } })).toBeNull();
+  expect(parseTerminalInput({ ...request, command: 'npm install react' })).toBeNull();
+});

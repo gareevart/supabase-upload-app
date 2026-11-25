@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import CodeEditor from './CodeEditor';
+import GravitySetupForm from './GravitySetupForm';
 import WorkspaceTree, { FileBadge } from './WorkspaceTree';
 import { useWorkspaceDrag } from './useWorkspaceDrag';
 import {
@@ -20,7 +21,8 @@ import {
   relocateWorkspaceNode, removeWorkspaceNode, runnableKind, type Workspace, type WorkspaceNode,
 } from '@/lib/playground/workspace';
 import {
-  applyTerminalChanges, parseTerminalCommand, resolveTerminalDirectory, terminalCanCreate,
+  applyTerminalChanges, GRAVITY_DEFAULTS, isGravityFolder, parseTerminalCommand, resolveTerminalDirectory,
+  terminalCanCreate, type GravitySetup, type TerminalCommand,
   TERMINAL_MANIFESTS, TERMINAL_RESERVE_MS,
 } from '@/lib/playground/terminal';
 import styles from './playground.module.css';
@@ -68,9 +70,12 @@ export default function Playground() {
   const [showTerminal, setShowTerminal] = useState(true);
   const [terminalCommand, setTerminalCommand] = useState('');
   const [terminalCwd, setTerminalCwd] = useState('');
+  const [gravitySetup, setGravitySetup] = useState<GravitySetup | null>(null);
+  const [gravityError, setGravityError] = useState<MessageKey | null>(null);
   const [transcript, setTranscript] = useState<(TerminalEntry & { id: number })[]>([]);
   const [runningCommand, setRunningCommand] = useState('');
   const terminalBody = useRef<HTMLDivElement>(null);
+  const terminalInput = useRef<HTMLInputElement>(null);
   const nextTerminalId = useRef(0);
   const [pendingDelete, setPendingDelete] = useState<WorkspaceNode | null>(null);
   const [repo, setRepo] = useState('');
@@ -275,7 +280,7 @@ export default function Playground() {
 
   async function run(event?: FormEvent) {
     event?.preventDefault();
-    if (busy || preview || budgetBlocked || (mode === 'files' && (!canRun || tooLarge))) return;
+    if (busy || preview || gravitySetup || budgetBlocked || (mode === 'files' && (!canRun || tooLarge))) return;
     setBusy(true);
     setShowTerminal(canRun !== 'html' || mode === 'github');
     setPreviewError(null);
@@ -331,11 +336,36 @@ export default function Playground() {
       return;
     }
     if (!command) return commandError('terminalUnsupported');
-    if (command.kind === 'create' && !terminalCanCreate(workspace, cwd, command.folder)) {
-      return commandError('terminalFolderExists', { name: command.folder });
+    if (command.kind === 'create') {
+      setGravityError(null);
+      setGravitySetup({ ...GRAVITY_DEFAULTS, folder: command.folder });
+      return;
     }
-    if (budget && (!budget.enabled || budget.active || !budget.remainingStarts ||
-        budget.remainingSeconds < TERMINAL_RESERVE_MS / 1_000)) return commandError('terminalBudget');
+    if (terminalBudgetBlocked) return commandError('terminalBudget');
+    await executeTerminal(line, command);
+  }
+
+  const terminalBudgetBlocked = budget && (!budget.enabled || budget.active || !budget.remainingStarts ||
+    budget.remainingSeconds < TERMINAL_RESERVE_MS / 1_000);
+
+  async function submitGravitySetup(event: FormEvent) {
+    event.preventDefault();
+    if (!gravitySetup || busy || preview) return;
+    const folder = gravitySetup.folder.trim();
+    if (!isGravityFolder(folder)) return setGravityError('gravityInvalidFolder');
+    if (!terminalCanCreate(workspace, terminalCwd, folder)) return setGravityError('gravityFolderExists');
+    if (terminalBudgetBlocked) return setGravityError('terminalBudget');
+    const options = {
+      ...gravitySetup, folder, styles: gravitySetup.frontend && gravitySetup.styles, react: gravitySetup.frontend && gravitySetup.react,
+    };
+    setGravitySetup(null);
+    setGravityError(null);
+    await executeTerminal(terminalCommand.trim(), { kind: 'create', folder }, options);
+  }
+
+  async function executeTerminal(line: string, command: TerminalCommand, setup?: GravitySetup) {
+    const cwd = terminalCwd;
+    const prompt = `/${cwd} $ ${line}`;
 
     setRunningCommand(prompt);
     setTerminalCommand('');
@@ -348,7 +378,7 @@ export default function Playground() {
       }) : [];
       const res = await authFetch('/api/playground', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: 'npm', command: line, manifests }),
+        body: JSON.stringify({ mode: 'npm', command: line, manifests, ...(setup ? { setup } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -397,7 +427,7 @@ export default function Playground() {
     }
   }
 
-  const runDisabled = busy || budgetBlocked || (mode === 'files' ? tooLarge || !canRun : !repo.trim());
+  const runDisabled = busy || !!gravitySetup || budgetBlocked || (mode === 'files' ? tooLarge || !canRun : !repo.trim());
   const runLabel = mode === 'github' ? msg('importAndRun') : canRun ? msg('runFile', { name: activeFile.name }) : msg(activeFile ? 'notRunnable' : 'runUnselected');
   const runtime = budget ? msg('runtime', {
     hours: Math.floor(budget.remainingSeconds / 3600),
@@ -433,7 +463,7 @@ export default function Playground() {
       />
       <div className={styles.activity}>
         <div className={styles.activityTools}>
-          <SegmentedRadioGroup size="m" value={mode} disabled={busy || !!preview}
+          <SegmentedRadioGroup size="m" value={mode} disabled={busy || !!preview || !!gravitySetup}
             onUpdate={setMode} aria-label={msg('source')}
             options={[{ value: 'files', content: msg('workspace') }, { value: 'github', content: 'GitHub / Vite' }]} />
           <Button view="flat" size="s" selected={showExplorer} aria-expanded={showExplorer}
@@ -549,7 +579,7 @@ export default function Playground() {
         </aside>}
 
         <TabProvider value={mode === 'files' ? workspace.entry : 'preview'} onUpdate={(name) => { if (mode === 'files') pickFile(name); }}>
-          <section className={styles.editArea} aria-label={msg(mode === 'files' ? 'editor' : 'preview')} data-terminal={showTerminal}>
+          <section className={styles.editArea} aria-label={msg(mode === 'files' ? 'editor' : 'preview')} data-terminal={showTerminal} data-terminal-setup={showTerminal && !!gravitySetup}>
             <TabList className={styles.tabs} aria-label={msg(mode === 'files' ? 'editorTabs' : 'previewTabs')} contentOverflow="scroll" size="m">
               {mode === 'files' && workspace.files.map((file) => (
                 <Tab key={file.name} value={file.name} disabled={busy} aria-label={file.name} title={file.name}
@@ -610,18 +640,28 @@ export default function Playground() {
                       onClick={clearTerminal}>{msg('clear')}</Button>
                   </div>
                 </div>
-                <div ref={terminalBody} className={styles.terminalBody} role="log" aria-label={msg('terminalHistory')}>
-                  {!transcript.length && !preview && !busy && !previewError &&
-                    <Text as="p" color="secondary" variant="body-1">{msg(mode === 'files' ? 'terminalHelp' : 'emptyRepoTerminal')}</Text>}
-                  {transcript.map(({ id, command, logs, error, script }) => (
-                    <div className={styles.terminalEntry} key={id}>
-                      {command && <pre>{command}</pre>}
-                      {logs && <pre>{logs}</pre>}
-                      {script && <>
-                        {typeof script.installLogs === 'string' && <>
-                          <Text as="p" variant="caption-2">{msg('dependenciesInstalled')}</Text>
-                          {script.installLogs && <pre>{script.installLogs}</pre>}
-                          <Text as="p" variant="caption-2">{msg('scriptOutput')}</Text>
+                {gravitySetup ? (
+                  <GravitySetupForm setup={gravitySetup} error={gravityError ? msg(gravityError) : undefined} msg={msg}
+                    onUpdate={(next) => { setGravitySetup(next); setGravityError(null); }}
+                    onCancel={() => {
+                      setGravitySetup(null);
+                      setGravityError(null);
+                      requestAnimationFrame(() => terminalInput.current?.focus());
+                    }}
+                    onSubmit={submitGravitySetup} />
+                ) : <>
+                  <div ref={terminalBody} className={styles.terminalBody} role="log" aria-label={msg('terminalHistory')}>
+                    {!transcript.length && !preview && !busy && !previewError &&
+                      <Text as="p" color="secondary" variant="body-1">{msg(mode === 'files' ? 'terminalHelp' : 'emptyRepoTerminal')}</Text>}
+                    {transcript.map(({ id, command, logs, error, script }) => (
+                      <div className={styles.terminalEntry} key={id}>
+                        {command && <pre>{command}</pre>}
+                        {logs && <pre>{logs}</pre>}
+                        {script && <>
+                          {typeof script.installLogs === 'string' && <>
+                            <Text as="p" variant="caption-2">{msg('dependenciesInstalled')}</Text>
+                            {script.installLogs && <pre>{script.installLogs}</pre>}
+                            <Text as="p" variant="caption-2">{msg('scriptOutput')}</Text>
                         </>}
                         <Label size="xs" theme={script.exitCode === 0 ? 'success' : 'danger'}>{msg('exitCode', { name: script.entry, code: script.exitCode })}</Label>
                         <pre>{script.output || msg('noOutput')}</pre>
@@ -638,11 +678,12 @@ export default function Playground() {
                 </div>
                 {mode === 'files' && <form className={styles.terminalForm} onSubmit={runTerminal}>
                   <code>/{terminalCwd} $</code>
-                  <TextInput value={terminalCommand} onUpdate={setTerminalCommand}
+                  <TextInput controlRef={terminalInput} value={terminalCommand} onUpdate={setTerminalCommand}
                     disabled={busy || !!preview} placeholder="npm create @gravity-ui" autoComplete="off"
                     controlProps={{ maxLength: 320, 'aria-label': msg('terminalCommand') }} />
                   <Button type="submit" view="action" disabled={busy || !!preview || !terminalCommand.trim()}>{msg('run')}</Button>
                 </form>}
+                </>}
               </section>
             )}
           </section>

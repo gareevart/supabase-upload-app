@@ -227,13 +227,18 @@ it('runs the official Gravity initializer then installs, closes egress and impor
   const changes = { folders: ['gravity-app'], files: [{ name: 'gravity-app/package.json', content: '{}' }] };
   const readFile = jest.fn().mockResolvedValue(Readable.from([JSON.stringify(changes)]));
   Object.assign(vm, { readFile });
-  await expect(runInSandbox({ mode: 'npm', command: { kind: 'create', folder: 'gravity-app' }, manifests: [] }, id, release))
+  await expect(runInSandbox({ mode: 'npm', command: { kind: 'create', folder: 'gravity-app',
+    options: { language: 'js', frontend: false, styles: false, react: false, backend: true },
+  }, manifests: [] }, id, release))
     .resolves.toEqual({ kind: 'terminal', exitCode: 0, output: 'hello\n\n$ npm install\nhello\n', changes });
   expect(Sandbox.create).toHaveBeenCalledWith(expect.objectContaining({
-    timeout: 130_000, persistent: false, ports: [], networkPolicy: { allow: ['registry.npmjs.org'] },
+    timeout: 165_000, persistent: false, ports: [], networkPolicy: { allow: ['registry.npmjs.org'] },
   }));
   expect(vm.runCommand).toHaveBeenNthCalledWith(2, expect.objectContaining({
-    cmd: 'npm', cwd: '/vercel/workspace', args: expect.arrayContaining(['create', '@gravity-ui@1.0.1', '--out', 'gravity-app', '--yes']),
+    cmd: 'npm', cwd: '/vercel/workspace', args: expect.arrayContaining([
+      'create', '@gravity-ui@1.0.1', '--out', 'gravity-app', '--language', 'js',
+      '--no-frontend', '--no-react', '--no-styles', '--backend', '--yes',
+    ]),
   }));
   expect(vm.runCommand).toHaveBeenNthCalledWith(3, expect.objectContaining({
     cmd: 'npm', cwd: '/vercel/workspace/gravity-app', args: expect.arrayContaining(['install', '--ignore-scripts']),
