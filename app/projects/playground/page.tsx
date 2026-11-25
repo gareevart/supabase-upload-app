@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function PlaygroundPage() {
-  return <Playground />;
+  return <Playground linuxPreviewEnabled={process.env.VERCEL_ENV !== 'production'} />;
 }
