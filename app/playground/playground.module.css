@@ -31,7 +31,6 @@
 }
 
 .shell {
-  --panel: var(--g-color-base-generic);
   --canvas: var(--g-color-base-background);
   --line: var(--g-color-line-generic);
   width: 100%;
@@ -55,7 +54,6 @@
 .shell .pageBar { position: sticky; }
 .activity, .statusbar {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
-  background: var(--panel);
 }
 .toolbarActions, .activityTools, .statusbar > div {
   display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap;
@@ -64,7 +62,7 @@
 .activityTools { gap: 3px; }
 .workbench { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); }
 .workbench[data-explorer='true'] { grid-template-columns: 236px minmax(0, 1fr); }
-.explorer { min-height: 0; min-width: 0; overflow: auto; background: var(--panel); border-right: 1px solid var(--line); }
+.explorer { min-height: 0; min-width: 0; overflow: auto; border-right: 1px solid var(--line); }
 .sideHeading, .consoleHead { display: flex; justify-content: space-between; align-items: center; min-height: 36px; padding: 0 12px; }
 .sideHeading h2, .consoleHead h2 { text-transform: uppercase; letter-spacing: .04em; }
 .treeHeading { padding: 5px 12px; }
@@ -78,13 +76,13 @@
 .repoForm label { display: grid; gap: 4px; }
 .editArea { min-width: 0; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); }
 .editArea[data-console='true'] { grid-template-rows: auto minmax(0, 1fr) clamp(105px, 24%, 220px); }
-.tabs { padding: 0 12px; background: var(--panel); min-height: 36px; min-width: 0; }
+.tabs { padding: 0 12px; min-height: 36px; min-width: 0; }
 .canvas { min-width: 0; min-height: 0; overflow: hidden; }
 .editorPane { height: 100%; min-height: 0; }
 .blank { overflow: auto; height: 100%; box-sizing: border-box; display: grid; padding: 12px; place-content: center; }
 .preview { display: block; border: 0; width: 100%; height: 100%; background: var(--canvas); }
 .console { min-height: 0; display: grid; grid-template-rows: 35px minmax(0, 1fr); border-top: 1px solid var(--line); }
-.consoleHead { border-bottom: 1px solid var(--line); background: var(--panel); }
+.consoleHead { border-bottom: 1px solid var(--line); }
 .consoleBody { overflow: auto; padding: 8px 12px; display: grid; justify-items: start; align-content: start; gap: 6px; }
 .consoleBody pre { font: 12px/1.6 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; }
 .running { display: flex; gap: 8px; align-items: center; }
