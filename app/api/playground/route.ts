@@ -55,6 +55,7 @@ const start = withApiAuth(async (req, user) => {
     if (issue) throw new Error('Quota reservation failed.');
     if (data === 'disabled') return error('Cloud runs are not enabled on this deployment.', 503);
     if (data === 'busy') return error('The shared sandbox slot is busy. Try again when the current run ends.', 429);
+    // A database that has not applied the quota migration can still return this code.
     if (data === 'daily') return error('The shared daily start limit has been reached.', 429);
     if (data === 'time') return error('There is not enough shared runtime left for this run.', 429);
     if (data !== 'reserved') throw new Error('Unexpected quota response.');

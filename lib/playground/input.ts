@@ -13,10 +13,7 @@ export type PlaygroundBudget = {
   enabled: boolean;
   remainingSeconds: number;
   totalSeconds: number;
-  remainingStarts: number;
-  dailyStarts: number;
   active: boolean;
-  dailyResetAt: string;
 };
 
 export type WorkspaceRun = { mode: 'files'; entry: string; files: SourceFile[]; folders?: string[] };

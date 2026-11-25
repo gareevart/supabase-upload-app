@@ -101,7 +101,7 @@ export default function Playground() {
   const bytes = workspace.files.reduce((total, file) => total + encoder.encode(file.content).length, 0);
   const tooLarge = bytes > MAX_CODE_BYTES;
   const budgetBlocked = budget !== null && (
-    !budget.enabled || budget.remainingStarts === 0 ||
+    !budget.enabled ||
     budget.remainingSeconds < (mode === 'github' || canRun === 'html' ? PREVIEW_MS : WORKSPACE_MS) / 1_000 ||
     (budget.active && !preview)
   );
@@ -345,7 +345,7 @@ export default function Playground() {
     await executeTerminal(line, command);
   }
 
-  const terminalBudgetBlocked = budget && (!budget.enabled || budget.active || !budget.remainingStarts ||
+  const terminalBudgetBlocked = budget && (!budget.enabled || budget.active ||
     budget.remainingSeconds < TERMINAL_RESERVE_MS / 1_000);
 
   async function submitGravitySetup(event: FormEvent) {
@@ -484,7 +484,7 @@ export default function Playground() {
               {budgetStatus === 'unavailable' && <Text as="p" color="secondary">{msg('unavailableBudget')}</Text>}
               {budget && <>
                 <Progress size="s" value={100 * budget.remainingSeconds / budget.totalSeconds} />
-                <Text as="p" variant="body-1">{msg('window', { hours: Math.round(budget.totalSeconds / 3600), starts: `${budget.remainingStarts}/${budget.dailyStarts}` })}</Text>
+                <Text as="p" variant="body-1">{msg('window', { hours: Math.round(budget.totalSeconds / 3600) })}</Text>
                 <Text as="p" variant="caption-2" color="secondary">{msg('budgetNote')}</Text>
                 {budget.active && <Label theme="info" size="xs">{msg('sandboxBusy')}</Label>}
                 {!budget.enabled && <Label theme="warning" size="xs">{msg('cloudDisabled')}</Label>}

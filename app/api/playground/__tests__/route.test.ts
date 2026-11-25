@@ -46,7 +46,7 @@ it('does not reserve quota for anonymous or foreign-origin requests', async () =
 });
 
 it('shows non-user-specific quota without authentication', async () => {
-  const snapshot = { enabled: true, remainingSeconds: 17400, totalSeconds: 18000, remainingStarts: 8, dailyStarts: 10, active: false, dailyResetAt: '2026-11-26T00:00:00Z' };
+  const snapshot = { enabled: true, remainingSeconds: 17400, totalSeconds: 18000, active: false };
   rpc.mockReturnValue(ok(snapshot));
   const response = await GET();
   expect(response.status).toBe(200);

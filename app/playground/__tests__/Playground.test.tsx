@@ -35,8 +35,7 @@ function Providers({ children }: React.PropsWithChildren) {
   return <ThemeProvider theme="light" scoped><I18nProvider>{children}</I18nProvider></ThemeProvider>;
 }
 const demoBudget = {
-  enabled: true, remainingSeconds: 17800, totalSeconds: 18000, remainingStarts: 8, dailyStarts: 10, active: false,
-  dailyResetAt: '2026-11-26T00:00:00Z',
+  enabled: true, remainingSeconds: 17800, totalSeconds: 18000, active: false,
 };
 const mockBudget = (data: object) => ({
   ok: true, json: async () => data,
@@ -183,8 +182,26 @@ it('displays the shared quota and disables Run when it runs out', async () => {
   render(<Playground />, { wrapper: Providers });
   expect(await screen.findByText('0h 00m 00s')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Shared Playground runtime' }));
-  expect(await screen.findByText(/8\/10 starts left today/)).toBeInTheDocument();
+  expect(await screen.findByText('5h every 30 days')).toBeInTheDocument();
+  expect(screen.queryByText(/starts left today/i)).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Run main.js' })).toBeDisabled();
+});
+
+it('does not block Run or Terminal on a legacy zero count when runtime is available', async () => {
+  (fetch as jest.Mock).mockResolvedValue(mockBudget({ ...demoBudget, remainingStarts: 0, dailyStarts: 10 }));
+  (authFetch as jest.Mock).mockResolvedValue({
+    ok: true, json: async () => ({ kind: 'terminal', output: 'added a package', exitCode: 0, changes: {
+      folders: [], files: [{ name: 'package.json', content: '{"dependencies":{"react":"18"}}' }],
+    } }),
+  });
+  render(<Playground />, { wrapper: Providers });
+  await screen.findByText('4h 56m 40s');
+  expect(screen.getByRole('button', { name: 'Run main.js' })).toBeEnabled();
+  const terminal = within(screen.getByRole('region', { name: 'Terminal' }));
+  fireEvent.change(terminal.getByRole('textbox', { name: 'Terminal command' }), { target: { value: 'npm install react' } });
+  fireEvent.click(terminal.getByRole('button', { name: 'Run' }));
+  expect(await terminal.findByText('added a package')).toBeInTheDocument();
+  expect(authFetch).toHaveBeenCalledTimes(1);
 });
 
 it('uses the post action bar and translates the workspace, dialogs and existing errors with the current site language', async () => {
