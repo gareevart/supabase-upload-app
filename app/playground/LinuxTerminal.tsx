@@ -288,19 +288,23 @@ export default function LinuxTerminal({ workspace, blocked, published, msg, onAc
   }
 
   function start() {
+    if (busy.current) return;
+    onClosing(true);
     perform('start', async () => {
-      const details = await action({ action: 'start', workspace });
-      if (!validRunId(details.runId) || !Number.isFinite(Date.parse(details.expiresAt)) ||
-          Date.parse(details.expiresAt) <= Date.now() || Date.parse(details.expiresAt) > Date.now() + LINUX_SESSION_MS + 30_000) {
-        throw new Error('Invalid session expiry.');
-      }
-      const active = { runId: details.runId, expiresAt: details.expiresAt };
-      activeId.current = active.runId;
-      revision.current = undefined;
-      remember(active);
-      setSession(active);
-      onBudget();
-      connect(details);
+      try {
+        const details = await action({ action: 'start', workspace });
+        if (!validRunId(details.runId) || !Number.isFinite(Date.parse(details.expiresAt)) ||
+            Date.parse(details.expiresAt) <= Date.now() || Date.parse(details.expiresAt) > Date.now() + LINUX_SESSION_MS + 30_000) {
+          throw new Error('Invalid session expiry.');
+        }
+        const active = { runId: details.runId, expiresAt: details.expiresAt };
+        activeId.current = active.runId;
+        revision.current = undefined;
+        remember(active);
+        setSession(active);
+        onBudget();
+        connect(details);
+      } finally { onClosing(false); }
     });
   }
 
