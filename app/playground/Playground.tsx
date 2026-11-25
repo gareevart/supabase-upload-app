@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type FormEven
 import Link from 'next/link';
 import CodeEditor from './CodeEditor';
 import GravitySetupForm from './GravitySetupForm';
+import { workspaceChanges, type LinuxChange } from '@/lib/playground/linux-workspace-sync';
 import LinuxTerminal, { lastLinuxSession } from './LinuxTerminal';
 import WorkspaceTree, { FileBadge } from './WorkspaceTree';
 import { useWorkspaceDrag } from './useWorkspaceDrag';
@@ -51,7 +52,8 @@ function cache(key: string, value: unknown) {
   try {
     if (value === null) sessionStorage.removeItem(key);
     else sessionStorage.setItem(key, JSON.stringify(value));
-  } catch { /* The runner still works when browser storage is disabled. */ }
+    return true;
+  } catch { return false; }
 }
 
 export default function Playground({ linuxPreviewEnabled = true }: { linuxPreviewEnabled?: boolean }) {
@@ -72,6 +74,8 @@ export default function Playground({ linuxPreviewEnabled = true }: { linuxPrevie
   const [showTerminal, setShowTerminal] = useState(true);
   const [linuxMode, setLinuxMode] = useState(false);
   const [linuxActive, setLinuxActive] = useState(false);
+  const [linuxClosing, setLinuxClosing] = useState(false);
+  const linuxEditQueue = useRef<((changes: LinuxChange[]) => void) | null>(null);
   const [linuxPort, setLinuxPort] = useState<{ url: string; number: number } | null>(null);
   const [terminalCommand, setTerminalCommand] = useState('');
   const [terminalCwd, setTerminalCwd] = useState('');
@@ -93,7 +97,7 @@ export default function Playground({ linuxPreviewEnabled = true }: { linuxPrevie
   const [budgetStatus, setBudgetStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading');
   const [budgetRefresh, refreshBudget] = useState(0);
   const refreshLinuxBudget = useCallback(() => refreshBudget((version) => version + 1), []);
-  const workspaceLocked = busy || linuxActive;
+  const workspaceLocked = busy || linuxClosing;
   const htmlPreview = preview?.source === 'html' ? preview : null;
   const activeFile = workspace.files.find((file) => file.name === workspace.entry);
   const canRun = activeFile && runnableKind(activeFile.name);
@@ -203,10 +207,11 @@ export default function Playground({ linuxPreviewEnabled = true }: { linuxPrevie
     setPreviewError(null);
   }
 
-  function updateWorkspace(next: Workspace) {
+  function updateWorkspace(next: Workspace, fromLinux = false) {
+    if (!fromLinux && linuxActive) linuxEditQueue.current?.(workspaceChanges(workspace, next));
     if (terminalCwd && !next.folders.includes(terminalCwd)) setTerminalCwd('');
     setWorkspace(next);
-    cache(DRAFT, { ...next, expires: Date.now() + DRAFT_TTL });
+    return cache(DRAFT, { ...next, expires: Date.now() + DRAFT_TTL });
   }
 
   function setFolderOpen(path: string, open: boolean) {
@@ -289,7 +294,7 @@ export default function Playground({ linuxPreviewEnabled = true }: { linuxPrevie
 
   async function run(event?: FormEvent) {
     event?.preventDefault();
-    if (workspaceLocked || preview || gravitySetup || budgetBlocked || (mode === 'files' && (!canRun || tooLarge))) return;
+    if (workspaceLocked || linuxActive || preview || gravitySetup || budgetBlocked || (mode === 'files' && (!canRun || tooLarge))) return;
     setBusy(true);
     setShowTerminal(canRun !== 'html' || mode === 'github');
     setPreviewError(null);
@@ -436,7 +441,7 @@ export default function Playground({ linuxPreviewEnabled = true }: { linuxPrevie
     }
   }
 
-  const runDisabled = workspaceLocked || !!gravitySetup || budgetBlocked || (mode === 'files' ? tooLarge || !canRun : !repo.trim());
+  const runDisabled = workspaceLocked || linuxActive || !!gravitySetup || budgetBlocked || (mode === 'files' ? tooLarge || !canRun : !repo.trim());
   const runLabel = mode === 'github' ? msg('importAndRun') : canRun ? msg('runFile', { name: activeFile.name }) : msg(activeFile ? 'notRunnable' : 'runUnselected');
   const runtime = budget ? msg('runtime', {
     hours: Math.floor(budget.remainingSeconds / 3600),
@@ -466,10 +471,12 @@ export default function Playground({ linuxPreviewEnabled = true }: { linuxPrevie
   }
 
   function importLinuxWorkspace(next: Workspace) {
-    const entry = next.files.some((file) => file.name === workspace.entry) ? workspace.entry : next.entry;
-    updateWorkspace({ ...next, entry });
-    setSelectedFolder(null);
-    reveal(entry);
+    const keepEntry = next.files.some((file) => file.name === workspace.entry);
+    const entry = keepEntry ? workspace.entry : next.entry;
+    const saved = updateWorkspace({ ...next, entry }, true);
+    setSelectedFolder((folder) => folder && !next.folders.includes(folder) ? null : folder);
+    if (!keepEntry) reveal(entry);
+    return saved;
   }
 
   return (
@@ -483,7 +490,7 @@ export default function Playground({ linuxPreviewEnabled = true }: { linuxPrevie
       />
       <div className={styles.activity}>
         <div className={styles.activityTools}>
-          <SegmentedRadioGroup size="m" value={mode} disabled={workspaceLocked || !!preview || !!gravitySetup}
+          <SegmentedRadioGroup size="m" value={mode} disabled={workspaceLocked || linuxActive || !!preview || !!gravitySetup}
             onUpdate={(value) => { setMode(value); if (value === 'github') setLinuxMode(false); }} aria-label={msg('source')}
             options={[{ value: 'files', content: msg('workspace') }, { value: 'github', content: 'GitHub / Vite' }]} />
           <Button view="flat" size="s" selected={showExplorer} aria-expanded={showExplorer}
@@ -690,7 +697,7 @@ export default function Playground({ linuxPreviewEnabled = true }: { linuxPrevie
                 </div>
                 {linuxMode ? (
                   <LinuxTerminal workspace={workspace} published={!!linuxPort} blocked={!!(terminalBudgetBlocked || preview || busy || tooLarge)}
-                    msg={msg} onActive={setLinuxActive} onSync={importLinuxWorkspace} onPort={setLinuxPort} onBudget={refreshLinuxBudget} />
+                    msg={msg} onActive={setLinuxActive} onClosing={setLinuxClosing} editQueue={linuxEditQueue} onSync={importLinuxWorkspace} onPort={setLinuxPort} onBudget={refreshLinuxBudget} />
                 ) : gravitySetup ? (
                   <GravitySetupForm setup={gravitySetup} error={gravityError ? msg(gravityError) : undefined} msg={msg}
                     onUpdate={(next) => { setGravitySetup(next); setGravityError(null); }}

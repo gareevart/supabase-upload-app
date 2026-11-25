@@ -1,7 +1,7 @@
 'use client';
 
 import '@xterm/xterm/css/xterm.css';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { Alert, Button, Text } from '@gravity-ui/uikit';
 import type { Terminal } from '@xterm/xterm';
 import type { FitAddon } from '@xterm/addon-fit';
@@ -9,18 +9,22 @@ import { authFetch } from '@/lib/auth-fetch';
 import { isSandboxPreviewUrl, MAX_CODE_BYTES, validRunId } from '@/lib/playground/input';
 import { bashStart, LINUX_SESSION_MS, ptyUrl, type LinuxSession, type LinuxTicket } from '@/lib/playground/linux-session';
 import { parseWorkspaceDraft, type Workspace } from '@/lib/playground/workspace';
+import { mergeChanges, parseLinuxChanges, type LinuxChange } from '@/lib/playground/linux-workspace-sync';
 import { DEV_PORTS } from '@/lib/playground/dev-port-options';
 import type { MessageKey } from './messages';
 import styles from './playground.module.css';
 
 const STORAGE = 'gareev-playground-linux-v1';
+const PENDING = 'gareev-playground-linux-changes-v1';
 const API = '/api/playground/session';
-type Ops = 'start' | 'connect' | 'publish' | 'unpublish' | 'snapshot' | 'stop';
+type Ops = 'replace' | 'start' | 'connect' | 'publish' | 'unpublish' | 'stop';
 type Props = {
   workspace: Workspace; blocked: boolean; published: boolean;
   msg: (key: MessageKey, params?: Record<string, string | number>) => string;
   onActive: (active: boolean) => void;
-  onSync: (workspace: Workspace) => void;
+  onClosing: (closing: boolean) => void;
+  editQueue: MutableRefObject<((changes: LinuxChange[]) => void) | null>;
+  onSync: (workspace: Workspace) => boolean;
   onPort: (port: { url: string; number: number } | null) => void;
   onBudget: () => void;
 };
@@ -44,10 +48,10 @@ class RequestError extends Error {
   constructor(readonly status: number) { super('Linux session request failed'); }
 }
 
-async function action(body: Record<string, unknown>) {
+async function action(body: Record<string, unknown>, signal?: AbortSignal) {
   let res: Response;
   try {
-    res = await authFetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    res = await authFetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal });
   } catch (err) {
     if (err instanceof Error && err.message === 'No active session') throw new RequestError(401);
     throw err;
@@ -56,7 +60,7 @@ async function action(body: Record<string, unknown>) {
   return res.json();
 }
 
-export default function LinuxTerminal({ workspace, blocked, published, msg, onActive, onSync, onPort, onBudget }: Props) {
+export default function LinuxTerminal({ workspace, blocked, published, msg, onActive, onClosing, editQueue, onSync, onPort, onBudget }: Props) {
   const element = useRef<HTMLDivElement>(null);
   const terminal = useRef<Terminal>();
   const fitter = useRef<FitAddon>();
@@ -68,10 +72,65 @@ export default function LinuxTerminal({ workspace, blocked, published, msg, onAc
   const [error, setError] = useState<MessageKey | null>(null);
   const [port, setPort] = useState<number>(5173);
   const [saveFailed, setSaveFailed] = useState(false);
-  const [justSynced, setJustSynced] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [screenReady, setScreenReady] = useState(false);
   const busy = useRef(false);
+  const activeId = useRef<string>();
+  const revision = useRef<string>();
+  const saveDraft = useRef(onSync);
+  const edits = useRef<LinuxChange[]>([]);
+  const writing = useRef<{ changes: LinuxChange[]; completion: Promise<void> }>();
+  const editVersion = useRef(0);
+  const editTimer = useRef<number>();
+  const background = useRef<{ controller: AbortController; completion: Promise<void> }>();
+
+  useEffect(() => { saveDraft.current = onSync; }, [onSync]);
+
+  const storeEdits = useCallback(() => {
+    try {
+      const pending = mergeChanges(writing.current?.changes ?? [], edits.current);
+      if (activeId.current && pending.length) sessionStorage.setItem(PENDING, JSON.stringify({ runId: activeId.current, pending }));
+      else sessionStorage.removeItem(PENDING);
+      return true;
+    } catch { return false; }
+  }, []);
+
+  const flushEdits = useCallback(async (force = false): Promise<void> => {
+    if (writing.current) return writing.current.completion;
+    const runId = activeId.current;
+    if (!runId || (!force && busy.current) || !edits.current.length) return;
+    const changes = edits.current;
+    edits.current = [];
+    const completion = action({ action: 'apply', runId, changes }).then(() => {
+      if (activeId.current !== runId) return;
+      setError((previous) => previous === 'linuxConflict' || previous === 'linuxEditFailed' ? null : previous);
+    }).catch((error) => {
+      if (activeId.current !== runId) return;
+      edits.current = mergeChanges(changes, edits.current);
+      setError(error instanceof RequestError && error.status === 409 ? 'linuxConflict' : 'linuxEditFailed');
+      throw error;
+    }).finally(() => {
+      if (writing.current?.completion === completion) {
+        writing.current = undefined;
+        storeEdits();
+      }
+    });
+    writing.current = { changes, completion };
+    storeEdits();
+    return completion;
+  }, [storeEdits]);
+
+  useEffect(() => {
+    editQueue.current = (changes) => {
+      if (!activeId.current || !changes.length) return;
+      editVersion.current++;
+      edits.current = mergeChanges(edits.current, changes);
+      if (!storeEdits()) setError('linuxEditFailed');
+      window.clearTimeout(editTimer.current);
+      editTimer.current = window.setTimeout(() => void flushEdits().catch(() => {}), 650);
+    };
+    return () => { editQueue.current = null; window.clearTimeout(editTimer.current); };
+  }, [editQueue, flushEdits, storeEdits]);
 
   const disconnect = useCallback(() => {
     const activeSocket = socket.current;
@@ -82,16 +141,30 @@ export default function LinuxTerminal({ workspace, blocked, published, msg, onAc
   }, []);
 
   const reset = useCallback(() => {
+    activeId.current = undefined;
+    revision.current = undefined;
+    edits.current = [];
+    writing.current = undefined;
+    storeEdits();
+    background.current?.controller.abort();
     disconnect();
     remember(null);
     setSession(null);
     setSaveFailed(false);
-    setJustSynced(false);
     onPort(null);
     onBudget();
-  }, [disconnect, onBudget, onPort]);
+  }, [disconnect, onBudget, onPort, storeEdits]);
 
-  useEffect(() => { setSession(lastLinuxSession()); }, []);
+  useEffect(() => {
+    const previous = lastLinuxSession();
+    activeId.current = previous?.runId;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(PENDING) ?? 'null');
+      if (previous && saved?.runId === previous.runId) edits.current = parseLinuxChanges(saved.pending) ?? [];
+    } catch { /* Older or unavailable tab storage. */ }
+    setSession(previous);
+    return () => { activeId.current = undefined; background.current?.controller.abort(); };
+  }, []);
   useEffect(() => { onActive(Boolean(session || op === 'start')); }, [onActive, session, op]);
   useEffect(() => {
     if (!session) return;
@@ -205,11 +278,10 @@ export default function LinuxTerminal({ workspace, blocked, published, msg, onAc
     busy.current = true;
     setOp(kind);
     setError(null);
-    setJustSynced(false);
     void run().catch((err) => {
       if (err instanceof RequestError && err.status === 404 && kind !== 'start') { reset(); setError('linuxExpired'); }
       else if (err instanceof RequestError && err.status === 401) setError('signInToRun');
-      else setError(kind === 'publish' ? 'linuxPortFailed' : kind === 'unpublish' ? 'linuxClosePortFailed' : kind === 'snapshot' ? 'linuxSyncFailed' :
+      else setError(kind === 'publish' ? 'linuxPortFailed' : kind === 'unpublish' ? 'linuxClosePortFailed' : kind === 'replace' ? 'linuxSyncFailed' :
         kind === 'stop' ? 'linuxStopFailed' : kind === 'start' && err instanceof RequestError && err.status === 429 ?
           'terminalBudget' : 'linuxConnectionFailed');
     }).finally(() => { busy.current = false; setOp(null); });
@@ -223,6 +295,8 @@ export default function LinuxTerminal({ workspace, blocked, published, msg, onAc
         throw new Error('Invalid session expiry.');
       }
       const active = { runId: details.runId, expiresAt: details.expiresAt };
+      activeId.current = active.runId;
+      revision.current = undefined;
       remember(active);
       setSession(active);
       onBudget();
@@ -230,28 +304,88 @@ export default function LinuxTerminal({ workspace, blocked, published, msg, onAc
     });
   }
 
-  async function sync(active: LinuxSession) {
-    const data = await action({ action: 'snapshot', runId: active.runId });
+  const sync = useCallback(async (active: LinuxSession, signal?: AbortSignal) => {
+    const version = editVersion.current;
+    const data = await action({ action: 'snapshot', runId: active.runId, afterRevision: revision.current }, signal);
+    if (signal?.aborted || activeId.current !== active.runId || version !== editVersion.current || edits.current.length || writing.current) return;
+    if (typeof data.revision !== 'string' || !/^[0-9a-f]{64}$/.test(data.revision)) throw new Error('Invalid snapshot revision.');
+    if (data.unchanged === true && revision.current === data.revision) return;
     const draft = parseWorkspaceDraft(data.workspace, MAX_CODE_BYTES);
-    if (!draft) throw new Error('Invalid workspace snapshot.');
-    onSync(draft);
-  }
+    if (!draft || !saveDraft.current(draft)) throw new Error('Could not save the workspace draft.');
+    revision.current = data.revision;
+  }, []);
+
+  useEffect(() => {
+    if (!session) return;
+    const refresh = () => {
+      if (document.visibilityState === 'hidden' || busy.current || background.current) return;
+      const controller = new AbortController();
+      const completion = (async () => {
+        await flushEdits();
+        if (!controller.signal.aborted && !busy.current && !edits.current.length && !writing.current) await sync(session, controller.signal);
+      })().catch((err) => {
+        if (controller.signal.aborted || activeId.current !== session.runId) return;
+        if (err instanceof RequestError && err.status === 404) { reset(); setError('linuxExpired'); }
+        // A file may change during export; retry quietly on the next pass.
+      }).finally(() => { if (background.current?.controller === controller) background.current = undefined; });
+      background.current = { controller, completion };
+    };
+    const first = window.setTimeout(refresh, 1200);
+    const interval = window.setInterval(refresh, 12_000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      window.clearTimeout(first);
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', refresh);
+      background.current?.controller.abort();
+    };
+  }, [session, reset, sync, flushEdits]);
 
   function stop(discard = false) {
-    if (!session) return;
+    if (!session || busy.current) return;
     const active = session;
+    onClosing(true);
     perform('stop', async () => {
-      if (!discard) {
-        try { await sync(active); }
-        catch (err) {
-          if (err instanceof RequestError && err.status === 404) throw err;
-          setSaveFailed(true);
-          setError('linuxSyncFailed');
-          return;
+      try {
+        if (!discard) {
+          try {
+            const pending = background.current;
+            pending?.controller.abort();
+            await pending?.completion;
+            while (writing.current || edits.current.length) await flushEdits(true);
+            await sync(active);
+            if (activeId.current !== active.runId) return;
+          } catch (err) {
+            if (err instanceof RequestError && err.status === 404) throw err;
+            setSaveFailed(true);
+            setError(err instanceof RequestError && err.status === 409 ? 'linuxConflict' : 'linuxSyncFailed');
+            return;
+          }
         }
-      }
-      await action({ action: 'stop', runId: active.runId });
-      reset();
+        await action({ action: 'stop', runId: active.runId });
+        reset();
+      } finally { onClosing(false); }
+    });
+  }
+
+  function replaceDraft() {
+    if (!session || busy.current) return;
+    onClosing(true);
+    perform('replace', async () => {
+      try {
+        const pending = background.current;
+        pending?.controller.abort();
+        await pending?.completion;
+        await writing.current?.completion.catch(() => {});
+        const data = await action({ action: 'snapshot', runId: session.runId });
+        const draft = parseWorkspaceDraft(data.workspace, MAX_CODE_BYTES);
+        if (activeId.current !== session.runId || !draft || !saveDraft.current(draft)) throw new Error('Could not save the workspace draft.');
+        edits.current = [];
+        revision.current = data.revision;
+        storeEdits();
+        setSaveFailed(false);
+        setError(null);
+      } finally { onClosing(false); }
     });
   }
 
@@ -265,9 +399,7 @@ export default function LinuxTerminal({ workspace, blocked, published, msg, onAc
         <Text variant="caption-2" color="secondary">{msg('sandboxExpires', { time: `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}` })}</Text>
         {!connected && <Button size="s" disabled={!!op || !screenReady} onClick={() =>
           perform('connect', async () => { connect(await action({ action: 'connect', runId: session.runId })); })}>{msg('linuxReconnect')}</Button>}
-        <Button size="s" disabled={!!op} onClick={() =>
-          perform('snapshot', async () => { await sync(session); setSaveFailed(false); setJustSynced(true); })}>{msg('linuxSync')}</Button>
-        <Button size="s" disabled={!!op} onClick={() => stop()}>{msg('linuxStop')}</Button>
+        <Button size="s" loading={op === 'stop'} disabled={!!op} onClick={() => stop()}>{msg('linuxStop')}</Button>
         {saveFailed && <Button size="s" view="outlined-danger" disabled={!!op} onClick={() => stop(true)}>{msg('linuxDiscard')}</Button>}
         <select aria-label={msg('linuxPort')} value={port} disabled={!!op} onChange={(event) => setPort(Number(event.target.value))}>
           {DEV_PORTS.map((available) => <option key={available} value={available}>{available}</option>)}
@@ -283,7 +415,7 @@ export default function LinuxTerminal({ workspace, blocked, published, msg, onAc
         })}>{msg('linuxClosePort')}</Button>}
       </div>}
       {error && <Alert theme="danger" message={msg(error)} />}
-      {justSynced && <Text variant="caption-2" color="secondary" role="status">{msg('linuxSynced')}</Text>}
+      {error === 'linuxConflict' && <Button size="s" disabled={!!op} onClick={replaceDraft}>{msg('linuxTakeRemote')}</Button>}
       <div ref={element} className={styles.linuxViewport} data-active={!!session} aria-label={msg('linuxTerminal')} />
     </div>
   );

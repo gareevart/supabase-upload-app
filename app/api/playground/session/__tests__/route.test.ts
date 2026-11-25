@@ -4,6 +4,7 @@ import { Sandbox } from '@vercel/sandbox';
 import { createClient } from '@supabase/supabase-js';
 import { POST } from '../route';
 import { publishDevPort } from '@/lib/playground/dev-port';
+import { applyLinuxChanges } from '@/lib/playground/linux-apply';
 import { snapshotLinux } from '@/lib/playground/linux-snapshot';
 
 jest.mock('@vercel/sandbox', () => ({ Sandbox: { create: jest.fn(), get: jest.fn() } }));
@@ -15,6 +16,7 @@ jest.mock('@/app/auth/withApiAuth', () => ({
 jest.mock('@/lib/playground/dev-port', () => ({
   devPort: (value: unknown) => value === 5173 ? 5173 : null, publishDevPort: jest.fn(),
 }));
+jest.mock('@/lib/playground/linux-apply', () => ({ applyLinuxChanges: jest.fn() }));
 jest.mock('@/lib/playground/linux-snapshot', () => ({ snapshotLinux: jest.fn() }));
 
 const id = 'cbc3ecfd-be6d-4abe-9612-a6724172ecdf';
@@ -80,7 +82,7 @@ it('reserves one ephemeral sandbox, writes the project and returns only a scoped
 
 it('does not access another owner’s terminal, port or files', async () => {
   rpc.mockReturnValue(ok(false));
-  for (const action of ['connect', 'snapshot', 'publish', 'unpublish', 'stop']) {
+  for (const action of ['connect', 'snapshot', 'apply', 'publish', 'unpublish', 'stop']) {
     expect((await POST(request({ action, runId: id, port: 5173 }))).status).toBe(404);
   }
   expect(Sandbox.get).not.toHaveBeenCalled();
@@ -95,7 +97,10 @@ it('opens only an explicitly selected port and stops before refunding the lease'
   expect(publishDevPort).toHaveBeenCalledWith(provider, 5173);
   expect(await (await POST(request({ action: 'unpublish', runId: id }))).json()).toEqual({ closed: true });
   expect(provider.update).toHaveBeenCalledWith({ ports: [] }, expect.anything());
-  expect(await (await POST(request({ action: 'snapshot', runId: id }))).json()).toEqual({ workspace: project });
+  const snapshot = await (await POST(request({ action: 'snapshot', runId: id }))).json();
+  expect(snapshot).toEqual({ workspace: project, revision: expect.stringMatching(/^[a-f0-9]{64}$/) });
+  expect(await (await POST(request({ action: 'snapshot', runId: id, afterRevision: snapshot.revision }))).json())
+    .toEqual({ revision: snapshot.revision, unchanged: true });
   expect(await (await POST(request({ action: 'stop', runId: id }))).json()).toEqual({ stopped: true });
   expect(Sandbox.get).toHaveBeenCalledWith(expect.objectContaining({ name: 'gareev-playground-terminal-' + id, resume: false }));
   expect(rpc).toHaveBeenLastCalledWith('release_playground', { p_user_id: 'test-user', p_run_id: id, p_refund: true });
@@ -106,4 +111,15 @@ it('does not refund before a confirmed stop', async () => {
   provider.stop.mockRejectedValueOnce(new Error('service unavailable'));
   expect((await POST(request({ action: 'stop', runId: id }))).status).toBe(502);
   expect(rpc).not.toHaveBeenCalledWith('release_playground', expect.anything());
+});
+
+it('accepts a valid editor edit and returns a conflict without substituting a stale file', async () => {
+  const changes = [{ kind: 'file', path: 'main.js', before: 'prev', after: 'next' }];
+  const body = { action: 'apply', runId: id, changes };
+  expect((await POST(request({ ...body, changes: [{ ...changes[0], path: '../outside' }] }))).status).toBe(400);
+  expect(applyLinuxChanges).not.toHaveBeenCalled();
+  (applyLinuxChanges as jest.Mock).mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+  expect(await (await POST(request(body))).json()).toEqual({ saved: true });
+  expect(applyLinuxChanges).toHaveBeenCalledWith(provider, '/vm/workspace', expect.any(String), changes);
+  expect((await POST(request(body))).status).toBe(409);
 });

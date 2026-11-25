@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { posix } from 'node:path';
 import { Sandbox } from '@vercel/sandbox';
 import { createClient } from '@supabase/supabase-js';
@@ -8,6 +8,8 @@ import type { Database } from '@/lib/types';
 import { MAX_CODE_BYTES, readBoundedJson, validRunId } from '@/lib/playground/input';
 import { parseWorkspaceDraft } from '@/lib/playground/workspace';
 import { linuxSandboxName, LINUX_RESERVE_SECONDS, LINUX_SESSION_MS, ptyUrl } from '@/lib/playground/linux-session';
+import { applyLinuxChanges } from '@/lib/playground/linux-apply';
+import { parseLinuxChanges } from '@/lib/playground/linux-workspace-sync';
 import { snapshotLinux } from '@/lib/playground/linux-snapshot';
 import { devPort, publishDevPort } from '@/lib/playground/dev-port';
 
@@ -100,7 +102,7 @@ const handle = withApiAuth(async (req, user) => {
     } catch { return fail('Playground quota unavailable.', 503); }
   }
 
-  if (!validRunId(body.runId) || typeof body.action !== 'string' || !['connect', 'snapshot', 'publish', 'unpublish', 'stop'].includes(body.action)) {
+  if (!validRunId(body.runId) || typeof body.action !== 'string' || !['connect', 'snapshot', 'apply', 'publish', 'unpublish', 'stop'].includes(body.action)) {
     return fail('Invalid terminal request.', 400);
   }
   const port = body.action === 'publish' ? devPort(body.port) : null;
@@ -120,9 +122,18 @@ const handle = withApiAuth(async (req, user) => {
     }
     if (sandbox.status !== 'running') return fail('Terminal session not found or expired.', 404);
     if (body.action === 'connect') return json(await ticket(sandbox, workspaceRoot(sandbox)));
+    if (body.action === 'apply') {
+      const changes = parseLinuxChanges(body.changes);
+      if (!changes) return fail('Invalid workspace changes.', 400);
+      const saved = await applyLinuxChanges(sandbox, workspaceRoot(sandbox), randomUUID(), changes);
+      return saved ? json({ saved: true }) : fail('The same files changed in the terminal.', 409);
+    }
     if (body.action === 'snapshot') {
-      try { return json({ workspace: await snapshotLinux(sandbox.currentSession(), workspaceRoot(sandbox), randomUUID()) }); }
-      catch { return fail('Could not sync project files. Check workspace limits and retry.', 422); }
+      try {
+        const workspace = await snapshotLinux(sandbox.currentSession(), workspaceRoot(sandbox), randomUUID());
+        const revision = createHash('sha256').update(JSON.stringify(workspace)).digest('hex');
+        return json(revision === body.afterRevision ? { revision, unchanged: true } : { revision, workspace });
+      } catch { return fail('Could not save project files. Check workspace limits and retry.', 422); }
     }
     if (body.action === 'unpublish') {
       await sandbox.update({ ports: [] }, { signal: AbortSignal.timeout(8_000) });

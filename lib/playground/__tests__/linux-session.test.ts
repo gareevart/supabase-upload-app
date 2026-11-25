@@ -47,3 +47,40 @@ it('syncs actual text files and empty folders without following symlinks or copy
     });
   } finally { await rm(home, { recursive: true, force: true }); }
 });
+
+it('applies a folder move to the actual VM filesystem without replacing a conflicting Bash edit', async () => {
+  const { applyLinuxChanges } = await import('../linux-apply');
+  const { readFile } = await import('node:fs/promises');
+  const home = await mkdtemp(join(tmpdir(), 'linux-edits-test-'));
+  const root = join(home, 'project');
+  const run = promisify(execFile);
+  const session = {
+    cwd: home,
+    writeFiles: async (files: { path: string; content: Buffer }[]) => {
+      for (const file of files) await writeFile(file.path, file.content);
+    },
+    runCommand: async ({ cmd, args, cwd }: { cmd: string; args: string[]; cwd: string }) => {
+      try { await run(cmd, args, { cwd }); return { exitCode: 0 }; }
+      catch (e) { return { exitCode: (e as { code: number }).code }; }
+    },
+  };
+  const sandbox = { currentSession: () => session } as unknown as Parameters<typeof applyLinuxChanges>[0];
+  try {
+    await mkdir(join(root, 'old'), { recursive: true });
+    await writeFile(join(root, 'old', 'memo.txt'), 'terminal change');
+    const edits = [
+      { kind: 'folder' as const, path: 'new', create: true },
+      { kind: 'folder' as const, path: 'old', create: false },
+      { kind: 'file' as const, path: 'old/memo.txt', before: 'original', after: null },
+      { kind: 'file' as const, path: 'new/memo.txt', before: null, after: 'original' },
+    ];
+    await expect(applyLinuxChanges(sandbox, root, 'conflict', edits)).resolves.toBe(false);
+    await expect(readFile(join(root, 'old/memo.txt'), 'utf8')).resolves.toBe('terminal change');
+    await expect(readFile(join(root, 'new/memo.txt'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' });
+    await writeFile(join(root, 'old', 'memo.txt'), 'original');
+    await expect(applyLinuxChanges(sandbox, root, 'rename', edits)).resolves.toBe(true);
+    await expect(readFile(join(root, 'new/memo.txt'), 'utf8')).resolves.toBe('original');
+    await expect(readFile(join(root, 'old/memo.txt'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' });
+    await expect(applyLinuxChanges(sandbox, root, 'retry', edits)).resolves.toBe(true);
+  } finally { await rm(home, { recursive: true, force: true }); }
+});
