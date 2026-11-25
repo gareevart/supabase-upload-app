@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { MAX_CODE_BYTES, MAX_REQUEST_BYTES, parseRunInput, readBoundedJson } from '../input';
+import { MAX_CODE_BYTES, MAX_FILES, MAX_REQUEST_BYTES, parseRunInput, PREVIEW_MS, readBoundedJson, runDurationMs, WORKSPACE_MS } from '../input';
 
 it('canonicalizes a GitHub repo without sending other user-controlled URLs to the VM', () => {
   expect(parseRunInput({ mode: 'github', repo: 'https://github.com/gareevart/ui-builder/', directory: 'apps/editor' }))
@@ -48,8 +48,8 @@ it('accepts a mixed set of files and a selected entry, including empty new files
   expect(parseRunInput({ ...request, entry: 'missing.js' })).toBeNull();
 });
 
-it.each(['../main.js', './main.js', '/main.ts', 'dir/main.py', '--main.js', 'package.json', 'a.tsx', 'a.js\n'])
-  ('rejects unsafe and unsupported names: %s', (name) => {
+it.each(['../main.js', './main.js', '/main.ts', 'dir/main.py', 'a\\b.js', 'a.js\n'])
+  ('rejects invalid names or files without an existing parent folder: %s', (name) => {
     expect(parseRunInput({ mode: 'files', entry: 'main.js', files: [
       { name: 'main.js', content: '' }, { name, content: '' },
     ] })).toBeNull();
@@ -60,6 +60,33 @@ it('rejects duplicate names including case collisions, plus aggregate byte and f
   for (const others of [
     [{ name: 'MAIN.js', content: '' }],
     [{ name: 'large.py', content: 'x'.repeat(MAX_CODE_BYTES) }],
-    Array.from({ length: 20 }, (_, i) => ({ name: `extra${i}.js`, content: '' })),
+    Array.from({ length: MAX_FILES }, (_, i) => ({ name: `extra${i}.js`, content: '' })),
   ]) expect(parseRunInput({ mode: 'files', entry: 'main.js', files: [main, ...others] })).toBeNull();
+});
+
+it('accepts a nested entry, arbitrary text files, and explicit empty directories', () => {
+  const input = { mode: 'files', entry: 'src/nested/main.mjs', folders: ['src', 'src/nested', 'empty'], files: [
+    { name: 'src/nested/main.mjs', content: '' },
+    { name: 'src/nested/settings.json', content: '{}' },
+    { name: 'README', content: 'Hello' },
+  ] };
+  expect(parseRunInput(input)).toEqual(input);
+  expect(parseRunInput({ ...input, entry: 'README' })).toBeNull();
+  expect(parseRunInput({ ...input, folders: ['src/nested'] })).toBeNull();
+  expect(parseRunInput({ ...input, folders: [...input.folders, 'README'] })).toBeNull();
+});
+
+it.each(['../outside', 'foo/../../outside', '/absolute', 'foo//bar', 'foo/.', 'foo\\bar', 'foo\u0000'])(
+  'rejects workspace paths outside or invalid for the workspace: %p', (folder) => {
+    expect(parseRunInput({ mode: 'files', entry: 'main.js', files: [{ name: 'main.js', content: '' }], folders: [folder] })).toBeNull();
+  },
+);
+
+it('reserves preview time for .html and .htm entries but keeps script run time unchanged', () => {
+  for (const entry of ['pages/index.html', 'pages/index.HTM']) {
+    const input = parseRunInput({ mode: 'files', entry, folders: ['pages'], files: [{ name: entry, content: '<h1>Demo</h1>' }] });
+    expect(input).toMatchObject({ mode: 'files', entry });
+    expect(runDurationMs(input!)).toBe(PREVIEW_MS);
+  }
+  expect(runDurationMs(parseRunInput({ mode: 'javascript', code: '' })!)).toBe(WORKSPACE_MS);
 });

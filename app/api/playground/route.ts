@@ -2,8 +2,9 @@ import { randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 import { withApiAuth } from '@/app/auth/withApiAuth';
-import { parseRunInput, readBoundedJson, validRunId, PREVIEW_MS, WORKSPACE_MS } from '@/lib/playground/input';
+import { parseRunInput, readBoundedJson, validRunId, runDurationMs } from '@/lib/playground/input';
 import { PlaygroundRunError, runInSandbox, stopSandbox } from '@/lib/playground/run';
+import { planWorkspaceNpm } from '@/lib/playground/npm-workspace';
 import type { Database } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -41,17 +42,20 @@ export async function GET() {
 const start = withApiAuth(async (req, user) => {
   const body = await readBoundedJson(req).catch(() => null);
   const input = parseRunInput(body);
-  if (!input) return error('Supply a valid .js, .ts or .py workspace (up to 20 files and 64 KiB), or a public GitHub repository URL.', 400);
+  if (!input) return error('Supply a valid workspace with a JavaScript, TypeScript, Python, or HTML entry (up to 100 files and 1.25 MiB), or a public GitHub repository URL.', 400);
+  const npm = input.mode === 'files' ? planWorkspaceNpm(input) : null;
+  if (npm && 'error' in npm) return error(npm.error, 422);
   const runId = randomUUID();
   const args = { p_user_id: user.id, p_run_id: runId };
   try {
     const db = dbClient();
     const { data, error: issue } = await db.rpc('reserve_playground', {
-      ...args, p_environment: environment(), p_seconds: (input.mode === 'github' ? PREVIEW_MS : WORKSPACE_MS) / 1_000,
+      ...args, p_environment: environment(), p_seconds: runDurationMs(input) / 1_000,
     }).abortSignal(AbortSignal.timeout(6_000));
     if (issue) throw new Error('Quota reservation failed.');
     if (data === 'disabled') return error('Cloud runs are not enabled on this deployment.', 503);
     if (data === 'busy') return error('The shared sandbox slot is busy. Try again when the current run ends.', 429);
+    // A database that has not applied the quota migration can still return this code.
     if (data === 'daily') return error('The shared daily start limit has been reached.', 429);
     if (data === 'time') return error('There is not enough shared runtime left for this run.', 429);
     if (data !== 'reserved') throw new Error('Unexpected quota response.');

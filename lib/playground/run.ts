@@ -1,6 +1,11 @@
 import { posix } from 'node:path';
 import { APIError, Sandbox, type Command } from '@vercel/sandbox';
-import { PREVIEW_MS, PREVIEW_PORT, WORKSPACE_MS, type RunInput } from './input';
+import { isSandboxPreviewUrl, PREVIEW_PORT, runDurationMs, type RunInput } from './input';
+import { HTML_PREVIEW_SERVER, htmlPreviewFiles, htmlPreviewPath } from './html-preview';
+import { runnableKind } from './workspace';
+import { NPM_INSTALL_TIMEOUT_MS, planWorkspaceNpm, WORKSPACE_NPM_CI_ARGS } from './npm-workspace';
+import { TERMINAL_VM_MS } from './terminal';
+import { runNpmTerminal } from './terminal-run';
 
 const LOG_LIMIT = 16 * 1024;
 const NO_NETWORK = 'deny-all' as const;
@@ -44,21 +49,45 @@ async function requireSuccess(label: string, command: Command) {
   }
 }
 
+function previewAddress(sandbox: Sandbox) {
+  const address = sandbox.domain(PREVIEW_PORT);
+  const expiresAt = sandbox.expiresAt;
+  if (!isSandboxPreviewUrl(address) || !expiresAt) throw new PlaygroundRunError('Preview is unavailable.');
+  return { url: new URL(address), expiresAt: expiresAt.toISOString() };
+}
+
+async function waitForPreview(sandbox: Sandbox, url: URL, command: Command, error: string) {
+  for (let retry = 0; retry < 20; retry++) {
+    const probe = await sandbox.runCommand('curl', [
+      '--noproxy', '*', '--silent', '--output', '/dev/null', '--fail', '--max-time', '1',
+      '--header', `Host: ${url.hostname}`, `http://127.0.0.1:${PREVIEW_PORT}${url.pathname}`,
+    ], { timeoutMs: 2_000 });
+    if (probe.exitCode === 0) return;
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  throw new PlaygroundRunError(error, await collect(command));
+}
+
 export async function runInSandbox(input: RunInput, runId: string, release: () => Promise<void>) {
   let sandbox: Sandbox | undefined;
   let keepPreview = false;
   let stage = 'Sandbox creation';
   try {
     const github = input.mode === 'github';
-    const python = !github && input.entry.endsWith('.py');
+    const terminal = input.mode === 'npm';
+    const npm = input.mode === 'files' ? planWorkspaceNpm(input) : null;
+    if (npm && 'error' in npm) throw new PlaygroundRunError(npm.error);
+    const python = input.mode === 'files' && runnableKind(input.entry) === 'python';
+    const html = input.mode === 'files' && runnableKind(input.entry) === 'html';
     sandbox = await Sandbox.create({
       name: sandboxName(runId),
       image: python ? 'vercel/sandbox/python:3.14' : 'vercel/sandbox/node:24',
       resources: { vcpus: 1 },
-      timeout: github ? PREVIEW_MS : WORKSPACE_MS,
+      timeout: terminal ? TERMINAL_VM_MS : runDurationMs(input),
       persistent: false,
-      ports: github ? [PREVIEW_PORT] : [],
-      networkPolicy: github ? { allow: ['github.com', 'registry.npmjs.org'] } : NO_NETWORK,
+      ports: github || html ? [PREVIEW_PORT] : [],
+      networkPolicy: github ? { allow: ['github.com', 'registry.npmjs.org'] }
+        : npm || terminal ? { allow: ['registry.npmjs.org'] } : NO_NETWORK,
       signal: AbortSignal.timeout(25_000),
     });
 
@@ -68,14 +97,68 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
     const source = posix.join(work, 'workspace');
     const repo = posix.join(work, 'repo');
 
+    if (input.mode === 'npm') return await runNpmTerminal(sandbox, work, input, {
+      stage: (nextStage) => { stage = nextStage; }, collect, check: requireSuccess,
+    });
+
     if (input.mode === 'files') {
       stage = 'Workspace creation';
+      const folders = input.folders ?? [];
       await requireSuccess(stage, await sandbox.runCommand({
-        cmd: 'mkdir', args: ['--', 'workspace'], cwd: work, timeoutMs: 3_000,
+        cmd: 'mkdir', args: ['-p', '--', 'workspace', ...folders.map((folder) => `workspace/${folder}`),
+          ...(npm ? ['workspace-dependencies/node_modules'] : [])],
+        cwd: work, timeoutMs: 3_000,
       }));
+      if (html) {
+        stage = 'Writing workspace files';
+        const assets = htmlPreviewFiles(input.files, input.entry);
+        await sandbox.writeFiles([
+          { path: 'playground-html-preview.mjs', content: Buffer.from(HTML_PREVIEW_SERVER) },
+          ...assets.map(({ name, content }) => ({ path: `workspace/${name}`, content: Buffer.from(content) })),
+        ], { signal: AbortSignal.timeout(5_000) });
+        stage = 'Preview startup';
+        const { url, expiresAt } = previewAddress(sandbox);
+        url.pathname = htmlPreviewPath(input.entry);
+        const server = await sandbox.runCommand({
+          cmd: 'node', args: ['playground-html-preview.mjs', String(PREVIEW_PORT), input.entry,
+            JSON.stringify(assets.map(({ name, mime }) => [name, mime]))],
+          cwd: work, detached: true,
+        });
+        await waitForPreview(sandbox, url, server, 'HTML preview did not become ready.');
+        keepPreview = true;
+        return { kind: 'preview' as const, source: 'html' as const, runId, previewUrl: url.href, expiresAt };
+      }
+
+      let installLogs: string | undefined;
+      if (npm) {
+        stage = 'Dependency install';
+        // npm never sees user source/config (including .npmrc, .git, or npm-shrinkwrap.json).
+        await sandbox.writeFiles(npm.manifests.map(({ name, content }) => ({
+          path: `workspace-dependencies/${name}`, content: Buffer.from(content),
+        })), { signal: AbortSignal.timeout(5_000) });
+        const install = await sandbox.runCommand({
+          cmd: 'npm',
+          args: WORKSPACE_NPM_CI_ARGS,
+          cwd: posix.join(work, 'workspace-dependencies'),
+          env: { ...PACKAGE_ENV, npm_config_fetch_timeout: '10000' },
+          timeoutMs: NPM_INSTALL_TIMEOUT_MS,
+        });
+        // Fail closed: don't write or execute project code unless the firewall was updated.
+        stage = 'Network isolation';
+        await sandbox.update({ networkPolicy: NO_NETWORK }, { signal: AbortSignal.timeout(5_000) });
+        await requireSuccess('Dependency install', install);
+        installLogs = await collect(install);
+        stage = 'Workspace creation';
+        await requireSuccess(stage, await sandbox.runCommand({
+          cmd: 'mv', args: ['-T', '--', 'workspace-dependencies/node_modules', posix.join('workspace', npm.directory, 'node_modules')],
+          cwd: work, timeoutMs: 3_000,
+        }));
+      }
+
       stage = 'Writing workspace files';
       await sandbox.writeFiles([
-        { path: 'workspace/package.json', content: Buffer.from('{"type":"module"}') },
+        ...(!python && !input.files.some(({ name }) => name === 'package.json') && !folders.includes('package.json')
+          ? [{ path: 'workspace/package.json', content: Buffer.from('{"type":"module"}') }] : []),
         ...input.files.map(({ name, content }) => ({
           path: `workspace/${name}`, content: Buffer.from(content),
         })),
@@ -83,10 +166,11 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
       stage = 'Script execution';
       const command = await sandbox.runCommand({
         cmd: python ? 'python3' : 'node',
-        args: python ? ['-B', '-s', input.entry] : ['--experimental-transform-types', '--disable-warning=ExperimentalWarning', '--', input.entry],
+        args: python ? ['-B', '-s', '--', input.entry] : ['--experimental-transform-types', '--disable-warning=ExperimentalWarning', '--', input.entry],
         cwd: source, timeoutMs: 8_000,
       });
-      return { kind: 'output' as const, output: await collect(command), exitCode: command.exitCode };
+      return { kind: 'output' as const, output: await collect(command), exitCode: command.exitCode,
+        ...(installLogs !== undefined ? { installLogs } : {}) };
     }
 
     stage = 'GitHub import';
@@ -118,11 +202,7 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
     await sandbox.update({ networkPolicy: NO_NETWORK });
 
     stage = 'Preview startup';
-    const previewUrl = new URL(sandbox.domain(PREVIEW_PORT));
-    const expiresAt = sandbox.expiresAt;
-    if (previewUrl.protocol !== 'https:' || !/^[a-z0-9-]+\.vercel\.run$/.test(previewUrl.hostname) || !expiresAt) {
-      throw new PlaygroundRunError('Preview is unavailable.');
-    }
+    const { url: previewUrl, expiresAt } = previewAddress(sandbox);
     const server = await sandbox.runCommand({
       cmd: manager,
       args: ['run', 'dev', ...(pnpm ? [] : ['--']), '--host', '0.0.0.0', '--port', String(PREVIEW_PORT), '--strictPort'],
@@ -135,19 +215,9 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
       },
       detached: true,
     });
-    for (let retry = 0; retry < 20; retry++) {
-      // Accept only a successful response on the declared port, and do not follow redirects.
-      const probe = await sandbox.runCommand('curl', [
-        '--noproxy', '*', '--silent', '--output', '/dev/null', '--fail', '--max-time', '1',
-        '--header', `Host: ${previewUrl.hostname}`, `http://127.0.0.1:${PREVIEW_PORT}/`,
-      ], { timeoutMs: 2_000 });
-      if (probe.exitCode === 0) {
-        keepPreview = true;
-        return { kind: 'preview' as const, runId, previewUrl: previewUrl.href, expiresAt: expiresAt.toISOString() };
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    }
-    throw new PlaygroundRunError('Vite did not become ready on port 4173. Check the dev script.', await collect(server));
+    await waitForPreview(sandbox, previewUrl, server, 'Vite did not become ready on port 4173. Check the dev script.');
+    keepPreview = true;
+    return { kind: 'preview' as const, runId, previewUrl: previewUrl.href, expiresAt };
   } catch (error) {
     if (error instanceof PlaygroundRunError) throw error;
     const status = error instanceof APIError ? error.response.status : undefined;

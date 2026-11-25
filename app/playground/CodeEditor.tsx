@@ -44,7 +44,8 @@ export default function CodeEditor(props: Props) {
   useEffect(() => {
     if (!mount.current) return;
     const name = props.name;
-    const language = name.endsWith('.py') ? python() : javascript({ typescript: name.endsWith('.ts') });
+    const language = /\.py$/i.test(name) ? python() : /\.(?:[cm]?[jt]s|[jt]sx)$/i.test(name)
+      ? javascript({ typescript: /\.(?:[cm]?ts|tsx)$/i.test(name), jsx: /\.[jt]sx$/i.test(name) }) : [];
     const editor = new EditorView({
       parent: mount.current,
       state: EditorState.create({
