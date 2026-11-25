@@ -9,7 +9,7 @@ export default function ProjectsPage() {
         <header className="hub-page__header">
           <Text as="h1" variant="display-1" className="hub-page__title">Projects</Text>
         </header>
-        <MyProjects />
+        <MyProjects showPlayground />
       </main>
     </div>
   );

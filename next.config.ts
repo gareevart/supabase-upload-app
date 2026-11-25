@@ -5,6 +5,9 @@ import { fileURLToPath } from "url";
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [{ source: '/playground', destination: '/projects/playground', permanent: true }];
+  },
   // The hand-written Supabase `Database` type is accurate (verified in isolation),
   // but @supabase/supabase-js's select-string conditional types exhaust TypeScript's
   // instantiation budget in large files, producing spurious `never` results that

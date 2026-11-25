@@ -1,0 +1,65 @@
+.shell {
+  --panel: var(--g-color-base-generic);
+  --canvas: var(--g-color-base-background);
+  --line: var(--g-color-line-generic);
+  width: min(100%, 92rem);
+  margin: clamp(.5rem, 2vw, 1.45rem) auto;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  height: max(37rem, calc(100dvh - 124px));
+  border: 1px solid var(--line);
+  border-radius: var(--g-border-radius-xl);
+  background: var(--canvas);
+  color: var(--g-color-text-primary);
+  overflow: hidden;
+}
+.shell h1, .shell h2, .shell p, .shell pre { margin: 0; }
+.toolbar, .activity, .statusbar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
+  background: var(--panel);
+}
+.toolbar { min-height: 52px; padding: 0 14px; border-bottom: 1px solid var(--line); }
+.brand { min-width: 0; flex: 1 1 140px; }
+.toolbarActions, .activityTools, .statusbar > div {
+  display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap;
+}
+.activity { border-bottom: 1px solid var(--line); min-height: 44px; padding: 4px 11px; box-sizing: border-box; }
+.activityTools { gap: 3px; }
+.workbench { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); }
+.workbench[data-explorer='true'] { grid-template-columns: 236px minmax(0, 1fr); }
+.explorer { min-width: 0; overflow: auto; background: var(--panel); border-right: 1px solid var(--line); }
+.sideHeading, .consoleHead { display: flex; justify-content: space-between; align-items: center; min-height: 36px; padding: 0 12px; }
+.sideHeading h2, .consoleHead h2 { text-transform: uppercase; letter-spacing: .04em; }
+.treeHeading { padding: 5px 12px; }
+.files { display: grid; gap: 1px; margin: 0; padding: 0 6px; list-style: none; }
+.files li { min-width: 0; }
+.file { text-align: left; min-width: 0; }
+.createFile { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px; padding: 5px 10px; align-items: start; }
+.fileError, .sidebarNote { padding: 5px 12px; }
+.repoForm { display: grid; gap: 9px; padding: 8px 12px; }
+.repoForm label { display: grid; gap: 4px; }
+.editArea { min-width: 0; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.editArea[data-console='true'] { grid-template-rows: auto minmax(0, 1fr) clamp(105px, 24%, 220px); }
+.tabs { padding: 0 12px; background: var(--panel); min-height: 36px; min-width: 0; }
+.canvas { min-width: 0; min-height: 0; overflow: hidden; }
+.editorPane { height: 100%; min-height: 0; }
+.blank { height: 100%; box-sizing: border-box; display: grid; padding: 12px; place-content: center; }
+.preview { border: 0; width: 100%; height: 100%; background: white; }
+.console { min-height: 0; display: grid; grid-template-rows: 35px minmax(0, 1fr); border-top: 1px solid var(--line); }
+.consoleHead { border-bottom: 1px solid var(--line); background: var(--panel); }
+.consoleBody { overflow: auto; padding: 8px 12px; display: grid; justify-items: start; align-content: start; gap: 6px; }
+.consoleBody pre { font: 12px/1.6 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; }
+.running { display: flex; gap: 8px; align-items: center; }
+.statusbar { min-height: 29px; padding: 0 10px; border-top: 1px solid var(--line); }
+.budgetPopover { display: grid; gap: 8px; width: min(260px, 75vw); padding: 9px; box-sizing: border-box; }
+@media (max-width: 700px) {
+  .shell { height: max(37rem, calc(100dvh - 96px)); margin: .35rem auto; }
+  .toolbar { padding: 5px 8px; }
+  .activity { padding: 3px 6px; }
+  .workbench[data-explorer='true'] { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(56px, max-content) minmax(0, 1fr); }
+  .explorer { max-height: 144px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .files { display: flex; flex-wrap: wrap; }
+  .treeHeading { display: none; }
+  .statusbar > div { gap: 4px; }
+}

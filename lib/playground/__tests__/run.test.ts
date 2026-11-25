@@ -1,0 +1,111 @@
+/** @jest-environment node */
+import { Sandbox } from '@vercel/sandbox';
+import { runInSandbox } from '../run';
+
+jest.mock('@vercel/sandbox', () => ({ APIError: class extends Error {}, Sandbox: { create: jest.fn() } }));
+
+const js = { mode: 'files' as const, entry: 'main.js', files: [{ name: 'main.js', content: 'console.log("hello")' }] };
+const id = 'f02fe46c-a3d5-4bee-8f64-0ab151028a10';
+const success = { exitCode: 0, logs: () => Object.assign((async function* () {
+  yield { data: 'hello\n' };
+})(), { close: jest.fn() }) };
+let vm: {
+  cwd: string; runCommand: jest.Mock; writeFiles: jest.Mock; update: jest.Mock; stop: jest.Mock;
+  domain: jest.Mock; expiresAt: Date;
+};
+const release = jest.fn();
+
+beforeEach(() => {
+  jest.resetAllMocks();
+  vm = {
+    cwd: '/vercel', runCommand: jest.fn().mockResolvedValue(success), writeFiles: jest.fn().mockResolvedValue(undefined),
+    update: jest.fn().mockResolvedValue(undefined), stop: jest.fn().mockResolvedValue(undefined),
+    domain: jest.fn(() => 'https://preview.vercel.run'), expiresAt: new Date('2026-11-27T14:00:00Z'),
+  };
+  (Sandbox.create as jest.Mock).mockResolvedValue(vm);
+  release.mockResolvedValue(undefined);
+});
+
+it('runs JavaScript offline with no open ports, returns output and tears down the VM', async () => {
+  await expect(runInSandbox(js, id, release))
+    .resolves.toEqual({ kind: 'output', output: 'hello\n', exitCode: 0 });
+  expect(Sandbox.create).toHaveBeenCalledWith(expect.objectContaining({
+    networkPolicy: 'deny-all', persistent: false, ports: [], timeout: 30_000,
+  }));
+  expect(vm.writeFiles).toHaveBeenCalledWith(expect.arrayContaining([{ path: 'workspace/main.js', content: Buffer.from(js.files[0].content) }]), expect.anything());
+  expect(vm.runCommand).toHaveBeenCalledWith(expect.objectContaining({
+    cmd: 'node', args: expect.arrayContaining(['main.js']), cwd: '/vercel/workspace', timeoutMs: 8_000,
+  }));
+  expect(vm.stop).toHaveBeenCalledTimes(1);
+  expect(vm.stop.mock.invocationCallOrder[0]).toBeLessThan(release.mock.invocationCallOrder[0]);
+});
+
+it('boots Vite only after limiting install to npm and turning off egress', async () => {
+  const result = await runInSandbox({ mode: 'github', repo: 'https://github.com/a/b.git', directory: 'apps/editor' }, id, release);
+  expect(result).toEqual({ kind: 'preview', runId: id, previewUrl: 'https://preview.vercel.run/', expiresAt: vm.expiresAt.toISOString() });
+  expect(Sandbox.create).toHaveBeenCalledWith(expect.objectContaining({ networkPolicy: { allow: ['github.com', 'registry.npmjs.org'] }, ports: [4173] }));
+  expect(vm.update.mock.calls).toEqual([[{ networkPolicy: 'deny-all' }]]);
+  const install = vm.runCommand.mock.calls.findIndex(([item]) => item.cmd === 'pnpm' && item.args[0] === 'install');
+  const dev = vm.runCommand.mock.calls.findIndex(([item]) => item.detached);
+  expect(vm.runCommand.mock.calls[install][0].args).toContain('--ignore-scripts');
+  expect(vm.runCommand.mock.invocationCallOrder[install]).toBeLessThan(vm.update.mock.invocationCallOrder[0]);
+  expect(vm.update.mock.invocationCallOrder[0]).toBeLessThan(vm.runCommand.mock.invocationCallOrder[dev]);
+  expect(vm.runCommand.mock.calls[dev][0]).toMatchObject({ cwd: '/vercel/repo/apps/editor' });
+  expect(vm.stop).not.toHaveBeenCalled();
+  expect(release).not.toHaveBeenCalled();
+});
+
+it('stops and releases on install failure without running the project', async () => {
+  vm.runCommand.mockImplementation(async (command) => ({
+    ...success, exitCode: command.cmd === 'pnpm' ? 1 : 0,
+  }));
+  await expect(runInSandbox({ mode: 'github', repo: 'https://github.com/a/b.git', directory: '' }, id, release))
+    .rejects.toThrow('Dependency install failed');
+  expect(vm.runCommand.mock.calls.some(([command]) => command.detached)).toBe(false);
+  expect(vm.stop).toHaveBeenCalledTimes(1);
+  expect(release).toHaveBeenCalledTimes(1);
+});
+
+it('keeps the lease if the VM cannot be confirmed stopped or created', async () => {
+  const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    vm.stop.mockRejectedValueOnce(new Error('unreachable'));
+    await runInSandbox(js, id, release);
+    expect(release).not.toHaveBeenCalled();
+    (Sandbox.create as jest.Mock).mockRejectedValueOnce(new Error('timeout'));
+    await expect(runInSandbox(js, id, release)).rejects.toThrow('Sandbox creation failed');
+    expect(release).not.toHaveBeenCalled();
+  } finally {
+    log.mockRestore();
+  }
+});
+
+
+it.each([
+  { entry: 'main.ts', helper: 'helper.ts', bin: 'node', image: 'vercel/sandbox/node:24' },
+  { entry: 'main.py', helper: 'helper.py', bin: 'python3', image: 'vercel/sandbox/python:3.14' },
+])('executes only the selected entry $entry and writes sibling files', async ({ entry, helper, bin, image }) => {
+  await runInSandbox({ mode: 'files', entry, files: [{ name: helper, content: '' }, { name: entry, content: '' }] }, id, release);
+  expect(Sandbox.create).toHaveBeenCalledWith(expect.objectContaining({ image, networkPolicy: 'deny-all', ports: [], persistent: false }));
+  expect(vm.runCommand).toHaveBeenNthCalledWith(1, expect.objectContaining({
+    cmd: 'mkdir', args: ['--', 'workspace'], cwd: '/vercel',
+  }));
+  expect(vm.writeFiles.mock.calls[0][0].map((file: { path: string }) => file.path)).toEqual([
+    'workspace/package.json', 'workspace/' + helper, 'workspace/' + entry,
+  ]);
+  expect(vm.runCommand).toHaveBeenCalledTimes(2);
+  expect(vm.runCommand).toHaveBeenCalledWith(expect.objectContaining({
+    cmd: bin, args: expect.arrayContaining([entry]), cwd: '/vercel/workspace', timeoutMs: 8_000,
+  }));
+});
+
+it('passes a file-write failure through as a named stage and stops the VM', async () => {
+  const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    vm.writeFiles.mockRejectedValueOnce(new Error('virtual filesystem failure'));
+    await expect(runInSandbox(js, id, release)).rejects.toThrow('Writing workspace files failed');
+    expect(vm.runCommand).toHaveBeenCalledTimes(1);
+    expect(vm.stop).toHaveBeenCalledTimes(1);
+    expect(release).toHaveBeenCalledTimes(1);
+  } finally { log.mockRestore(); }
+});
