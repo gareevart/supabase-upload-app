@@ -155,3 +155,13 @@
 .gravityInputs select { min-height: 28px; min-width: 0; background: var(--canvas); color: var(--g-color-text-primary); border: 1px solid var(--g-color-line-generic); border-radius: 5px; }
 .gravityOptions, .gravityActions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .gravityActions { justify-content: flex-end; padding: 6px 12px; border-top: 1px solid var(--line); }
+
+.terminalPanel[hidden] { display: none; }
+.terminalActions { display: flex; flex-wrap: wrap; gap: 4px; }
+.editArea[data-linux="true"] { grid-template-rows: auto minmax(0, 1fr) clamp(195px, 42%, 345px); }
+.linuxTerminal { display: flex; flex-direction: column; overflow: auto; min-height: 0; min-width: 0; }
+.linuxSetup, .linuxControls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; }
+.linuxControls select { min-height: 28px; color: var(--g-color-text-primary); background: var(--canvas); border: 1px solid var(--line); }
+.linuxViewport { flex: 1 0 86px; min-width: 0; overflow: hidden; background: #151719; padding: 4px 6px; }
+.linuxViewport[data-active="false"] { position: absolute; pointer-events: none; width: 1px; height: 1px; visibility: hidden; }
+.linuxViewport :global(.xterm) { width: 100%; height: 100%; }

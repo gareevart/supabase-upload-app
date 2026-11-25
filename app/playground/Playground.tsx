@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import CodeEditor from './CodeEditor';
 import GravitySetupForm from './GravitySetupForm';
+import { workspaceChanges, type LinuxChange } from '@/lib/playground/linux-workspace-sync';
+import LinuxTerminal, { lastLinuxSession } from './LinuxTerminal';
 import WorkspaceTree, { FileBadge } from './WorkspaceTree';
 import { useWorkspaceDrag } from './useWorkspaceDrag';
 import {
@@ -50,10 +52,11 @@ function cache(key: string, value: unknown) {
   try {
     if (value === null) sessionStorage.removeItem(key);
     else sessionStorage.setItem(key, JSON.stringify(value));
-  } catch { /* The runner still works when browser storage is disabled. */ }
+    return true;
+  } catch { return false; }
 }
 
-export default function Playground() {
+export default function Playground({ linuxPreviewEnabled = true }: { linuxPreviewEnabled?: boolean }) {
   const { t } = useI18n();
   const budgetTitleId = useId();
   const msg = (key: MessageKey, params?: Record<string, string | number>) => translatePlayground(t, key, params);
@@ -69,6 +72,11 @@ export default function Playground() {
   const [moveError, setMoveError] = useState<MessageKey | null>(null);
   const [showExplorer, setShowExplorer] = useState(true);
   const [showTerminal, setShowTerminal] = useState(true);
+  const [linuxMode, setLinuxMode] = useState(false);
+  const [linuxActive, setLinuxActive] = useState(false);
+  const [linuxClosing, setLinuxClosing] = useState(false);
+  const linuxEditQueue = useRef<((changes: LinuxChange[]) => void) | null>(null);
+  const [linuxPort, setLinuxPort] = useState<{ url: string; number: number } | null>(null);
   const [terminalCommand, setTerminalCommand] = useState('');
   const [terminalCwd, setTerminalCwd] = useState('');
   const [gravitySetup, setGravitySetup] = useState<GravitySetup | null>(null);
@@ -88,6 +96,8 @@ export default function Playground() {
   const [budget, setBudget] = useState<PlaygroundBudget | null>(null);
   const [budgetStatus, setBudgetStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading');
   const [budgetRefresh, refreshBudget] = useState(0);
+  const refreshLinuxBudget = useCallback(() => refreshBudget((version) => version + 1), []);
+  const workspaceLocked = busy || linuxClosing;
   const htmlPreview = preview?.source === 'html' ? preview : null;
   const activeFile = workspace.files.find((file) => file.name === workspace.entry);
   const canRun = activeFile && runnableKind(activeFile.name);
@@ -108,6 +118,7 @@ export default function Playground() {
   );
 
   useEffect(() => {
+    if (linuxPreviewEnabled && lastLinuxSession()) { setLinuxMode(true); setLinuxActive(true); }
     const draft = cached<Workspace & { expires: number }>(DRAFT);
     if (draft && draft.expires > Date.now()) {
       const restored = parseWorkspaceDraft(draft); // Drafts can be edited even above the run limit.
@@ -129,7 +140,7 @@ export default function Playground() {
       setMode(active.source === 'html' ? 'files' : 'github');
       if (active.source === 'html') setShowTerminal(false);
     } else cache(ACTIVE, null);
-  }, []);
+  }, [linuxPreviewEnabled]);
 
   useEffect(() => {
     if (!preview) return;
@@ -196,10 +207,11 @@ export default function Playground() {
     setPreviewError(null);
   }
 
-  function updateWorkspace(next: Workspace) {
+  function updateWorkspace(next: Workspace, fromLinux = false) {
+    if (!fromLinux && linuxActive) linuxEditQueue.current?.(workspaceChanges(workspace, next));
     if (terminalCwd && !next.folders.includes(terminalCwd)) setTerminalCwd('');
     setWorkspace(next);
-    cache(DRAFT, { ...next, expires: Date.now() + DRAFT_TTL });
+    return cache(DRAFT, { ...next, expires: Date.now() + DRAFT_TTL });
   }
 
   function setFolderOpen(path: string, open: boolean) {
@@ -224,7 +236,7 @@ export default function Playground() {
 
   function submitName(event: FormEvent) {
     event.preventDefault();
-    if (!nameAction || busy) return;
+    if (!nameAction || workspaceLocked) return;
     const name = newFileName.trim();
     const result = nameAction.kind === 'rename'
       ? relocateWorkspaceNode(workspace, nameAction.node, parentPath(nameAction.node.path), name)
@@ -243,6 +255,7 @@ export default function Playground() {
   }
 
   function moveWorkspaceNode(node: WorkspaceNode, parent: string) {
+    if (workspaceLocked) return 'invalidDestination' as const;
     const result = relocateWorkspaceNode(workspace, node, parent, leafName(node.path));
     if ('error' in result) return result.error;
     updateWorkspace(result.workspace);
@@ -255,14 +268,14 @@ export default function Playground() {
   }
 
   function applyMove() {
-    if (!moveNode || busy) return;
+    if (!moveNode || workspaceLocked) return;
     const problem = moveWorkspaceNode(moveNode, destination);
     if (problem) return setMoveError(problem);
     setMoveNode(null);
   }
 
   const explorerDrag = useWorkspaceDrag({
-    disabled: busy || !showExplorer || mode !== 'files',
+    disabled: workspaceLocked || !showExplorer || mode !== 'files',
     collapsed,
     canMove: (node, parent) => !('error' in relocateWorkspaceNode(workspace, node, parent, leafName(node.path))),
     onMove: moveWorkspaceNode,
@@ -270,7 +283,7 @@ export default function Playground() {
   });
 
   function confirmDelete() {
-    if (!pendingDelete || busy) return;
+    if (!pendingDelete || workspaceLocked) return;
     updateWorkspace(removeWorkspaceNode(workspace, pendingDelete));
     if (pendingDelete.kind === 'folder') {
       setCollapsed((previous) => previous.filter((folder) => !includesPath(pendingDelete.path, folder)));
@@ -281,7 +294,7 @@ export default function Playground() {
 
   async function run(event?: FormEvent) {
     event?.preventDefault();
-    if (busy || preview || gravitySetup || budgetBlocked || (mode === 'files' && (!canRun || tooLarge))) return;
+    if (workspaceLocked || linuxActive || preview || gravitySetup || budgetBlocked || (mode === 'files' && (!canRun || tooLarge))) return;
     setBusy(true);
     setShowTerminal(canRun !== 'html' || mode === 'github');
     setPreviewError(null);
@@ -317,7 +330,7 @@ export default function Playground() {
   async function runTerminal(event: FormEvent) {
     event.preventDefault();
     const line = terminalCommand.trim();
-    if (!line || busy || preview) return;
+    if (!line || workspaceLocked || preview) return;
     const cwd = terminalCwd;
     const command = parseTerminalCommand(line);
     const prompt = `/${cwd} $ ${line}`;
@@ -351,7 +364,7 @@ export default function Playground() {
 
   async function submitGravitySetup(event: FormEvent) {
     event.preventDefault();
-    if (!gravitySetup || busy || preview) return;
+    if (!gravitySetup || workspaceLocked || preview) return;
     const folder = gravitySetup.folder.trim();
     if (!isGravityFolder(folder)) return setGravityError('gravityInvalidFolder');
     if (!terminalCanCreate(workspace, terminalCwd, folder)) return setGravityError('gravityFolderExists');
@@ -428,7 +441,7 @@ export default function Playground() {
     }
   }
 
-  const runDisabled = busy || !!gravitySetup || budgetBlocked || (mode === 'files' ? tooLarge || !canRun : !repo.trim());
+  const runDisabled = workspaceLocked || linuxActive || !!gravitySetup || budgetBlocked || (mode === 'files' ? tooLarge || !canRun : !repo.trim());
   const runLabel = mode === 'github' ? msg('importAndRun') : canRun ? msg('runFile', { name: activeFile.name }) : msg(activeFile ? 'notRunnable' : 'runUnselected');
   const runtime = budget ? msg('runtime', {
     hours: Math.floor(budget.remainingSeconds / 3600),
@@ -452,9 +465,18 @@ export default function Playground() {
   }
 
   function updateFile(content: string) {
-    if (!activeFile) return;
+    if (!activeFile || workspaceLocked) return;
     updateWorkspace({ ...workspace, files: workspace.files.map((file) =>
       file.name === activeFile.name ? { ...file, content } : file) });
+  }
+
+  function importLinuxWorkspace(next: Workspace) {
+    const keepEntry = next.files.some((file) => file.name === workspace.entry);
+    const entry = keepEntry ? workspace.entry : next.entry;
+    const saved = updateWorkspace({ ...next, entry }, true);
+    setSelectedFolder((folder) => folder && !next.folders.includes(folder) ? null : folder);
+    if (!keepEntry) reveal(entry);
+    return saved;
   }
 
   return (
@@ -468,8 +490,8 @@ export default function Playground() {
       />
       <div className={styles.activity}>
         <div className={styles.activityTools}>
-          <SegmentedRadioGroup size="m" value={mode} disabled={busy || !!preview || !!gravitySetup}
-            onUpdate={setMode} aria-label={msg('source')}
+          <SegmentedRadioGroup size="m" value={mode} disabled={workspaceLocked || linuxActive || !!preview || !!gravitySetup}
+            onUpdate={(value) => { setMode(value); if (value === 'github') setLinuxMode(false); }} aria-label={msg('source')}
             options={[{ value: 'files', content: msg('workspace') }, { value: 'github', content: 'GitHub / Vite' }]} />
           <Button view="flat" size="s" selected={showExplorer} aria-expanded={showExplorer}
             onClick={() => setShowExplorer(!showExplorer)}><Icon data={FolderOpen} size={14} /> {msg('explorer')}</Button>
@@ -535,16 +557,16 @@ export default function Playground() {
           <div className={styles.sideHeading}>
             <Text as="h2" variant="caption-2">{msg(mode === 'files' ? 'explorer' : 'repo')}</Text>
             {mode === 'files' && <div className={styles.fileActions}>
-              <TreeAction icon={FilePlus} label={msg('newFile')} disabled={busy}
+              <TreeAction icon={FilePlus} label={msg('newFile')} disabled={workspaceLocked}
                 action={() => startNameAction({ kind: 'file', parent: currentFolder })} />
-              <TreeAction icon={FolderPlus} label={msg('newFolder')} disabled={busy}
+              <TreeAction icon={FolderPlus} label={msg('newFolder')} disabled={workspaceLocked}
                 action={() => startNameAction({ kind: 'folder', parent: currentFolder })} />
               {target && <>
-                <TreeAction icon={Pencil} label={msg('renameNode')} disabled={busy}
+                <TreeAction icon={Pencil} label={msg('renameNode')} disabled={workspaceLocked}
                   action={() => startNameAction({ kind: 'rename', node: target })} />
-                <TreeAction icon={ArrowRight} label={msg('moveNode')} disabled={busy}
+                <TreeAction icon={ArrowRight} label={msg('moveNode')} disabled={workspaceLocked}
                   action={() => { cancelNameAction(); setMoveError(null); setDestination(parentPath(target.path)); setMoveNode(target); }} />
-                <TreeAction icon={TrashBin} label={msg('deleteNode')} disabled={busy}
+                <TreeAction icon={TrashBin} label={msg('deleteNode')} disabled={workspaceLocked}
                   action={() => { cancelNameAction(); setPendingDelete(target); }} />
               </>}
             </div>}
@@ -560,9 +582,9 @@ export default function Playground() {
                 <TextInput key={nameAction.kind} autoFocus size="s"
                   controlProps={{ maxLength: MAX_NAME_BYTES, 'aria-label': msg(nameAction.kind === 'rename' ? 'newName' : nameAction.kind === 'folder' ? 'folderName' : 'filename') }}
                   placeholder={msg(nameAction.kind === 'rename' ? 'newName' : nameAction.kind === 'folder' ? 'folderName' : 'filename')}
-                  value={newFileName} disabled={busy} onUpdate={(value) => { setNewFileName(value); setFileError(null); }}
+                  value={newFileName} disabled={workspaceLocked} onUpdate={(value) => { setNewFileName(value); setFileError(null); }}
                   onKeyDown={(event) => { if (event.key === 'Escape') cancelNameAction(); }} />
-                <Button type="submit" view="normal" size="s" disabled={busy}>{msg(nameAction.kind === 'rename' ? 'saveName' : 'create')}</Button>
+                <Button type="submit" view="normal" size="s" disabled={workspaceLocked}>{msg(nameAction.kind === 'rename' ? 'saveName' : 'create')}</Button>
               </form>}
               {fileError && <div className={styles.fileError} role="alert"><Text color="danger" variant="caption-2">
                 {msg(fileError, { count: fileError === 'tooManyFolders' ? MAX_FOLDERS : MAX_FILES })}</Text></div>}
@@ -597,7 +619,7 @@ export default function Playground() {
         </aside>}
 
         <TabProvider value={mode === 'files' ? workspace.entry : 'preview'} onUpdate={(name) => { if (mode === 'files') pickFile(name); }}>
-          <section className={styles.editArea} aria-label={msg(mode === 'files' ? 'editor' : 'preview')} data-terminal={showTerminal} data-terminal-setup={showTerminal && !!gravitySetup}>
+          <section className={styles.editArea} aria-label={msg(mode === 'files' ? 'editor' : 'preview')} data-terminal={showTerminal} data-terminal-setup={showTerminal && !!gravitySetup} data-linux={showTerminal && linuxMode}>
             <TabList className={styles.tabs} aria-label={msg(mode === 'files' ? 'editorTabs' : 'previewTabs')} contentOverflow="scroll" size="m">
               {mode === 'files' && workspace.files.map((file) => (
                 <Tab key={file.name} value={file.name} disabled={busy} aria-label={file.name} title={file.name}
@@ -605,10 +627,10 @@ export default function Playground() {
               ))}
               {mode === 'github' && <Tab value="preview" icon={<Icon data={Code} size={14} />}>{msg('preview')}</Tab>}
             </TabList>
-            <div className={styles.canvas} data-html-preview={!!htmlPreview}>
+            <div className={styles.canvas} data-html-preview={!!(htmlPreview || linuxPort)}>
               {mode === 'files' && (activeFile ? (
                 <TabPanel value={activeFile.name} className={styles.editorPane}>
-                  <CodeEditor name={activeFile.name} value={activeFile.content} disabled={busy} onChange={updateFile} onRun={() => void run()} />
+                  <CodeEditor name={activeFile.name} value={activeFile.content} disabled={workspaceLocked} onChange={updateFile} onRun={() => void run()} />
                 </TabPanel>
               ) : (
                 <div className={styles.blank}>
@@ -632,6 +654,18 @@ export default function Playground() {
                     src={htmlPreview.previewUrl} referrerPolicy="no-referrer" />
                 </section>
               )}
+              {linuxPort && (
+                <section className={styles.htmlPreview} aria-label={msg('linuxDevPreview')}>
+                  <div className={styles.htmlPreviewHeader}>
+                    <Text as="h2" variant="caption-2">{msg('linuxDevPreview')} · {linuxPort.number}</Text>
+                    <Button size="s" view="flat" href={linuxPort.url} target="_blank" rel="noopener noreferrer">
+                      {msg('open')} <Icon data={ArrowUpRightFromSquare} size={12} />
+                    </Button>
+                  </div>
+                  <iframe className={styles.preview} sandbox="allow-scripts allow-same-origin"
+                    title={msg('linuxDevPreview')} src={linuxPort.url} referrerPolicy="no-referrer" />
+                </section>
+              )}
               {mode === 'github' && (
                 <TabPanel value="preview" className={styles.editorPane}>
                   {preview ? (
@@ -646,19 +680,25 @@ export default function Playground() {
                 </TabPanel>
               )}
             </div>
-            {showTerminal && (
-              <section id="playground-terminal" className={styles.terminalPanel} aria-label={msg('terminal')} aria-busy={busy}>
+            {(showTerminal || linuxMode) && (
+              <section id="playground-terminal" className={styles.terminalPanel} aria-label={msg('terminal')}
+                aria-busy={busy} hidden={!showTerminal}>
                 <div className={styles.terminalHead}>
                   <Text as="h2" variant="caption-2">{msg('terminal')}</Text>
-                  <div>
+                  <div className={styles.terminalActions}>
+                    {mode === 'files' && linuxPreviewEnabled && <Button view="flat" size="s" disabled={busy || !!preview || !!gravitySetup || linuxActive}
+                      onClick={() => setLinuxMode((value) => !value)}>{msg(linuxMode ? 'linuxQuick' : 'linuxTerminal')}</Button>}
                     {preview && !htmlPreview && <Button href={preview.previewUrl} target="_blank" rel="noopener noreferrer" view="flat" size="s">
                       {msg('open')} <Icon data={ArrowUpRightFromSquare} size={12} />
                     </Button>}
-                    <Button view="flat" size="s" disabled={busy || (!transcript.length && !previewError)}
-                      onClick={clearTerminal}>{msg('clear')}</Button>
+                    {!linuxMode && <Button view="flat" size="s" disabled={busy || (!transcript.length && !previewError)}
+                      onClick={clearTerminal}>{msg('clear')}</Button>}
                   </div>
                 </div>
-                {gravitySetup ? (
+                {linuxMode ? (
+                  <LinuxTerminal workspace={workspace} published={!!linuxPort} blocked={!!(terminalBudgetBlocked || preview || busy || tooLarge)}
+                    msg={msg} onActive={setLinuxActive} onClosing={setLinuxClosing} editQueue={linuxEditQueue} onSync={importLinuxWorkspace} onPort={setLinuxPort} onBudget={refreshLinuxBudget} />
+                ) : gravitySetup ? (
                   <GravitySetupForm setup={gravitySetup} error={gravityError ? msg(gravityError) : undefined} msg={msg}
                     onUpdate={(next) => { setGravitySetup(next); setGravityError(null); }}
                     onCancel={() => {
@@ -713,7 +753,7 @@ export default function Playground() {
           <Label theme="utility" size="xxs">{mode === 'files' ? msg('draft') : 'Vercel Sandbox'}</Label>
           {tooLarge && mode === 'files' && <span role="alert"><Text color="danger">{msg('sizeLimit')}</Text></span>}
           {mode === 'files' && activeFile && <Button view="flat" size="xs" aria-label={msg('deleteActive')}
-            disabled={busy} onClick={() => setPendingDelete({ path: activeFile.name, kind: 'file' })}><Icon data={TrashBin} size={13} /></Button>}
+            disabled={workspaceLocked} onClick={() => setPendingDelete({ path: activeFile.name, kind: 'file' })}><Icon data={TrashBin} size={13} /></Button>}
         </div>
         <div>{mode === 'files' && <><Text variant="caption-2">{language}</Text><Text variant="caption-2">UTF-8</Text><Text variant="caption-2">{canRun ? msg('runShortcut') : ''}</Text></>}</div>
       </footer>
