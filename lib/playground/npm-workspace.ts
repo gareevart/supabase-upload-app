@@ -18,8 +18,9 @@ const packageName = `(?:@${namePart}/)?${namePart}`;
 const validName = new RegExp(`^${packageName}$`);
 const validInstallPath = new RegExp(`^(?:node_modules/${packageName}/)*node_modules/${packageName}$`);
 const validTarball = new RegExp(`^https://registry\\.npmjs\\.org/${packageName}/-/${namePart}\\.tgz$`);
-// Only registry tags/ranges. No aliases, URLs, git, local dependencies, or workspace protocols.
-const validSpec = /^[a-zA-Z0-9*~^<>=][a-zA-Z0-9.*~^<>=+| -]*$/;
+// Only registry tags/ranges and aliases to other registry packages.
+const specRange = '[a-zA-Z0-9*~^<>=][a-zA-Z0-9.*~^<>=+| -]*';
+const validSpec = new RegExp(`^(?:npm:${packageName}@)?${specRange}$`);
 const validIntegrity = /^sha512-[A-Za-z0-9+/]{86}==$/;
 
 type Files = { entry: string; files: SourceFile[]; folders?: string[] };

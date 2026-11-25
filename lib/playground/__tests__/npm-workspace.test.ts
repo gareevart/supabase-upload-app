@@ -25,7 +25,7 @@ it('requires the root manifest and lock together before installing', () => {
 });
 
 it.each([
-  'file:./local', 'git+https://github.com/a/b', 'a/b', 'npm:other@1.0.0', 'https://example.net/p.tgz', 'workspace:*',
+  'file:./local', 'git+https://github.com/a/b', 'a/b', 'npm:other@file:./local', 'https://example.net/p.tgz', 'workspace:*',
 ])('rejects a non-registry dependency declaration (%s)', (spec) => {
   expect(planWorkspaceNpm({ entry, files: [
     { ...manifest, content: JSON.stringify({ ...pkg, devDependencies: { example: spec } }) }, lockfile,
@@ -56,4 +56,14 @@ it('finds the closest enclosing npm project for a nested entry', () => {
   const nested = [manifest, lockfile].map((file) => ({ ...file, name: 'src/' + file.name }));
   expect(planWorkspaceNpm({ entry: 'src/lib/main.ts', files: nested }))
     .toEqual({ directory: 'src', manifests: [manifest, lockfile] });
+});
+
+it('accepts a registry alias, as found in the official Gravity project lockfile', () => {
+  const packages = {
+    ...lock.packages,
+    'node_modules/is-number': { ...lock.packages['node_modules/is-number'], dependencies: { alias: 'npm:@scope/package@^1.0.0' } },
+  };
+  expect(planWorkspaceNpm({ entry, files: [
+    manifest, { ...lockfile, content: JSON.stringify({ ...lock, packages }) },
+  ] })).toEqual(expect.objectContaining({ manifests: expect.any(Array) }));
 });
