@@ -3,6 +3,7 @@ import { APIError, Sandbox, type Command } from '@vercel/sandbox';
 import { isSandboxPreviewUrl, PREVIEW_PORT, runDurationMs, type RunInput } from './input';
 import { HTML_PREVIEW_SERVER, htmlPreviewFiles, htmlPreviewPath } from './html-preview';
 import { runnableKind } from './workspace';
+import { NPM_INSTALL_TIMEOUT_MS, planWorkspaceNpm, WORKSPACE_NPM_CI_ARGS } from './npm-workspace';
 
 const LOG_LIMIT = 16 * 1024;
 const NO_NETWORK = 'deny-all' as const;
@@ -71,6 +72,8 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
   let stage = 'Sandbox creation';
   try {
     const github = input.mode === 'github';
+    const npm = github ? null : planWorkspaceNpm(input);
+    if (npm && 'error' in npm) throw new PlaygroundRunError(npm.error);
     const python = !github && runnableKind(input.entry) === 'python';
     const html = !github && runnableKind(input.entry) === 'html';
     sandbox = await Sandbox.create({
@@ -80,7 +83,8 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
       timeout: runDurationMs(input),
       persistent: false,
       ports: github || html ? [PREVIEW_PORT] : [],
-      networkPolicy: github ? { allow: ['github.com', 'registry.npmjs.org'] } : NO_NETWORK,
+      networkPolicy: github ? { allow: ['github.com', 'registry.npmjs.org'] }
+        : npm ? { allow: ['registry.npmjs.org'] } : NO_NETWORK,
       signal: AbortSignal.timeout(25_000),
     });
 
@@ -94,7 +98,8 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
       stage = 'Workspace creation';
       const folders = input.folders ?? [];
       await requireSuccess(stage, await sandbox.runCommand({
-        cmd: 'mkdir', args: ['-p', '--', 'workspace', ...folders.map((folder) => `workspace/${folder}`)],
+        cmd: 'mkdir', args: ['-p', '--', 'workspace', ...folders.map((folder) => `workspace/${folder}`),
+          ...(npm ? ['workspace-dependencies/node_modules'] : [])],
         cwd: work, timeoutMs: 3_000,
       }));
       if (html) {
@@ -117,6 +122,32 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
         return { kind: 'preview' as const, source: 'html' as const, runId, previewUrl: url.href, expiresAt };
       }
 
+      let installLogs: string | undefined;
+      if (npm) {
+        stage = 'Dependency install';
+        // npm never sees user source/config (including .npmrc, .git, or npm-shrinkwrap.json).
+        await sandbox.writeFiles(npm.manifests.map(({ name, content }) => ({
+          path: `workspace-dependencies/${name}`, content: Buffer.from(content),
+        })), { signal: AbortSignal.timeout(5_000) });
+        const install = await sandbox.runCommand({
+          cmd: 'npm',
+          args: WORKSPACE_NPM_CI_ARGS,
+          cwd: posix.join(work, 'workspace-dependencies'),
+          env: { ...PACKAGE_ENV, npm_config_fetch_timeout: '10000' },
+          timeoutMs: NPM_INSTALL_TIMEOUT_MS,
+        });
+        // Fail closed: don't write or execute project code unless the firewall was updated.
+        stage = 'Network isolation';
+        await sandbox.update({ networkPolicy: NO_NETWORK }, { signal: AbortSignal.timeout(5_000) });
+        await requireSuccess('Dependency install', install);
+        installLogs = await collect(install);
+        stage = 'Workspace creation';
+        await requireSuccess(stage, await sandbox.runCommand({
+          cmd: 'mv', args: ['-T', '--', 'workspace-dependencies/node_modules', 'workspace/node_modules'],
+          cwd: work, timeoutMs: 3_000,
+        }));
+      }
+
       stage = 'Writing workspace files';
       await sandbox.writeFiles([
         ...(!python && !input.files.some(({ name }) => name === 'package.json') && !folders.includes('package.json')
@@ -131,7 +162,8 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
         args: python ? ['-B', '-s', '--', input.entry] : ['--experimental-transform-types', '--disable-warning=ExperimentalWarning', '--', input.entry],
         cwd: source, timeoutMs: 8_000,
       });
-      return { kind: 'output' as const, output: await collect(command), exitCode: command.exitCode };
+      return { kind: 'output' as const, output: await collect(command), exitCode: command.exitCode,
+        ...(installLogs !== undefined ? { installLogs } : {}) };
     }
 
     stage = 'GitHub import';

@@ -1,6 +1,7 @@
 /** @jest-environment node */
 import { Sandbox } from '@vercel/sandbox';
 import { runInSandbox } from '../run';
+import npmLock from './fixtures/npm-lock.json';
 
 jest.mock('@vercel/sandbox', () => ({ APIError: class extends Error {}, Sandbox: { create: jest.fn() } }));
 
@@ -165,4 +166,58 @@ it('rejects preview origins outside the isolated sandbox domain and cleans up', 
     .rejects.toThrow('Preview is unavailable.');
   expect(vm.stop).toHaveBeenCalled();
   expect(release).toHaveBeenCalled();
+});
+
+const npmInput = {
+  mode: 'files' as const, entry: 'src/main.ts', folders: ['src'],
+  files: [
+    { name: 'package.json', content: '{"name":"workspace-smoke","type":"module","dependencies":{"is-number":"7.0.0"}}' },
+    { name: 'package-lock.json', content: JSON.stringify(npmLock) },
+    { name: '.npmrc', content: 'registry=https://example.test/' },
+    { name: 'npm-shrinkwrap.json', content: '{}' },
+    { name: 'src/main.ts', content: 'import isNumber from "is-number"; console.log(isNumber("42"));' },
+  ],
+};
+
+it('installs public npm dependencies before writing source files and runs the selected entry offline', async () => {
+  await expect(runInSandbox(npmInput, id, release))
+    .resolves.toEqual({ kind: 'output', output: 'hello\n', exitCode: 0, installLogs: 'hello\n' });
+  expect(Sandbox.create).toHaveBeenCalledWith(expect.objectContaining({
+    networkPolicy: { allow: ['registry.npmjs.org'] }, ports: [], persistent: false, timeout: 30_000,
+  }));
+  expect(vm.runCommand).toHaveBeenNthCalledWith(2, expect.objectContaining({
+    cmd: 'npm', args: expect.arrayContaining(['ci', '--ignore-scripts', '--registry=https://registry.npmjs.org/']),
+    cwd: '/vercel/workspace-dependencies', timeoutMs: 15_000,
+  }));
+  expect(vm.writeFiles.mock.calls[0][0].map((file: { path: string }) => file.path))
+    .toEqual(['workspace-dependencies/package.json', 'workspace-dependencies/package-lock.json']);
+  expect(vm.update).toHaveBeenCalledWith({ networkPolicy: 'deny-all' }, expect.anything());
+  expect(vm.runCommand.mock.invocationCallOrder[1]).toBeLessThan(vm.update.mock.invocationCallOrder[0]);
+  expect(vm.update.mock.invocationCallOrder[0]).toBeLessThan(vm.writeFiles.mock.invocationCallOrder[1]);
+  expect(vm.runCommand).toHaveBeenNthCalledWith(4, expect.objectContaining({
+    cmd: 'node', args: expect.arrayContaining(['--', 'src/main.ts']), cwd: '/vercel/workspace',
+  }));
+  expect(vm.stop).toHaveBeenCalledTimes(1);
+  expect(release).toHaveBeenCalledTimes(1);
+});
+
+it('returns npm diagnostics and does not run the entry when dependencies fail to install', async () => {
+  vm.runCommand.mockImplementation(async ({ cmd }) => ({ ...success, exitCode: cmd === 'npm' ? 1 : 0 }));
+  await expect(runInSandbox(npmInput, id, release))
+    .rejects.toMatchObject({ message: 'Dependency install failed (exit 1).', logs: 'hello\n' });
+  expect(vm.writeFiles).toHaveBeenCalledTimes(1);
+  expect(vm.runCommand).toHaveBeenCalledTimes(2);
+  expect(release).toHaveBeenCalledTimes(1);
+});
+
+it('fails closed when the npm VM cannot turn off registry access', async () => {
+  const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    vm.update.mockRejectedValueOnce(new Error('firewall unavailable'));
+    await expect(runInSandbox(npmInput, id, release)).rejects.toThrow('Network isolation failed');
+    expect(vm.writeFiles).toHaveBeenCalledTimes(1);
+    expect(vm.runCommand).toHaveBeenCalledTimes(2);
+    expect(vm.stop).toHaveBeenCalledTimes(1);
+    expect(release).toHaveBeenCalledTimes(1);
+  } finally { log.mockRestore(); }
 });

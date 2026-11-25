@@ -253,3 +253,26 @@ it('blocks an HTML preview when shared runtime is enough only for a script', asy
   addFile('index.html');
   expect(screen.getByRole('button', { name: 'Run index.html' })).toBeDisabled();
 });
+
+it('sends both npm manifests with the selected entry and separates dependency logs from script output', async () => {
+  let finish!: (response: unknown) => void;
+  (authFetch as jest.Mock).mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+  const files = [
+    { name: 'main.ts', content: 'import isNumber from "is-number"; console.log(isNumber("42"));' },
+    { name: 'package.json', content: '{"type":"module","dependencies":{"is-number":"7.0.0"}}' },
+    { name: 'package-lock.json', content: '{"lockfileVersion":3,"packages":{}}' },
+  ];
+  sessionStorage.setItem('gareev-playground-files-v2', JSON.stringify({
+    files, entry: 'main.ts', folders: [], expires: Date.now() + 60_000,
+  }));
+  render(<Playground />, { wrapper: Providers });
+  fireEvent.click(screen.getByRole('button', { name: 'Run main.ts' }));
+  expect(screen.getByRole('status')).toHaveTextContent('Preparing npm dependencies and running the file');
+  expect(JSON.parse((authFetch as jest.Mock).mock.calls[0][1].body)).toEqual({ mode: 'files', entry: 'main.ts', files });
+  finish({ ok: true, json: async () => ({ kind: 'output', installLogs: 'added 1 package', output: 'true', exitCode: 0 }) });
+  expect(await screen.findByText('npm dependencies installed')).toBeInTheDocument();
+  expect(screen.getByText('added 1 package')).toBeInTheDocument();
+  expect(screen.getByText('Script output')).toBeInTheDocument();
+  expect(screen.getByText('true')).toBeInTheDocument();
+  expect(screen.getByText('main.ts · Exit code: 0')).toBeInTheDocument();
+});

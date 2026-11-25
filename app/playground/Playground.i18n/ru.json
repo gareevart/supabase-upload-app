@@ -108,5 +108,13 @@
   "playground.plainText": "Обычный текст",
   "playground.htmlPreview": "Предпросмотр HTML",
   "playground.htmlPublicNotice": "Файлы предпросмотра доступны по ссылке до её истечения. Не добавляйте секреты.",
-  "playground.htmlNotReady": "Не удалось запустить предпросмотр HTML."
+  "playground.htmlNotReady": "Не удалось запустить предпросмотр HTML.",
+  "playground.installingAndRunning": "Установка npm-зависимостей и запуск файла…",
+  "playground.dependenciesInstalled": "npm-зависимости установлены",
+  "playground.scriptOutput": "Вывод скрипта",
+  "playground.workspaceNpmManifestMissing": "Добавьте package.json и package-lock.json в корень проекта.",
+  "playground.workspaceNpmInvalidManifest": "Проверьте package.json и package-lock.json (версия формата 2 или 3). Поддерживаются только зависимости из публичного реестра npm.",
+  "playground.workspaceNpmReservedPath": "Удалите файл или папку node_modules из корня проекта. Эту папку создаёт npm.",
+  "playground.networkIsolation": "Изоляция сети",
+  "playground.workspaceNpmHint": "Для публичных npm-пакетов добавьте package.json и package-lock.json в корень проекта."
 }

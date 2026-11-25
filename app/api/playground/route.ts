@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { withApiAuth } from '@/app/auth/withApiAuth';
 import { parseRunInput, readBoundedJson, validRunId, runDurationMs } from '@/lib/playground/input';
 import { PlaygroundRunError, runInSandbox, stopSandbox } from '@/lib/playground/run';
+import { planWorkspaceNpm } from '@/lib/playground/npm-workspace';
 import type { Database } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -42,6 +43,8 @@ const start = withApiAuth(async (req, user) => {
   const body = await readBoundedJson(req).catch(() => null);
   const input = parseRunInput(body);
   if (!input) return error('Supply a valid workspace with a JavaScript, TypeScript, Python, or HTML entry (up to 20 files and 64 KiB), or a public GitHub repository URL.', 400);
+  const npm = input.mode === 'files' ? planWorkspaceNpm(input) : null;
+  if (npm && 'error' in npm) return error(npm.error, 422);
   const runId = randomUUID();
   const args = { p_user_id: user.id, p_run_id: runId };
   try {

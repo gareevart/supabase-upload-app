@@ -84,3 +84,18 @@ it('never stops a sandbox without ownership', async () => {
   expect((await DELETE(request)).status).toBe(404);
   expect(stopSandbox).not.toHaveBeenCalled();
 });
+
+it('does not consume quota for a signed-in npm workspace missing its lockfile', async () => {
+  const request = new NextRequest('https://example.com/api/playground', {
+    method: 'POST', headers: { 'content-type': 'application/json', 'x-test-user': 'any-account' },
+    body: JSON.stringify({ mode: 'files', entry: 'main.ts', files: [
+      { name: 'main.ts', content: 'import isNumber from "is-number";' },
+      { name: 'package.json', content: '{"dependencies":{"is-number":"7.0.0"}}' },
+    ] }),
+  });
+  const response = await POST(request);
+  expect(response.status).toBe(422);
+  expect(await response.json()).toMatchObject({ error: 'Add package.json and package-lock.json to the workspace root.' });
+  expect(rpc).not.toHaveBeenCalled();
+  expect(runInSandbox).not.toHaveBeenCalled();
+});

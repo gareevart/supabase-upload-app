@@ -11,9 +11,10 @@ export function translatePlayground(t: (key: string) => string, key: MessageKey,
 const apiErrors: MessageKey[] = [
   'badInput', 'deploymentDisabled', 'slotBusy', 'dailyLimit', 'timeLimit', 'sandboxFailed',
   'quotaUnavailable', 'packageMissing', 'lockfileMissing', 'previewUnavailable', 'viteNotReady', 'htmlNotReady',
+  'workspaceNpmManifestMissing', 'workspaceNpmInvalidManifest', 'workspaceNpmReservedPath',
 ];
 const stages: MessageKey[] = [
-  'sandboxCreation', 'workspaceCreation', 'writeFiles', 'scriptExecution', 'githubImport', 'install', 'previewStartup',
+  'sandboxCreation', 'networkIsolation', 'workspaceCreation', 'writeFiles', 'scriptExecution', 'githubImport', 'install', 'previewStartup',
 ];
 
 export function translateRunError(t: (key: string) => string, message: string) {

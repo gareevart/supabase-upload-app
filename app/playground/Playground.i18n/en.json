@@ -108,5 +108,13 @@
   "playground.plainText": "Plain text",
   "playground.htmlPreview": "HTML preview",
   "playground.htmlPublicNotice": "Preview files are public to anyone with the link until it expires. Don’t include secrets.",
-  "playground.htmlNotReady": "HTML preview did not become ready."
+  "playground.htmlNotReady": "HTML preview did not become ready.",
+  "playground.installingAndRunning": "Preparing npm dependencies and running the file…",
+  "playground.dependenciesInstalled": "npm dependencies installed",
+  "playground.scriptOutput": "Script output",
+  "playground.workspaceNpmManifestMissing": "Add package.json and package-lock.json to the workspace root.",
+  "playground.workspaceNpmInvalidManifest": "Use valid package.json and npm v2 or v3 package-lock.json files with public npm registry dependencies only.",
+  "playground.workspaceNpmReservedPath": "Remove the node_modules file or folder from the workspace root. It is created by npm.",
+  "playground.networkIsolation": "Network isolation",
+  "playground.workspaceNpmHint": "To use public npm packages, add package.json and package-lock.json at the project root."
 }

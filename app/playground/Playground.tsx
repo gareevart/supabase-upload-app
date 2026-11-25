@@ -27,7 +27,7 @@ const DRAFT_TTL = 60 * 60 * 1000;
 const GRAVITY_EXAMPLE = 'https://github.com/gravity-ui/gravity-ui-vite-example';
 const STARTER = "const ideas = ['design', 'build', 'try'];\nconsole.log(ideas.map((idea) => idea.toUpperCase()));";
 type Preview = { kind: 'preview'; source?: 'html'; previewUrl: string; expiresAt: string; runId: string };
-type Result = Preview | { kind: 'output'; output: string; exitCode: number; entry: string };
+type Result = Preview | { kind: 'output'; output: string; installLogs?: string; exitCode: number; entry: string };
 type NameAction = { kind: 'file' | 'folder'; parent: string } | { kind: 'rename'; node: WorkspaceNode };
 const DEFAULT_WORKSPACE: Workspace = { files: [{ name: 'main.js', content: STARTER }], entry: 'main.js', folders: [] };
 
@@ -73,6 +73,7 @@ export default function Playground() {
   const htmlPreview = preview?.source === 'html' ? preview : null;
   const activeFile = workspace.files.find((file) => file.name === workspace.entry);
   const canRun = activeFile && runnableKind(activeFile.name);
+  const npmRun = canRun === 'node' && workspace.files.some(({ name }) => name === 'package-lock.json');
   const target: WorkspaceNode | null = selectedFolder !== null
     ? selectedFolder ? { path: selectedFolder, kind: 'folder' } : null
     : activeFile ? { path: activeFile.name, kind: 'file' } : null;
@@ -491,9 +492,16 @@ export default function Playground() {
               <div className={styles.consoleBody} aria-live="polite">
                 {error && <Alert theme="danger" message={'key' in error ? msg(error.key) : translateRunError(t, error.runError)} />}
                 {logs && <pre>{logs}</pre>}
-                {busy && !preview && <span role="status" className={styles.running}><Spin size="xs" /> {msg(mode === 'github' ? 'importing' : 'starting')}</span>}
+                {busy && !preview && <span role="status" className={styles.running}><Spin size="xs" /> {msg(mode === 'github' ? 'importing' : npmRun ? 'installingAndRunning' : 'starting')}</span>}
                 {!result && !error && !busy && <Text as="p" color="secondary" variant="body-1">{msg(mode === 'files' ? 'emptyConsole' : 'emptyRepoConsole')}</Text>}
+                {!result && !error && !busy && mode === 'files' && canRun === 'node' && !npmRun &&
+                  <Text as="p" variant="caption-2" color="secondary">{msg('workspaceNpmHint')}</Text>}
                 {output && <>
+                  {typeof output.installLogs === 'string' && <>
+                    <Text as="p" variant="caption-2">{msg('dependenciesInstalled')}</Text>
+                    {output.installLogs && <pre>{output.installLogs}</pre>}
+                    <Text as="p" variant="caption-2">{msg('scriptOutput')}</Text>
+                  </>}
                   <Label size="xs" theme={output.exitCode === 0 ? 'success' : 'danger'}>{msg('exitCode', { name: output.entry, code: output.exitCode })}</Label>
                   <pre>{output.output || msg('noOutput')}</pre>
                 </>}
