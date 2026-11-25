@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import { I18nProvider, useI18n } from '@/app/contexts/I18nContext';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { ThemeProvider } from '@gravity-ui/uikit';
 import { TextEncoder } from 'node:util';
 import Playground from '../Playground';
@@ -74,6 +74,50 @@ it.each([
   expect(screen.getByRole('textbox', { name })).toHaveValue(content);
 });
 
+it('opens files from the Explorer by mouse and keyboard and stays in sync with the editor tabs', () => {
+  render(<Playground />, { wrapper: Providers });
+  addFile('helper.ts');
+  fireEvent.change(screen.getByRole('textbox', { name: 'helper.ts' }), { target: { value: 'export const value = 42;' } });
+
+  const list = screen.getByRole('listbox', { name: 'Workspace files' });
+  const main = within(list).getByRole('option', { name: 'main.js', selected: false });
+  const helper = within(list).getByRole('option', { name: 'helper.ts', selected: true });
+  fireEvent.click(main);
+
+  expect(main).toHaveAttribute('aria-selected', 'true');
+  expect(screen.getByRole('tab', { name: 'main.js', selected: true })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Run main.js' })).toBeInTheDocument();
+
+  act(() => list.focus());
+  expect(list).toHaveFocus();
+  fireEvent.keyDown(list, { key: 'ArrowDown' });
+  expect(list).toHaveAttribute('aria-activedescendant', helper.id);
+  expect(main).toHaveAttribute('aria-selected', 'true');
+  fireEvent.keyDown(list, { key: 'Enter' });
+
+  expect(helper).toHaveAttribute('aria-selected', 'true');
+  expect(screen.getByRole('textbox', { name: 'helper.ts' })).toHaveValue('export const value = 42;');
+  expect(screen.getByRole('button', { name: 'Run helper.ts' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('tab', { name: 'main.js' }));
+  expect(main).toHaveAttribute('aria-selected', 'true');
+});
+
+it('does not switch files while a run is in progress', () => {
+  (authFetch as jest.Mock).mockImplementation(() => new Promise(() => {}));
+  render(<Playground />, { wrapper: Providers });
+  addFile('helper.ts');
+  const list = screen.getByRole('listbox', { name: 'Workspace files' });
+  act(() => list.focus());
+  fireEvent.click(screen.getByRole('button', { name: 'Run helper.ts' }));
+
+  const main = within(list).getByRole('option', { name: 'main.js' });
+  expect(main).toHaveAttribute('aria-disabled', 'true');
+  fireEvent.click(main);
+  fireEvent.keyDown(list, { key: 'ArrowUp' });
+  fireEvent.keyDown(list, { key: 'Enter' });
+  expect(screen.getByRole('textbox', { name: 'helper.ts' })).toBeInTheDocument();
+});
+
 it('keeps unsent files when switching to the independent GitHub import mode', () => {
   render(<Playground />, { wrapper: Providers });
   addFile('custom.py');
@@ -108,6 +152,7 @@ it('uses the post action bar and translates the workspace, dialogs and existing 
   expect(crumb.closest('.page-action-bar')).toBeInTheDocument();
   expect(screen.getByRole('heading', { level: 1, name: 'Playground' })).toBeInTheDocument();
   expect(screen.getByRole('radio', { name: 'Рабочая область' })).toBeInTheDocument();
+  expect(screen.getByRole('listbox', { name: 'Файлы рабочей области' })).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Удалить открытый файл' }));
   expect(await screen.findByText('Удалить main.js из рабочей области? Это действие нельзя отменить.')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));

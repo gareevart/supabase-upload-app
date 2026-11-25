@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useId, useMemo, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import CodeEditor from './CodeEditor';
 import {
   ActionTooltip, Alert, Button, Dialog, Icon, Label, PlaceholderContainer, Popover, Progress,
   SegmentedRadioGroup, Spin, Tab, TabList, TabPanel, TabProvider, Text, TextInput,
 } from '@gravity-ui/uikit';
+import { ListContainer, useNormalizedList } from '@gravity-ui/normalized-list';
+import { UIKitListItemView, UIKitNormalizedList } from '@gravity-ui/normalized-list/uikit';
 import { ArrowUpRightFromSquare, Code, FolderOpen, PlayFill, Plus, Square, Terminal, TrashBin } from '@gravity-ui/icons';
 import { useI18n } from '@/app/contexts/I18nContext';
 import { PageActionBar } from '@/shared/ui/PageActionBar';
@@ -324,17 +326,8 @@ export default function Playground() {
                 <Button type="submit" view="normal" size="s" disabled={busy}>{msg('create')}</Button>
               </form>}
               {fileError && <div className={styles.fileError} role="alert"><Text color="danger" variant="caption-2">{msg(fileError, { count: MAX_FILES })}</Text></div>}
-              <ul className={styles.files} aria-label={msg('filesList')}>
-                {workspace.files.map((file) => (
-                  <li key={file.name}>
-                    <Button view="flat" size="s" width="max" className={styles.file} selected={workspace.entry === file.name}
-                      aria-label={file.name} onClick={() => pickFile(file.name)} disabled={busy}>
-                      <span aria-hidden="true"><FileBadge name={file.name} /></span>
-                      <Text ellipsis>{file.name}</Text>
-                    </Button>
-                  </li>
-                ))}
-              </ul>
+              <ExplorerFileList files={workspace.files} entry={workspace.entry} disabled={busy}
+                label={msg('filesList')} onPick={pickFile} />
               {!workspace.files.length && !creatingFile && <Text as="p" className={styles.sidebarNote} color="secondary" variant="caption-2">{msg('addFileHint')}</Text>}
             </>
           ) : (
@@ -432,6 +425,58 @@ export default function Playground() {
           onClickButtonApply={confirmDelete} onClickButtonCancel={() => setPendingDelete(null)} />
       </Dialog>
     </div>
+  );
+}
+
+function ExplorerFileList({ files, entry, disabled, label, onPick }: {
+  files: SourceFile[];
+  entry: string;
+  disabled: boolean;
+  label: string;
+  onPick: (name: string) => void;
+}) {
+  const listId = useId();
+  const names = useMemo(() => files.map(({ name }) => name), [files]);
+  const list = useNormalizedList({
+    items: names,
+    getItemId: (name) => name,
+    controlledState: {
+      selectedById: entry ? { [entry]: true } : {},
+      disabledById: disabled ? Object.fromEntries(names.map((name) => [name, true])) : {},
+    },
+  });
+  const activeId = list.state.activeItemId;
+  const rowId = (id: string) => `${listId}-${id}`;
+
+  return (
+    <UIKitNormalizedList
+      list={list}
+      size="s"
+      className={styles.files}
+      mapItemDataToContentProps={(name) => ({
+        title: name,
+        startSlot: <span aria-hidden="true"><FileBadge name={name} /></span>,
+      })}
+      onItemClick={({ id }) => {
+        if (disabled || !list.structure.itemsById[id]) return;
+        list.state.setActiveItemId(id);
+        onPick(id);
+      }}
+      renderContainer={(props) => (
+        <ListContainer {...props} as="ul" extraProps={{
+          'aria-label': label,
+          'aria-disabled': disabled || undefined,
+          'aria-activedescendant': !disabled && activeId && list.structure.itemsById[activeId] ? rowId(activeId) : undefined,
+          tabIndex: files.length && !disabled ? 0 : -1,
+          onFocus: () => list.state.setActiveItemId(disabled ? undefined : entry || undefined),
+          onBlur: () => list.state.setActiveItemId(undefined),
+        }} />
+      )}
+      renderItem={({ props }) => (
+        <UIKitListItemView {...props} aria-disabled={props.disabled || undefined}
+          ref={(node) => { if (node) node.id = rowId(props.id); }} />
+      )}
+    />
   );
 }
 

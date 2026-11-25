@@ -66,10 +66,8 @@
 .sideHeading, .consoleHead { display: flex; justify-content: space-between; align-items: center; min-height: 36px; padding: 0 12px; }
 .sideHeading h2, .consoleHead h2 { text-transform: uppercase; letter-spacing: .04em; }
 .treeHeading { padding: 5px 12px; }
-.files { display: grid; gap: 1px; margin: 0; padding: 0 6px; list-style: none; }
-.files li { min-width: 0; }
-.file { text-align: left; min-width: 0; justify-content: flex-start; }
-.file :global(.g-button__text) { display: flex; align-items: center; gap: var(--g-spacing-1); }
+.files { gap: 1px; margin: 0; padding: 0 6px; list-style: none; }
+.files:focus-visible { outline: 2px solid var(--g-color-line-focus); outline-offset: -2px; }
 .createFile { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px; padding: 5px 10px; align-items: start; }
 .fileError, .sidebarNote { padding: 5px 12px; }
 .repoForm { display: grid; gap: 9px; padding: 8px 12px; }
