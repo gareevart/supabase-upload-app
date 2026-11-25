@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 import { withApiAuth } from '@/app/auth/withApiAuth';
-import { parseRunInput, readBoundedJson, validRunId, PREVIEW_MS, WORKSPACE_MS } from '@/lib/playground/input';
+import { parseRunInput, readBoundedJson, validRunId, runDurationMs } from '@/lib/playground/input';
 import { PlaygroundRunError, runInSandbox, stopSandbox } from '@/lib/playground/run';
 import type { Database } from '@/lib/types';
 
@@ -41,13 +41,13 @@ export async function GET() {
 const start = withApiAuth(async (req, user) => {
   const body = await readBoundedJson(req).catch(() => null);
   const input = parseRunInput(body);
-  if (!input) return error('Supply a valid workspace with a JavaScript, TypeScript, or Python entry (up to 20 files and 64 KiB), or a public GitHub repository URL.', 400);
+  if (!input) return error('Supply a valid workspace with a JavaScript, TypeScript, Python, or HTML entry (up to 20 files and 64 KiB), or a public GitHub repository URL.', 400);
   const runId = randomUUID();
   const args = { p_user_id: user.id, p_run_id: runId };
   try {
     const db = dbClient();
     const { data, error: issue } = await db.rpc('reserve_playground', {
-      ...args, p_environment: environment(), p_seconds: (input.mode === 'github' ? PREVIEW_MS : WORKSPACE_MS) / 1_000,
+      ...args, p_environment: environment(), p_seconds: runDurationMs(input) / 1_000,
     }).abortSignal(AbortSignal.timeout(6_000));
     if (issue) throw new Error('Quota reservation failed.');
     if (data === 'disabled') return error('Cloud runs are not enabled on this deployment.', 503);

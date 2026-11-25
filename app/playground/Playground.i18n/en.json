@@ -70,7 +70,7 @@
   "playground.runFailed": "Could not start the sandbox.",
   "playground.signInToRun": "Sign in with your gareev.de account to run code.",
   "playground.stopFailed": "Could not confirm Stop. The preview will expire automatically.",
-  "playground.badInput": "Supply a valid workspace with a JavaScript, TypeScript, or Python entry (up to 20 files and 64 KiB), or a public GitHub repository URL.",
+  "playground.badInput": "Supply a valid workspace with a JavaScript, TypeScript, Python, or HTML entry (up to 20 files and 64 KiB), or a public GitHub repository URL.",
   "playground.deploymentDisabled": "Cloud runs are not enabled on this deployment.",
   "playground.slotBusy": "The shared sandbox slot is busy. Try again when the current run ends.",
   "playground.dailyLimit": "The shared daily start limit has been reached.",
@@ -104,6 +104,9 @@
   "playground.deleteFolderPrompt": "Delete {name} and everything inside it? This cannot be undone.",
   "playground.invalidDestination": "Choose an existing folder outside the item you are moving.",
   "playground.tooManyFolders": "Folder limit: {count} per workspace.",
-  "playground.notRunnable": "Open a JavaScript, TypeScript, or Python file to run",
-  "playground.plainText": "Plain text"
+  "playground.notRunnable": "Open a JavaScript, TypeScript, or Python file to run, or HTML to preview",
+  "playground.plainText": "Plain text",
+  "playground.htmlPreview": "HTML preview",
+  "playground.htmlPublicNotice": "Preview files are public to anyone with the link until it expires. Don’t include secrets.",
+  "playground.htmlNotReady": "HTML preview did not become ready."
 }

@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { MAX_CODE_BYTES, MAX_REQUEST_BYTES, parseRunInput, readBoundedJson } from '../input';
+import { MAX_CODE_BYTES, MAX_REQUEST_BYTES, parseRunInput, PREVIEW_MS, readBoundedJson, runDurationMs, WORKSPACE_MS } from '../input';
 
 it('canonicalizes a GitHub repo without sending other user-controlled URLs to the VM', () => {
   expect(parseRunInput({ mode: 'github', repo: 'https://github.com/gareevart/ui-builder/', directory: 'apps/editor' }))
@@ -81,3 +81,12 @@ it.each(['../outside', 'foo/../../outside', '/absolute', 'foo//bar', 'foo/.', 'f
     expect(parseRunInput({ mode: 'files', entry: 'main.js', files: [{ name: 'main.js', content: '' }], folders: [folder] })).toBeNull();
   },
 );
+
+it('reserves preview time for .html and .htm entries but keeps script run time unchanged', () => {
+  for (const entry of ['pages/index.html', 'pages/index.HTM']) {
+    const input = parseRunInput({ mode: 'files', entry, folders: ['pages'], files: [{ name: entry, content: '<h1>Demo</h1>' }] });
+    expect(input).toMatchObject({ mode: 'files', entry });
+    expect(runDurationMs(input!)).toBe(PREVIEW_MS);
+  }
+  expect(runDurationMs(parseRunInput({ mode: 'javascript', code: '' })!)).toBe(WORKSPACE_MS);
+});

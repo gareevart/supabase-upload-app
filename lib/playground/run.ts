@@ -1,6 +1,7 @@
 import { posix } from 'node:path';
 import { APIError, Sandbox, type Command } from '@vercel/sandbox';
-import { PREVIEW_MS, PREVIEW_PORT, WORKSPACE_MS, type RunInput } from './input';
+import { isSandboxPreviewUrl, PREVIEW_PORT, runDurationMs, type RunInput } from './input';
+import { HTML_PREVIEW_SERVER, htmlPreviewFiles, htmlPreviewPath } from './html-preview';
 import { runnableKind } from './workspace';
 
 const LOG_LIMIT = 16 * 1024;
@@ -45,6 +46,25 @@ async function requireSuccess(label: string, command: Command) {
   }
 }
 
+function previewAddress(sandbox: Sandbox) {
+  const address = sandbox.domain(PREVIEW_PORT);
+  const expiresAt = sandbox.expiresAt;
+  if (!isSandboxPreviewUrl(address) || !expiresAt) throw new PlaygroundRunError('Preview is unavailable.');
+  return { url: new URL(address), expiresAt: expiresAt.toISOString() };
+}
+
+async function waitForPreview(sandbox: Sandbox, url: URL, command: Command, error: string) {
+  for (let retry = 0; retry < 20; retry++) {
+    const probe = await sandbox.runCommand('curl', [
+      '--noproxy', '*', '--silent', '--output', '/dev/null', '--fail', '--max-time', '1',
+      '--header', `Host: ${url.hostname}`, `http://127.0.0.1:${PREVIEW_PORT}${url.pathname}`,
+    ], { timeoutMs: 2_000 });
+    if (probe.exitCode === 0) return;
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  throw new PlaygroundRunError(error, await collect(command));
+}
+
 export async function runInSandbox(input: RunInput, runId: string, release: () => Promise<void>) {
   let sandbox: Sandbox | undefined;
   let keepPreview = false;
@@ -52,13 +72,14 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
   try {
     const github = input.mode === 'github';
     const python = !github && runnableKind(input.entry) === 'python';
+    const html = !github && runnableKind(input.entry) === 'html';
     sandbox = await Sandbox.create({
       name: sandboxName(runId),
       image: python ? 'vercel/sandbox/python:3.14' : 'vercel/sandbox/node:24',
       resources: { vcpus: 1 },
-      timeout: github ? PREVIEW_MS : WORKSPACE_MS,
+      timeout: runDurationMs(input),
       persistent: false,
-      ports: github ? [PREVIEW_PORT] : [],
+      ports: github || html ? [PREVIEW_PORT] : [],
       networkPolicy: github ? { allow: ['github.com', 'registry.npmjs.org'] } : NO_NETWORK,
       signal: AbortSignal.timeout(25_000),
     });
@@ -76,6 +97,26 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
         cmd: 'mkdir', args: ['-p', '--', 'workspace', ...folders.map((folder) => `workspace/${folder}`)],
         cwd: work, timeoutMs: 3_000,
       }));
+      if (html) {
+        stage = 'Writing workspace files';
+        const assets = htmlPreviewFiles(input.files, input.entry);
+        await sandbox.writeFiles([
+          { path: 'playground-html-preview.mjs', content: Buffer.from(HTML_PREVIEW_SERVER) },
+          ...assets.map(({ name, content }) => ({ path: `workspace/${name}`, content: Buffer.from(content) })),
+        ], { signal: AbortSignal.timeout(5_000) });
+        stage = 'Preview startup';
+        const { url, expiresAt } = previewAddress(sandbox);
+        url.pathname = htmlPreviewPath(input.entry);
+        const server = await sandbox.runCommand({
+          cmd: 'node', args: ['playground-html-preview.mjs', String(PREVIEW_PORT), input.entry,
+            JSON.stringify(assets.map(({ name, mime }) => [name, mime]))],
+          cwd: work, detached: true,
+        });
+        await waitForPreview(sandbox, url, server, 'HTML preview did not become ready.');
+        keepPreview = true;
+        return { kind: 'preview' as const, source: 'html' as const, runId, previewUrl: url.href, expiresAt };
+      }
+
       stage = 'Writing workspace files';
       await sandbox.writeFiles([
         ...(!python && !input.files.some(({ name }) => name === 'package.json') && !folders.includes('package.json')
@@ -122,11 +163,7 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
     await sandbox.update({ networkPolicy: NO_NETWORK });
 
     stage = 'Preview startup';
-    const previewUrl = new URL(sandbox.domain(PREVIEW_PORT));
-    const expiresAt = sandbox.expiresAt;
-    if (previewUrl.protocol !== 'https:' || !/^[a-z0-9-]+\.vercel\.run$/.test(previewUrl.hostname) || !expiresAt) {
-      throw new PlaygroundRunError('Preview is unavailable.');
-    }
+    const { url: previewUrl, expiresAt } = previewAddress(sandbox);
     const server = await sandbox.runCommand({
       cmd: manager,
       args: ['run', 'dev', ...(pnpm ? [] : ['--']), '--host', '0.0.0.0', '--port', String(PREVIEW_PORT), '--strictPort'],
@@ -139,19 +176,9 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
       },
       detached: true,
     });
-    for (let retry = 0; retry < 20; retry++) {
-      // Accept only a successful response on the declared port, and do not follow redirects.
-      const probe = await sandbox.runCommand('curl', [
-        '--noproxy', '*', '--silent', '--output', '/dev/null', '--fail', '--max-time', '1',
-        '--header', `Host: ${previewUrl.hostname}`, `http://127.0.0.1:${PREVIEW_PORT}/`,
-      ], { timeoutMs: 2_000 });
-      if (probe.exitCode === 0) {
-        keepPreview = true;
-        return { kind: 'preview' as const, runId, previewUrl: previewUrl.href, expiresAt: expiresAt.toISOString() };
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    }
-    throw new PlaygroundRunError('Vite did not become ready on port 4173. Check the dev script.', await collect(server));
+    await waitForPreview(sandbox, previewUrl, server, 'Vite did not become ready on port 4173. Check the dev script.');
+    keepPreview = true;
+    return { kind: 'preview' as const, runId, previewUrl: previewUrl.href, expiresAt };
   } catch (error) {
     if (error instanceof PlaygroundRunError) throw error;
     const status = error instanceof APIError ? error.response.status : undefined;

@@ -13,7 +13,7 @@ import { useI18n } from '@/app/contexts/I18nContext';
 import { PageActionBar } from '@/shared/ui/PageActionBar';
 import { translatePlayground, translateRunError, type MessageKey } from './messages';
 import { authFetch } from '@/lib/auth-fetch';
-import { MAX_CODE_BYTES, parseRunInput, PREVIEW_MS, WORKSPACE_MS, type PlaygroundBudget } from '@/lib/playground/input';
+import { isSandboxPreviewUrl, MAX_CODE_BYTES, parseRunInput, PREVIEW_MS, WORKSPACE_MS, type PlaygroundBudget } from '@/lib/playground/input';
 import {
   createWorkspaceNode, includesPath, leafName, MAX_FILES, MAX_FOLDERS, MAX_NAME_BYTES, parentPath, parseWorkspaceDraft,
   relocateWorkspaceNode, removeWorkspaceNode, runnableKind, type Workspace, type WorkspaceNode,
@@ -26,7 +26,7 @@ const ACTIVE = 'gareev-playground-run-v1';
 const DRAFT_TTL = 60 * 60 * 1000;
 const GRAVITY_EXAMPLE = 'https://github.com/gravity-ui/gravity-ui-vite-example';
 const STARTER = "const ideas = ['design', 'build', 'try'];\nconsole.log(ideas.map((idea) => idea.toUpperCase()));";
-type Preview = { kind: 'preview'; previewUrl: string; expiresAt: string; runId: string };
+type Preview = { kind: 'preview'; source?: 'html'; previewUrl: string; expiresAt: string; runId: string };
 type Result = Preview | { kind: 'output'; output: string; exitCode: number; entry: string };
 type NameAction = { kind: 'file' | 'folder'; parent: string } | { kind: 'rename'; node: WorkspaceNode };
 const DEFAULT_WORKSPACE: Workspace = { files: [{ name: 'main.js', content: STARTER }], entry: 'main.js', folders: [] };
@@ -70,6 +70,7 @@ export default function Playground() {
   const [budgetStatus, setBudgetStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading');
   const [budgetRefresh, refreshBudget] = useState(0);
   const preview = result?.kind === 'preview' ? result : null;
+  const htmlPreview = preview?.source === 'html' ? preview : null;
   const activeFile = workspace.files.find((file) => file.name === workspace.entry);
   const canRun = activeFile && runnableKind(activeFile.name);
   const target: WorkspaceNode | null = selectedFolder !== null
@@ -82,7 +83,7 @@ export default function Playground() {
   const tooLarge = bytes > MAX_CODE_BYTES;
   const budgetBlocked = budget !== null && (
     !budget.enabled || budget.remainingStarts === 0 ||
-    budget.remainingSeconds < (mode === 'github' ? PREVIEW_MS : WORKSPACE_MS) / 1_000 ||
+    budget.remainingSeconds < (mode === 'github' || canRun === 'html' ? PREVIEW_MS : WORKSPACE_MS) / 1_000 ||
     (budget.active && !preview)
   );
 
@@ -103,9 +104,10 @@ export default function Playground() {
       cache(LEGACY_DRAFT, null);
     }
     const active = cached<Preview>(ACTIVE);
-    if (active?.kind === 'preview' && Date.parse(active.expiresAt) > Date.now()) {
+    if (active?.kind === 'preview' && isSandboxPreviewUrl(active.previewUrl) && Date.parse(active.expiresAt) > Date.now()) {
       setResult(active);
-      setMode('github');
+      setMode(active.source === 'html' ? 'files' : 'github');
+      if (active.source === 'html') setShowConsole(false);
     } else cache(ACTIVE, null);
   }, []);
 
@@ -118,6 +120,7 @@ export default function Playground() {
         setResult(null);
         cache(ACTIVE, null);
         setError({ key: 'previewExpired' });
+        setShowConsole(true);
       }
     };
     tick();
@@ -230,7 +233,7 @@ export default function Playground() {
     event?.preventDefault();
     if (busy || preview || budgetBlocked || (mode === 'files' && (!canRun || tooLarge))) return;
     setBusy(true);
-    setShowConsole(true);
+    setShowConsole(canRun !== 'html' || mode === 'github');
     setError(null);
     setLogs('');
     setResult(null);
@@ -246,6 +249,7 @@ export default function Playground() {
         throw new Error(data.error ?? 'Run failed.');
       }
       if (data.kind === 'preview') {
+        if (!isSandboxPreviewUrl(data.previewUrl)) throw new Error('Preview is unavailable.');
         cache(ACTIVE, data);
         setResult(data);
       } else {
@@ -254,6 +258,7 @@ export default function Playground() {
     } catch (issue) {
       const message = issue instanceof Error ? issue.message : '';
       setError({ runError: message });
+      setShowConsole(true);
     } finally {
       setBusy(false);
       refreshBudget((version) => version + 1);
@@ -271,6 +276,7 @@ export default function Playground() {
       cache(ACTIVE, null);
     } catch {
       setError({ key: 'stopFailed' });
+      setShowConsole(true);
     } finally {
       setBusy(false);
       refreshBudget((version) => version + 1);
@@ -286,7 +292,7 @@ export default function Playground() {
   }) : msg('sharedRuntimeShort');
   const previewExpired = preview ? `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}` : null;
   const output = result?.kind === 'output' ? result : null;
-  const language = !activeFile ? msg('noFile') : !canRun ? msg('plainText') : canRun === 'python' ? 'Python'
+  const language = !activeFile ? msg('noFile') : !canRun ? msg('plainText') : canRun === 'python' ? 'Python' : canRun === 'html' ? 'HTML'
     : /\.[cm]?ts$/i.test(activeFile.name) ? 'TypeScript' : 'JavaScript';
 
   function pickFile(name: string) {
@@ -344,6 +350,9 @@ export default function Playground() {
               {runtime}
             </Button>
           </Popover>
+          {mode === 'files' && canRun === 'html' && !preview && (
+            <Text variant="caption-1" color="secondary" className={styles.htmlNotice}>{msg('htmlPublicNotice')}</Text>
+          )}
           {preview ? (
             <Button view="outlined" size="m" loading={busy} onClick={() => void stop()}>
               <Icon data={Square} size={14} /> {msg('stopPreview')}
@@ -433,7 +442,7 @@ export default function Playground() {
               ))}
               {mode === 'github' && <Tab value="preview" icon={<Icon data={Code} size={14} />}>{msg('preview')}</Tab>}
             </TabList>
-            <div className={styles.canvas}>
+            <div className={styles.canvas} data-html-preview={!!htmlPreview}>
               {mode === 'files' && (activeFile ? (
                 <TabPanel value={activeFile.name} className={styles.editorPane}>
                   <CodeEditor name={activeFile.name} value={activeFile.content} disabled={busy} onChange={updateFile} onRun={() => void run()} />
@@ -445,6 +454,16 @@ export default function Playground() {
                     actions={[{ text: msg('newFile'), onClick: () => { setShowExplorer(true); startNameAction({ kind: 'file', parent: currentFolder }); } }]} />
                 </div>
               ))}
+              {htmlPreview && (
+                <section className={styles.htmlPreview} aria-label={msg('htmlPreview')}>
+                  <div className={styles.htmlPreviewHeader}>
+                    <Text as="h2" variant="caption-2">{msg('htmlPreview')}</Text>
+                    <Text variant="caption-1" color="secondary">{msg('expires', { time: previewExpired ?? '' })}</Text>
+                  </div>
+                  <iframe className={styles.preview} sandbox="allow-scripts allow-same-origin" title={msg('htmlPreview')}
+                    src={htmlPreview.previewUrl} referrerPolicy="no-referrer" />
+                </section>
+              )}
               {mode === 'github' && (
                 <TabPanel value="preview" className={styles.editorPane}>
                   {preview ? (

@@ -70,7 +70,7 @@
   "playground.runFailed": "Не удалось запустить песочницу.",
   "playground.signInToRun": "Войдите в аккаунт gareev.de, чтобы запустить код.",
   "playground.stopFailed": "Не удалось подтвердить остановку. Предпросмотр завершится автоматически.",
-  "playground.badInput": "Укажите файл JavaScript, TypeScript или Python для запуска (до 20 файлов и 64 КиБ в проекте) или ссылку на публичный репозиторий GitHub.",
+  "playground.badInput": "Укажите файл JavaScript, TypeScript, Python или HTML для запуска (до 20 файлов и 64 КиБ в проекте) или ссылку на публичный репозиторий GitHub.",
   "playground.deploymentDisabled": "На этой версии сайта облачные запуски отключены.",
   "playground.slotBusy": "Общая песочница занята. Повторите попытку после завершения текущего запуска.",
   "playground.dailyLimit": "Достигнут общий дневной лимит запусков.",
@@ -104,6 +104,9 @@
   "playground.deleteFolderPrompt": "Удалить папку {name} и всё её содержимое? Это действие нельзя отменить.",
   "playground.invalidDestination": "Выберите существующую папку за пределами перемещаемого элемента.",
   "playground.tooManyFolders": "Лимит папок в рабочей области: {count}.",
-  "playground.notRunnable": "Для запуска откройте файл JavaScript, TypeScript или Python",
-  "playground.plainText": "Обычный текст"
+  "playground.notRunnable": "Откройте JavaScript, TypeScript или Python для запуска либо HTML для предпросмотра",
+  "playground.plainText": "Обычный текст",
+  "playground.htmlPreview": "Предпросмотр HTML",
+  "playground.htmlPublicNotice": "Файлы предпросмотра доступны по ссылке до её истечения. Не добавляйте секреты.",
+  "playground.htmlNotReady": "Не удалось запустить предпросмотр HTML."
 }

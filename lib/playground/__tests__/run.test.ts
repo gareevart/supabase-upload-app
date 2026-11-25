@@ -128,3 +128,41 @@ it('creates nested and empty folders before writing files, and preserves the use
     cmd: 'node', args: expect.arrayContaining(['--', 'src/main.cjs']), cwd: '/vercel/workspace',
   }));
 });
+
+it('starts an isolated HTML preview and serves only the selected page and allowed project assets', async () => {
+  const files = [
+    { name: 'pages/hello #1.html', content: '<link rel="stylesheet" href="site.css"><script type="module" src="./ui.js"></script>' },
+    { name: 'pages/site.css', content: 'body { color: red }' },
+    { name: 'pages/ui.js', content: 'document.body.textContent = "Ready";' },
+    { name: '.env', content: 'NOT_A_PREVIEW_ASSET=example' },
+    { name: 'pages/.private.json', content: '{}' },
+    { name: 'build.py', content: 'print("not served")' },
+  ];
+  const result = await runInSandbox({ mode: 'files', folders: ['pages'], entry: files[0].name, files }, id, release);
+  expect(result).toEqual({
+    kind: 'preview', source: 'html', runId: id, previewUrl: 'https://preview.vercel.run/pages/hello%20%231.html',
+    expiresAt: vm.expiresAt.toISOString(),
+  });
+  expect(Sandbox.create).toHaveBeenCalledWith(expect.objectContaining({
+    timeout: 600_000, ports: [4173], networkPolicy: 'deny-all', persistent: false,
+  }));
+  expect(vm.writeFiles.mock.calls[0][0].map((file: { path: string }) => file.path)).toEqual([
+    'playground-html-preview.mjs', 'workspace/pages/hello #1.html', 'workspace/pages/site.css', 'workspace/pages/ui.js',
+  ]);
+  expect(vm.runCommand).toHaveBeenCalledWith(expect.objectContaining({
+    cmd: 'node', args: expect.arrayContaining(['playground-html-preview.mjs', 'pages/hello #1.html']), detached: true,
+  }));
+  expect(vm.runCommand).toHaveBeenCalledWith('curl', expect.arrayContaining([
+    'http://127.0.0.1:4173/pages/hello%20%231.html',
+  ]), expect.anything());
+  expect(vm.stop).not.toHaveBeenCalled();
+  expect(release).not.toHaveBeenCalled();
+});
+
+it('rejects preview origins outside the isolated sandbox domain and cleans up', async () => {
+  vm.domain.mockReturnValue('https://gareev.de');
+  await expect(runInSandbox({ mode: 'files', entry: 'index.html', files: [{ name: 'index.html', content: '' }] }, id, release))
+    .rejects.toThrow('Preview is unavailable.');
+  expect(vm.stop).toHaveBeenCalled();
+  expect(release).toHaveBeenCalled();
+});

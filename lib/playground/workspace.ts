@@ -28,7 +28,8 @@ export function isWorkspacePath(path: unknown): path is string {
   return parts.length <= MAX_DEPTH && parts.every(isWorkspaceName);
 }
 
-export function runnableKind(path: string): 'python' | 'node' | null {
+export function runnableKind(path: string): 'python' | 'node' | 'html' | null {
+  if (/\.html?$/i.test(path)) return 'html';
   if (/\.py$/i.test(path)) return 'python';
   return /\.(?:[cm]?[jt]s)$/.test(path) ? 'node' : null;
 }

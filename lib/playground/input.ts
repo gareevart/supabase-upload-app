@@ -23,6 +23,19 @@ export type RunInput =
   | WorkspaceRun
   | { mode: 'github'; repo: string; directory: string };
 
+export function runDurationMs(input: RunInput) {
+  return input.mode === 'github' || runnableKind(input.entry) === 'html' ? PREVIEW_MS : WORKSPACE_MS;
+}
+
+export function isSandboxPreviewUrl(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password && !url.port &&
+      /^[a-z0-9-]+\.vercel\.run$/.test(url.hostname);
+  } catch { return false; }
+}
+
 export function parseWorkspace(input: Record<string, unknown>, maxBytes = MAX_CODE_BYTES): WorkspaceRun | null {
   const workspace = parseWorkspaceDraft(input, maxBytes);
   if (!workspace || !runnableKind(workspace.entry)) return null;

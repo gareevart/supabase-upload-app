@@ -133,7 +133,7 @@ it('creates and edits arbitrary text files in nested folders, then restores the 
   expect(within(tree).getByRole('treeitem', { name: 'README' })).toHaveAttribute('aria-level', '3');
   const editor = screen.getByRole('textbox', { name: 'src/assets/README' });
   fireEvent.change(editor, { target: { value: 'A text file with no extension.' } });
-  expect(screen.getByRole('button', { name: 'Open a JavaScript, TypeScript, or Python file to run' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Open a JavaScript, TypeScript, or Python file to run, or HTML to preview' })).toBeDisabled();
 
   view.unmount();
   render(<Playground />, { wrapper: Providers });
@@ -212,4 +212,44 @@ it('uses the post action bar and translates the workspace, dialogs and existing 
   fireEvent.click(screen.getByRole('button', { name: 'EN' }));
   expect(screen.getByRole('link', { name: 'Projects' })).toBeInTheDocument();
   expect(screen.getByText('Dependency install failed (exit 1).')).toBeInTheDocument();
+});
+
+it('runs an HTML file, keeps the editor open, restores the preview on reload, and stops it', async () => {
+  const preview = {
+    kind: 'preview', source: 'html', previewUrl: 'https://example.vercel.run/pages/index.html',
+    runId: 'f02fe46c-a3d5-4bee-8f64-0ab151028a10', expiresAt: new Date(Date.now() + 30_000).toISOString(),
+  };
+  (authFetch as jest.Mock)
+    .mockResolvedValueOnce({ ok: true, json: async () => preview })
+    .mockResolvedValueOnce({ ok: true });
+  const view = render(<Playground />, { wrapper: Providers });
+  addFolder('pages');
+  addFile('index.html');
+  fireEvent.change(screen.getByRole('textbox', { name: 'pages/index.html' }), { target: { value: '<h1>Hello</h1>' } });
+  expect(screen.getByText(/Preview files are public/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Run pages/index.html' }));
+  const iframe = await screen.findByTitle('HTML preview');
+  expect(iframe).toHaveAttribute('src', preview.previewUrl);
+  expect(iframe).toHaveAttribute('sandbox', 'allow-scripts allow-same-origin');
+  expect(screen.getByRole('textbox', { name: 'pages/index.html' })).toHaveValue('<h1>Hello</h1>');
+  expect(JSON.parse((authFetch as jest.Mock).mock.calls[0][1].body)).toMatchObject({
+    mode: 'files', entry: 'pages/index.html', folders: ['pages'],
+  });
+  view.unmount();
+  render(<Playground />, { wrapper: Providers });
+  expect(screen.getByTitle('HTML preview')).toBeInTheDocument();
+  expect(screen.getByRole('radio', { name: 'Workspace' })).toBeChecked();
+  fireEvent.click(screen.getByRole('button', { name: 'Stop preview' }));
+  expect(await screen.findByRole('button', { name: 'Run pages/index.html' })).toBeInTheDocument();
+  expect(screen.queryByTitle('HTML preview')).not.toBeInTheDocument();
+  expect(authFetch).toHaveBeenLastCalledWith('/api/playground?runId=' + preview.runId, { method: 'DELETE' });
+});
+
+it('blocks an HTML preview when shared runtime is enough only for a script', async () => {
+  (fetch as jest.Mock).mockResolvedValue(mockBudget({ ...demoBudget, remainingSeconds: 60 }));
+  render(<Playground />, { wrapper: Providers });
+  await screen.findByText('0h 01m 00s');
+  expect(screen.getByRole('button', { name: 'Run main.js' })).toBeEnabled();
+  addFile('index.html');
+  expect(screen.getByRole('button', { name: 'Run index.html' })).toBeDisabled();
 });
