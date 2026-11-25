@@ -104,7 +104,16 @@
 .terminalBody pre { font: 12px/1.6 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; }
 .running { display: flex; gap: 8px; align-items: center; }
 .statusbar { border-end-start-radius: inherit; border-end-end-radius: inherit; min-height: 29px; padding: 0 10px; border-top: 1px solid var(--line); }
-.budgetPopover { display: grid; gap: 8px; width: min(260px, 75vw); padding: 9px; box-sizing: border-box; }
+.budgetPopover {
+  box-sizing: border-box;
+  width: min(272px, calc(100vw - 32px));
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+.budgetText { margin: 0; }
+.budgetMeter { display: grid; gap: 8px; }
+.budgetStatuses { display: flex; flex-wrap: wrap; gap: 8px; }
 @media (max-width: 767px) {
   .shell { min-height: 29rem; }
   .canvas[data-html-preview='true'] { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 2fr) minmax(0, 3fr); }

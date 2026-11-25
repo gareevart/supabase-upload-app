@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import CodeEditor from './CodeEditor';
 import GravitySetupForm from './GravitySetupForm';
@@ -55,6 +55,7 @@ function cache(key: string, value: unknown) {
 
 export default function Playground() {
   const { t } = useI18n();
+  const budgetTitleId = useId();
   const msg = (key: MessageKey, params?: Record<string, string | number>) => translatePlayground(t, key, params);
   const [mode, setMode] = useState<'files' | 'github'>('files');
   const [workspace, setWorkspace] = useState<Workspace>(DEFAULT_WORKSPACE);
@@ -434,6 +435,8 @@ export default function Playground() {
     minutes: String(Math.floor(budget.remainingSeconds % 3600 / 60)).padStart(2, '0'),
     seconds: String(budget.remainingSeconds % 60).padStart(2, '0'),
   }) : msg('sharedRuntimeShort');
+  const runtimePercent = budget && budget.totalSeconds > 0
+    ? Math.min(100, Math.max(0, 100 * budget.remainingSeconds / budget.totalSeconds)) : 0;
   const previewExpired = preview ? `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}` : null;
   const language = !activeFile ? msg('noFile') : !canRun ? msg('plainText') : canRun === 'python' ? 'Python' : canRun === 'html' ? 'HTML'
     : /\.[cm]?ts$/i.test(activeFile.name) ? 'TypeScript' : 'JavaScript';
@@ -477,16 +480,29 @@ export default function Playground() {
           }}>{msg('signIn')}</Button>
         </div>
         <div className={styles.toolbarActions}>
-          <Popover trigger="click" placement="bottom-end" content={
-            <div className={styles.budgetPopover}>
-              <Text as="h2" variant="subheader-2">{msg('sharedRuntime')}</Text>
-              {budgetStatus === 'loading' && <Text as="p" color="secondary">{msg('loadingBudget')}</Text>}
-              {budgetStatus === 'unavailable' && <Text as="p" color="secondary">{msg('unavailableBudget')}</Text>}
+          <Popover trigger="click" placement="bottom-end" offset={8} content={
+            <div className={styles.budgetPopover} role="group" aria-labelledby={budgetTitleId}>
+              <Text as="h2" id={budgetTitleId} className={styles.budgetText} variant="subheader-2">{msg('sharedRuntime')}</Text>
+              {budgetStatus !== 'ready' && (
+                <Text as="p" className={styles.budgetText} color="secondary">
+                  {msg(budgetStatus === 'loading' ? 'loadingBudget' : 'unavailableBudget')}
+                </Text>
+              )}
               {budget && <>
-                <Progress size="s" value={100 * budget.remainingSeconds / budget.totalSeconds} />
-                <Text as="p" variant="body-1">{msg('window', { hours: Math.round(budget.totalSeconds / 3600) })}</Text>
-                {budget.active && <Label theme="info" size="xs">{msg('sandboxBusy')}</Label>}
-                {!budget.enabled && <Label theme="warning" size="xs">{msg('cloudDisabled')}</Label>}
+                <div className={styles.budgetMeter}>
+                  <div role="progressbar" aria-labelledby={budgetTitleId} aria-valuenow={Math.round(runtimePercent)} aria-valuetext={runtime}>
+                    <Progress size="s" value={runtimePercent} />
+                  </div>
+                  <Text as="p" className={styles.budgetText} variant="caption-2" color="secondary">
+                    {msg('window', { hours: Math.round(budget.totalSeconds / 3600) })}
+                  </Text>
+                </div>
+                {(budget.active || !budget.enabled) && (
+                  <div className={styles.budgetStatuses}>
+                    {budget.active && <Label theme="info" size="xs">{msg('sandboxBusy')}</Label>}
+                    {!budget.enabled && <Label theme="warning" size="xs">{msg('cloudDisabled')}</Label>}
+                  </div>
+                )}
               </>}
             </div>
           }>

@@ -182,7 +182,9 @@ it('displays the shared quota and disables Run when it runs out', async () => {
   render(<Playground />, { wrapper: Providers });
   expect(await screen.findByText('0h 00m 00s')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Shared Playground runtime' }));
-  expect(await screen.findByText('5h every 30 days')).toBeInTheDocument();
+  const budget = within(await screen.findByRole('group', { name: 'Shared Playground runtime' }));
+  expect(budget.getByText('5h every 30 days')).toBeInTheDocument();
+  expect(budget.getByRole('progressbar')).toHaveAttribute('aria-valuetext', '0h 00m 00s');
   expect(screen.queryByText(/starts left today/i)).not.toBeInTheDocument();
   expect(screen.queryByText(/sandbox uptime/i)).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Run main.js' })).toBeDisabled();
