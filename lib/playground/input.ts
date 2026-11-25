@@ -1,8 +1,10 @@
 import { parseWorkspaceDraft, runnableKind, type SourceFile } from './workspace';
 
+import { MAX_TERMINAL_BYTES, parseTerminalInput, TERMINAL_RESERVE_MS, type TerminalInput } from './terminal';
+
 export { MAX_FILES, type SourceFile } from './workspace';
-export const MAX_CODE_BYTES = 64 * 1024; // combined workspace content
-export const MAX_REQUEST_BYTES = 448 * 1024;
+export const MAX_CODE_BYTES = MAX_TERMINAL_BYTES; // combined workspace content
+export const MAX_REQUEST_BYTES = 3_250 * 1024;
 export const PREVIEW_PORT = 4173;
 export const PREVIEW_MS = 10 * 60 * 1000;
 export const WORKSPACE_MS = 30_000;
@@ -21,9 +23,11 @@ export type WorkspaceRun = { mode: 'files'; entry: string; files: SourceFile[]; 
 
 export type RunInput =
   | WorkspaceRun
+  | TerminalInput
   | { mode: 'github'; repo: string; directory: string };
 
 export function runDurationMs(input: RunInput) {
+  if (input.mode === 'npm') return TERMINAL_RESERVE_MS;
   return input.mode === 'github' || runnableKind(input.entry) === 'html' ? PREVIEW_MS : WORKSPACE_MS;
 }
 
@@ -46,6 +50,7 @@ export function parseWorkspace(input: Record<string, unknown>, maxBytes = MAX_CO
 export function parseRunInput(value: unknown): RunInput | null {
   if (!value || typeof value !== 'object') return null;
   const input = value as Record<string, unknown>;
+  if (input.mode === 'npm') return parseTerminalInput(input);
   if (input.mode === 'files') return parseWorkspace(input);
   // Accept requests from old Playground tabs until they are reloaded.
   if (input.mode === 'javascript' && typeof input.code === 'string') {

@@ -1,4 +1,4 @@
-import { includesPath, runnableKind, type SourceFile } from './workspace';
+import { includesPath, joinPath, parentPath, runnableKind, type SourceFile } from './workspace';
 
 export const NPM_REGISTRY = 'https://registry.npmjs.org/';
 export const NPM_INSTALL_TIMEOUT_MS = 15_000;
@@ -7,9 +7,9 @@ export const WORKSPACE_NPM_CI_ARGS = [
   '--allow-git=none', '--allow-file=none', '--allow-directory=none', '--allow-remote=none',
   '--userconfig=./.empty-npmrc', '--globalconfig=/dev/null', `--registry=${NPM_REGISTRY}`,
 ];
-export const NPM_MANIFEST_MISSING = 'Add package.json and package-lock.json to the workspace root.';
+export const NPM_MANIFEST_MISSING = 'Add package.json and package-lock.json to the same project folder.';
 export const NPM_INVALID_MANIFEST = 'Use valid package.json and npm v2 or v3 package-lock.json files with public npm registry dependencies only.';
-export const NPM_RESERVED_PATH = 'Remove the node_modules file or folder from the workspace root. It is created by npm.';
+export const NPM_RESERVED_PATH = 'Remove the node_modules file or folder from the npm project folder. It is created by npm.';
 const PACKAGE_JSON = 'package.json';
 const LOCKFILE = 'package-lock.json';
 const dependencyFields = ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies'] as const;
@@ -23,7 +23,7 @@ const validSpec = /^[a-zA-Z0-9*~^<>=][a-zA-Z0-9.*~^<>=+| -]*$/;
 const validIntegrity = /^sha512-[A-Za-z0-9+/]{86}==$/;
 
 type Files = { entry: string; files: SourceFile[]; folders?: string[] };
-type NpmPlan = { manifests: [SourceFile, SourceFile] } | { error: string } | null;
+type NpmPlan = { directory: string; manifests: [SourceFile, SourceFile] } | { error: string } | null;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -45,8 +45,17 @@ function dependenciesValid(manifest: Record<string, unknown>) {
 
 export function planWorkspaceNpm({ entry, files, folders = [] }: Files): NpmPlan {
   if (runnableKind(entry) !== 'node') return null;
-  const manifest = files.find(({ name }) => name === PACKAGE_JSON);
-  const lockfile = files.find(({ name }) => name === LOCKFILE);
+  let directory = parentPath(entry);
+  for (;;) {
+    const plan = planNpmDirectory(files, folders, directory);
+    if (plan || !directory) return plan;
+    directory = parentPath(directory);
+  }
+}
+
+function planNpmDirectory(files: SourceFile[], folders: string[], directory: string): NpmPlan {
+  const manifest = files.find(({ name }) => name === joinPath(directory, PACKAGE_JSON));
+  const lockfile = files.find(({ name }) => name === joinPath(directory, LOCKFILE));
   if (!manifest) return lockfile ? { error: NPM_MANIFEST_MISSING } : null;
 
   const pkg = parse(manifest.content);
@@ -66,8 +75,8 @@ export function planWorkspaceNpm({ entry, files, folders = [] }: Files): NpmPlan
     return { error: NPM_INVALID_MANIFEST };
   }
 
-  if ([...folders, ...files.map(({ name }) => name)].some((name) => includesPath('node_modules', name))) {
+  if ([...folders, ...files.map(({ name }) => name)].some((name) => includesPath(joinPath(directory, 'node_modules'), name))) {
     return { error: NPM_RESERVED_PATH };
   }
-  return { manifests: [manifest, lockfile] };
+  return { directory, manifests: [{ ...manifest, name: PACKAGE_JSON }, { ...lockfile, name: LOCKFILE }] };
 }

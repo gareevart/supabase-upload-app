@@ -42,7 +42,7 @@ export async function GET() {
 const start = withApiAuth(async (req, user) => {
   const body = await readBoundedJson(req).catch(() => null);
   const input = parseRunInput(body);
-  if (!input) return error('Supply a valid workspace with a JavaScript, TypeScript, Python, or HTML entry (up to 20 files and 64 KiB), or a public GitHub repository URL.', 400);
+  if (!input) return error('Supply a valid workspace with a JavaScript, TypeScript, Python, or HTML entry (up to 100 files and 1.25 MiB), or a public GitHub repository URL.', 400);
   const npm = input.mode === 'files' ? planWorkspaceNpm(input) : null;
   if (npm && 'error' in npm) return error(npm.error, 422);
   const runId = randomUUID();

@@ -6,6 +6,7 @@ import { File, Folder, FolderOpen } from '@gravity-ui/icons';
 import { ListContainerView, useNormalizedList, type ListTreeItemType } from '@gravity-ui/normalized-list';
 import { UIKitListItemView, UIKitNormalizedList } from '@gravity-ui/normalized-list/uikit';
 import { leafName, parentPath, type WorkspaceNode } from '@/lib/playground/workspace';
+import type { useWorkspaceDrag } from './useWorkspaceDrag';
 import styles from './playground.module.css';
 
 const itemId = (path: string) => `node:${encodeURIComponent(path)}`;
@@ -19,7 +20,7 @@ export function FileBadge({ name }: { name: string }) {
   </Label>;
 }
 
-export default function WorkspaceTree({ paths, folders, selected, collapsed, disabled, label, onPick, onExpand }: {
+export default function WorkspaceTree({ paths, folders, selected, collapsed, disabled, label, onPick, onExpand, dragRow }: {
   paths: string[];
   folders: string[];
   selected: string;
@@ -28,6 +29,7 @@ export default function WorkspaceTree({ paths, folders, selected, collapsed, dis
   label: string;
   onPick: (node: WorkspaceNode) => void;
   onExpand: (path: string, open: boolean) => void;
+  dragRow: ReturnType<typeof useWorkspaceDrag>['row'];
 }) {
   const listId = useId();
   const items = useMemo(() => {
@@ -105,7 +107,7 @@ export default function WorkspaceTree({ paths, folders, selected, collapsed, dis
     )}
     renderItem={({ props, data }) => {
       const siblings = (parentPath(data.path) ? groupsState[itemId(parentPath(data.path))]?.childrenIds : list.structure.rootIds) ?? [];
-      return <UIKitListItemView {...props} role="treeitem" title={data.path}
+      return <UIKitListItemView {...props} {...dragRow(data)} role="treeitem" title={data.path}
         aria-level={data.path.split('/').length} aria-setsize={siblings.length}
         aria-posinset={siblings.indexOf(props.id) + 1}
         aria-expanded={data.kind === 'folder' ? !collapsed.includes(data.path) : undefined}

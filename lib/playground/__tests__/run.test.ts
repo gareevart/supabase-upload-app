@@ -221,3 +221,36 @@ it('fails closed when the npm VM cannot turn off registry access', async () => {
     expect(release).toHaveBeenCalledTimes(1);
   } finally { log.mockRestore(); }
 });
+
+it('runs the official Gravity initializer then installs, closes egress and imports the generated files', async () => {
+  const { Readable } = await import('node:stream');
+  const changes = { folders: ['gravity-app'], files: [{ name: 'gravity-app/package.json', content: '{}' }] };
+  const readFile = jest.fn().mockResolvedValue(Readable.from([JSON.stringify(changes)]));
+  Object.assign(vm, { readFile });
+  await expect(runInSandbox({ mode: 'npm', command: { kind: 'create', folder: 'gravity-app' }, manifests: [] }, id, release))
+    .resolves.toEqual({ kind: 'terminal', exitCode: 0, output: 'hello\n\n$ npm install\nhello\n', changes });
+  expect(Sandbox.create).toHaveBeenCalledWith(expect.objectContaining({
+    timeout: 130_000, persistent: false, ports: [], networkPolicy: { allow: ['registry.npmjs.org'] },
+  }));
+  expect(vm.runCommand).toHaveBeenNthCalledWith(2, expect.objectContaining({
+    cmd: 'npm', cwd: '/vercel/workspace', args: expect.arrayContaining(['create', '@gravity-ui@1.0.1', '--out', 'gravity-app', '--yes']),
+  }));
+  expect(vm.runCommand).toHaveBeenNthCalledWith(3, expect.objectContaining({
+    cmd: 'npm', cwd: '/vercel/workspace/gravity-app', args: expect.arrayContaining(['install', '--ignore-scripts']),
+  }));
+  expect(vm.update).toHaveBeenCalledWith({ networkPolicy: 'deny-all' }, expect.anything());
+  expect(vm.update.mock.invocationCallOrder[0]).toBeLessThan(readFile.mock.invocationCallOrder[0]);
+  expect(vm.stop).toHaveBeenCalledTimes(1);
+  expect(release).toHaveBeenCalledTimes(1);
+});
+
+it('does not publish a partially created workspace when the npm install fails', async () => {
+  vm.runCommand.mockImplementation(async ({ cmd }) => ({ ...success, exitCode: cmd === 'npm' ? 1 : 0 }));
+  const readFile = jest.fn();
+  Object.assign(vm, { readFile });
+  await expect(runInSandbox({ mode: 'npm', command: { kind: 'install', packages: ['react'] }, manifests: [
+    { name: 'package.json', content: '{}' },
+  ] }, id, release)).resolves.toMatchObject({ kind: 'terminal', output: 'hello\n', exitCode: 1 });
+  expect(readFile).not.toHaveBeenCalled();
+  expect(vm.stop).toHaveBeenCalledTimes(1);
+});

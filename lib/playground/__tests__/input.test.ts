@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { MAX_CODE_BYTES, MAX_REQUEST_BYTES, parseRunInput, PREVIEW_MS, readBoundedJson, runDurationMs, WORKSPACE_MS } from '../input';
+import { MAX_CODE_BYTES, MAX_FILES, MAX_REQUEST_BYTES, parseRunInput, PREVIEW_MS, readBoundedJson, runDurationMs, WORKSPACE_MS } from '../input';
 
 it('canonicalizes a GitHub repo without sending other user-controlled URLs to the VM', () => {
   expect(parseRunInput({ mode: 'github', repo: 'https://github.com/gareevart/ui-builder/', directory: 'apps/editor' }))
@@ -60,7 +60,7 @@ it('rejects duplicate names including case collisions, plus aggregate byte and f
   for (const others of [
     [{ name: 'MAIN.js', content: '' }],
     [{ name: 'large.py', content: 'x'.repeat(MAX_CODE_BYTES) }],
-    Array.from({ length: 20 }, (_, i) => ({ name: `extra${i}.js`, content: '' })),
+    Array.from({ length: MAX_FILES }, (_, i) => ({ name: `extra${i}.js`, content: '' })),
   ]) expect(parseRunInput({ mode: 'files', entry: 'main.js', files: [main, ...others] })).toBeNull();
 });
 

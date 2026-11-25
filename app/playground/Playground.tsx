@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import CodeEditor from './CodeEditor';
 import WorkspaceTree, { FileBadge } from './WorkspaceTree';
+import { useWorkspaceDrag } from './useWorkspaceDrag';
 import {
   ActionTooltip, Alert, Button, Dialog, Icon, Label, PlaceholderContainer, Popover, Progress,
   SegmentedRadioGroup, Select, Spin, Tab, TabList, TabPanel, TabProvider, Text, TextInput,
@@ -15,9 +16,13 @@ import { translatePlayground, translateRunError, type MessageKey } from './messa
 import { authFetch } from '@/lib/auth-fetch';
 import { isSandboxPreviewUrl, MAX_CODE_BYTES, parseRunInput, PREVIEW_MS, WORKSPACE_MS, type PlaygroundBudget } from '@/lib/playground/input';
 import {
-  createWorkspaceNode, includesPath, leafName, MAX_FILES, MAX_FOLDERS, MAX_NAME_BYTES, parentPath, parseWorkspaceDraft,
+  createWorkspaceNode, includesPath, joinPath, leafName, MAX_FILES, MAX_FOLDERS, MAX_NAME_BYTES, parentPath, parseWorkspaceDraft,
   relocateWorkspaceNode, removeWorkspaceNode, runnableKind, type Workspace, type WorkspaceNode,
 } from '@/lib/playground/workspace';
+import {
+  applyTerminalChanges, parseTerminalCommand, resolveTerminalDirectory, terminalCanCreate,
+  TERMINAL_MANIFESTS, TERMINAL_RESERVE_MS,
+} from '@/lib/playground/terminal';
 import styles from './playground.module.css';
 
 const DRAFT = 'gareev-playground-files-v2';
@@ -58,6 +63,12 @@ export default function Playground() {
   const [moveError, setMoveError] = useState<MessageKey | null>(null);
   const [showExplorer, setShowExplorer] = useState(true);
   const [showConsole, setShowConsole] = useState(true);
+  const [panel, setPanel] = useState<'console' | 'terminal'>('console');
+  const [terminalCommand, setTerminalCommand] = useState('');
+  const [terminalCwd, setTerminalCwd] = useState('');
+  const [terminalOutput, setTerminalOutput] = useState('');
+  const [terminalError, setTerminalError] = useState('');
+  const [terminalBusy, setTerminalBusy] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<WorkspaceNode | null>(null);
   const [repo, setRepo] = useState('');
   const [directory, setDirectory] = useState('');
@@ -73,7 +84,8 @@ export default function Playground() {
   const htmlPreview = preview?.source === 'html' ? preview : null;
   const activeFile = workspace.files.find((file) => file.name === workspace.entry);
   const canRun = activeFile && runnableKind(activeFile.name);
-  const npmRun = canRun === 'node' && workspace.files.some(({ name }) => name === 'package-lock.json');
+  const npmRun = canRun === 'node' && workspace.files.some(({ name }) =>
+    leafName(name) === 'package-lock.json' && (!parentPath(name) || includesPath(parentPath(name), workspace.entry)));
   const target: WorkspaceNode | null = selectedFolder !== null
     ? selectedFolder ? { path: selectedFolder, kind: 'folder' } : null
     : activeFile ? { path: activeFile.name, kind: 'file' } : null;
@@ -163,6 +175,7 @@ export default function Playground() {
   }, [budgetRefresh]);
 
   function updateWorkspace(next: Workspace) {
+    if (terminalCwd && !next.folders.includes(terminalCwd)) setTerminalCwd('');
     setWorkspace(next);
     cache(DRAFT, { ...next, expires: Date.now() + DRAFT_TTL });
   }
@@ -207,18 +220,32 @@ export default function Playground() {
     cancelNameAction();
   }
 
-  function applyMove() {
-    if (!moveNode || busy) return;
-    const result = relocateWorkspaceNode(workspace, moveNode, destination, leafName(moveNode.path));
-    if ('error' in result) return setMoveError(result.error);
+  function moveWorkspaceNode(node: WorkspaceNode, parent: string) {
+    const result = relocateWorkspaceNode(workspace, node, parent, leafName(node.path));
+    if ('error' in result) return result.error;
     updateWorkspace(result.workspace);
-    setSelectedFolder(moveNode.kind === 'folder' ? result.path : null);
-    if (moveNode.kind === 'folder') {
-      setCollapsed((previous) => previous.filter((folder) => !includesPath(moveNode.path, folder)));
+    setSelectedFolder(node.kind === 'folder' ? result.path : null);
+    if (node.kind === 'folder') {
+      setCollapsed((previous) => previous.filter((folder) => !includesPath(node.path, folder)));
     }
     reveal(result.path);
+    cancelNameAction();
+  }
+
+  function applyMove() {
+    if (!moveNode || busy) return;
+    const problem = moveWorkspaceNode(moveNode, destination);
+    if (problem) return setMoveError(problem);
     setMoveNode(null);
   }
+
+  const explorerDrag = useWorkspaceDrag({
+    disabled: busy || !showExplorer || mode !== 'files',
+    collapsed,
+    canMove: (node, parent) => !('error' in relocateWorkspaceNode(workspace, node, parent, leafName(node.path))),
+    onMove: moveWorkspaceNode,
+    onExpand: setFolderOpen,
+  });
 
   function confirmDelete() {
     if (!pendingDelete || busy) return;
@@ -234,6 +261,7 @@ export default function Playground() {
     event?.preventDefault();
     if (busy || preview || budgetBlocked || (mode === 'files' && (!canRun || tooLarge))) return;
     setBusy(true);
+    setPanel('console');
     setShowConsole(canRun !== 'html' || mode === 'github');
     setError(null);
     setLogs('');
@@ -262,6 +290,76 @@ export default function Playground() {
       setShowConsole(true);
     } finally {
       setBusy(false);
+      refreshBudget((version) => version + 1);
+    }
+  }
+
+  async function runTerminal(event: FormEvent) {
+    event.preventDefault();
+    const line = terminalCommand.trim();
+    if (!line || busy || preview) return;
+    const cwd = terminalCwd;
+    const command = parseTerminalCommand(line);
+    if (line === 'clear') {
+      setTerminalOutput('');
+      setTerminalError('');
+      setTerminalCommand('');
+      return;
+    }
+    if (line === 'cd' || line.startsWith('cd ')) {
+      const directory = resolveTerminalDirectory(cwd, line.slice(2).trim(), workspace.folders);
+      setTerminalError(directory === null ? msg('terminalFolderMissing') : '');
+      if (directory !== null) {
+        setTerminalCwd(directory);
+        setTerminalCommand('');
+      }
+      return;
+    }
+    if (!command) return setTerminalError(msg('terminalUnsupported'));
+    if (command.kind === 'create' && !terminalCanCreate(workspace, cwd, command.folder)) {
+      return setTerminalError(msg('terminalFolderExists', { name: command.folder }));
+    }
+    if (budget && (!budget.enabled || budget.active || !budget.remainingStarts ||
+        budget.remainingSeconds < TERMINAL_RESERVE_MS / 1_000)) return setTerminalError(msg('terminalBudget'));
+
+    setTerminalError('');
+    setTerminalOutput(`/${cwd} $ ${line}
+`);
+    setTerminalCommand('');
+    setTerminalBusy(true);
+    setBusy(true);
+    try {
+      const manifests = command.kind === 'install' ? TERMINAL_MANIFESTS.flatMap((name) => {
+        const file = workspace.files.find((item) => item.name === joinPath(cwd, name));
+        return file ? [{ name, content: file.content }] : [];
+      }) : [];
+      const res = await authFetch('/api/playground', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'npm', command: line, manifests }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (typeof data.logs === 'string') setTerminalOutput((previous) => previous + data.logs);
+        throw new Error(translateRunError(t, data.error ?? ''));
+      }
+      if (data.kind !== 'terminal' || typeof data.exitCode !== 'number') throw new Error(msg('runFailed'));
+      setTerminalOutput((previous) => previous + (typeof data.output === 'string' ? data.output : ''));
+      if (data.exitCode !== 0) throw new Error(msg('terminalExit', { code: data.exitCode }));
+      const next = applyTerminalChanges(workspace, cwd, command, data.changes);
+      if (!next) throw new Error(msg('terminalExportFailed'));
+      updateWorkspace(next);
+      if (command.kind === 'create') {
+        setTerminalCwd(joinPath(cwd, command.folder));
+        setSelectedFolder(null);
+        setShowExplorer(true);
+        reveal(next.entry);
+      }
+    } catch (issue) {
+      setTerminalError(issue instanceof Error && issue.message !== 'No active session'
+        ? issue.message : translateRunError(t, issue instanceof Error ? issue.message : ''));
+    } finally {
+      setBusy(false);
+      setTerminalBusy(false);
       refreshBudget((version) => version + 1);
     }
   }
@@ -322,12 +420,17 @@ export default function Playground() {
       <div className={styles.activity}>
         <div className={styles.activityTools}>
           <SegmentedRadioGroup size="m" value={mode} disabled={busy || !!preview}
-            onUpdate={(value) => setMode(value)} aria-label={msg('source')}
+            onUpdate={(value) => { setMode(value); if (value === 'github') setPanel('console'); }} aria-label={msg('source')}
             options={[{ value: 'files', content: msg('workspace') }, { value: 'github', content: 'GitHub / Vite' }]} />
           <Button view="flat" size="s" selected={showExplorer} aria-expanded={showExplorer}
             onClick={() => setShowExplorer(!showExplorer)}><Icon data={FolderOpen} size={14} /> {msg('explorer')}</Button>
-          <Button view="flat" size="s" selected={showConsole} aria-expanded={showConsole}
-            onClick={() => setShowConsole(!showConsole)}><Icon data={Terminal} size={14} /> {msg('console')}</Button>
+          <Button view="flat" size="s" selected={showConsole && panel === 'console'} aria-expanded={showConsole && panel === 'console'}
+            onClick={() => { setShowConsole(!showConsole || panel !== 'console'); setPanel('console'); }}>{msg('console')}</Button>
+          {mode === 'files' && <Button view="flat" size="s" selected={showConsole && panel === 'terminal'}
+            aria-expanded={showConsole && panel === 'terminal'}
+            onClick={() => { setShowConsole(!showConsole || panel !== 'terminal'); setPanel('terminal'); }}>
+            <Icon data={Terminal} size={14} /> {msg('terminal')}
+          </Button>}
           <Button href="/auth" component={Link} view="flat" size="s" onClick={() => {
             try { window.sessionStorage.setItem('returnUrl', '/projects/playground'); } catch { /* Optional. */ }
           }}>{msg('signIn')}</Button>
@@ -389,7 +492,7 @@ export default function Playground() {
           </div>
           {mode === 'files' ? (
             <>
-              <div className={styles.treeLocation}>
+              <div className={styles.treeLocation} {...explorerDrag.root}>
                 <Button size="xs" view="flat" selected={selectedFolder === ''} disabled={busy}
                   onClick={() => { cancelNameAction(); setSelectedFolder(''); }}>{msg('projectRoot')}</Button>
                 {currentFolder && <Text variant="caption-2" color="secondary" ellipsis title={currentFolder}>/{currentFolder}</Text>}
@@ -405,7 +508,7 @@ export default function Playground() {
               {fileError && <div className={styles.fileError} role="alert"><Text color="danger" variant="caption-2">
                 {msg(fileError, { count: fileError === 'tooManyFolders' ? MAX_FOLDERS : MAX_FILES })}</Text></div>}
               <WorkspaceTree paths={filePaths} folders={workspace.folders} selected={target?.path ?? ''} collapsed={collapsed}
-                disabled={busy} label={msg('filesList')} onExpand={setFolderOpen} onPick={(node) => {
+                disabled={busy} label={msg('filesList')} dragRow={explorerDrag.row} onExpand={setFolderOpen} onPick={(node) => {
                   cancelNameAction();
                   if (node.kind === 'file') pickFile(node.path);
                   else {
@@ -459,7 +562,12 @@ export default function Playground() {
                 <section className={styles.htmlPreview} aria-label={msg('htmlPreview')}>
                   <div className={styles.htmlPreviewHeader}>
                     <Text as="h2" variant="caption-2">{msg('htmlPreview')}</Text>
-                    <Text variant="caption-1" color="secondary">{msg('expires', { time: previewExpired ?? '' })}</Text>
+                    <div className={styles.htmlPreviewActions}>
+                      <Text variant="caption-1" color="secondary">{msg('sandboxExpires', { time: previewExpired ?? '' })}</Text>
+                      <Button size="s" view="flat" href={htmlPreview.previewUrl} target="_blank" rel="noopener noreferrer">
+                        {msg('openHtmlPreview')} <Icon data={ArrowUpRightFromSquare} size={12} />
+                      </Button>
+                    </div>
                   </div>
                   <iframe className={styles.preview} sandbox="allow-scripts allow-same-origin" title={msg('htmlPreview')}
                     src={htmlPreview.previewUrl} referrerPolicy="no-referrer" />
@@ -479,7 +587,7 @@ export default function Playground() {
                 </TabPanel>
               )}
             </div>
-            {showConsole && <section className={styles.console} aria-label={msg('console')} aria-busy={busy}>
+            {showConsole && panel === 'console' && <section className={styles.console} aria-label={msg('console')} aria-busy={busy}>
               <div className={styles.consoleHead}>
                 <Text as="h2" variant="caption-2">{msg('console')}</Text>
                 <div>
@@ -508,6 +616,27 @@ export default function Playground() {
                 {preview && <Label size="xs" theme="success">{msg('expires', { time: previewExpired ?? '' })}</Label>}
               </div>
             </section>}
+            {showConsole && panel === 'terminal' && mode === 'files' && (
+              <section className={styles.terminalPanel} aria-label={msg('terminal')} aria-busy={terminalBusy}>
+                <div className={styles.consoleHead}>
+                  <Text as="h2" variant="caption-2">{msg('terminal')}</Text>
+                  <Button view="flat" size="s" disabled={terminalBusy}
+                    onClick={() => { setTerminalOutput(''); setTerminalError(''); }}>{msg('clear')}</Button>
+                </div>
+                <div className={styles.consoleBody} aria-live="polite">
+                  {!terminalOutput && <Text as="p" color="secondary" variant="body-1">{msg('terminalHelp')}</Text>}
+                  {terminalOutput && <pre>{terminalOutput}</pre>}
+                  {terminalBusy && <span role="status" className={styles.running}><Spin size="xs" /> {msg('terminalRunning')}</span>}
+                  {terminalError && <Alert theme="danger" message={terminalError} />}
+                </div>
+                <form className={styles.terminalForm} onSubmit={runTerminal}>
+                  <code>/{terminalCwd} $</code>
+                  <TextInput value={terminalCommand} onUpdate={setTerminalCommand}
+                    disabled={busy || !!preview} placeholder="npm create @gravity-ui" autoComplete="off" controlProps={{ maxLength: 320, 'aria-label': msg('terminalCommand') }} />
+                  <Button type="submit" view="action" disabled={busy || !!preview || !terminalCommand.trim()}>{msg('run')}</Button>
+                </form>
+              </section>
+            )}
           </section>
         </TabProvider>
       </div>

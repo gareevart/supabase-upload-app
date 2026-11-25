@@ -1,4 +1,4 @@
-export const MAX_FILES = 20;
+export const MAX_FILES = 100;
 export const MAX_FOLDERS = 100;
 const MAX_PATH_BYTES = 240;
 export const MAX_NAME_BYTES = 100;

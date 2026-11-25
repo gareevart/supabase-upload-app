@@ -231,6 +231,8 @@ it('runs an HTML file, keeps the editor open, restores the preview on reload, an
   const iframe = await screen.findByTitle('HTML preview');
   expect(iframe).toHaveAttribute('src', preview.previewUrl);
   expect(iframe).toHaveAttribute('sandbox', 'allow-scripts allow-same-origin');
+  expect(screen.getByRole('link', { name: 'Open HTML in a new tab' })).toHaveAttribute('href', preview.previewUrl);
+  expect(screen.getByText(/Sandbox shuts down in/)).toBeInTheDocument();
   expect(screen.getByRole('textbox', { name: 'pages/index.html' })).toHaveValue('<h1>Hello</h1>');
   expect(JSON.parse((authFetch as jest.Mock).mock.calls[0][1].body)).toMatchObject({
     mode: 'files', entry: 'pages/index.html', folders: ['pages'],
@@ -275,4 +277,128 @@ it('sends both npm manifests with the selected entry and separates dependency lo
   expect(screen.getByText('Script output')).toBeInTheDocument();
   expect(screen.getByText('true')).toBeInTheDocument();
   expect(screen.getByText('main.ts · Exit code: 0')).toBeInTheDocument();
+});
+
+const makeDragTransfer = () => {
+  const types: string[] = [];
+  return {
+    types, dropEffect: 'none', effectAllowed: 'none',
+    setData(type: string) { if (!types.includes(type)) types.push(type); },
+  };
+};
+
+it('drags the open file into a collapsed folder and back to the root without changing its content', () => {
+  sessionStorage.setItem('gareev-playground-files-v2', JSON.stringify({
+    files: [{ name: 'src/notes.js', content: 'console.log(8)' }],
+    entry: 'src/notes.js', folders: ['src', 'docs'], expires: Date.now() + 60_000,
+  }));
+  const view = render(<Playground />, { wrapper: Providers });
+  const source = screen.getByRole('treeitem', { name: 'notes.js' });
+  const target = screen.getByRole('treeitem', { name: 'docs' });
+  fireEvent.click(target);
+  fireEvent.click(target);
+  expect(target).toHaveAttribute('aria-expanded', 'false');
+
+  const transfer = makeDragTransfer();
+  fireEvent.dragStart(source, { dataTransfer: transfer });
+  expect(source).toHaveAttribute('data-drag-source', 'true');
+  expect(fireEvent.dragOver(target, { dataTransfer: transfer })).toBe(false);
+  expect(target).toHaveAttribute('data-drop-target', 'true');
+  expect(transfer.dropEffect).toBe('move');
+  fireEvent.drop(target, { dataTransfer: transfer });
+  expect(target).not.toHaveAttribute('data-drop-target');
+  expect(target).toHaveAttribute('aria-expanded', 'true');
+  expect(screen.getByRole('textbox', { name: 'docs/notes.js' })).toHaveValue('console.log(8)');
+
+  const moved = screen.getByRole('treeitem', { name: 'notes.js' });
+  const root = screen.getByRole('button', { name: 'Project root' });
+  const rootTransfer = makeDragTransfer();
+  fireEvent.dragStart(moved, { dataTransfer: rootTransfer });
+  expect(fireEvent.dragOver(root, { dataTransfer: rootTransfer })).toBe(false);
+  fireEvent.drop(root, { dataTransfer: rootTransfer });
+  expect(screen.getByRole('textbox', { name: 'notes.js' })).toHaveValue('console.log(8)');
+  view.unmount();
+  render(<Playground />, { wrapper: Providers });
+  expect(screen.getByRole('textbox', { name: 'notes.js' })).toHaveValue('console.log(8)');
+});
+
+it('opens a collapsed folder when a dragged file hovers over it', () => {
+  jest.useFakeTimers();
+  try {
+    sessionStorage.setItem('gareev-playground-files-v2', JSON.stringify({
+      files: [{ name: 'notes.js', content: 'hello' }],
+      entry: 'notes.js', folders: ['docs', 'docs/nested'], expires: Date.now() + 60_000,
+    }));
+    render(<Playground />, { wrapper: Providers });
+    const target = screen.getByRole('treeitem', { name: 'docs' });
+    fireEvent.click(target);
+    fireEvent.click(target);
+    const source = screen.getByRole('treeitem', { name: 'notes.js' });
+    const transfer = makeDragTransfer();
+    fireEvent.dragStart(source, { dataTransfer: transfer });
+    fireEvent.dragOver(target, { dataTransfer: transfer });
+    expect(screen.queryByRole('treeitem', { name: 'nested' })).not.toBeInTheDocument();
+    act(() => jest.advanceTimersByTime(650));
+    const nested = screen.getByRole('treeitem', { name: 'nested' });
+    fireEvent.dragOver(nested, { dataTransfer: transfer });
+    fireEvent.drop(nested, { dataTransfer: transfer });
+    expect(screen.getByRole('textbox', { name: 'docs/nested/notes.js' })).toHaveValue('hello');
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+it('rejects external drags, filename conflicts, and dropping a folder into its own descendant', () => {
+  sessionStorage.setItem('gareev-playground-files-v2', JSON.stringify({
+    files: [{ name: 'src/notes.js', content: 'first' }, { name: 'docs/notes.js', content: 'second' }],
+    entry: 'src/notes.js', folders: ['src', 'src/nested', 'docs'], expires: Date.now() + 60_000,
+  }));
+  render(<Playground />, { wrapper: Providers });
+  const docs = screen.getByRole('treeitem', { name: 'docs' });
+  const source = screen.getByRole('treeitem', { name: 'notes.js', selected: true });
+  const external = makeDragTransfer();
+  external.setData('Files');
+  expect(fireEvent.dragOver(docs, { dataTransfer: external })).toBe(true);
+  fireEvent.drop(docs, { dataTransfer: external });
+
+  const transfer = makeDragTransfer();
+  fireEvent.dragStart(source, { dataTransfer: transfer });
+  expect(fireEvent.dragOver(docs, { dataTransfer: transfer })).toBe(true);
+  fireEvent.drop(docs, { dataTransfer: transfer });
+  fireEvent.dragEnd(source, { dataTransfer: transfer });
+  expect(source).not.toHaveAttribute('data-drag-source');
+
+  const folder = screen.getByRole('treeitem', { name: 'src' });
+  const nested = screen.getByRole('treeitem', { name: 'nested' });
+  const folderTransfer = makeDragTransfer();
+  fireEvent.dragStart(folder, { dataTransfer: folderTransfer });
+  expect(fireEvent.dragOver(nested, { dataTransfer: folderTransfer })).toBe(true);
+  fireEvent.drop(nested, { dataTransfer: folderTransfer });
+  expect(docs).not.toHaveAttribute('data-drop-target');
+  expect(screen.getByRole('textbox', { name: 'src/notes.js' })).toHaveValue('first');
+  expect(screen.getAllByRole('treeitem', { name: 'notes.js' })).toHaveLength(2);
+});
+
+it('runs npm create from the terminal and opens imported Gravity UI files in the Explorer', async () => {
+  const changes = { folders: ['gravity-app', 'gravity-app/entries'], files: [
+    { name: 'gravity-app/package.json', content: '{"dependencies":{"@gravity-ui/uikit":"^7.0.0"}}' },
+    { name: 'gravity-app/package-lock.json', content: '{}' },
+    { name: 'gravity-app/entries/app.tsx', content: 'export default function App() { return null }' },
+  ] };
+  (authFetch as jest.Mock).mockResolvedValue({
+    ok: true, json: async () => ({ kind: 'terminal', output: 'added packages', exitCode: 0, changes }),
+  });
+  render(<Playground />, { wrapper: Providers });
+  fireEvent.click(screen.getByRole('button', { name: 'Terminal' }));
+  const panel = within(screen.getByRole('region', { name: 'Terminal' }));
+  fireEvent.change(panel.getByRole('textbox', { name: 'Terminal command' }), { target: { value: 'npm create @gravity-ui' } });
+  fireEvent.click(panel.getByRole('button', { name: 'Run' }));
+  expect(await screen.findByRole('textbox', { name: 'gravity-app/entries/app.tsx' })).toHaveValue(changes.files[2].content);
+  expect(panel.getByText(/added packages/)).toBeInTheDocument();
+  expect(JSON.parse((authFetch as jest.Mock).mock.calls[0][1].body)).toEqual({
+    mode: 'npm', command: 'npm create @gravity-ui', manifests: [],
+  });
+  expect(within(screen.getByRole('tree')).getByRole('treeitem', { name: 'package-lock.json' })).toBeInTheDocument();
+  expect(panel.getByText('/gravity-app $')).toBeInTheDocument();
+  expect(within(screen.getByRole('tree')).getByRole('treeitem', { name: 'main.js' })).toBeInTheDocument();
 });

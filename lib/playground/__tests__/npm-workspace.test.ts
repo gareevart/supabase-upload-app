@@ -7,14 +7,14 @@ const lockfile = { name: 'package-lock.json', content: JSON.stringify(lock) };
 const entry = 'src/main.ts';
 
 it('recognizes a registry lock at the project root even when the entry is nested', () => {
-  expect(planWorkspaceNpm({ entry, files: [manifest, lockfile] })).toEqual({ manifests: [manifest, lockfile] });
+  expect(planWorkspaceNpm({ entry, files: [manifest, lockfile] })).toEqual({ directory: '', manifests: [manifest, lockfile] });
   expect(planWorkspaceNpm({ entry, files: [manifest, { ...lockfile, content: JSON.stringify({ ...lock, lockfileVersion: 2 }) }] }))
     .toEqual(expect.objectContaining({ manifests: expect.any(Array) }));
 });
 
-it('preserves no-dependency, Python, HTML and nested-only manifest runs', () => {
+it('preserves no-dependency, Python, and HTML runs', () => {
   expect(planWorkspaceNpm({ entry, files: [{ name: 'package.json', content: '{"type":"commonjs"}' }] })).toBeNull();
-  expect(planWorkspaceNpm({ entry, files: [{ ...manifest, name: 'src/package.json' }] })).toBeNull();
+
   expect(planWorkspaceNpm({ entry: 'main.py', files: [manifest] })).toBeNull();
   expect(planWorkspaceNpm({ entry: 'index.html', files: [manifest] })).toBeNull();
 });
@@ -50,4 +50,10 @@ it('rejects non-package lock paths and workspace content that collides with inst
   ] })).toEqual({ error: NPM_INVALID_MANIFEST });
   expect(planWorkspaceNpm({ entry, files: [manifest, lockfile], folders: ['node_modules'] }))
     .toEqual({ error: NPM_RESERVED_PATH });
+});
+
+it('finds the closest enclosing npm project for a nested entry', () => {
+  const nested = [manifest, lockfile].map((file) => ({ ...file, name: 'src/' + file.name }));
+  expect(planWorkspaceNpm({ entry: 'src/lib/main.ts', files: nested }))
+    .toEqual({ directory: 'src', manifests: [manifest, lockfile] });
 });

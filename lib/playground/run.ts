@@ -4,6 +4,8 @@ import { isSandboxPreviewUrl, PREVIEW_PORT, runDurationMs, type RunInput } from 
 import { HTML_PREVIEW_SERVER, htmlPreviewFiles, htmlPreviewPath } from './html-preview';
 import { runnableKind } from './workspace';
 import { NPM_INSTALL_TIMEOUT_MS, planWorkspaceNpm, WORKSPACE_NPM_CI_ARGS } from './npm-workspace';
+import { TERMINAL_VM_MS } from './terminal';
+import { runNpmTerminal } from './terminal-run';
 
 const LOG_LIMIT = 16 * 1024;
 const NO_NETWORK = 'deny-all' as const;
@@ -72,19 +74,20 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
   let stage = 'Sandbox creation';
   try {
     const github = input.mode === 'github';
-    const npm = github ? null : planWorkspaceNpm(input);
+    const terminal = input.mode === 'npm';
+    const npm = input.mode === 'files' ? planWorkspaceNpm(input) : null;
     if (npm && 'error' in npm) throw new PlaygroundRunError(npm.error);
-    const python = !github && runnableKind(input.entry) === 'python';
-    const html = !github && runnableKind(input.entry) === 'html';
+    const python = input.mode === 'files' && runnableKind(input.entry) === 'python';
+    const html = input.mode === 'files' && runnableKind(input.entry) === 'html';
     sandbox = await Sandbox.create({
       name: sandboxName(runId),
       image: python ? 'vercel/sandbox/python:3.14' : 'vercel/sandbox/node:24',
       resources: { vcpus: 1 },
-      timeout: runDurationMs(input),
+      timeout: terminal ? TERMINAL_VM_MS : runDurationMs(input),
       persistent: false,
       ports: github || html ? [PREVIEW_PORT] : [],
       networkPolicy: github ? { allow: ['github.com', 'registry.npmjs.org'] }
-        : npm ? { allow: ['registry.npmjs.org'] } : NO_NETWORK,
+        : npm || terminal ? { allow: ['registry.npmjs.org'] } : NO_NETWORK,
       signal: AbortSignal.timeout(25_000),
     });
 
@@ -93,6 +96,10 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
     if (!posix.isAbsolute(work) || work === '/') throw new Error('Missing sandbox working directory.');
     const source = posix.join(work, 'workspace');
     const repo = posix.join(work, 'repo');
+
+    if (input.mode === 'npm') return await runNpmTerminal(sandbox, work, input, {
+      stage: (nextStage) => { stage = nextStage; }, collect, check: requireSuccess,
+    });
 
     if (input.mode === 'files') {
       stage = 'Workspace creation';
@@ -143,7 +150,7 @@ export async function runInSandbox(input: RunInput, runId: string, release: () =
         installLogs = await collect(install);
         stage = 'Workspace creation';
         await requireSuccess(stage, await sandbox.runCommand({
-          cmd: 'mv', args: ['-T', '--', 'workspace-dependencies/node_modules', 'workspace/node_modules'],
+          cmd: 'mv', args: ['-T', '--', 'workspace-dependencies/node_modules', posix.join('workspace', npm.directory, 'node_modules')],
           cwd: work, timeoutMs: 3_000,
         }));
       }

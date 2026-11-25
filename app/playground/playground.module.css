@@ -68,6 +68,15 @@
 .fileActions { display: flex; align-items: center; gap: 2px; }
 .treeLocation { display: flex; align-items: center; min-width: 0; gap: 6px; padding: 0 8px 4px; }
 .treeLocation > :last-child { min-width: 0; }
+.treeLocation[data-drop-target], .files [data-drop-target] {
+  background: var(--g-color-base-selection);
+  outline: 2px solid var(--g-color-line-focus);
+  outline-offset: -2px;
+  border-radius: 5px;
+}
+.files [data-drag-source] { opacity: .55; }
+.files [draggable='true'] { cursor: grab; }
+.files [data-drag-source] { cursor: grabbing; }
 .moveForm { display: grid; gap: 12px; overflow-wrap: anywhere; }
 .files { gap: 1px; margin: 0; padding: 0 6px; list-style: none; }
 .files:focus-visible { outline: 2px solid var(--g-color-line-focus); outline-offset: -2px; }
@@ -108,3 +117,7 @@
   .explorer { max-height: min(210px, 30dvh); border-right: 0; border-bottom: 1px solid var(--line); }
   .statusbar > div { gap: 4px; }
 }
+.terminalPanel { min-height: 0; display: grid; grid-template-rows: 35px minmax(0, 1fr) auto; border-top: 1px solid var(--line); }
+.terminalForm { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 6px 12px; border-top: 1px solid var(--line); }
+.terminalForm code { max-width: min(12rem, 30vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.htmlPreviewActions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }

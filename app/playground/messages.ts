@@ -14,7 +14,7 @@ const apiErrors: MessageKey[] = [
   'workspaceNpmManifestMissing', 'workspaceNpmInvalidManifest', 'workspaceNpmReservedPath',
 ];
 const stages: MessageKey[] = [
-  'sandboxCreation', 'networkIsolation', 'workspaceCreation', 'writeFiles', 'scriptExecution', 'githubImport', 'install', 'previewStartup',
+  'sandboxCreation', 'networkIsolation', 'workspaceCreation', 'writeFiles', 'scriptExecution', 'githubImport', 'install', 'previewStartup', 'projectGeneration', 'projectExport',
 ];
 
 export function translateRunError(t: (key: string) => string, message: string) {

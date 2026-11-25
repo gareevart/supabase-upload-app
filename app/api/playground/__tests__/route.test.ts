@@ -95,7 +95,25 @@ it('does not consume quota for a signed-in npm workspace missing its lockfile', 
   });
   const response = await POST(request);
   expect(response.status).toBe(422);
-  expect(await response.json()).toMatchObject({ error: 'Add package.json and package-lock.json to the workspace root.' });
+  expect(await response.json()).toMatchObject({ error: 'Add package.json and package-lock.json to the same project folder.' });
   expect(rpc).not.toHaveBeenCalled();
   expect(runInSandbox).not.toHaveBeenCalled();
+});
+
+it('accepts a typed npm command only after authentication and reserves the existing quota tier', async () => {
+  const makeRequest = (authenticated: boolean, command: string) => new NextRequest('https://example.com/api/playground', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...(authenticated ? { 'x-test-user': 'any-account' } : {}) },
+    body: JSON.stringify({ mode: 'npm', command, manifests: [] }),
+  });
+  expect((await POST(makeRequest(false, 'npm create @gravity-ui'))).status).toBe(401);
+  expect((await POST(makeRequest(true, 'npm install --global react'))).status).toBe(400);
+  expect(rpc).not.toHaveBeenCalled();
+  rpc.mockReturnValue(ok('reserved'));
+  (runInSandbox as jest.Mock).mockResolvedValue({ kind: 'terminal', output: 'done', exitCode: 0 });
+  expect((await POST(makeRequest(true, 'npm create @gravity-ui'))).status).toBe(200);
+  expect(rpc).toHaveBeenCalledWith('reserve_playground', expect.objectContaining({ p_seconds: 600 }));
+  expect(runInSandbox).toHaveBeenCalledWith({
+    mode: 'npm', command: { kind: 'create', folder: 'gravity-app' }, manifests: [],
+  }, expect.any(String), expect.any(Function));
 });
