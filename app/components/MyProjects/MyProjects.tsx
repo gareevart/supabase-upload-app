@@ -28,9 +28,9 @@ const MyProjects = ({ showPlayground = false }: { showPlayground?: boolean }) =>
         <Link href="/projects/playground" aria-labelledby={`${playgroundId}-title`} aria-describedby={`${playgroundId}-description`}>
           <Card type="container" size="l" className="project-card">
             <Flex direction="column" gap="1">
-              <Text id={`${playgroundId}-title`} color="primary" variant="header-1">Playground</Text>
+              <Text id={`${playgroundId}-title`} color="primary" variant="header-1">{t('playground.title')}</Text>
               <Text id={`${playgroundId}-description`} color="secondary" variant="body-1">
-                Cloud IDE for JavaScript, TypeScript, Python and Vite projects.
+                {t('playground.cardDescription')}
               </Text>
             </Flex>
           </Card>
