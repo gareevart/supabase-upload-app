@@ -180,14 +180,31 @@ it('keeps unsent files when switching to the independent GitHub import mode', ()
 it('displays the shared quota and disables Run when it runs out', async () => {
   (fetch as jest.Mock).mockResolvedValue(mockBudget({ ...demoBudget, remainingSeconds: 0 }));
   render(<Playground />, { wrapper: Providers });
-  expect(await screen.findByText('0h 00m 00s')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Shared Playground runtime' }));
   const budget = within(await screen.findByRole('group', { name: 'Shared Playground runtime' }));
-  expect(budget.getByText('5h every 30 days')).toBeInTheDocument();
+  expect(await budget.findByText('5h every 30 days')).toBeInTheDocument();
   expect(budget.getByRole('progressbar')).toHaveAttribute('aria-valuetext', '0h 00m 00s');
   expect(screen.queryByText(/starts left today/i)).not.toBeInTheDocument();
   expect(screen.queryByText(/sandbox uptime/i)).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Run main.js' })).toBeDisabled();
+});
+
+it.each([
+  [18_000, 'success', '5h 00m 00s'],
+  [7_200, 'success', '2h 00m 00s'],
+  [7_199, 'warning', '1h 59m 59s'],
+  [3_600, 'warning', '1h 00m 00s'],
+  [3_599, 'danger', '0h 59m 59s'],
+])('shows %i seconds inside the progress bar with %s tone', async (remainingSeconds, tone, time) => {
+  (fetch as jest.Mock).mockResolvedValue(mockBudget({ ...demoBudget, remainingSeconds }));
+  render(<Playground />, { wrapper: Providers });
+  const trigger = screen.getByRole('button', { name: 'Shared Playground runtime' });
+  expect(trigger).toHaveTextContent('Budget');
+  fireEvent.click(trigger);
+  const bar = await screen.findByRole('progressbar');
+  expect(bar).toHaveAttribute('data-budget-tone', tone);
+  expect(bar).toHaveAttribute('aria-valuetext', time);
+  expect(within(bar).getAllByText(time).length).toBeGreaterThan(0);
 });
 
 it('does not block Run or Terminal on a legacy zero count when runtime is available', async () => {
@@ -198,7 +215,9 @@ it('does not block Run or Terminal on a legacy zero count when runtime is availa
     } }),
   });
   render(<Playground />, { wrapper: Providers });
-  await screen.findByText('4h 56m 40s');
+  fireEvent.click(screen.getByRole('button', { name: 'Shared Playground runtime' }));
+  expect(await screen.findByRole('progressbar')).toHaveAttribute('aria-valuetext', '4h 56m 40s');
+  fireEvent.click(screen.getByRole('button', { name: 'Shared Playground runtime' }));
   expect(screen.getByRole('button', { name: 'Run main.js' })).toBeEnabled();
   const terminal = within(screen.getByRole('region', { name: 'Terminal' }));
   fireEvent.change(terminal.getByRole('textbox', { name: 'Terminal command' }), { target: { value: 'npm install react' } });
@@ -270,7 +289,10 @@ it('runs an HTML file, keeps the editor open, restores the preview on reload, an
 it('blocks an HTML preview when shared runtime is enough only for a script', async () => {
   (fetch as jest.Mock).mockResolvedValue(mockBudget({ ...demoBudget, remainingSeconds: 60 }));
   render(<Playground />, { wrapper: Providers });
-  await screen.findByText('0h 01m 00s');
+  const trigger = screen.getByRole('button', { name: 'Shared Playground runtime' });
+  fireEvent.click(trigger);
+  expect(await screen.findByRole('progressbar')).toHaveAttribute('aria-valuetext', '0h 01m 00s');
+  fireEvent.click(trigger);
   expect(screen.getByRole('button', { name: 'Run main.js' })).toBeEnabled();
   addFile('index.html');
   expect(screen.getByRole('button', { name: 'Run index.html' })).toBeDisabled();

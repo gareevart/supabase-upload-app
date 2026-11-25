@@ -10,7 +10,7 @@
   "playground.runtime": "{hours} ч {minutes} мин {seconds} с",
   "playground.sandboxBusy": "Песочница занята",
   "playground.cloudDisabled": "Облачные запуски отключены",
-  "playground.sharedRuntimeShort": "Общий лимит",
+  "playground.sharedRuntimeShort": "Бюджет",
   "playground.stopPreview": "Остановить предпросмотр",
   "playground.runFile": "Запустить {name}",
   "playground.runUnselected": "Запустить файл",

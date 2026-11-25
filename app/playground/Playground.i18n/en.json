@@ -10,7 +10,7 @@
   "playground.runtime": "{hours}h {minutes}m {seconds}s",
   "playground.sandboxBusy": "Sandbox in use",
   "playground.cloudDisabled": "Cloud runs disabled",
-  "playground.sharedRuntimeShort": "Shared runtime",
+  "playground.sharedRuntimeShort": "Budget",
   "playground.stopPreview": "Stop preview",
   "playground.runFile": "Run {name}",
   "playground.runUnselected": "Run file",

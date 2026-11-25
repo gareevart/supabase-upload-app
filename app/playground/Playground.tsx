@@ -437,6 +437,8 @@ export default function Playground() {
   }) : msg('sharedRuntimeShort');
   const runtimePercent = budget && budget.totalSeconds > 0
     ? Math.min(100, Math.max(0, 100 * budget.remainingSeconds / budget.totalSeconds)) : 0;
+  const budgetTone = !budget || budget.remainingSeconds >= 2 * 3600 ? 'success'
+    : budget.remainingSeconds >= 3600 ? 'warning' : 'danger';
   const previewExpired = preview ? `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}` : null;
   const language = !activeFile ? msg('noFile') : !canRun ? msg('plainText') : canRun === 'python' ? 'Python' : canRun === 'html' ? 'HTML'
     : /\.[cm]?ts$/i.test(activeFile.name) ? 'TypeScript' : 'JavaScript';
@@ -490,8 +492,9 @@ export default function Playground() {
               )}
               {budget && <>
                 <div className={styles.budgetMeter}>
-                  <div role="progressbar" aria-labelledby={budgetTitleId} aria-valuenow={Math.round(runtimePercent)} aria-valuetext={runtime}>
-                    <Progress size="s" value={runtimePercent} />
+                  <div role="progressbar" aria-labelledby={budgetTitleId} aria-valuenow={Math.round(runtimePercent)}
+                    aria-valuetext={runtime} data-budget-tone={budgetTone} className={styles.budgetProgress}>
+                    <Progress size="m" value={runtimePercent} theme={budgetTone} text={runtime} />
                   </div>
                   <Text as="p" className={styles.budgetText} variant="caption-2" color="secondary">
                     {msg('window', { hours: Math.round(budget.totalSeconds / 3600) })}
@@ -507,7 +510,7 @@ export default function Playground() {
             </div>
           }>
             <Button view="outlined" size="m" aria-label={msg('sharedRuntime')}>
-              {runtime}
+              {msg('sharedRuntimeShort')}
             </Button>
           </Popover>
           {mode === 'files' && canRun === 'html' && !preview && (

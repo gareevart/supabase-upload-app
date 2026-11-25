@@ -113,6 +113,21 @@
 }
 .budgetText { margin: 0; }
 .budgetMeter { display: grid; gap: 8px; }
+.budgetProgress { font-variant-numeric: tabular-nums; }
+.budgetProgress[data-budget-tone='warning'] {
+  /* The Gravity UI warning palette is yellow; use its orange accent for this meter. */
+  --g-progress-filled-background-color: var(--g-color-private-orange-300);
+}
+/* Keep the in-bar label readable over the fill in the dark theme. */
+:global(.g-root_theme_dark) .budgetProgress[data-budget-tone='success'] {
+  --g-progress-filled-background-color: var(--g-color-private-green-200);
+}
+:global(.g-root_theme_dark) .budgetProgress[data-budget-tone='warning'] {
+  --g-progress-filled-background-color: var(--g-color-private-orange-200);
+}
+:global(.g-root_theme_dark) .budgetProgress[data-budget-tone='danger'] {
+  --g-progress-filled-background-color: var(--g-color-private-red-200);
+}
 .budgetStatuses { display: flex; flex-wrap: wrap; gap: 8px; }
 @media (max-width: 767px) {
   .shell { min-height: 29rem; }
