@@ -8,7 +8,6 @@
   "playground.unavailableBudget": "Budget temporarily unavailable.",
   "playground.window": "{hours}h every 30 days",
   "playground.runtime": "{hours}h {minutes}m {seconds}s",
-  "playground.budgetNote": "This is sandbox uptime, not CPU. A preview reserves up to 10 minutes. Stop returns unused time once the sandbox shuts down. Only one sandbox can run at a time. Vercel meters usage separately.",
   "playground.sandboxBusy": "Sandbox in use",
   "playground.cloudDisabled": "Cloud runs disabled",
   "playground.sharedRuntimeShort": "Shared runtime",

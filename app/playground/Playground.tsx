@@ -485,7 +485,6 @@ export default function Playground() {
               {budget && <>
                 <Progress size="s" value={100 * budget.remainingSeconds / budget.totalSeconds} />
                 <Text as="p" variant="body-1">{msg('window', { hours: Math.round(budget.totalSeconds / 3600) })}</Text>
-                <Text as="p" variant="caption-2" color="secondary">{msg('budgetNote')}</Text>
                 {budget.active && <Label theme="info" size="xs">{msg('sandboxBusy')}</Label>}
                 {!budget.enabled && <Label theme="warning" size="xs">{msg('cloudDisabled')}</Label>}
               </>}

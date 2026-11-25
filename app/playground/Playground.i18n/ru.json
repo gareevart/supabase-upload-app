@@ -8,7 +8,6 @@
   "playground.unavailableBudget": "Лимиты временно недоступны.",
   "playground.window": "{hours} ч на 30 дней",
   "playground.runtime": "{hours} ч {minutes} мин {seconds} с",
-  "playground.budgetNote": "Это время работы песочницы, а не CPU. Предпросмотр резервирует до 10 минут. После остановки неиспользованное время возвращается. Одновременно может работать только одна песочница. Vercel считает расход отдельно.",
   "playground.sandboxBusy": "Песочница занята",
   "playground.cloudDisabled": "Облачные запуски отключены",
   "playground.sharedRuntimeShort": "Общий лимит",
